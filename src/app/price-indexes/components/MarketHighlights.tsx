@@ -14,12 +14,12 @@ const HighlightCard = ({ title, data, type }: HighlightCardProps) => (
       <span className="text-xs text-muted-foreground">24h</span>
     </div>
     <div className="space-y-3">
-      {data.map((coin, index) => {
-        // FIX: Ensure the value is a number (or 0) before calling toFixed
-        const changeValue = coin.price_change_percentage_24h || 0; 
+      {data.length > 0 ? data.map((coin, index) => {
+        // Use the mapped variable 'change24h'
+        const changeValue = coin.change24h || 0;
         
         return (
-          <div key={index} className="flex justify-between items-center">
+          <div key={coin.id || index} className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <img src={coin.image} alt={coin.name} className="w-6 h-6 rounded-full bg-white/10" onError={(e) => e.currentTarget.style.display='none'} />
               <span className="font-bold text-sm text-foreground">{coin.symbol?.toUpperCase() || 'N/A'}</span>
@@ -29,18 +29,19 @@ const HighlightCard = ({ title, data, type }: HighlightCardProps) => (
             </span>
           </div>
         );
-      })}
+      }) : (
+        <div className="text-xs text-muted-foreground py-4 text-center">Loading market data...</div>
+      )}
     </div>
   </div>
 );
 
 export default function MarketHighlights({ coins, news }: { coins: any[], news: any[] }) {
-  // Use filter/map to clean data before sorting
-  const cleanCoins = coins.filter(c => c.price_change_percentage_24h != null);
+  // FIX: Use 'change24h' (our internal name) instead of raw API name
+  const validCoins = coins.filter(c => typeof c.change24h === 'number');
   
-  // Simple sort for UI
-  const gainers = [...cleanCoins].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0, 3);
-  const losers = [...cleanCoins].sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0, 3);
+  const gainers = [...validCoins].sort((a, b) => b.change24h - a.change24h).slice(0, 3);
+  const losers = [...validCoins].sort((a, b) => a.change24h - b.change24h).slice(0, 3);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -50,7 +51,7 @@ export default function MarketHighlights({ coins, news }: { coins: any[], news: 
       <div className="bg-card border border-border p-4 flex-1">
         <h3 className="font-bold text-lg mb-4 pb-2 border-b border-border text-white">Hot Market News</h3>
         <div className="space-y-4">
-          {news.map((item) => (
+          {news.length > 0 ? news.map((item) => (
             <a href={item.url} target="_blank" key={item.id} className="flex gap-3 group hover:bg-white/5 p-2 rounded transition-colors">
               <img src={item.image} alt="news" className="w-16 h-16 object-cover rounded" onError={(e) => e.currentTarget.style.display='none'}/>
               <div>
@@ -58,7 +59,7 @@ export default function MarketHighlights({ coins, news }: { coins: any[], news: 
                 <span className="text-[10px] text-muted-foreground mt-1 block">{item.source} • {new Date(item.published_on * 1000).getHours()}h ago</span>
               </div>
             </a>
-          ))}
+          )) : <div className="text-xs text-muted-foreground">Loading news feed...</div>}
         </div>
       </div>
     </div>
