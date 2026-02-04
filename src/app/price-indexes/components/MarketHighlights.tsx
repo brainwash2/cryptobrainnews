@@ -15,8 +15,9 @@ const HighlightCard = ({ title, data, type }: HighlightCardProps) => (
     </div>
     <div className="space-y-3">
       {data.length > 0 ? data.map((coin, index) => {
-        // Use the mapped variable 'change24h'
-        const changeValue = coin.change24h || 0;
+        // BRUTE FORCE: Force convert to number, default to 0 if NaN
+        const rawChange = coin.change24h || coin.price_change_percentage_24h;
+        const changeValue = Number(rawChange) || 0;
         
         return (
           <div key={coin.id || index} className="flex justify-between items-center">
@@ -30,18 +31,22 @@ const HighlightCard = ({ title, data, type }: HighlightCardProps) => (
           </div>
         );
       }) : (
-        <div className="text-xs text-muted-foreground py-4 text-center">Loading market data...</div>
+        <div className="text-xs text-muted-foreground py-4 text-center">Scanning market...</div>
       )}
     </div>
   </div>
 );
 
 export default function MarketHighlights({ coins, news }: { coins: any[], news: any[] }) {
-  // FIX: Use 'change24h' (our internal name) instead of raw API name
-  const validCoins = coins.filter(c => typeof c.change24h === 'number');
-  
-  const gainers = [...validCoins].sort((a, b) => b.change24h - a.change24h).slice(0, 3);
-  const losers = [...validCoins].sort((a, b) => a.change24h - b.change24h).slice(0, 3);
+  // BRUTE FORCE SORT: Convert to number before sorting to handle API strings
+  const sorted = [...coins].sort((a, b) => {
+    const valA = Number(a.change24h || a.price_change_percentage_24h || 0);
+    const valB = Number(b.change24h || b.price_change_percentage_24h || 0);
+    return valB - valA;
+  });
+
+  const gainers = sorted.slice(0, 3);
+  const losers = sorted.slice(-3).reverse(); // Bottom 3, reversed to show worst first
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
