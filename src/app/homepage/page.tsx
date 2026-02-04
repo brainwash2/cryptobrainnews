@@ -11,20 +11,20 @@ export default async function Homepage() {
   const carouselSlides = news.slice(0, 3).map((article: any) => ({
     id: String(article.id),
     headline: article.title,
-    summary: article.body?.substring(0, 160) + "...",
+    summary: article.body?.substring(0, 160) || "",
     image: article.image,
     category: article.source?.toUpperCase() || "NEWS",
-    articleUrl: `/news/${article.id}` // POINT TO INTERNAL
+    articleUrl: `/news/${article.id}`
   }));
 
   const newsArticles = news.slice(3).map((article: any) => ({
     id: String(article.id),
     thumbnail: article.image,
     headline: article.title,
-    excerpt: article.body?.substring(0, 100) + "...",
+    excerpt: article.body?.substring(0, 100) || "",
     category: article.source?.toUpperCase() || "MARKETS",
     timestamp: "Real-time",
-    articleUrl: `/news/${article.id}` // POINT TO INTERNAL
+    articleUrl: `/news/${article.id}`
   }));
 
   const trendingStories = news.slice(0, 5).map((article: any, i: number) => ({
@@ -37,7 +37,8 @@ export default async function Homepage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header /><PriceTicker />
+      <Header />
+      <PriceTicker />
       <div className="pt-4">
         <div className="container mx-auto px-4 lg:px-8">
           <Breadcrumb />
