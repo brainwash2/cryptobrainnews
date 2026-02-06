@@ -12,16 +12,17 @@ export default async function NewsArticlePage({ params }: any) {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-primary selection:text-black">
       <Header />
-      {/* Reading Progress Bar */}
+      
+      {/* FIXED: Using Global CSS Animation instead of styled-jsx */}
       <div className="fixed top-16 left-0 w-full h-1 bg-gray-900 z-[1001]">
-        <div className="h-full bg-primary animate-progress w-[45%]"></div>
+        <div className="h-full bg-primary animate-reading-bar"></div>
       </div>
+
       <PriceTicker />
 
       <main className="container mx-auto px-4 lg:px-8 pt-24 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
-          {/* LEFT: ARTICLE CONTENT (8 Cols) */}
           <div className="lg:col-span-8">
             <div className="mb-6 flex items-center gap-3">
               <span className="bg-primary text-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest">
@@ -36,15 +37,14 @@ export default async function NewsArticlePage({ params }: any) {
               {article.title}
             </h1>
 
-            {/* QUICK TAKE BOX (Institutional Style) */}
             <div className="bg-[#111] border-l-4 border-primary p-6 mb-10 shadow-xl">
               <h4 className="text-primary font-black text-xs uppercase mb-3 tracking-widest flex items-center gap-2">
                 <Icon name="LightBulbIcon" size={16} /> Quick Take
               </h4>
               <ul className="space-y-3 text-sm text-gray-300 font-medium list-disc list-inside">
                 <li>Major volatility detected across institutional liquidity pools.</li>
-                <li>{article.title.split(' ').slice(0, 8).join(' ')} marks a pivotal shift in market sentiment.</li>
-                <li>On-chain data suggests whale accumulation preceding this event.</li>
+                <li>Strategic shift in market sentiment confirmed via on-chain flow.</li>
+                <li>Institutional participation reaching multi-year highs in this sector.</li>
               </ul>
             </div>
 
@@ -63,7 +63,6 @@ export default async function NewsArticlePage({ params }: any) {
             </div>
           </div>
 
-          {/* RIGHT: INTELLIGENCE SIDEBAR (4 Cols) */}
           <aside className="lg:col-span-4 space-y-8">
             <div className="sticky top-32">
               <div className="bg-[#0a0a0a] border border-gray-900 p-6">
@@ -93,10 +92,6 @@ export default async function NewsArticlePage({ params }: any) {
           </aside>
         </div>
       </main>
-      <style jsx>{`
-        @keyframes progress { from { width: 0; } to { width: 45%; } }
-        .animate-progress { animation: progress 2s ease-out forwards; }
-      `}</style>
     </div>
   );
 }
