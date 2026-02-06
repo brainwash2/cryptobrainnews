@@ -2,8 +2,8 @@ const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 const DEFILLAMA_BASE = 'https://api.llama.fi';
 const NEWS_API = 'https://min-api.cryptocompare.com/data/v2/news/?lang=EN';
 
-// --- FALLBACKS FOR STABILITY ---
-const FALLBACK_MARKET_DATA = [
+// --- FALLBACKS FOR STABILITY (Now Exported) ---
+export const FALLBACK_MARKET_DATA = [
   { id: 'bitcoin', rank: 1, name: 'Bitcoin', symbol: 'btc', image: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png', current_price: 76038, price_change_percentage_24h: -2.86, price_change_percentage_1h_in_currency: -0.1, price_change_percentage_7d_in_currency: 12.5, market_cap: 1500000000000, total_volume: 45000000000, sparkline_in_7d: { price: Array(20).fill(0).map(() => 75000 + Math.random() * 2000) } },
   { id: 'ethereum', rank: 2, name: 'Ethereum', symbol: 'eth', image: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png', current_price: 2890, price_change_percentage_24h: -1.20, price_change_percentage_1h_in_currency: 0.2, price_change_percentage_7d_in_currency: 5.4, market_cap: 350000000000, total_volume: 15000000000, sparkline_in_7d: { price: Array(20).fill(0).map(() => 2800 + Math.random() * 100) } },
 ];
@@ -31,10 +31,12 @@ async function safeFetch(url: string) {
 }
 
 export async function getLivePrices(currency = 'usd', category = 'all') {
-  let url = `${COINGECKO_BASE}/coins/markets?vs_currency=${currency}&order=market_cap_desc&per_page=50&sparkline=true&price_change_percentage=1h,24h,7d`;
-  if (category !== 'all') url += `&category=${category.toLowerCase().replace(/\s+/g, '-')}`;
-  const data = await safeFetch(url);
-  return Array.isArray(data) ? data : FALLBACK_MARKET_DATA;
+  try {
+    let url = `${COINGECKO_BASE}/coins/markets?vs_currency=${currency}&order=market_cap_desc&per_page=50&sparkline=true&price_change_percentage=1h,24h,7d`;
+    if (category !== 'all') url += `&category=${category.toLowerCase().replace(/\s+/g, '-')}`;
+    const data = await safeFetch(url);
+    return Array.isArray(data) ? data : FALLBACK_MARKET_DATA;
+  } catch (e) { return FALLBACK_MARKET_DATA; }
 }
 
 export async function getRealNews() {
@@ -54,7 +56,6 @@ export async function getDeFiProtocols() {
   })) : [];
 }
 
-// ROBUST CHART FETCHERS
 export async function getDexVolume() {
   const data = await safeFetch('https://api.llama.fi/overview/dexs?excludeTotalVolumeChart=false');
   if (data?.totalVolumeChart) {
@@ -63,7 +64,7 @@ export async function getDexVolume() {
       volume: d[1]
     }));
   }
-  return MOCK_DEX_VOLUME; // Fallback to realistic mock if API fails
+  return MOCK_DEX_VOLUME;
 }
 
 export async function getStablecoinData() {
@@ -74,7 +75,7 @@ export async function getStablecoinData() {
       mcap: d.totalCirculating.peggedUSD
     }));
   }
-  return MOCK_STABLE_SUPPLY; // Fallback to realistic mock
+  return MOCK_STABLE_SUPPLY;
 }
 
 export async function getGlobalTVLHistory() { return []; }
