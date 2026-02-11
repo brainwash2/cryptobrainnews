@@ -1,5 +1,5 @@
 {
-  "name": "out",
+  "name": "cryptobrainnews",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,7 +15,6 @@
     "@tailwindcss/typography": "^0.5.19",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "ioredis": "^5.9.2",
     "lucide-react": "^0.563.0",
     "next": "16.0.8",
     "react": "19.2.1",

@@ -1,37 +1,36 @@
 import React from 'react';
 import type { Metadata, Viewport } from 'next';
+import { Merriweather, Inter, JetBrains_Mono, Space_Mono } from 'next/font/google';
 import '../styles/globals.css';
+import Header from '@/components/common/Header';
+import PriceTicker from '@/components/common/PriceTicker';
 import Footer from '@/components/layout/Footer';
+
+// Load Fonts Efficiently
+const merriweather = Merriweather({ subsets: ['latin'], weight: ['400', '700', '900'], variable: '--font-heading', display: 'swap' });
+const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '700'], variable: '--font-body', display: 'swap' });
+const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-caption', display: 'swap' });
+const space = Space_Mono({ subsets: ['latin'], weight: ['400', '700'], variable: '--font-data', display: 'swap' });
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#000000',
 };
 
 export const metadata: Metadata = {
-  title: 'CryptoBrainNews',
-  description: 'The Market Terminal for Crypto Intelligence',
-  icons: {
-    icon: [
-      { url: '/favicon.ico', type: 'image/x-icon' }
-    ],
-  },
+  title: { default: 'CryptoBrainNews', template: '%s | CBN' },
+  description: 'Institutional Grade Crypto Intelligence Terminal',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${merriweather.variable} ${inter.variable} ${jetbrains.variable} ${space.variable}`}>
       <body className="flex flex-col min-h-screen">
-        <div className="flex-grow">
-          {children}
-        </div>
+        <Header />
+        <PriceTicker />
+        <div className="flex-grow">{children}</div>
         <Footer />
-        <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fcryptobrai9477back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.16" />
-        <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" />
       </body>
     </html>
   );

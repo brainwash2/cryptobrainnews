@@ -1,56 +1,46 @@
 import React from 'react';
-import Header from '@/components/common/Header';
-import PriceTicker from '@/components/common/PriceTicker';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import HomepageInteractive from './components/HomepageInteractive';
 import { getRealNews } from '@/lib/api';
+import { supabase } from '@/lib/supabase-client';
 
-export default async function Homepage({ searchParams }: any) {
-  // Handle URL params like /homepage?cat=btc
-  const params = await searchParams;
-  const category = params.cat || '';
+export default async function Homepage() {
+  const apiNews = await getRealNews();
+  const { data: internalArticles } = await supabase.from('articles').select('*').order('created_at', { ascending: false }).limit(5);
 
-  const news = await getRealNews(category);
+  const carouselSlides = (internalArticles || []).length > 0 
+    ? internalArticles!.map((art: any) => ({
+        id: art.id,
+        headline: art.title,
+        summary: art.content.substring(0, 150) + "...",
+        image: art.image_url,
+        category: "ANALYSIS",
+        articleUrl: `/news/${art.id}`
+      }))
+    : apiNews.slice(0, 3).map((a: any) => ({
+        id: a.id,
+        headline: a.title,
+        summary: a.body.substring(0, 150) + "...",
+        image: a.image,
+        category: "NEWS",
+        articleUrl: `/news/${a.id}`
+      }));
 
-  // Layout logic: Top 3 are Hero, next 12 are Grid
-  const carouselSlides = news.slice(0, 3).map((article: any) => ({
-    id: String(article.id),
-    headline: article.title,
-    summary: article.body.substring(0, 160) + "...",
-    image: article.image,
-    category: category ? category.toUpperCase() : article.source.toUpperCase(),
-    articleUrl: `/news/${article.id}` // Always Internal
-  }));
-
-  const newsArticles = news.slice(3).map((article: any) => ({
-    id: String(article.id),
-    thumbnail: article.image,
-    headline: article.title,
-    excerpt: article.body.substring(0, 100) + "...",
-    category: article.source.toUpperCase(),
+  const newsArticles = apiNews.slice(3).map((a: any) => ({
+    id: a.id,
+    thumbnail: a.image,
+    headline: a.title,
+    excerpt: a.body.substring(0, 100) + "...",
+    category: a.source.toUpperCase(),
     timestamp: "Real-time",
-    articleUrl: `/news/${article.id}` // Always Internal
+    articleUrl: `/news/${a.id}`
   }));
 
   return (
-    <div className="min-h-screen bg-background text-white">
-      <Header />
-      <PriceTicker />
-      <div className="pt-4">
-        <div className="container mx-auto px-4 lg:px-8">
-          <Breadcrumb />
-          <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary">
-              {category ? `${category} Intelligence` : "Global News Feed"}
-            </h2>
-            <div className="h-[1px] flex-1 bg-white/10"></div>
-          </div>
-        </div>
-        <HomepageInteractive 
-          carouselSlides={carouselSlides} 
-          newsArticles={newsArticles} 
-          trendingStories={[]} 
-        />
+    <div className="pt-4">
+      <div className="container mx-auto px-4 lg:px-8">
+        <Breadcrumb />
+        <HomepageInteractive carouselSlides={carouselSlides} newsArticles={newsArticles} trendingStories={[]} />
       </div>
     </div>
   );

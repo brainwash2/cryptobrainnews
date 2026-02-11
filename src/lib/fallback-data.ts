@@ -1,0 +1,4 @@
+export const FALLBACK_MARKET_DATA = [
+  { id: 'bitcoin', rank: 1, name: 'Bitcoin', symbol: 'btc', image: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png', current_price: 76038, price_change_percentage_24h: -2.86, price_change_percentage_1h_in_currency: -0.1, price_change_percentage_7d_in_currency: 12.5, market_cap: 1500000000000, total_volume: 45000000000, sparkline_in_7d: { price: Array(20).fill(76000) } },
+  { id: 'ethereum', rank: 2, name: 'Ethereum', symbol: 'eth', image: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png', current_price: 2890, price_change_percentage_24h: -1.20, price_change_percentage_1h_in_currency: 0.2, price_change_percentage_7d_in_currency: 5.4, market_cap: 350000000000, total_volume: 15000000000, sparkline_in_7d: { price: Array(20).fill(2800) } },
+];
