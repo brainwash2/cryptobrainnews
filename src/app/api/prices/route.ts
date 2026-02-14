@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getLivePrices, FALLBACK_MARKET_DATA } from '@/lib/api';
+import { getLivePrices } from '@/lib/api';
+import { FALLBACK_MARKET_DATA } from '@/lib/fallback-data';
 
 export async function GET() {
   try {
-    // Force fetching from server-side logic
-    const prices = await getLivePrices('usd', 'all');
-    if (!prices || prices.length === 0) {
-      return NextResponse.json(FALLBACK_MARKET_DATA);
-    }
-    return NextResponse.json(prices);
+    const prices = await getLivePrices();
+    return NextResponse.json(prices || FALLBACK_MARKET_DATA);
   } catch (error) {
     return NextResponse.json(FALLBACK_MARKET_DATA);
   }

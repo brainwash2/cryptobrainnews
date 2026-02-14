@@ -1,64 +1,93 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import Icon from '@/components/ui/AppIcon';
 import AuthButton from '@/components/auth/AuthButton';
 
-const Header = () => {
-  const pathname = usePathname();
-  const [hoveredLink, setHoveredLink] = useState<string | null>(null);
+const NAV_ITEMS = [
+  { 
+    label: 'NEWS', 
+    href: '/homepage',
+    children: [
+      { label: 'LATEST', href: '/homepage' },
+      { label: 'BITCOIN', href: '/homepage?category=BTC' },
+      { label: 'ETHEREUM', href: '/homepage?category=ETH' },
+      { label: 'DEFI', href: '/homepage?category=DEFI' },
+    ]
+  },
+  { 
+    label: 'MARKETS', 
+    href: '/markets-overview',
+    children: [
+      { label: 'SPOT', href: '/markets-overview' },
+      { label: 'FUTURES', href: '/price-indexes' },
+    ]
+  },
+  { 
+    label: 'PRICES', 
+    href: '/price-indexes'
+  },
+  { label: 'DEFI TERMINAL', href: '/de-fi-analytics' },
+  { label: 'LEARNING', href: '/homepage' },
+];
 
-  const navConfig = [
-    { label: 'NEWS', href: '/homepage', subItems: ['Bitcoin', 'Ethereum', 'DeFi', 'Policy'] },
-    { label: 'MARKETS', href: '/markets-overview', subItems: ['Spot', 'Futures', 'ETFs'] },
-    { label: 'PRICES', href: '/price-indexes', subItems: ['Top 100', 'Movers'] },
-    { label: 'DEFI', href: '/de-fi-analytics', subItems: [] },
-    { label: 'LEARNING', href: '/learning', subItems: [] },
-  ];
+export default function Header() {
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[2000] bg-black border-b border-white/10 h-16 shadow-2xl" onMouseLeave={() => setHoveredLink(null)}>
-      <div className="container mx-auto px-4 lg:px-8 h-full flex items-center justify-between">
-        
-        {/* LOGO */}
-        <Link href="/homepage" className="flex items-center gap-2 group bg-black">
-          <div className="bg-primary text-black font-black p-1 text-xl leading-none transition-all group-hover:rotate-12">CB</div>
-          <span className="font-serif font-black text-white text-2xl tracking-tighter">CRYPTO<span className="text-primary">BRAIN</span></span>
-        </Link>
+    <header className="fixed top-0 left-0 right-0 z-[1000] bg-black border-b border-[#1a1a1a] h-16">
+      <div className="container mx-auto h-full flex items-center justify-between px-4 lg:px-8">
+        <div className="flex items-center gap-8">
+          <Link href="/homepage" className="flex items-center gap-2 group">
+            <div className="relative w-8 h-8 bg-primary rounded flex items-center justify-center font-black text-black">CB</div>
+            <span className="text-xl font-black tracking-tighter text-white group-hover:text-primary transition-colors uppercase">
+              CryptoBrain
+            </span>
+          </Link>
 
-        {/* NAVIGATION */}
-        <nav className="hidden lg:flex items-center gap-8 h-full">
-          {navConfig.map((item) => (
-            <div key={item.label} className="relative h-full flex items-center group" onMouseEnter={() => setHoveredLink(item.label)}>
-              <Link href={item.href} className={`text-[11px] font-black tracking-[0.1em] transition-colors flex items-center gap-1 ${pathname === item.href || hoveredLink === item.label ? 'text-primary' : 'text-gray-400 hover:text-white'}`}>
-                {item.label}
-                {item.subItems.length > 0 && <Icon name="ChevronDownIcon" size={10} className="group-hover:rotate-180 transition-transform" />}
-              </Link>
+          <nav className="hidden xl:flex items-center gap-1">
+            {NAV_ITEMS.map((item) => (
+              <div 
+                key={item.label} 
+                className="relative group"
+                onMouseEnter={() => setActiveMenu(item.label)}
+                onMouseLeave={() => setActiveMenu(null)}
+              >
+                <Link 
+                  href={item.href}
+                  className="px-4 py-2 text-[11px] font-black text-[#888] hover:text-white uppercase tracking-widest transition-colors flex items-center gap-1"
+                >
+                  {item.label}
+                  {item.children && <span className="text-[8px] opacity-40">▼</span>}
+                </Link>
 
-              {/* DROPDOWN */}
-              {item.subItems.length > 0 && hoveredLink === item.label && (
-                <div className="absolute top-16 left-0 w-48 bg-black border border-gray-800 shadow-2xl py-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {item.subItems.map(sub => (
-                    <Link key={sub} href={item.href} className="block px-6 py-2 text-[10px] font-black text-gray-500 hover:text-primary hover:bg-gray-900 transition-colors uppercase tracking-widest">{sub}</Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </nav>
+                {item.children && activeMenu === item.label && (
+                  <div className="absolute top-full left-0 w-48 bg-black border border-[#1a1a1a] py-2 shadow-2xl">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.label}
+                        href={child.href}
+                        className="block px-4 py-2 text-[10px] font-bold text-[#555] hover:text-primary hover:bg-white/5 transition-all"
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+        </div>
 
-        {/* ACTIONS */}
-        <div className="flex items-center gap-6">
-          <div className="hidden lg:flex items-center gap-4 text-gray-500">
-            <Icon name="MagnifyingGlassIcon" size={18} className="hover:text-primary cursor-pointer transition-colors" />
-            <span className="text-[10px] font-black border border-gray-800 px-2 py-1 hover:text-white cursor-pointer">EN</span>
-          </div>
-          <Link href="/go-alpha" className="bg-primary text-black text-[10px] font-black px-4 py-2 hover:bg-white transition-all transform hover:-translate-y-0.5 uppercase tracking-widest">Go Alpha</Link>
+        <div className="flex items-center gap-4">
+          <Link 
+            href="/go-alpha" 
+            className="hidden md:block bg-primary text-black px-4 py-2 text-[10px] font-black hover:bg-white transition-all uppercase tracking-widest"
+          >
+            Go Alpha
+          </Link>
           <AuthButton />
         </div>
       </div>
     </header>
   );
-};
-export default Header;
+}

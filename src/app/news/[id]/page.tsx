@@ -1,93 +1,132 @@
 import React from 'react';
-import { getRealNews } from '@/lib/api';
-import Icon from '@/components/ui/AppIcon';
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import { getArticleById, getRelatedArticles, calculateReadingTime } from '@/lib/api';
+import { ReadingProgress } from './_components/ReadingProgress';
+import { StickyShareBar } from './_components/StickyShareBar';
+import { ArticleSidebar } from './_components/ArticleSidebar';
 import Image from 'next/image';
+import Link from 'next/link';
+import type { NewsArticle } from '@/lib/types';
+
+export async function generateMetadata({ params }: any): Promise<Metadata> {
+  const { id } = await params;
+  const article = await getArticleById(id);
+  if (!article) return { title: 'Article Not Found' };
+  return {
+    title: article.title,
+    description: article.body.slice(0, 160),
+    openGraph: {
+      title: article.title,
+      description: article.body.slice(0, 160),
+      images: article.image ? [{ url: article.image }] : [],
+      type: 'article',
+      publishedTime: new Date(article.published_on * 1000).toISOString(),
+    },
+  };
+}
 
 export default async function NewsArticlePage({ params }: any) {
   const { id } = await params;
-  const news = await getRealNews();
-  const article = news.find((a: any) => String(a.id) === String(id)) || news[0];
+  const [article, related] = await Promise.all([
+    getArticleById(id), 
+    getRelatedArticles(id, 4)
+  ]);
+  
+  if (!article) notFound();
+
+  const readingTime = calculateReadingTime(article.body);
+  const publishDate = new Date(article.published_on * 1000).toLocaleDateString('en-US', { 
+    month: 'short', day: 'numeric', year: 'numeric' 
+  });
 
   return (
-    <div className="bg-black text-white selection:bg-primary selection:text-black">
-      {/* Note: Header/Ticker are in layout.tsx now */}
-      
-      <div className="fixed top-16 left-0 w-full h-1 bg-gray-900 z-[1001]">
-        <div className="h-full bg-primary animate-reading-bar"></div>
-      </div>
-
-      <main className="container mx-auto px-4 lg:px-8 pt-12 pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          
-          <div className="lg:col-span-8">
-            <div className="mb-6 flex items-center gap-3">
-              <span className="bg-primary text-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest">
-                {article.source}
+    <>
+      <ReadingProgress />
+      <main className="container mx-auto px-4 lg:px-8 py-8 lg:py-12">
+        <div className="flex gap-6 lg:gap-10">
+          <StickyShareBar title={article.title} articleId={id} />
+          <article className="flex-1 min-w-0 max-w-[780px]">
+            {article.categories && article.categories[0] && (
+              <span className="inline-block bg-primary text-primary-foreground px-3 py-1 text-xs font-bold uppercase tracking-widest mb-5">
+                {article.categories[0]}
               </span>
-              <span className="text-gray-500 font-mono text-[10px] uppercase">
-                {new Date(article.published_on * 1000).toLocaleDateString()} • 5 MIN READ
-              </span>
-            </div>
-
-            <h1 className="text-4xl md:text-6xl font-serif font-black mb-8 leading-[1.1] tracking-tighter">
+            )}
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black leading-[1.15] mb-6 text-foreground font-heading">
               {article.title}
             </h1>
-
-            <div className="bg-[#111] border-l-4 border-primary p-6 mb-10 shadow-xl">
-              <h4 className="text-primary font-black text-xs uppercase mb-3 tracking-widest flex items-center gap-2">
-                <Icon name="LightBulbIcon" size={16} /> Quick Take
-              </h4>
-              <ul className="space-y-3 text-sm text-gray-300 font-medium list-disc list-inside">
-                <li>Major volatility detected across institutional liquidity pools.</li>
-                <li>Strategic shift in market sentiment confirmed via on-chain flow.</li>
-                <li>Institutional participation reaching multi-year highs in this sector.</li>
-              </ul>
-            </div>
-
-            <div className="relative w-full h-[450px] mb-12 border border-white/10 group overflow-hidden">
-               <img src={article.image} alt={article.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
-            </div>
-
-            <div className="prose prose-invert max-w-none">
-              <div className="text-xl leading-relaxed text-gray-300 space-y-8 font-light">
-                {article.body.split('\n').map((p: string, i: number) => (
-                  <p key={i} className={i === 0 ? "first-letter:text-7xl first-letter:font-black first-letter:text-primary first-letter:mr-3 first-letter:float-left" : ""}>
-                    {p}
-                  </p>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <aside className="lg:col-span-4 space-y-8">
-            <div className="sticky top-32">
-              <div className="bg-[#0a0a0a] border border-gray-900 p-6">
-                <h3 className="text-white font-black text-xs uppercase mb-6 tracking-widest border-b border-gray-800 pb-4">
-                  Trending Now
-                </h3>
-                <div className="space-y-6">
-                  {news.slice(0, 4).map((n: any, i: number) => (
-                    <a href={`/news/${n.id}`} key={i} className="flex gap-4 group">
-                      <span className="text-2xl font-serif font-black text-gray-800 group-hover:text-primary transition-colors">
-                        0{i+1}
-                      </span>
-                      <p className="text-xs font-bold text-gray-400 group-hover:text-white transition-colors leading-snug">
-                        {n.title}
-                      </p>
-                    </a>
-                  ))}
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-8 pb-6 border-b border-border">
+              <div className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-xs font-bold text-primary">CB</div>
+              <div>
+                <div className="font-semibold text-foreground">CryptoBrain Editorial</div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground font-caption">
+                  <time dateTime={new Date(article.published_on * 1000).toISOString()}>{publishDate}</time>
+                  <span>·</span>
+                  <span>{readingTime} min read</span>
                 </div>
               </div>
-
-              <div className="mt-8 p-6 bg-primary text-black text-center">
-                 <h4 className="font-black text-sm uppercase mb-2">Alpha Member Access</h4>
-                 <p className="text-[10px] font-bold mb-4 uppercase tracking-tighter">Get deep on-chain metrics for this story</p>
-                 <button className="bg-black text-white text-[10px] font-black px-4 py-2 w-full">UPGRADE TO PRO</button>
+            </div>
+            {article.image && (
+              <figure className="mb-10">
+                <div className="relative w-full aspect-video overflow-hidden bg-card">
+                  <Image src={article.image} alt={article.title} fill sizes="(max-width: 768px) 100vw, 780px"
+                         className="object-cover" priority />
+                </div>
+                <figcaption className="text-xs text-muted-foreground mt-2 font-caption">Source: {article.source}</figcaption>
+              </figure>
+            )}
+            <div className="article-body prose prose-invert prose-lg max-w-none">
+              {article.body.split('\n').filter(Boolean).map((para: string, idx: number) => (
+                <p key={idx} className="mb-6 text-[17px] leading-[1.85] text-foreground/90 font-body">{para}</p>
+              ))}
+            </div>
+            {article.tags && article.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-10 pt-6 border-t border-border">
+                {article.tags.map((tag: string) => (
+                  <span key={tag} className="px-3 py-1.5 text-xs bg-card border border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer font-caption">#{tag}</span>
+                ))}
+              </div>
+            )}
+            <div className="mt-10 p-6 bg-card border border-border">
+              <div className="flex items-start gap-4">
+                <div className="w-16 h-16 rounded-full bg-secondary border-2 border-primary flex items-center justify-center text-lg font-bold text-primary shrink-0">CB</div>
+                <div>
+                  <h4 className="font-bold text-foreground mb-1 font-heading text-lg">CryptoBrain Editorial</h4>
+                  <p className="text-sm text-muted-foreground font-body leading-relaxed">
+                    Our editorial team combines on‑chain analytics with institutional market intelligence.
+                  </p>
+                </div>
               </div>
             </div>
-          </aside>
+            {related.length > 0 && (
+              <section className="mt-14">
+                <h3 className="text-xl font-black mb-6 flex items-center gap-3 font-heading">
+                  <span className="w-8 h-0.5 bg-primary" /> Related Stories
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {related.map((rel: NewsArticle) => (
+                    <Link key={rel.id} href={`/news/${rel.id}`} className="group block bg-card border border-border hover:border-primary/50 transition-colors overflow-hidden">
+                      {rel.image && (
+                        <div className="relative aspect-video">
+                          <Image src={rel.image} alt={rel.title} fill sizes="(max-width: 768px) 100vw, 380px"
+                                 className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                        </div>
+                      )}
+                      <div className="p-4">
+                        <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 font-heading">
+                          {rel.title}
+                        </h4>
+                        <span className="text-xs text-muted-foreground mt-2 block font-caption">{rel.source}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+          </article>
+          <ArticleSidebar />
         </div>
       </main>
-    </div>
+    </>
   );
 }

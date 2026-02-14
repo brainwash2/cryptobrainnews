@@ -1,47 +1,80 @@
+// src/app/markets-overview/components/MarketsInteractive.tsx
 'use client';
+
 import React, { useState, useEffect } from 'react';
-import { FALLBACK_MARKET_DATA } from '@/lib/api';
+// FIX: Import from fallback-data directly, NOT from api.ts
+import { FALLBACK_MARKET_DATA } from '@/lib/fallback-data';
 
 export default function MarketsInteractive() {
-  const [data, setData] = useState<any[]>(FALLBACK_MARKET_DATA); 
+  const [data, setData] = useState<any[]>(FALLBACK_MARKET_DATA);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/prices')
-      .then(res => res.json())
-      .then(json => {
-        if (Array.isArray(json) && json.length > 0) setData(json);
-        setLoading(false);
+    const controller = new AbortController();
+
+    fetch('/api/prices', { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
       })
-      .catch(() => setLoading(false));
+      .then((json) => {
+        if (Array.isArray(json) && json.length > 0) setData(json);
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          console.warn('[Markets] Fetch failed, using fallback');
+        }
+      })
+      .finally(() => setLoading(false));
+
+    return () => controller.abort();
   }, []);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {data.slice(0, 6).map((coin, index) => {
-        // DETERMINISTIC WIDTH CALCULATION (Fixes Hydration Error)
-        // Uses the index to create a stable percentage instead of Math.random()
         const barWidth = `${((index + 1) * 15 + 20) % 100}%`;
+        const change = coin.price_change_percentage_24h ?? 0;
 
         return (
-          <div key={coin.id} className="bg-[#111] border border-gray-800 p-6 rounded-sm hover:border-primary/50 transition-colors group">
+          <div
+            key={coin.id}
+            className="bg-[#0a0a0a] border border-[#1a1a1a] p-5 hover:border-primary/30 transition-colors group"
+          >
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">
-                <img src={coin.image} className="w-8 h-8 rounded-full grayscale group-hover:grayscale-0 transition-all" alt={coin.name} onError={(e) => e.currentTarget.style.display='none'} />
+                <img
+                  src={coin.image}
+                  className="w-7 h-7 rounded-full grayscale group-hover:grayscale-0 transition-all"
+                  alt={coin.name}
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
                 <div>
-                  <h3 className="font-bold text-white">{coin.name}</h3>
-                  <span className="text-xs text-gray-500 font-mono uppercase">{coin.symbol}</span>
+                  <h3 className="font-bold text-white text-sm">{coin.name}</h3>
+                  <span className="text-[10px] text-[#555] font-mono uppercase">
+                    {coin.symbol}
+                  </span>
                 </div>
               </div>
-              <span className={`text-xs font-mono font-bold px-2 py-1 rounded ${coin.price_change_percentage_24h >= 0 ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
-                {coin.price_change_percentage_24h?.toFixed(2)}%
+              <span
+                className={`text-[10px] font-mono font-bold px-2 py-0.5 ${
+                  change >= 0
+                    ? 'bg-[#00d672]/10 text-[#00d672]'
+                    : 'bg-[#ff4757]/10 text-[#ff4757]'
+                }`}
+              >
+                {change >= 0 ? '+' : ''}
+                {change.toFixed(2)}%
               </span>
             </div>
-            <p className="text-2xl font-black text-white font-mono mb-1">
+            <p className="text-xl font-black text-white font-mono tabular-nums mb-1">
               ${coin.current_price?.toLocaleString()}
             </p>
-            <div className="h-1 w-full bg-gray-800 mt-4 overflow-hidden">
-              <div className="h-full bg-primary" style={{ width: barWidth }}></div>
+            <div className="h-0.5 w-full bg-[#111] mt-3 overflow-hidden">
+              <div
+                className="h-full bg-primary/50"
+                style={{ width: barWidth }}
+              />
             </div>
           </div>
         );

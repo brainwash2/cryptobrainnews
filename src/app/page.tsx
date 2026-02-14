@@ -1,5 +1,7 @@
-import Homepage from '@/app/homepage/page';
+// src/app/page.tsx
+// ─── Root route redirects to homepage ─────────────────────────────────────
+import { redirect } from 'next/navigation';
 
 export default function RootPage() {
-  return <Homepage />;
+  redirect('/homepage');
 }

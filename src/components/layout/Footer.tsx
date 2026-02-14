@@ -1,81 +1,72 @@
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 
 export default function Footer() {
   return (
-    <footer className="bg-black text-white border-t-4 border-primary pt-16 pb-8">
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          {/* Brand Column */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2">
-              <div className="bg-primary w-10 h-10 flex items-center justify-center font-serif font-black text-2xl text-black">
-                C
+    <footer className="bg-black border-t border-[#1a1a1a] py-16 px-4 lg:px-8 mt-20">
+      <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+        <div className="space-y-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center font-black text-black">C</div>
+            <span className="text-xl font-black tracking-tighter text-white uppercase">CryptoBrain</span>
+          </div>
+          <p className="text-[#444] text-xs leading-relaxed font-medium max-w-xs">
+            The definitive source for institutional-grade crypto intelligence, DeFi data, and on-chain education.
+          </p>
+          <div className="flex gap-4">
+            {[
+              { id: 'tw', label: 'X' },
+              { id: 'tg', label: 'TG' },
+              { id: 'dc', label: 'DC' },
+              { id: 'li', label: 'IN' }
+            ].map((social) => (
+              <div key={social.id} className="w-8 h-8 border border-[#1a1a1a] flex items-center justify-center text-[10px] text-[#444] hover:border-primary hover:text-primary cursor-pointer transition-all">
+                {social.label}
               </div>
-              <span className="font-serif text-2xl font-bold tracking-tighter uppercase">
-                Crypto<span className="text-primary">Brain</span>
-              </span>
-            </div>
-            <p className="text-gray-400 text-sm leading-relaxed font-caption">
-              The definitive source for institutional-grade crypto intelligence, DeFi data, and on-chain education. Leading the transition to the sovereign economy.
-            </p>
-            <div className="flex gap-4">
-              {['Twitter', 'Telegram', 'Discord', 'Linkedin'].map((social) => (
-                <div key={social} className="w-8 h-8 bg-gray-800 flex items-center justify-center hover:bg-primary hover:text-black transition-colors cursor-pointer">
-                  <span className="text-xs">{social[0]}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Links Column 1 */}
-          <div>
-            <h4 className="text-primary font-bold uppercase tracking-widest mb-6 text-sm">Network</h4>
-            <ul className="space-y-4 text-sm text-gray-400 font-medium">
-              <li><Link href="/homepage" className="hover:text-white transition-colors">News Hub</Link></li>
-              <li><Link href="/markets-overview" className="hover:text-white transition-colors">Data Terminal</Link></li>
-              <li><Link href="/learning" className="hover:text-white transition-colors">Learning Hub</Link></li>
-              <li><Link href="/go-alpha" className="hover:text-white transition-colors">Go Alpha</Link></li>
-            </ul>
-          </div>
-
-          {/* Links Column 2 */}
-          <div>
-            <h4 className="text-primary font-bold uppercase tracking-widest mb-6 text-sm">Policies</h4>
-            <ul className="space-y-4 text-sm text-gray-400 font-medium">
-              <li><Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Terms of Service</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Cookie Policy</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Editorial Guidelines</Link></li>
-            </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div>
-            <h4 className="text-primary font-bold uppercase tracking-widest mb-6 text-sm">Daily Briefing</h4>
-            <p className="text-gray-400 text-sm mb-4">Get the most important alpha delivered to your inbox every morning.</p>
-            <div className="flex gap-2">
-              <input 
-                type="email" 
-                placeholder="Email address" 
-                className="bg-gray-900 border border-gray-800 px-4 py-2 text-sm w-full focus:outline-none focus:border-primary text-white"
-              />
-              <button className="bg-primary text-black font-bold px-4 py-2 text-sm hover:bg-white transition-colors">
-                JOIN
-              </button>
-            </div>
+            ))}
           </div>
         </div>
 
-        <div className="border-t border-gray-900 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-600 font-mono">
-          <p>© 2026 CRYPTOBRAINNEWS. ALL RIGHTS RESERVED. MARKET DATA BY DEFILLAMA & COINCAP.</p>
-          <div className="flex gap-6 mt-4 md:mt-0">
-            <span>TWITTER</span>
-            <span>TELEGRAM</span>
-            <span>DISCORD</span>
-          </div>
+        <div>
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6">Network</h4>
+          <ul className="space-y-4">
+            {['News Hub', 'Data Terminal', 'Learning Hub', 'Go Alpha'].map((item) => (
+              <li key={item}>
+                <Link href="/homepage" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">{item}</Link>
+              </li>
+            ))}
+          </ul>
         </div>
+
+        <div>
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6">Policies</h4>
+          <ul className="space-y-4">
+            {['Privacy Policy', 'Terms of Service', 'Cookie Policy', 'Editorial Guidelines'].map((item) => (
+              <li key={item}>
+                <Link href="/homepage" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">{item}</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6">Daily Briefing</h4>
+          <p className="text-[#444] text-xs mb-6 font-medium">Institutional alpha delivered to your inbox every morning.</p>
+          <form className="flex">
+            <input 
+              type="email" 
+              placeholder="Email address" 
+              className="bg-[#0a0a0a] border border-[#1a1a1a] px-4 py-2 text-xs text-white focus:outline-none focus:border-primary flex-grow"
+            />
+            <button className="bg-primary text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all">Join</button>
+          </form>
+        </div>
+      </div>
+      
+      <div className="container mx-auto mt-16 pt-8 border-t border-[#111] flex justify-between items-center">
+        <p className="text-[9px] text-[#333] font-mono uppercase tracking-widest">
+          © 2026 CryptoBrainNews. Market Data by DefiLlama.
+        </p>
       </div>
     </footer>
   );
