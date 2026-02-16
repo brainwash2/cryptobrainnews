@@ -1,52 +1,69 @@
 // src/lib/cache.ts
-// ─── In-Memory LRU Cache ──────────────────────────────────────────────────
-// NOTE: On Vercel serverless, this cache is per-isolate and resets on cold starts.
-// For persistent caching, integrate Redis/Upstash when ready.
+// ─── Hybrid Cache: RAM (L1) + Redis (L2) ─────────────────────────────────
+import 'server-only';
+import { Redis } from '@upstash/redis';
+
+// 1. Initialize Redis
+const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+  ? new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    })
+  : null;
+
+if (process.env.NODE_ENV === 'development') {
+  console.log(redis ? "✅ [Redis] Connected" : "⚠️ [Redis] Not connected (Check .env.local)");
+}
 
 interface CacheEntry<T> {
   data: T;
   expiresAt: number;
 }
 
-const store = new Map<string, CacheEntry<unknown>>();
-const MAX_ENTRIES = 200;
+const memoryStore = new Map<string, CacheEntry<unknown>>();
+const inflight = new Map<string, Promise<unknown>>();
 
 export async function cached<T>(
   key: string,
   fn: () => Promise<T>,
   ttlSeconds = 300
 ): Promise<T> {
-  const existing = store.get(key) as CacheEntry<T> | undefined;
+  const now = Date.now();
+  const memoryKey = `mem:${key}`;
 
-  if (existing && Date.now() < existing.expiresAt) {
-    // Move to end (LRU refresh) — Map preserves insertion order
-    store.delete(key);
-    store.set(key, existing);
-    return existing.data;
-  }
+  // 1. L1 Memory
+  const memEntry = memoryStore.get(memoryKey) as CacheEntry<T> | undefined;
+  if (memEntry && now < memEntry.expiresAt) return memEntry.data;
 
-  try {
-    const data = await fn();
+  // Deduplicate
+  if (inflight.has(key)) return inflight.get(key) as Promise<T>;
 
-    // Evict oldest entry if at capacity
-    if (store.size >= MAX_ENTRIES) {
-      const oldestKey = store.keys().next().value;
-      if (oldestKey) store.delete(oldestKey);
+  const promise = (async () => {
+    try {
+      // 2. L2 Redis
+      if (redis) {
+        const cachedData = await redis.get<T>(key);
+        if (cachedData) {
+          memoryStore.set(memoryKey, { data: cachedData, expiresAt: now + (ttlSeconds * 1000) });
+          console.log(`[Cache] HIT (Redis): ${key}`);
+          return cachedData;
+        }
+      }
+
+      // 3. Fetch
+      console.log(`[Cache] MISS: Fetching fresh data for ${key}`);
+      const freshData = await fn();
+
+      // 4. Save
+      memoryStore.set(memoryKey, { data: freshData, expiresAt: now + (ttlSeconds * 1000) });
+      if (redis) redis.set(key, freshData, { ex: ttlSeconds }).catch(console.error);
+
+      return freshData;
+    } finally {
+      inflight.delete(key);
     }
+  })();
 
-    store.set(key, {
-      data,
-      expiresAt: Date.now() + ttlSeconds * 1000,
-    });
-
-    return data;
-  } catch (error) {
-    // If we have stale data, return it rather than throwing
-    if (existing) {
-      console.warn(`[Cache] Returning stale data for "${key}"`);
-      return existing.data;
-    }
-    console.error(`[Cache] Fetch failed for "${key}"`, error);
-    throw error;
-  }
+  inflight.set(key, promise);
+  return promise;
 }

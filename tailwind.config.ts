@@ -52,3 +52,13 @@ const config: Config = {
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 };
 export default config;
+// Add this to theme.extend
+// animation: {
+//   marquee: 'marquee 60s linear infinite',
+// },
+// keyframes: {
+//   marquee: {
+//     '0%': { transform: 'translateX(0%)' },
+//     '100%': { transform: 'translateX(-100%)' },
+//   },
+// }

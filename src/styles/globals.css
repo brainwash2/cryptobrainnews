@@ -94,3 +94,46 @@
   background: #FABF2C;
   color: #000;
 }
+@layer base {
+  body {
+    @apply antialiased selection:bg-primary selection:text-black;
+    text-rendering: optimizeLegibility;
+  }
+  .font-heading {
+    letter-spacing: -0.02em;
+  }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+/* Institutional Typography Tweak */
+h1, h2, h3, h4 {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar for Terminal Feel */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: #1a1a1a;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FABF2C;
+}

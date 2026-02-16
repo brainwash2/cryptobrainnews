@@ -1,23 +1,33 @@
 import React from 'react';
 import { getDeFiProtocols } from '@/lib/api';
+import { MetricCard } from '../../_components/MetricCard';
+import DataTable from '../../_components/charts/DataTable';
 
 export default async function TVLPage() {
   const protocols = await getDeFiProtocols();
   
+  const formattedRows = protocols.map((p, i) => ({
+    rank: i + 1,
+    name: p.name,
+    category: p.category,
+    chain: p.chain,
+    tvl: p.tvl >= 1e9 ? `$${(p.tvl / 1e9).toFixed(2)}B` : `$${(p.tvl / 1e6).toFixed(1)}M`,
+    change_1d: `${p.change_1d! >= 0 ? '+' : ''}${p.change_1d?.toFixed(2)}%`,
+  }));
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-black text-white font-heading uppercase">TVL <span className="text-primary">Rankings</span></h1>
-      <div className="grid grid-cols-1 gap-2">
-        {protocols.map((p, i) => (
-          <div key={i} className="flex items-center justify-between p-4 bg-[#0a0a0a] border border-[#1a1a1a] hover:border-primary/50 transition-all">
-            <div className="flex items-center gap-4">
-              <span className="text-[#333] font-mono text-xs">#{(i + 1).toString().padStart(2, '0')}</span>
-              <span className="font-bold text-white uppercase">{p.name}</span>
-            </div>
-            <span className="font-mono text-primary">${p.tvl?.toLocaleString()}</span>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-8">
+      <DataTable
+        columns={[
+          { key: 'rank', label: '#' },
+          { key: 'name', label: 'Protocol' },
+          { key: 'category', label: 'Category' },
+          { key: 'chain', label: 'Chain' },
+          { key: 'tvl', label: 'TVL', align: 'right' },
+          { key: 'change_1d', label: '24H', align: 'right' },
+        ]}
+        rows={formattedRows}
+      />
     </div>
   );
 }
