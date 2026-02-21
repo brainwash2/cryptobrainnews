@@ -1,55 +1,37 @@
 import React from 'react';
-import { getDeFiProtocols, getDexVolume, getStablecoinData } from '@/lib/api';
-import { MetricCard } from '../_components/MetricCard';
-import AreaChartCard from '../_components/charts/AreaChartCard';
-import BarChartCard from '../_components/charts/BarChartCard';
-import DataTable from '../_components/charts/DataTable';
+import DeFiClient from './_components/DeFiClient';
 
-export const metadata = { title: 'DeFi Intelligence | CryptoBrainNews' };
+export const metadata = {
+  title: 'DeFi Data | CryptoBrainNews',
+  description: 'DeFi protocol TVL, yields, and decentralized finance analytics.',
+};
 
-export default async function DeFiOverviewPage() {
-  const [protocols, dexVolume, stableMcap] = await Promise.all([
-    getDeFiProtocols(),
-    getDexVolume(),
-    getStablecoinData(),
-  ]);
+export const revalidate = 300;
 
-  const totalTVL = protocols.reduce((sum, p) => sum + (p.tvl || 0), 0);
-  
-  // Format rows on the SERVER
-  const formattedRows = protocols.map((p, i) => ({
-    rank: i + 1,
-    name: p.name,
-    category: p.category,
-    chain: p.chain,
-    tvl: p.tvl >= 1e9 ? `$${(p.tvl / 1e9).toFixed(2)}B` : `$${(p.tvl / 1e6).toFixed(1)}M`,
-    change_1d: `${p.change_1d! >= 0 ? '+' : ''}${p.change_1d?.toFixed(2)}%`,
-  }));
+async function getDeFiData() {
+  try {
+    const res = await fetch('https://api.llama.fi/protocols', {
+      next: { revalidate: 600 },
+    });
+    if (!res.ok) throw new Error('Failed');
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export default async function DeFiPage() {
+  const protocols = await getDeFiData();
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Global DeFi TVL" value={`$${(totalTVL / 1e9).toFixed(2)}B`} />
-        <MetricCard label="Protocols" value={String(protocols.length)} />
+    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
+      <div className="max-w-[1400px] mx-auto">
+        <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">DeFi Protocols</h1>
+        <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em] mb-10">
+          Total Value Locked & Protocol Analysis
+        </p>
+        <DeFiClient protocols={protocols} />
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AreaChartCard title="DEX Volume" data={dexVolume as any} xKey="date" yKey="volume" />
-        <BarChartCard title="Stablecoin Supply" data={stableMcap as any} xKey="date" yKey="mcap" />
-      </div>
-
-      <DataTable
-        columns={[
-          { key: 'rank', label: '#' },
-          { key: 'name', label: 'Protocol' },
-          { key: 'category', label: 'Category' },
-          { key: 'chain', label: 'Chain' },
-          { key: 'tvl', label: 'TVL', align: 'right' },
-          { key: 'change_1d', label: '24h', align: 'right' },
-        ]}
-        rows={formattedRows}
-        maxRows={30}
-      />
-    </div>
+    </main>
   );
 }

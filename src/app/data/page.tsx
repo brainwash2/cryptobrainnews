@@ -1,75 +1,100 @@
 import React from 'react';
-import { getLivePrices, getDeFiProtocols } from '@/lib/api';
-import { MetricCard } from './_components/MetricCard';
 import Link from 'next/link';
 
-export default async function DataTerminalRoot() {
-  const [prices, protocols] = await Promise.all([
-    getLivePrices(),
-    getDeFiProtocols(),
-  ]);
+export const metadata = {
+  title: 'Data Terminal | CryptoBrainNews',
+  description: 'Real-time blockchain data, DeFi analytics, NFT metrics, and market intelligence.',
+};
 
-  const totalMcap = prices.reduce((sum, c) => sum + (c.market_cap || 0), 0);
-  const totalTVL = protocols.reduce((sum, p) => sum + (p.tvl || 0), 0);
-  const btc = prices.find((c) => c.id === 'bitcoin');
-  const eth = prices.find((c) => c.id === 'ethereum');
+const DATA_PAGES = [
+  {
+    title: 'Markets',
+    slug: 'markets',
+    description: 'Global crypto market cap, volume, and price indexes',
+    icon: '📊',
+  },
+  {
+    title: 'DeFi Protocols',
+    slug: 'defi',
+    description: 'Total value locked, yields, and protocol analysis',
+    icon: '🏦',
+  },
+  {
+    title: 'On-Chain',
+    slug: 'onchain',
+    description: 'Active addresses, transactions, whale movements',
+    icon: '⛓️',
+  },
+  {
+    title: 'ETFs',
+    slug: 'etfs',
+    description: 'Bitcoin & Ethereum ETF flows and holdings',
+    icon: '📈',
+  },
+  {
+    title: 'Stablecoins',
+    slug: 'stablecoins',
+    description: 'Stablecoin supply, flows, and distribution',
+    icon: '💵',
+  },
+  {
+    title: 'NFTs',
+    slug: 'nfts',
+    description: 'Top collections, volumes, and market metrics',
+    icon: '🖼️',
+  },
+  {
+    title: 'DEX Volumes',
+    slug: 'exchanges',
+    description: 'Decentralized exchange trading volumes by protocol',
+    icon: '🔄',
+  },
+  {
+    title: 'Layer 2s',
+    slug: 'l2',
+    description: 'Arbitrum, Optimism, Base, and ZkSync comparison',
+    icon: '🚀',
+  },
+  {
+    title: 'Governance',
+    slug: 'governance',
+    description: 'DAO votes, proposals, and governance tokens',
+    icon: '🗳️',
+  },
+];
 
+export default function DataIndexPage() {
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-black text-white font-heading uppercase tracking-tighter">
-          Data <span className="text-primary">Terminal</span>
-        </h1>
-        <p className="text-[#444] font-mono text-[10px] uppercase tracking-[0.3em] mt-1">
-          Institutional-Grade Crypto Intelligence
-        </p>
-        <div className="h-px w-20 bg-primary/40 mt-3" />
-      </div>
+    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
+      <div className="max-w-[1400px] mx-auto">
+        <div className="mb-16">
+          <h1 className="text-5xl lg:text-7xl font-black text-white uppercase tracking-tighter leading-[0.95]">
+            Data <span className="text-[#FABF2C]">Terminal</span>
+          </h1>
+          <p className="text-gray-400 font-serif text-lg mt-4 max-w-2xl leading-relaxed">
+            Real-time blockchain analytics, DeFi metrics, and institutional-grade market intelligence.
+          </p>
+        </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          label="Total Crypto Market Cap"
-          value={`$${(totalMcap / 1e12).toFixed(2)}T`}
-        />
-        <MetricCard
-          label="BTC Price"
-          value={`$${btc?.current_price?.toLocaleString() ?? '—'}`}
-          trend={btc?.price_change_percentage_24h ?? undefined}
-        />
-        <MetricCard
-          label="ETH Price"
-          value={`$${eth?.current_price?.toLocaleString() ?? '—'}`}
-          trend={eth?.price_change_percentage_24h ?? undefined}
-        />
-        <MetricCard
-          label="Total DeFi TVL"
-          value={`$${(totalTVL / 1e9).toFixed(2)}B`}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {DATA_PAGES.map((page) => (
+            <Link
+              key={page.slug}
+              href={`/data/${page.slug}`}
+              className="group border border-[#1a1a1a] hover:border-[#FABF2C] bg-[#0a0a0a] hover:bg-[#0a0a0a] p-8 transition-all"
+            >
+              <div className="text-3xl mb-3">{page.icon}</div>
+              <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2 group-hover:text-[#FABF2C] transition-colors">
+                {page.title}
+              </h3>
+              <p className="text-xs text-[#555] leading-relaxed">{page.description}</p>
+              <div className="mt-6 flex items-center gap-2 text-[#FABF2C] text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                Explore →
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
-
-      {/* Quick Navigation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[
-          { label: 'Markets', href: '/data/markets', desc: 'Spot, Futures, Options, Indices' },
-          { label: 'ETFs', href: '/data/etfs', desc: 'Bitcoin & Ethereum ETF flows' },
-          { label: 'DeFi', href: '/data/defi', desc: 'TVL, DEX Volume, Yields, Whale Watch' },
-          { label: 'On-Chain', href: '/data/onchain', desc: 'Active addresses, Gas, CEX flows' },
-          { label: 'Scaling', href: '/data/scaling', desc: 'L2 metrics and comparisons' },
-          { label: 'NFTs', href: '/data/nfts', desc: 'Sales volume, top collections' },
-        ].map((card) => (
-          <Link
-            key={card.href}
-            href={card.href}
-            className="bg-[#0a0a0a] border border-[#1a1a1a] p-6 hover:border-primary/50 transition-colors group"
-          >
-            <h3 className="text-lg font-black text-white uppercase group-hover:text-primary transition-colors">
-              {card.label}
-            </h3>
-            <p className="text-xs text-[#555] font-mono mt-2">{card.desc}</p>
-          </Link>
-        ))}
-      </div>
-    </div>
+    </main>
   );
 }

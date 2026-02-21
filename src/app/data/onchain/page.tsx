@@ -1,80 +1,47 @@
 import React from 'react';
-import { getEthActiveAddresses, getEthDailyTransactions, getEthGasMetrics } from '@/lib/dune';
-import { MetricCard } from '../_components/MetricCard';
-import AreaChartCard from '../_components/charts/AreaChartCard';
-import BarChartCard from '../_components/charts/BarChartCard';
+import { cached } from '@/lib/cache';
+import OnChainClient from './_components/OnChainClient';
 
-export const metadata = { title: 'On-Chain Metrics | CryptoBrainNews' };
+export const metadata = {
+  title: 'On-Chain Data | CryptoBrainNews',
+  description: 'Active addresses, transactions, whale movements, and on-chain metrics.',
+};
+
+export const revalidate = 300;
+
+async function getOnChainMetrics() {
+  return cached(
+    'onchain:metrics',
+    async () => {
+      try {
+        // Fetch from blockchain.com API (free tier)
+        const [btc, eth] = await Promise.all([
+          fetch('https://blockchain.info/q/getblockcount').then((r) => r.text()),
+          fetch('https://api.etherscan.io/api?module=stats&action=ethsupply&apikey=demo').then((r) =>
+            r.json()
+          ),
+        ]);
+        return { btcBlocks: btc, eth };
+      } catch {
+        return null;
+      }
+    },
+    600
+  );
+}
 
 export default async function OnChainPage() {
-  const [addresses, txns, gas] = await Promise.all([
-    getEthActiveAddresses(30),
-    getEthDailyTransactions(30),
-    getEthGasMetrics(30),
-  ]);
-
-  const latestGas = gas[gas.length - 1];
-  const latestTx = txns[txns.length - 1];
-  const latestAddr = addresses[addresses.length - 1];
+  const metrics = await getOnChainMetrics();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-white font-heading uppercase tracking-tighter">
-          On-Chain <span className="text-primary">Metrics</span>
-        </h1>
-        <p className="text-[#444] font-mono text-[10px] uppercase tracking-[0.3em] mt-1">
-          Network Activity • Dune Analytics
+    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
+      <div className="max-w-[1400px] mx-auto">
+        <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">On-Chain Metrics</h1>
+        <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em] mb-10">
+          Active Addresses, Transactions & Whale Movements
         </p>
+        <OnChainClient metrics={metrics} />
       </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          label="ETH Gas (Avg)"
-          value={latestGas ? `${latestGas.avg_gas_price_gwei.toFixed(1)} Gwei` : '—'}
-        />
-        <MetricCard
-          label="Daily Active Addresses"
-          value={latestAddr ? `${(latestAddr.active_addresses / 1e3).toFixed(0)}K` : '—'}
-        />
-        <MetricCard
-          label="Daily Transactions"
-          value={latestTx ? `${(latestTx.tx_count / 1e6).toFixed(2)}M` : '—'}
-        />
-        <MetricCard label="Source" value="Dune Analytics" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AreaChartCard
-          title="Ethereum Active Addresses (30d)"
-          source="Dune"
-          data={addresses as Record<string, unknown>[]}
-          xKey="day"
-          yKey="active_addresses"
-          yFormat="number"
-          color="#627EEA"
-        />
-        <BarChartCard
-          title="Daily Transactions (30d)"
-          source="Dune"
-          data={txns as Record<string, unknown>[]}
-          xKey="day"
-          yKey="tx_count"
-          yFormat="number"
-          color="#FABF2C"
-        />
-      </div>
-
-      <AreaChartCard
-        title="Average Gas Price (Gwei)"
-        source="Dune"
-        data={gas as Record<string, unknown>[]}
-        xKey="day"
-        yKey="avg_gas_price_gwei"
-        yFormat="number"
-        color="#ff4757"
-        height={300}
-      />
-    </div>
+    </main>
   );
 }

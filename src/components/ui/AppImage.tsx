@@ -1,22 +1,33 @@
 'use client';
-import Image from 'next/image';
+import Image, { type ImageProps } from 'next/image';
 import { useState } from 'react';
 
-export default function AppImage({ src, alt, fill, className, priority }: any) {
+const FALLBACK_SRC =
+  'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2000';
+
+interface AppImageProps extends Omit<ImageProps, 'src' | 'alt'> {
+  src?: string | null;
+  alt?: string;
+}
+
+export default function AppImage({
+  src,
+  alt = 'CryptoBrain',
+  className,
+  ...rest
+}: AppImageProps) {
   const [error, setError] = useState(false);
-  
-  // High-quality crypto placeholder if image fails
-  const fallback = "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2000";
+
+  const resolvedSrc = error || !src ? FALLBACK_SRC : src;
 
   return (
     <Image
-      src={error || !src ? fallback : src}
-      alt={alt || "CryptoBrain"}
-      fill={fill}
-      className={`${className} ${error ? 'opacity-50 grayscale' : ''}`}
-      priority={priority}
+      src={resolvedSrc}
+      alt={alt}
+      className={`${className ?? ''} ${error ? 'opacity-50 grayscale' : ''}`}
       onError={() => setError(true)}
-      unoptimized
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      {...rest}
     />
   );
 }

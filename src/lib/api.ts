@@ -1,269 +1,148 @@
-// src/lib/api.ts
-// ─── External API integration (CoinGecko, DefiLlama, CryptoCompare) ─────
-import 'server-only';
+import { fetchWithTimeout } from './fetch-with-timeout';
 import { cached } from './cache';
+import type { CoinMarketData, DeFiProtocol } from './types';
 import { FALLBACK_MARKET_DATA } from './fallback-data';
-import type {
-  CoinMarketData,
-  NewsArticle,
-  DeFiProtocol,
-  DexVolumePoint,
-  StablecoinPoint,
-} from './types';
 
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
-const DEFILLAMA_BASE = 'https://api.llama.fi';
-const NEWS_API = 'https://min-api.cryptocompare.com/data/v2/news/?lang=EN';
+const DEFI_LLAMA_BASE = 'https://api.llama.fi';
 
-// ─── CoinGecko ───────────────────────────────────────────────────────────
-export async function getLivePrices(): Promise<CoinMarketData[]> {
+// ─── Market Data ────────────────────────────────────────────────────────
+
+export async function getLiveMarketPrices(): Promise<CoinMarketData[]> {
   return cached(
-    'cg:markets',
+    'market:prices',
     async () => {
-      // Keep revalidate for small requests like this
-      const res = await fetch(
-        `${COINGECKO_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&sparkline=true&price_change_percentage=1h,24h,7d`,
-        { next: { revalidate: 60 } }
-      );
-      if (!res.ok) return FALLBACK_MARKET_DATA;
-      const data: CoinMarketData[] = await res.json();
-      return Array.isArray(data) ? data : FALLBACK_MARKET_DATA;
-    },
-    60
-  );
-}
-
-// ─── CryptoCompare News ──────────────────────────────────────────────────
-export async function getRealNews(): Promise<NewsArticle[]> {
-  return cached(
-    'news:latest',
-    async () => {
-      const res = await fetch(NEWS_API, { next: { revalidate: 300 } });
-      if (!res.ok) return [];
-      const data = await res.json();
-      if (!data?.Data || !Array.isArray(data.Data)) return [];
-
-      return data.Data.slice(0, 30).map(
-        (a: {
-          id: number;
-          title: string;
-          body: string;
-          imageurl: string;
-          url: string;
-          source_info?: { name: string };
-          published_on: number;
-          categories?: string;
-          tags?: string;
-        }): NewsArticle => ({
-          id: String(a.id),
-          title: a.title,
-          body: a.body || '',
-          image: a.imageurl,
-          source: a.source_info?.name || 'Unknown',
-          published_on: a.published_on,
-          url: a.url,
-          categories: a.categories?.split('|') || [],
-          tags: a.tags?.split('|') || [],
-        })
-      );
+      try {
+        const res = await fetchWithTimeout(`${COINGECKO_BASE}/coins/markets?...`, { next: { revalidate: 300 } });
+        if (!res.ok) throw new Error(`CoinGecko ${res.status}`);
+        return await res.json();
+      } catch {
+        return FALLBACK_MARKET_DATA;
+      }
     },
     300
   );
 }
 
-// ─── DefiLlama (Optimized for Large Responses) ───────────────────────────
+/** @alias getLiveMarketPrices — used by /api/prices route */
+export const getLivePrices = getLiveMarketPrices;
+
+export async function getCoinPrice(coinId: string): Promise<number | null> {
+  try {
+    const res = await fetchWithTimeout(
+      `${COINGECKO_BASE}/simple/price?ids=${coinId}&vs_currencies=usd`,
+      { next: { revalidate: 60 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data[coinId]?.usd ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── DeFi Data ──────────────────────────────────────────────────────────
+
 export async function getDeFiProtocols(): Promise<DeFiProtocol[]> {
   return cached(
     'defi:protocols',
     async () => {
-      // Use no-store to bypass Next.js file cache (avoids 2MB limit warning)
-      // Our in-memory 'cached' wrapper will still handle caching!
-      const res = await fetch(`${DEFILLAMA_BASE}/protocols`, {
-        cache: 'no-store', 
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      if (!Array.isArray(data)) return [];
-      return data.slice(0, 100).map(
-        (p: {
-          name: string;
-          chain: string;
-          chains?: string[];
-          category: string;
-          tvl: number;
-          change_1d: number | null;
-          change_7d?: number | null;
-        }): DeFiProtocol => ({
-          name: p.name,
-          chain: p.chain || 'Multi',
-          chains: p.chains,
-          category: p.category,
-          tvl: p.tvl,
-          change_1d: p.change_1d,
-          change_7d: p.change_7d ?? null,
-        })
-      );
+      try {
+        const res = await fetchWithTimeout(`${DEFI_LLAMA_BASE}/protocols`, {
+          next: { revalidate: 600 },
+        });
+        if (!res.ok) throw new Error(`DefiLlama ${res.status}`);
+        return await res.json();
+      } catch {
+        return [];
+      }
     },
-    600 // In-memory cache for 10 minutes
+    600
   );
 }
 
-export async function getDexVolume(): Promise<DexVolumePoint[]> {
+export async function getChainTVL(chain: string): Promise<number | null> {
+  try {
+    const res = await fetchWithTimeout(`${DEFI_LLAMA_BASE}/tvl/${chain}`, {
+      next: { revalidate: 600 },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+// ─── DEX Volume (DefiLlama) ─────────────────────────────────────────────
+
+export interface DexVolumeDataPoint {
+  date: string;
+  volume: number;
+}
+
+export async function getDexVolume(): Promise<DexVolumeDataPoint[]> {
   return cached(
-    'defi:dex-volume',
+    'dex:volume:llama',
     async () => {
-      // HUGE response (19MB) - Must disable Next.js cache
-      const res = await fetch(
-        `${DEFILLAMA_BASE}/overview/dexs?excludeTotalDataChart=false`,
-        { cache: 'no-store' }
-      );
-      if (!res.ok) return [];
-      const data = await res.json();
-      if (!data?.totalDataChart) return [];
-      return data.totalDataChart.slice(-30).map(
-        (d: [number, number]): DexVolumePoint => ({
-          date: new Date(d[0] * 1000).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-          }),
-          volume: d[1],
-        })
-      );
+      try {
+        const res = await fetchWithTimeout(`${DEFI_LLAMA_BASE}/overview/dexs?excludeTotalDataChart=false`, {
+          next: { revalidate: 600 },
+        });
+        if (!res.ok) throw new Error(`DefiLlama DEX ${res.status}`);
+        const json = await res.json();
+        const chart: Array<[number, number]> = json.totalDataChart ?? [];
+        return chart.map(([ts, vol]) => ({
+          date: new Date(ts * 1000).toISOString().slice(0, 10),
+          volume: vol,
+        }));
+      } catch {
+        return [];
+      }
     },
-    3600 // In-memory cache for 1 hour
+    600
   );
 }
 
-export async function getStablecoinData(): Promise<StablecoinPoint[]> {
-  return cached(
-    'defi:stables',
-    async () => {
-      const res = await fetch(
-        'https://stablecoins.llama.fi/stablecoincharts/all',
-        { cache: 'no-store' }
-      );
-      if (!res.ok) return [];
-      const data = await res.json();
-      if (!Array.isArray(data)) return [];
-      return data.slice(-60).map(
-        (d: {
-          date: number;
-          totalCirculating?: { peggedUSD?: number };
-        }): StablecoinPoint => ({
-          date: new Date(d.date * 1000).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-          }),
-          mcap: d.totalCirculating?.peggedUSD || 0,
-        })
-      );
-    },
-    3600
-  );
-}
+// ─── Yields (DefiLlama) ─────────────────────────────────────────────────
 
-// ─── Article helpers ─────────────────────────────────────────────────────
-export async function getArticleById(
-  id: string
-): Promise<NewsArticle | null> {
-  const news = await getRealNews();
-  return news.find((a) => a.id === id) ?? null;
-}
-
-export async function getRelatedArticles(
-  id: string,
-  limit = 4
-): Promise<NewsArticle[]> {
-  const news = await getRealNews();
-  return news.filter((a) => a.id !== id).slice(0, limit);
-}
-
-export function calculateReadingTime(text: string): number {
-  const words = (text || '').split(/\s+/).length;
-  return Math.max(1, Math.ceil(words / 200));
-}
-
-// ─── Yields Data (DefiLlama) ─────────────────────────────────────────────
 export interface YieldPool {
-  chain: string;
   project: string;
+  chain: string;
   symbol: string;
   tvlUsd: number;
   apy: number;
-  apyPct1D: number; // APY change
+  apyPct1D: number;
+  pool: string;
 }
 
 export async function getTopYields(): Promise<YieldPool[]> {
   return cached(
     'defi:yields',
     async () => {
-      const res = await fetch('https://yields.llama.fi/pools', { cache: 'no-store' });
-      if (!res.ok) return [];
-      const data = await res.json();
-      if (!data?.data || !Array.isArray(data.data)) return [];
-
-      // Filter for:
-      // 1. TVL > $1M (Remove junk)
-      // 2. APY < 500% (Remove scams/glitches)
-      // 3. APY > 2% (Remove dead pools)
-      return data.data
-        .filter((p: any) => p.tvlUsd > 1_000_000 && p.apy < 500 && p.apy > 2)
-        .sort((a: any, b: any) => b.tvlUsd - a.tvlUsd) // Sort by TVL (Safety)
-        .slice(0, 50)
-        .map((p: any) => ({
-          chain: p.chain,
-          project: p.project,
-          symbol: p.symbol,
-          tvlUsd: p.tvlUsd,
-          apy: p.apy,
-          apyPct1D: p.apyPct1D || 0,
-        }));
+      try {
+        const res = await fetchWithTimeout('https://yields.llama.fi/pools', {
+          next: { revalidate: 600 },
+        });
+        if (!res.ok) throw new Error(`Yields ${res.status}`);
+        const json = await res.json();
+        const pools: YieldPool[] = (json.data ?? [])
+          .filter((p: any) => p.tvlUsd > 1_000_000 && p.apy > 0 && p.apy < 1000)
+          .sort((a: any, b: any) => b.tvlUsd - a.tvlUsd)
+          .slice(0, 50)
+          .map((p: any): YieldPool => ({
+            project: p.project ?? 'Unknown',
+            chain: p.chain ?? 'Unknown',
+            symbol: p.symbol ?? '—',
+            tvlUsd: p.tvlUsd ?? 0,
+            apy: p.apy ?? 0,
+            apyPct1D: p.apyPct1D ?? 0,
+            pool: p.pool ?? '',
+          }));
+        return pools;
+      } catch {
+        return [];
+      }
     },
-    600 // Cache for 10 mins
-  );
-}
-
-// ─── CEX Volume Data (DefiLlama) ─────────────────────────────────────────
-export async function getCexVolume(): Promise<any[]> {
-  return cached(
-    'market:cex-volume',
-    async () => {
-      // Fetch historical CEX volume
-      const res = await fetch('https://api.llama.fi/summary/dexs/cexs?excludeTotalDataChart=false&dataType=dailyVolume', {
-        cache: 'no-store'
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      
-      if (!data?.totalDataChart) return [];
-      
-      // Process last 90 days
-      return data.totalDataChart.slice(-90).map((d: any) => ({
-        date: new Date(d[0] * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        volume: d[1],
-      }));
-    },
-    3600
-  );
-}
-
-export async function getGlobalCapHistory(): Promise<any[]> {
-  return cached(
-    'market:global-cap',
-    async () => {
-      // Use DefiLlama Chain TVL as a proxy for market health/activity history
-      // (Since CoinGecko global history requires Pro API)
-      const res = await fetch('https://api.llama.fi/v2/chains', { cache: 'no-store' });
-      if (!res.ok) return [];
-      const data = await res.json();
-      
-      // Just return top 10 chains current stats for the table
-      return data.slice(0, 10).map((c: any) => ({
-        name: c.name,
-        token: c.tokenSymbol,
-        tvl: c.tvl,
-      }));
-    },
-    3600
+    600
   );
 }

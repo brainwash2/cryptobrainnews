@@ -1,13 +1,13 @@
 import React, { Suspense } from 'react';
 import { getDexVolume } from '@/lib/api';
-import { getDailyDexVolume, QUERY_IDS } from '@/lib/dune';
+import { getDEXDailyVolumes } from '@/lib/dune';
 import { MetricCard } from '../../_components/MetricCard';
 import AreaChartCard from '../../_components/charts/AreaChartCard';
 import { ChartSkeleton } from '../../_components/ChartSkeleton';
 
 export const metadata = { title: 'DEX Volume | CryptoBrainNews' };
+export const revalidate = 300;
 
-// 1. The Main Page (Instant Load)
 export default function DexVolumePage() {
   return (
     <div className="space-y-8">
@@ -19,8 +19,6 @@ export default function DexVolumePage() {
           Decentralized Exchange Trading Activity
         </p>
       </div>
-
-      {/* 2. The Suspense Boundary (Streaming) */}
       <Suspense fallback={<ChartSkeleton />}>
         <AsyncDexData />
       </Suspense>
@@ -28,19 +26,15 @@ export default function DexVolumePage() {
   );
 }
 
-// 3. The Data Fetching Component (Runs in background)
 async function AsyncDexData() {
-  // Fetch Llama first (fast)
   const llamaPromise = getDexVolume();
-  
-  // Fetch Dune (slow/timeout)
+
   const dunePromise = (async () => {
-    const queryId = QUERY_IDS.DAILY_DEX_VOLUME as number;
-    if (queryId === 0) return null;
     try {
-      // 15s timeout
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000));
-      return await Promise.race([getDailyDexVolume(30), timeout]) as any[];
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 15000)
+      );
+      return await Promise.race([getDEXDailyVolumes(30), timeout]);
     } catch {
       return null;
     }
@@ -48,17 +42,17 @@ async function AsyncDexData() {
 
   const [llamaVolume, duneVolume] = await Promise.all([llamaPromise, dunePromise]);
 
-  let chartData: any[] = llamaVolume;
-  let source = "DefiLlama";
-  let yKey = "volume";
-  let xKey = "date";
+  let chartData: Record<string, unknown>[] = llamaVolume as unknown as Record<string, unknown>[];
+  let source = 'DefiLlama';
+  let yKey = 'volume';
+  let xKey = 'date';
   let duneSuccess = false;
 
   if (duneVolume && duneVolume.length > 0) {
-    chartData = duneVolume;
-    source = "Dune Analytics";
-    yKey = "volume_usd";
-    xKey = "day";
+    chartData = duneVolume as Record<string, unknown>[];
+    source = 'Dune Analytics';
+    yKey = 'volume_usd';
+    xKey = 'day';
     duneSuccess = true;
   }
 
@@ -67,18 +61,17 @@ async function AsyncDexData() {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard 
-          label="30d Volume" 
-          value={totalVol >= 1e12 ? `$${(totalVol / 1e12).toFixed(2)}T` : `$${(totalVol / 1e9).toFixed(2)}B`} 
+        <MetricCard
+          label="30d Volume"
+          value={totalVol >= 1e12 ? `$${(totalVol / 1e12).toFixed(2)}T` : `$${(totalVol / 1e9).toFixed(2)}B`}
         />
         <MetricCard label="Source" value={source} />
         <MetricCard label="Data Points" value={String(chartData.length)} />
-        <MetricCard label="Status" value={duneSuccess ? "Live On-Chain" : "Aggregated"} />
+        <MetricCard label="Status" value={duneSuccess ? 'Live On-Chain' : 'Aggregated'} />
       </div>
-
       <AreaChartCard
         title="Global DEX Volume"
-        subtitle={duneSuccess ? "On-chain data directly from Dune Analytics" : "Aggregated data via DefiLlama"}
+        subtitle={duneSuccess ? 'On-chain data from Dune Analytics' : 'Aggregated via DefiLlama'}
         source={source}
         data={chartData}
         xKey={xKey}

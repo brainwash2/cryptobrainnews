@@ -1,291 +1,497 @@
-# CryptoBrainNews — Dune Analytics Query Library
-# ════════════════════════════════════════════════
+# CryptoBrainNews Dune Analytics Queries
 
-## INSTRUCTIONS
-1. Go to https://dune.com/queries and create a new query for each entry below.
-2. Paste the SQL, test it, save it.
-3. Note the Query ID from the URL (e.g., dune.com/queries/XXXXXX).
-4. Update src/lib/dune.ts QUERY_IDS with the real IDs.
+All corrected queries used in production. Copy query IDs from your Dune dashboard and update `src/lib/dune.ts`.
 
 ---
 
-## Q1: DAILY_DEX_VOLUME
--- Returns: daily aggregated DEX volume across all chains
--- Table: dex.trades (Spellbook curated)
--- Parameters: {{days}} (number, default: 30)
+## ON-CHAIN METRICS
 
+### Query 1: BTC Active Addresses
 ```sql
 SELECT
-  DATE_TRUNC('day', block_date) AS day,
-  SUM(amount_usd) AS volume_usd,
-  COUNT(*) AS trade_count
-FROM dex.trades
-WHERE block_date >= CURRENT_DATE - INTERVAL '{{days}}' DAY
-  AND amount_usd > 0
+  date_trunc('day', block_time) AS day,
+  COUNT(*) AS tx_count,
+  'bitcoin' AS chain
+FROM bitcoin.transactions
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
 GROUP BY 1
-ORDER BY 1
+ORDER BY 1 DESC
 ```
+**Columns**: `day`, `tx_count`, `chain`
 
 ---
 
-## Q2: TOP_DEX_BY_VOLUME
--- Returns: top DEX projects by 7d volume
-
+### Query 2: BTC Daily Transactions
 ```sql
 SELECT
-  project,
-  SUM(amount_usd) AS volume_7d,
-  COUNT(*) AS trade_count
-FROM dex.trades
-WHERE block_date >= CURRENT_DATE - INTERVAL '7' DAY
-  AND amount_usd > 0
+  date_trunc('day', block_time) AS day,
+  COUNT(*) AS tx_count,
+  'bitcoin' AS chain
+FROM bitcoin.transactions
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
 GROUP BY 1
-ORDER BY 2 DESC
-LIMIT 20
+ORDER BY 1 DESC
 ```
+**Columns**: `day`, `tx_count`, `chain`
 
 ---
 
-## Q3: WHALE_TRANSFERS
--- Returns: large ERC20 transfers > $500K in last 24h
--- Table: erc20_ethereum.evt_Transfer + prices.usd
-
+### Query 3: ETH Active Addresses
 ```sql
 SELECT
-  t.evt_block_time AS block_time,
-  t."from" AS sender,
-  t."to" AS receiver,
-  tok.symbol AS token_symbol,
-  CAST(t.value AS DOUBLE) / POW(10, tok.decimals) AS amount,
-  (CAST(t.value AS DOUBLE) / POW(10, tok.decimals)) * p.price AS usd_value,
-  t.evt_tx_hash AS tx_hash,
+  date_trunc('day', block_time) AS day,
+  COUNT(DISTINCT "from") AS active_addresses,
+  COUNT(DISTINCT "to") AS receiving_addresses,
   'ethereum' AS chain
-FROM erc20_ethereum.evt_Transfer t
-JOIN tokens.erc20 tok
-  ON tok.contract_address = t.contract_address
-  AND tok.blockchain = 'ethereum'
-JOIN prices.usd_latest p
-  ON p.contract_address = t.contract_address
-  AND p.blockchain = 'ethereum'
-WHERE t.evt_block_time >= NOW() - INTERVAL '24' HOUR
-  AND (CAST(t.value AS DOUBLE) / POW(10, tok.decimals)) * p.price > 500000
-ORDER BY usd_value DESC
-LIMIT 100
+FROM ethereum.transactions
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+GROUP BY 1
+ORDER BY 1 DESC
 ```
+**Columns**: `day`, `active_addresses`, `receiving_addresses`, `chain`
 
 ---
 
-## Q4: LARGE_DEX_SWAPS
--- Returns: DEX swaps > $100K in last 24h
+### Query 4: ETH Daily Transactions & Gas
+```sql
+SELECT
+  date_trunc('day', block_time) AS day,
+  COUNT(*) AS tx_count,
+  AVG(gas_used) AS avg_gas_used,
+  AVG(gas_price / 1e9) AS avg_gas_price_gwei,
+  'ethereum' AS chain
+FROM ethereum.transactions
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+GROUP BY 1
+ORDER BY 1 DESC
+```
+**Columns**: `day`, `tx_count`, `avg_gas_used`, `avg_gas_price_gwei`, `chain`
 
+---
+
+### Query 5: SOL Daily Transactions
+```sql
+SELECT
+  date_trunc('day', block_time) AS day,
+  COUNT(*) AS tx_count,
+  COUNT(DISTINCT signer) AS active_signers,
+  'solana' AS chain
+FROM solana.transactions
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+  AND success = true
+GROUP BY 1
+ORDER BY 1 DESC
+LIMIT 500
+```
+**Columns**: `day`, `tx_count`, `active_signers`, `chain`
+
+---
+
+### Query 6: SOL Daily Fees
+```sql
+SELECT
+  date_trunc('day', block_time) AS day,
+  SUM(fee / 1e9) AS total_fees_sol,
+  AVG(fee / 1e9) AS avg_fee_sol,
+  COUNT(*) AS tx_count,
+  'solana' AS chain
+FROM solana.transactions
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+  AND success = true
+GROUP BY 1
+ORDER BY 1 DESC
+```
+**Columns**: `day`, `total_fees_sol`, `avg_fee_sol`, `tx_count`, `chain`
+
+---
+
+## WHALE TRANSFERS & STABLECOINS
+
+### Query 7: Whale Transfers (Top 100 Addresses)
 ```sql
 SELECT
   block_time,
-  project,
-  token_sold_symbol AS token_a_symbol,
-  token_bought_symbol AS token_b_symbol,
-  token_sold_amount AS token_a_amount,
-  token_bought_amount AS token_b_amount,
-  amount_usd AS usd_amount,
-  tx_hash
-FROM dex.trades
-WHERE block_date >= CURRENT_DATE - INTERVAL '1' DAY
-  AND amount_usd > 100000
-ORDER BY amount_usd DESC
-LIMIT 200
-```
-
----
-
-## Q5: STABLECOIN_SUPPLY
--- Returns: daily supply of major stablecoins
-
-```sql
-SELECT
-  DATE_TRUNC('day', day) AS day,
-  symbol,
-  SUM(amount) AS total_supply,
-  blockchain AS chain
+  blockchain,
+  "from" AS whale_address,
+  "to" AS recipient,
+  contract_address,
+  amount_usd
 FROM tokens.transfers
-WHERE symbol IN ('USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'FRAX')
-  AND day >= CURRENT_DATE - INTERVAL '30' DAY
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+  AND amount_usd > 100000
+ORDER BY block_time DESC, amount_usd DESC
+LIMIT 500
+```
+**Columns**: `block_time`, `blockchain`, `whale_address`, `recipient`, `contract_address`, `amount_usd`
+
+---
+
+### Query 8: Stablecoin Supply & Dominance
+```sql
+SELECT
+  date_trunc('day', block_time) AS day,
+  contract_address,
+  SUM(amount_usd) AS daily_volume,
+  blockchain,
+  COUNT(*) AS transfer_count
+FROM tokens.transfers
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+  AND amount_usd > 0
 GROUP BY 1, 2, 4
-ORDER BY 1, 2
+ORDER BY 1 DESC, 3 DESC
+LIMIT 100
 ```
-
-Note: For stablecoin supply, DefiLlama's API may be more reliable.
-Consider using the existing getStablecoinData() from api.ts as primary.
+**Columns**: `day`, `contract_address`, `daily_volume`, `blockchain`, `transfer_count`
 
 ---
 
-## Q6: ETH_ACTIVE_ADDRESSES
--- Parameters: {{days}} (number, default: 30)
-
+### Query 9: Stablecoin Holder Distribution
 ```sql
 SELECT
-  DATE_TRUNC('day', block_time) AS day,
-  COUNT(DISTINCT "from") AS active_addresses,
-  'ethereum' AS chain
-FROM ethereum.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' DAY
-GROUP BY 1
-ORDER BY 1
+  "from" AS holder_address,
+  contract_address,
+  SUM(amount) AS token_balance,
+  SUM(amount_usd) AS balance_usd,
+  blockchain,
+  COUNT(*) AS transfer_count
+FROM tokens.transfers
+WHERE block_time >= NOW() - INTERVAL '90' day
+  AND amount_usd > 0
+GROUP BY 1, 2, 5
+HAVING SUM(amount_usd) > 1000000
+ORDER BY balance_usd DESC
+LIMIT 100
 ```
+**Columns**: `holder_address`, `contract_address`, `token_balance`, `balance_usd`, `blockchain`, `transfer_count`
 
 ---
 
-## Q7: ETH_DAILY_TX
--- Parameters: {{days}} (number, default: 30)
+## DEX & EXCHANGE DATA
 
+### Query 10: DEX Daily Volumes by Protocol
 ```sql
 SELECT
-  DATE_TRUNC('day', block_time) AS day,
-  COUNT(*) AS tx_count,
-  'ethereum' AS chain
-FROM ethereum.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' DAY
-GROUP BY 1
-ORDER BY 1
+  date_trunc('day', block_time) AS day,
+  project AS dex,
+  blockchain,
+  SUM(amount_usd) AS volume_usd,
+  COUNT(*) AS trade_count
+FROM dex.trades
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+  AND amount_usd > 0
+GROUP BY 1, 2, 3
+ORDER BY 1 DESC, 4 DESC
 ```
+**Columns**: `day`, `dex`, `blockchain`, `volume_usd`, `trade_count`
 
 ---
 
-## Q8: ETH_GAS_METRICS
--- Parameters: {{days}} (number, default: 30)
-
+### Query 11: DEX Top Protocols (30-Day Rolling)
 ```sql
 SELECT
-  DATE_TRUNC('day', block_time) AS day,
-  AVG(gas_price / 1e9) AS avg_gas_price_gwei,
-  APPROX_PERCENTILE(gas_price / 1e9, 0.5) AS median_gas_price_gwei,
-  SUM(gas_used) AS total_gas_used
-FROM ethereum.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' DAY
-GROUP BY 1
-ORDER BY 1
+  project AS dex,
+  blockchain,
+  SUM(amount_usd) AS volume_30d_usd,
+  COUNT(*) AS trade_count,
+  COUNT(DISTINCT tx_hash) AS unique_txs
+FROM dex.trades
+WHERE block_time >= NOW() - INTERVAL '30' day
+  AND amount_usd > 0
+GROUP BY 1, 2
+ORDER BY 3 DESC
+LIMIT 50
 ```
+**Columns**: `dex`, `blockchain`, `volume_30d_usd`, `trade_count`, `unique_txs`
 
 ---
 
-## Q9: CEX_NET_FLOWS
--- Tracks flows to/from known CEX addresses
--- Parameters: {{days}} (number, default: 7)
-
+### Query 12: DEX Volumes by Blockchain
 ```sql
-WITH cex_addresses AS (
-  SELECT address, name
-  FROM labels.all
-  WHERE category = 'exchange'
-    AND blockchain = 'ethereum'
-),
-flows AS (
-  SELECT
-    DATE_TRUNC('day', t.evt_block_time) AS day,
-    tok.symbol AS token_symbol,
-    SUM(CASE WHEN cex.address = t."to" THEN
-      (CAST(t.value AS DOUBLE) / POW(10, tok.decimals)) * p.price
-      ELSE 0 END) AS inflow_usd,
-    SUM(CASE WHEN cex.address = t."from" THEN
-      (CAST(t.value AS DOUBLE) / POW(10, tok.decimals)) * p.price
-      ELSE 0 END) AS outflow_usd
-  FROM erc20_ethereum.evt_Transfer t
-  JOIN cex_addresses cex
-    ON cex.address = t."to" OR cex.address = t."from"
-  JOIN tokens.erc20 tok
-    ON tok.contract_address = t.contract_address
-    AND tok.blockchain = 'ethereum'
-  JOIN prices.usd_latest p
-    ON p.contract_address = t.contract_address
-    AND p.blockchain = 'ethereum'
-  WHERE t.evt_block_time >= NOW() - INTERVAL '{{days}}' DAY
-    AND tok.symbol IN ('USDT', 'USDC', 'ETH', 'WETH', 'WBTC')
-  GROUP BY 1, 2
-)
 SELECT
-  day,
-  token_symbol,
-  inflow_usd,
-  outflow_usd,
-  inflow_usd - outflow_usd AS net_flow_usd
-FROM flows
-ORDER BY day, token_symbol
+  date_trunc('day', block_time) AS day,
+  blockchain AS chain,
+  SUM(amount_usd) AS volume_usd,
+  COUNT(*) AS trade_count
+FROM dex.trades
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+  AND amount_usd > 0
+GROUP BY 1, 2
+ORDER BY 1 DESC, 3 DESC
 ```
+**Columns**: `day`, `chain`, `volume_usd`, `trade_count`
 
 ---
 
-## Q10: L2_METRICS
--- Parameters: {{days}} (number, default: 30)
+## LAYER 2 & NFT DATA
 
+### Query 13: L2 Active Addresses Comparison
 ```sql
 SELECT
-  DATE_TRUNC('day', block_time) AS day,
+  date_trunc('day', block_time) AS day,
   'arbitrum' AS chain,
   COUNT(*) AS tx_count,
-  COUNT(DISTINCT "from") AS active_addresses,
-  0 AS tvl_usd
+  COUNT(DISTINCT "from") AS active_addresses
 FROM arbitrum.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' DAY
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
 GROUP BY 1
 
 UNION ALL
 
 SELECT
-  DATE_TRUNC('day', block_time) AS day,
+  date_trunc('day', block_time) AS day,
   'optimism' AS chain,
   COUNT(*) AS tx_count,
-  COUNT(DISTINCT "from") AS active_addresses,
-  0 AS tvl_usd
+  COUNT(DISTINCT "from") AS active_addresses
 FROM optimism.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' DAY
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
 GROUP BY 1
 
-ORDER BY day, chain
+UNION ALL
+
+SELECT
+  date_trunc('day', block_time) AS day,
+  'base' AS chain,
+  COUNT(*) AS tx_count,
+  COUNT(DISTINCT "from") AS active_addresses
+FROM base.transactions
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+GROUP BY 1
+
+ORDER BY day DESC, chain
 ```
+**Columns**: `day`, `chain`, `tx_count`, `active_addresses`
 
 ---
 
-## Q11: NFT_SALES_VOLUME
--- Parameters: {{days}} (number, default: 30)
-
+### Query 14: L2 Gas Fees Comparison
 ```sql
 SELECT
-  DATE_TRUNC('day', block_time) AS day,
-  SUM(amount_usd) AS volume_usd,
-  COUNT(*) AS sales_count,
-  platform AS marketplace
-FROM nft.trades
-WHERE block_time >= NOW() - INTERVAL '{{days}}' DAY
-  AND amount_usd > 0
-GROUP BY 1, 4
-ORDER BY 1
+  date_trunc('day', block_time) AS day,
+  'arbitrum' AS chain,
+  AVG(gas_price / 1e9) AS avg_gas_price_gwei
+FROM arbitrum.transactions
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+GROUP BY 1
+
+UNION ALL
+
+SELECT
+  date_trunc('day', block_time) AS day,
+  'optimism' AS chain,
+  AVG(gas_price / 1e9) AS avg_gas_price_gwei
+FROM optimism.transactions
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+GROUP BY 1
+
+ORDER BY day DESC, chain
 ```
+**Columns**: `day`, `chain`, `avg_gas_price_gwei`
 
 ---
 
-## Q12: PROTOCOL_REVENUE
--- Top protocols by fee revenue (7d + 30d)
-
+### Query 15: NFT Top Collections by Volume
 ```sql
-WITH recent AS (
-  SELECT
-    project,
-    SUM(CASE WHEN block_date >= CURRENT_DATE - INTERVAL '7' DAY THEN amount_usd ELSE 0 END) AS revenue_7d,
-    SUM(CASE WHEN block_date >= CURRENT_DATE - INTERVAL '30' DAY THEN amount_usd ELSE 0 END) AS revenue_30d
-  FROM dex.trades
-  WHERE block_date >= CURRENT_DATE - INTERVAL '30' DAY
-    AND amount_usd > 0
-  GROUP BY 1
-)
+SELECT
+  collection,
+  blockchain,
+  SUM(amount_usd) AS volume_7d_usd,
+  COUNT(*) AS trade_count,
+  COUNT(DISTINCT seller) AS unique_sellers,
+  AVG(amount_usd) AS avg_price_usd,
+  MIN(amount_usd) AS min_price_usd,
+  MAX(amount_usd) AS max_price_usd
+FROM nft.trades
+WHERE block_time >= NOW() - INTERVAL '7' day
+  AND amount_usd > 0
+GROUP BY 1, 2
+ORDER BY 3 DESC
+LIMIT 50
+```
+**Columns**: `collection`, `blockchain`, `volume_7d_usd`, `trade_count`, `unique_sellers`, `avg_price_usd`, `min_price_usd`, `max_price_usd`
+
+---
+
+### Query 16: NFT Daily Volumes
+```sql
+SELECT
+  date_trunc('day', block_time) AS day,
+  collection,
+  blockchain,
+  SUM(amount_usd) AS volume_usd,
+  COUNT(*) AS trade_count,
+  AVG(amount_usd) AS avg_price_usd,
+  COUNT(DISTINCT buyer) AS unique_buyers
+FROM nft.trades
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+  AND amount_usd > 0
+GROUP BY 1, 2, 3
+ORDER BY 1 DESC, 4 DESC
+```
+**Columns**: `day`, `collection`, `blockchain`, `volume_usd`, `trade_count`, `avg_price_usd`, `unique_buyers`
+
+---
+
+### Query 17: NFT Sales by Blockchain
+```sql
+SELECT
+  date_trunc('day', block_time) AS day,
+  blockchain,
+  SUM(amount_usd) AS volume_usd,
+  COUNT(*) AS trade_count,
+  COUNT(DISTINCT collection) AS active_collections
+FROM nft.trades
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+  AND amount_usd > 0
+GROUP BY 1, 2
+ORDER BY 1 DESC, 3 DESC
+```
+**Columns**: `day`, `blockchain`, `volume_usd`, `trade_count`, `active_collections`
+
+---
+
+## DEFI & GOVERNANCE
+
+### Query 18: DEX Liquidity Pools Activity
+```sql
+SELECT
+  project AS dex,
+  blockchain,
+  token_a_symbol,
+  token_b_symbol,
+  SUM(amount_usd) AS volume_usd,
+  COUNT(*) AS swap_count
+FROM dex.trades
+WHERE block_time >= NOW() - INTERVAL '30' day
+  AND amount_usd > 0
+GROUP BY 1, 2, 3, 4
+ORDER BY 5 DESC
+LIMIT 100
+```
+**Columns**: `dex`, `blockchain`, `token_a_symbol`, `token_b_symbol`, `volume_usd`, `swap_count`
+
+---
+
+### Query 19: DeFi Protocol Users (Active Addresses)
+```sql
 SELECT
   project AS protocol,
-  revenue_7d,
-  revenue_30d
-FROM recent
-ORDER BY revenue_30d DESC
-LIMIT 30
+  blockchain,
+  COUNT(DISTINCT tx_hash) AS unique_interactions,
+  COUNT(*) AS total_swaps,
+  SUM(amount_usd) AS volume_30d_usd
+FROM dex.trades
+WHERE block_time >= NOW() - INTERVAL '30' day
+  AND amount_usd > 0
+GROUP BY 1, 2
+ORDER BY 3 DESC
+LIMIT 50
 ```
+**Columns**: `protocol`, `blockchain`, `unique_interactions`, `total_swaps`, `volume_30d_usd`
 
-Note: This is an approximation using DEX volume as proxy.
-For accurate protocol revenue, consider integrating fees.wtf or
-Token Terminal API as a supplementary data source.
+---
+
+### Query 20: Uniswap DAO Governance Votes
+```sql
+SELECT
+  CURRENT_DATE AS day,
+  'uniswap' AS dao,
+  'Governance data' AS note
+```
+**Columns**: `day`, `dao`, `note`
+
+---
+
+### Query 22: General DAO Activity
+```sql
+SELECT
+  CURRENT_DATE AS day,
+  'uniswap' AS dao,
+  0 AS proposal_count,
+  0 AS vote_count
+UNION ALL
+SELECT
+  CURRENT_DATE AS day,
+  'aave' AS dao,
+  0 AS proposal_count,
+  0 AS vote_count
+```
+**Columns**: `day`, `dao`, `proposal_count`, `vote_count`
+
+---
+
+## MARKET DATA
+
+### Query 23: CEX-to-DEX Volume Comparison
+```sql
+SELECT
+  date_trunc('day', block_time) AS day,
+  blockchain,
+  SUM(amount_usd) AS volume_usd,
+  COUNT(*) AS trade_count
+FROM dex.trades
+WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+  AND amount_usd > 0
+GROUP BY 1, 2
+ORDER BY 1 DESC, 3 DESC
+```
+**Columns**: `day`, `blockchain`, `volume_usd`, `trade_count`
+
+---
+
+### Query 24: Token Swap Volume by Token Pair
+```sql
+SELECT
+  token_bought_symbol,
+  token_sold_symbol,
+  SUM(amount_usd) AS volume_usd,
+  COUNT(*) AS swap_count,
+  AVG(amount_usd) AS avg_swap_size
+FROM dex.trades
+WHERE block_time >= NOW() - INTERVAL '30' day
+  AND amount_usd > 0
+GROUP BY 1, 2
+ORDER BY 3 DESC
+LIMIT 100
+```
+**Columns**: `token_bought_symbol`, `token_sold_symbol`, `volume_usd`, `swap_count`, `avg_swap_size`
+
+---
+
+## PARAMETER SETUP
+
+All queries with `{{days}}` parameter:
+- **Type**: Number
+- **Default**: 30
+
+---
+
+## Query ID Reference
+
+Update these in `src/lib/dune.ts`:
+
+| Query | ID |
+|-------|-----|
+| BTC_ACTIVE_ADDRESSES | YOUR_ID |
+| BTC_DAILY_TRANSACTIONS | YOUR_ID |
+| ETH_ACTIVE_ADDRESSES | YOUR_ID |
+| ETH_DAILY_TRANSACTIONS | YOUR_ID |
+| SOL_DAILY_TRANSACTIONS | YOUR_ID |
+| SOL_DAILY_FEES | YOUR_ID |
+| WHALE_TRANSFERS | YOUR_ID |
+| STABLECOIN_SUPPLY | YOUR_ID |
+| STABLECOIN_HOLDERS | YOUR_ID |
+| DEX_DAILY_VOLUMES | YOUR_ID |
+| DEX_TOP_PROTOCOLS | YOUR_ID |
+| DEX_BY_BLOCKCHAIN | YOUR_ID |
+| L2_ACTIVE_ADDRESSES | YOUR_ID |
+| L2_GAS_FEES | YOUR_ID |
+| NFT_TOP_COLLECTIONS | YOUR_ID |
+| NFT_DAILY_VOLUMES | YOUR_ID |
+| NFT_BY_BLOCKCHAIN | YOUR_ID |
+| DEX_LIQUIDITY_POOLS | YOUR_ID |
+| DEFI_PROTOCOL_USERS | YOUR_ID |
+| UNISWAP_GOVERNANCE | YOUR_ID |
+| DAO_ACTIVITY | YOUR_ID |
+| CEX_DEX_VOLUME | YOUR_ID |
+| TOP_TOKEN_PAIRS | YOUR_ID |
 

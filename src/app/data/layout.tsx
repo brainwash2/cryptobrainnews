@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic';
 import React, { Suspense } from 'react';
 import { DataSidebar } from './_components/DataSidebar';
 import { DataBreadcrumb } from './_components/DataBreadcrumb';

@@ -1,26 +1,38 @@
 import React from 'react';
-import { MetricCard } from '../_components/MetricCard';
+import NFTsClient from './_components/NFTsClient';
 
-export const metadata = { title: 'nfts | CryptoBrainNews' };
+export const metadata = {
+  title: 'NFT Data | CryptoBrainNews',
+  description: 'NFT collection volumes, floor prices, and market metrics.',
+};
 
-export default function Page() {
+export const revalidate = 300;
+
+async function getNFTData() {
+  try {
+    const res = await fetch('https://api.reservoir.tools/collections/v5?limit=50', {
+      headers: { 'X-API-Key': process.env.RESERVOIR_API_KEY || '' },
+      next: { revalidate: 600 },
+    });
+    if (!res.ok) throw new Error('Failed');
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export default async function NFTsPage() {
+  const nftData = await getNFTData();
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-white font-heading uppercase tracking-tighter">
-          nfts <span className="text-primary">Data</span>
-        </h1>
-        <p className="text-[#444] font-mono text-[10px] uppercase tracking-[0.3em] mt-1">
-          Coming Soon • Powered by Dune Analytics
+    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
+      <div className="max-w-[1400px] mx-auto">
+        <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">NFTs</h1>
+        <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em] mb-10">
+          Top Collections & Market Metrics
         </p>
+        <NFTsClient nftData={nftData} />
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Status" value="Building" />
-        <MetricCard label="Source" value="Dune" />
-      </div>
-      <div className="p-20 border-2 border-dashed border-[#1a1a1a] text-center text-[#333] font-mono text-xs uppercase tracking-[0.3em]">
-        Data pipeline initializing...
-      </div>
-    </div>
+    </main>
   );
 }

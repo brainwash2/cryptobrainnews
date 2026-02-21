@@ -1,23 +1,19 @@
-// src/app/price-indexes/components/PriceIndexesTerminal.tsx
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import type { PriceTableRow, NewsArticle } from '@/lib/types';
+import type { CoinMarketData } from '@/lib/types';
 import TerminalTableRow from './TerminalTableRow';
-import MiniSparkline from './MiniSparkline';
 import TerminalHighlights from './TerminalHighlights';
 
 interface Props {
-  initialCoins: PriceTableRow[];
-  initialNews: NewsArticle[];
+  prices: CoinMarketData[];
 }
 
-type SortField = 'rank' | 'price' | 'change1h' | 'change24h' | 'change7d' | 'marketCap' | 'volume24h';
+type SortField = 'market_cap_rank' | 'current_price' | 'price_change_percentage_24h' | 'price_change_percentage_7d' | 'market_cap' | 'total_volume';
 type SortDir = 'asc' | 'desc';
 
-export default function PriceIndexesTerminal({ initialCoins, initialNews }: Props) {
-  const [coins] = useState<PriceTableRow[]>(initialCoins);
-  const [sortField, setSortField] = useState<SortField>('rank');
+export default function PriceIndexesTerminal({ prices }: Props) {
+  const [sortField, setSortField] = useState<SortField>('market_cap_rank');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -26,14 +22,14 @@ export default function PriceIndexesTerminal({ initialCoins, initialNews }: Prop
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortField(field);
-      setSortDir(field === 'rank' ? 'asc' : 'desc');
+      setSortDir(field === 'market_cap_rank' ? 'asc' : 'desc');
     }
   }, [sortField]);
 
   const filteredAndSorted = useMemo(() => {
-    let result = [...coins];
+    let result = [...prices];
 
-    // Filter
+    // Filter by search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -45,14 +41,42 @@ export default function PriceIndexesTerminal({ initialCoins, initialNews }: Prop
 
     // Sort
     result.sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
+      let aVal: number = 0;
+      let bVal: number = 0;
+
+      switch (sortField) {
+        case 'market_cap_rank':
+          aVal = a.market_cap_rank || 999;
+          bVal = b.market_cap_rank || 999;
+          break;
+        case 'current_price':
+          aVal = a.current_price || 0;
+          bVal = b.current_price || 0;
+          break;
+        case 'price_change_percentage_24h':
+          aVal = a.price_change_percentage_24h || 0;
+          bVal = b.price_change_percentage_24h || 0;
+          break;
+        case 'price_change_percentage_7d':
+          aVal = a.price_change_percentage_7d || 0;
+          bVal = b.price_change_percentage_7d || 0;
+          break;
+        case 'market_cap':
+          aVal = a.market_cap || 0;
+          bVal = b.market_cap || 0;
+          break;
+        case 'total_volume':
+          aVal = a.total_volume || 0;
+          bVal = b.total_volume || 0;
+          break;
+      }
+
       const multiplier = sortDir === 'asc' ? 1 : -1;
-      return (Number(aVal) - Number(bVal)) * multiplier;
+      return (aVal - bVal) * multiplier;
     });
 
     return result;
-  }, [coins, sortField, sortDir, searchQuery]);
+  }, [prices, sortField, sortDir, searchQuery]);
 
   const SortHeader = ({
     field,
@@ -74,7 +98,7 @@ export default function PriceIndexesTerminal({ initialCoins, initialNews }: Prop
         <span
           className={`text-[10px] font-black uppercase tracking-wider transition-colors ${
             isActive
-              ? 'text-primary'
+              ? 'text-[#FABF2C]'
               : 'text-[#555] group-hover:text-[#888]'
           }`}
         >
@@ -98,11 +122,11 @@ export default function PriceIndexesTerminal({ initialCoins, initialNews }: Prop
               LIVE
             </span>
           </div>
-          <h1 className="text-3xl font-black font-heading uppercase tracking-tight text-white">
-            Price <span className="text-primary">Index</span>
+          <h1 className="text-3xl font-black uppercase tracking-tight text-white">
+            Price <span className="text-[#FABF2C]">Index</span>
           </h1>
           <p className="text-[10px] font-mono text-[#555] uppercase tracking-[0.2em] mt-1">
-            TOP {coins.length} ASSETS BY MARKET CAP • USD
+            TOP {prices.length} ASSETS BY MARKET CAP • USD
           </p>
         </div>
 
@@ -114,14 +138,14 @@ export default function PriceIndexesTerminal({ initialCoins, initialNews }: Prop
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="SEARCH ASSET..."
             className="bg-[#0a0a0a] border border-[#1a1a1a] text-white font-mono text-[11px] 
-                       px-4 py-2 w-64 outline-none focus:border-primary/50 placeholder:text-[#333]
+                       px-4 py-2 w-64 outline-none focus:border-[#FABF2C]/50 placeholder:text-[#333]
                        uppercase tracking-wider"
           />
         </div>
       </div>
 
       {/* Highlight Cards */}
-      <TerminalHighlights coins={coins} news={initialNews} />
+      <TerminalHighlights coins={prices} news={[]} />
 
       {/* ─── THE TABLE ─────────────────────────────────────────────── */}
       <div className="border border-[#1a1a1a] bg-[#080808] overflow-hidden">
@@ -130,18 +154,17 @@ export default function PriceIndexesTerminal({ initialCoins, initialNews }: Prop
             {/* STICKY HEADER */}
             <thead className="sticky top-0 z-10 bg-[#0a0a0a] border-b-2 border-[#1a1a1a]">
               <tr>
-                <SortHeader field="rank" label="#" align="left" />
+                <SortHeader field="market_cap_rank" label="#" align="left" />
                 <th className="px-3 py-2 text-left">
                   <span className="text-[10px] font-black text-[#555] uppercase tracking-wider">
                     Asset
                   </span>
                 </th>
-                <SortHeader field="price" label="Price" />
-                <SortHeader field="change1h" label="1H %" />
-                <SortHeader field="change24h" label="24H %" />
-                <SortHeader field="change7d" label="7D %" />
-                <SortHeader field="marketCap" label="Mkt Cap" />
-                <SortHeader field="volume24h" label="Vol 24H" />
+                <SortHeader field="current_price" label="Price" />
+                <SortHeader field="price_change_percentage_24h" label="24H %" />
+                <SortHeader field="price_change_percentage_7d" label="7D %" />
+                <SortHeader field="market_cap" label="Mkt Cap" />
+                <SortHeader field="total_volume" label="Vol 24H" />
                 <th className="px-3 py-2 text-right">
                   <span className="text-[10px] font-black text-[#555] uppercase tracking-wider">
                     7D Chart

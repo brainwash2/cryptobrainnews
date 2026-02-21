@@ -1,12 +1,11 @@
-// src/app/price-indexes/components/TerminalTableRow.tsx
 'use client';
 
 import React from 'react';
-import type { PriceTableRow } from '@/lib/types';
+import type { CoinMarketData } from '@/lib/types';
 import MiniSparkline from './MiniSparkline';
 
 interface Props {
-  coin: PriceTableRow;
+  coin: CoinMarketData;
   isEven: boolean;
 }
 
@@ -28,13 +27,15 @@ function fmtCompact(val: number): string {
 }
 
 // Color class for percentage change
-function changeColor(val: number): string {
+function changeColor(val: number | null | undefined): string {
+  if (!val) return 'text-[#555]';
   if (val > 0) return 'text-[#00d672]';
   if (val < 0) return 'text-[#ff4757]';
   return 'text-[#555]';
 }
 
-function fmtChange(val: number): string {
+function fmtChange(val: number | null | undefined): string {
+  if (!val) return '0.00%';
   const prefix = val > 0 ? '+' : '';
   return `${prefix}${val.toFixed(2)}%`;
 }
@@ -49,22 +50,24 @@ export default function TerminalTableRow({ coin, isEven }: Props) {
       {/* Rank */}
       <td className="px-3 py-[10px] w-10">
         <span className="text-[11px] font-mono text-[#444] tabular-nums">
-          {coin.rank}
+          {coin.market_cap_rank || '—'}
         </span>
       </td>
 
       {/* Asset */}
       <td className="px-3 py-[10px]">
         <div className="flex items-center gap-2.5 min-w-[140px]">
-          <img
-            src={coin.image}
-            alt=""
-            className="w-5 h-5 rounded-full flex-shrink-0"
-            loading="lazy"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
+          {coin.image && (
+            <img
+              src={coin.image}
+              alt={coin.name}
+              className="w-5 h-5 rounded-full flex-shrink-0"
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          )}
           <div className="flex items-center gap-2">
             <span className="text-[12px] font-bold text-white tracking-wide">
               {coin.symbol.toUpperCase()}
@@ -79,51 +82,46 @@ export default function TerminalTableRow({ coin, isEven }: Props) {
       {/* Price */}
       <td className="px-3 py-[10px] text-right">
         <span className="text-[12px] font-mono font-bold text-white tabular-nums">
-          ${fmtPrice(coin.price)}
-        </span>
-      </td>
-
-      {/* 1H % */}
-      <td className="px-3 py-[10px] text-right">
-        <span className={`text-[11px] font-mono font-bold tabular-nums ${changeColor(coin.change1h)}`}>
-          {fmtChange(coin.change1h)}
+          ${fmtPrice(coin.current_price || 0)}
         </span>
       </td>
 
       {/* 24H % */}
       <td className="px-3 py-[10px] text-right">
-        <span className={`text-[11px] font-mono font-bold tabular-nums ${changeColor(coin.change24h)}`}>
-          {fmtChange(coin.change24h)}
+        <span className={`text-[11px] font-mono font-bold tabular-nums ${changeColor(coin.price_change_percentage_24h)}`}>
+          {fmtChange(coin.price_change_percentage_24h)}
         </span>
       </td>
 
       {/* 7D % */}
       <td className="px-3 py-[10px] text-right">
-        <span className={`text-[11px] font-mono font-bold tabular-nums ${changeColor(coin.change7d)}`}>
-          {fmtChange(coin.change7d)}
+        <span className={`text-[11px] font-mono font-bold tabular-nums ${changeColor(coin.price_change_percentage_7d)}`}>
+          {fmtChange(coin.price_change_percentage_7d)}
         </span>
       </td>
 
       {/* Market Cap */}
       <td className="px-3 py-[10px] text-right">
         <span className="text-[11px] font-mono text-[#888] tabular-nums">
-          {fmtCompact(coin.marketCap)}
+          {fmtCompact(coin.market_cap || 0)}
         </span>
       </td>
 
       {/* Volume */}
       <td className="px-3 py-[10px] text-right">
         <span className="text-[11px] font-mono text-[#666] tabular-nums">
-          {fmtCompact(coin.volume24h)}
+          {fmtCompact(coin.total_volume || 0)}
         </span>
       </td>
 
       {/* Sparkline */}
       <td className="px-3 py-[10px] w-[100px]">
-        <MiniSparkline
-          data={coin.sparkline}
-          isPositive={coin.change7d >= 0}
-        />
+        {coin.sparkline_in_7d?.price && (
+          <MiniSparkline
+            data={coin.sparkline_in_7d.price}
+            isPositive={(coin.price_change_percentage_7d || 0) >= 0}
+          />
+        )}
       </td>
     </tr>
   );
