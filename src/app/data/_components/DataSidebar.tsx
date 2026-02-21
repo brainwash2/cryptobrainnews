@@ -55,7 +55,7 @@ function SectionGroup({
   section: SidebarSection;
   pathname: string;
 }) {
-  const isActive = section.children.some(
+  const isActive = section.children?.some(
     (c) => pathname === c.href || pathname.startsWith(c.href + '/')
   );
   const [open, setOpen] = useState(isActive);
