@@ -19,6 +19,15 @@ interface CacheEntry<T> {
 const memoryStore = new Map<string, CacheEntry<unknown>>();
 const inflight = new Map<string, Promise<unknown>>();
 
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of memoryStore.entries()) {
+      if (now > entry.expiresAt) memoryStore.delete(key);
+    }
+  }, 60000).unref();
+}
+
 async function setRedisChunked<T>(key: string, data: T, ttl: number): Promise<void> {
   if (!redis) return;
   try {
@@ -73,7 +82,10 @@ export async function cached<T>(
   const memKey = `mem:${key}`;
 
   const memEntry = memoryStore.get(memKey) as CacheEntry<T> | undefined;
-  if (memEntry && now < memEntry.expiresAt) return memEntry.data;
+  if (memEntry) {
+    if (now < memEntry.expiresAt) return memEntry.data;
+    memoryStore.delete(memKey);
+  }
 
   if (inflight.has(key)) return inflight.get(key) as Promise<T>;
 

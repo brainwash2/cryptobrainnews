@@ -1,72 +1,107 @@
-════════════════════════════════════════════════════════════════════
-CRYPTOBRAINNEWS - COMPLETE CODE EXPORT FOR CLAUDE OPUS AUDIT
-════════════════════════════════════════════════════════════════════
-Export Date: Thu Feb 19 03:02:37 AM UTC 2026
-Tech Stack: Next.js 16, React 19, TypeScript, Tailwind, Supabase
-════════════════════════════════════════════════════════════════════
+=========================================
+CRYPTOBRAINNEWS - COMPLETE CODE CONTEXT
+Generated: Sat Feb 21 10:17:39 PM UTC 2026
+=========================================
 
-═══════════════════════════════════════════════════════════════════
-📦 FILE: package.json
-═══════════════════════════════════════════════════════════════════
-{
-  "name": "cryptobrainnews",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@ai-sdk/groq": "^3.0.24",
-    "@duneanalytics/client-sdk": "^0.3.5",
-    "@heroicons/react": "^2.2.0",
-    "@sentry/nextjs": "^10.39.0",
-    "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.95.3",
-    "@tailwindcss/forms": "^0.5.11",
-    "@tailwindcss/typography": "^0.5.19",
-    "@upstash/redis": "^1.36.2",
-    "@vercel/analytics": "^1.6.1",
-    "@vercel/speed-insights": "^1.3.1",
-    "ai": "^6.0.86",
-    "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
-    "lucide-react": "^0.563.0",
-    "next": "16.0.8",
-    "react": "19.2.1",
-    "react-dom": "19.2.1",
-    "recharts": "^3.7.0",
-    "server-only": "^0.0.1",
-    "swr": "^2.4.0",
-    "tailwind-merge": "^3.4.0",
-    "tailwindcss-animate": "^1.0.7"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20.19.33",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "autoprefixer": "^10.4.19",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.8",
-    "postcss": "^8.4.38",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5"
-  }
-}
+========== FOLDER STRUCTURE ==========
+
+tree command not found – using find fallback:
+  .
+    .git
+    .next
+    node_modules
+    public
+    src
+      app
+        advertise
+          _components
+        api
+          ad-leads
+          events
+          news
+            ai
+          prices
+        auth
+          callback
+        data
+          _components
+            charts
+          defi
+            _components
+            dex-volume
+            large-swaps
+            lending
+            revenue
+            stablecoins
+            tvl
+            whale-watch
+            yields
+          etfs
+            bitcoin
+            comparison
+            _components
+            ethereum
+          exchanges
+            _components
+          governance
+            _components
+          l2
+            _components
+          _lib
+          market
+          markets
+            _components
+            futures
+            indices
+            options
+            prices
+            spot
+              _components
+            volumes
+          nfts
+            collections
+            _components
+            volume
+          onchain
+            bitcoin
+            _components
+            ethereum
+            flows
+            gas
+            solana
+          scaling
+            l2-comparison
+            optimistic
+            zk
+          stablecoins
+            chains
+            _components
+            usd
+        events
+          _components
+        feed.xml
+        go-alpha
+        learning
+        news
+          [id]
+            _components
+        price-indexes
+          _components
+      components
+        auth
+        common
+        layout
+        news
+        ui
+      lib
+      styles
+    supabase
+      .temp
+    .vscode
 
 
-═══════════════════════════════════════════════════════════════════
-📁 PROJECT FOLDER STRUCTURE
-═══════════════════════════════════════════════════════════════════
-Tree command not found. Structure not generated.
+========== DUNE QUERIES ==========
 
-
-═══════════════════════════════════════════════════════════════════
-📋 FILE: DUNE_QUERIES.md
-═══════════════════════════════════════════════════════════════════
 # CryptoBrainNews Dune Analytics Queries
 
 All corrected queries used in production. Copy query IDs from your Dune dashboard and update `src/lib/dune.ts`.
@@ -566,90 +601,14 @@ Update these in `src/lib/dune.ts`:
 
 
 
-═══════════════════════════════════════════════════════════════════
-🗄️  FILE: supabase_schema.sql
-═══════════════════════════════════════════════════════════════════
--- 6.1 — CMS Strategy: Articles Table (Safe Update)
--- Run this in your Supabase SQL Editor
-
--- 1. Create table only if it doesn't exist
-CREATE TABLE IF NOT EXISTS public.articles (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 2. Add columns safely (DO block ensures we don't error if columns exist)
-DO $$
-BEGIN
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS title TEXT;
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS slug TEXT;
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS body TEXT;
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS excerpt TEXT;
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS image_url TEXT;
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS author_name TEXT DEFAULT 'CryptoBrain Editorial';
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS author_avatar TEXT;
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'News';
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ DEFAULT NOW();
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE;
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'editorial';
-    ALTER TABLE public.articles ADD COLUMN IF NOT EXISTS external_url TEXT;
-END $$;
-
--- 3. Ensure Uniqueness on Slug (Drop constraint first to avoid errors, then recreate)
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'articles_slug_key') THEN
-    ALTER TABLE public.articles ADD CONSTRAINT articles_slug_key UNIQUE (slug);
-  END IF;
-END $$;
-
--- 4. Recreate Indexes (Drop existing to ensure they match our new definition)
-DROP INDEX IF EXISTS idx_articles_published;
-CREATE INDEX idx_articles_published ON public.articles (published_at DESC);
-
-DROP INDEX IF EXISTS idx_articles_featured;
-CREATE INDEX idx_articles_featured ON public.articles (is_featured) WHERE is_featured = TRUE;
-
-DROP INDEX IF EXISTS idx_articles_slug;
-CREATE INDEX idx_articles_slug ON public.articles (slug);
-
--- 5. Security (RLS)
-ALTER TABLE public.articles ENABLE ROW LEVEL SECURITY;
-
--- 6. Policies (Drop first to avoid "policy already exists" errors)
-DROP POLICY IF EXISTS "Public read" ON public.articles;
-CREATE POLICY "Public read" ON public.articles FOR SELECT USING (true);
-
--- (Optional) Write policy for authenticated users
-DROP POLICY IF EXISTS "Authenticated write" ON public.articles;
-CREATE POLICY "Authenticated write" ON public.articles 
-  FOR INSERT 
-  TO authenticated 
-  WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Authenticated update" ON public.articles;
-CREATE POLICY "Authenticated update" ON public.articles 
-  FOR UPDATE 
-  TO authenticated 
-  USING (true);
+========== SUPABASE COMPLETE SCHEMA ==========
 
 
 
-═══════════════════════════════════════════════════════════════════
-🔐 FILE: .env.example
-═══════════════════════════════════════════════════════════════════
-❌ .env.example not found
+========== SOURCE CODE (src/) ==========
 
+--- FILE: src/app/advertise/_components/AdvertiseClient.tsx ---
 
-═══════════════════════════════════════════════════════════════════
-🔧 SOURCE CODE FILES (src/)
-═══════════════════════════════════════════════════════════════════
-
-───────────────────────────────────────────────────────────────────
-FILE: src/app/advertise/_components/AdvertiseClient.tsx
-───────────────────────────────────────────────────────────────────
 'use client';
 import React, { useState } from 'react';
 
@@ -796,9 +755,8 @@ export default function AdvertiseClient() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/advertise/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/advertise/page.tsx ---
+
 import React from 'react';
 import AdvertiseClient from './_components/AdvertiseClient';
 
@@ -946,20 +904,30 @@ export default function AdvertisePage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/api/ad-leads/route.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/api/ad-leads/route.ts ---
+
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
+import { isRateLimited } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    // Rate limit by IP
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
+    if (isRateLimited(`ad-leads:${ip}`, 3, 60_000)) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
 
     // Validation
-    const required = ['company_name', 'email', 'budget_range', 'package_interest'];
+    const required = ['company_name', 'email', 'budget_range', 'package_interest'] as const;
     for (const field of required) {
-      if (!body[field]) {
+      if (!body[field] || typeof body[field] !== 'string' || body[field].trim() === '') {
         return NextResponse.json(
           { error: `Missing required field: ${field}` },
           { status: 400 }
@@ -967,21 +935,36 @@ export async function POST(request: Request) {
       }
     }
 
-    // Basic email validation
+    // Email validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
-      return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
+    }
+
+    // Length limits to prevent abuse
+    if (body.company_name.length > 200 || body.email.length > 254 || (body.message && body.message.length > 5000)) {
+      return NextResponse.json({ error: 'Field length exceeded' }, { status: 400 });
+    }
+
+    // Allowed values validation
+    const validBudgets = ['$1k-$5k', '$5k-$15k', '$15k-$50k', '$50k+'];
+    const validPackages = ['signal', 'alpha', 'institutional', 'event'];
+    if (!validBudgets.includes(body.budget_range)) {
+      return NextResponse.json({ error: 'Invalid budget range' }, { status: 400 });
+    }
+    if (!validPackages.includes(body.package_interest)) {
+      return NextResponse.json({ error: 'Invalid package interest' }, { status: 400 });
     }
 
     const supabase = getSupabase();
     const { error } = await supabase.from('ad_leads').insert({
-      company_name: body.company_name,
-      contact_name: body.contact_name || null,
-      email: body.email,
-      telegram: body.telegram || null,
-      website: body.website || null,
+      company_name: body.company_name.trim(),
+      contact_name: body.contact_name?.trim() || null,
+      email: body.email.trim().toLowerCase(),
+      telegram: body.telegram?.trim() || null,
+      website: body.website?.trim() || null,
       budget_range: body.budget_range,
       package_interest: body.package_interest,
-      message: body.message || null,
+      message: body.message?.trim() || null,
       source_page: '/advertise',
     });
 
@@ -997,9 +980,8 @@ export async function POST(request: Request) {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/api/events/route.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/api/events/route.ts ---
+
 import { NextResponse } from 'next/server';
 import { cached } from '@/lib/cache';
 import { getSupabase } from '@/lib/supabase';
@@ -1035,12 +1017,28 @@ export async function GET(request: Request) {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/api/news/ai/route.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/api/news/ai/route.ts ---
+
 import { NextResponse } from 'next/server';
 import { generateText } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
+
+interface CryptoCompareArticle {
+  id: number;
+  title: string;
+  url: string;
+  source_info?: { name?: string };
+  body?: string;
+}
+
+interface EnrichedArticle {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  bullets: string[];
+  sentiment: string;
+}
 
 export async function GET() {
   const groqKey = process.env.GROQ_API_KEY?.trim();
@@ -1049,55 +1047,59 @@ export async function GET() {
   const groq = createGroq({ apiKey: groqKey });
 
   try {
-    // 1. Switch to CryptoCompare (Verified working source)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+
     const newsRes = await fetch(
       'https://min-api.cryptocompare.com/data/v2/news/?lang=EN',
-      { next: { revalidate: 600 } }
+      { next: { revalidate: 600 }, signal: controller.signal }
     );
-    
+    clearTimeout(timeout);
+
     if (!newsRes.ok) return NextResponse.json([]);
 
     const newsData = await newsRes.json();
-    const rawArticles = newsData.Data?.slice(0, 4) || [];
+    const rawArticles: CryptoCompareArticle[] = (newsData.Data ?? []).slice(0, 4);
 
-    // 2. AI Summarization
-    const enriched = await Promise.all(
-      rawArticles.map(async (article: any) => {
+    const enriched: (EnrichedArticle | null)[] = await Promise.all(
+      rawArticles.map(async (article): Promise<EnrichedArticle | null> => {
         try {
           const { text } = await generateText({
             model: groq('llama-3.3-70b-versatile'),
-            prompt: `Task: Summarize this headline into 3 bullets (6 words max each). End with SENTIMENT: [Positive/Negative/Neutral].
-            Headline: "${article.title}"`,
+            prompt: `Task: Summarize this headline into 3 bullets (6 words max each). End with SENTIMENT: [Positive/Negative/Neutral].\nHeadline: "${article.title}"`,
           });
 
-          const [bulletsRaw, sentimentRaw] = text.split('SENTIMENT:');
-          const bullets = bulletsRaw.trim().split('\n')
-            .map(l => l.replace(/^[•\-\d\.]+\s*/, '').trim())
-            .filter(l => l.length > 2)
+          const [bulletsRaw = '', sentimentRaw = 'Neutral'] = text.split('SENTIMENT:');
+          const bullets = bulletsRaw
+            .trim()
+            .split('\n')
+            .map((l) => l.replace(/^[•\-\d.]+\s*/, '').trim())
+            .filter((l) => l.length > 2)
             .slice(0, 3);
 
           return {
             id: String(article.id),
             title: article.title,
             url: article.url,
-            source: article.source_info?.name || 'Wire',
+            source: article.source_info?.name ?? 'Wire',
             bullets,
-            sentiment: (sentimentRaw || 'Neutral').trim().replace(/[.\s]/g, ''),
+            sentiment: sentimentRaw.trim().replace(/[.\s]/g, ''),
           };
-        } catch { return null; }
+        } catch {
+          return null;
+        }
       })
     );
 
     return NextResponse.json(enriched.filter(Boolean));
-  } catch (error) {
+  } catch {
     return NextResponse.json([]);
   }
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/api/prices/route.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/api/prices/route.ts ---
+
 import { NextResponse } from 'next/server';
 import { getLivePrices } from '@/lib/api';
 import { FALLBACK_MARKET_DATA } from '@/lib/fallback-data';
@@ -1112,9 +1114,8 @@ export async function GET() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/auth/callback/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/auth/callback/page.tsx ---
+
 'use client';
 
 import { useEffect } from 'react';
@@ -1147,9 +1148,8 @@ export default function AuthCallbackPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/_components/charts/AreaChartCard.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/_components/charts/AreaChartCard.tsx ---
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -1258,9 +1258,8 @@ export default function AreaChartCard({ title, subtitle, source, data, xKey, yKe
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/_components/charts/BarChartCard.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/_components/charts/BarChartCard.tsx ---
+
 'use client';
 
 import React from 'react';
@@ -1312,80 +1311,8 @@ export default function BarChartCard({ title, subtitle, source, data, xKey, yKey
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/_components/charts/DataTable.tsx
-───────────────────────────────────────────────────────────────────
-'use client';
+--- FILE: src/app/data/_components/ChartSkeleton.tsx ---
 
-import React from 'react';
-
-interface Column {
-  key: string;
-  label: string;
-  align?: 'left' | 'right' | 'center';
-}
-
-interface DataTableProps {
-  columns: Column[];
-  rows: Record<string, any>[];
-  maxRows?: number;
-}
-
-export default function DataTable({ columns, rows, maxRows = 50 }: DataTableProps) {
-  const displayRows = rows.slice(0, maxRows);
-
-  if (displayRows.length === 0) {
-    return (
-      <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-12 text-center text-[#333] font-mono text-xs uppercase">
-        No data available
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-[#1a1a1a] bg-[#080808]">
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  className={`px-6 py-3 text-[10px] font-black text-[#555] uppercase tracking-widest ${
-                    col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
-                  }`}
-                >
-                  {col.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {displayRows.map((row, i) => (
-              <tr key={i} className="border-b border-[#111] hover:bg-white/[0.02] transition-colors">
-                {columns.map((col) => (
-                  <td
-                    key={col.key}
-                    className={`px-6 py-3 text-sm font-mono ${
-                      col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
-                    } ${col.key === 'name' || col.key === 'protocol' ? 'font-bold text-white' : 'text-[#888]'}`}
-                  >
-                    {row[col.key]}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/_components/ChartSkeleton.tsx
-───────────────────────────────────────────────────────────────────
 export function ChartSkeleton() {
   return (
     <div className="space-y-8 animate-pulse">
@@ -1411,9 +1338,8 @@ export function ChartSkeleton() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/_components/DataBreadcrumb.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/_components/DataBreadcrumb.tsx ---
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -1489,9 +1415,8 @@ export function DataBreadcrumb() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/_components/DataHeader.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/_components/DataHeader.tsx ---
+
 'use client';
 import React from 'react';
 
@@ -1522,9 +1447,8 @@ export function DataHeader({
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/_components/DataSidebar.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/_components/DataSidebar.tsx ---
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -1582,7 +1506,7 @@ function SectionGroup({
   section: SidebarSection;
   pathname: string;
 }) {
-  const isActive = section.children.some(
+  const isActive = section.children?.some(
     (c) => pathname === c.href || pathname.startsWith(c.href + '/')
   );
   const [open, setOpen] = useState(isActive);
@@ -1635,9 +1559,8 @@ function SectionGroup({
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/_components/DataTable.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/_components/DataTable.tsx ---
+
 'use client';
 import React from 'react';
 
@@ -1719,9 +1642,8 @@ export function DataTable({
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/_components/MetricCard.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/_components/MetricCard.tsx ---
+
 import React from 'react';
 
 interface MetricCardProps {
@@ -1751,9 +1673,8 @@ export function MetricCard({ label, value, trend }: MetricCardProps) {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/_components/DeFiClient.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/_components/DeFiClient.tsx ---
+
 'use client';
 import React, { useState, useMemo } from 'react';
 import { formatNumber } from '../../_lib/formatters';
@@ -1829,19 +1750,18 @@ export default function DeFiClient({ protocols }: { protocols: Protocol[] }) {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/dex-volume/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/dex-volume/page.tsx ---
+
 import React, { Suspense } from 'react';
 import { getDexVolume } from '@/lib/api';
-import { getDailyDexVolume, QUERY_IDS } from '@/lib/dune';
+import { getDEXDailyVolumes } from '@/lib/dune';
 import { MetricCard } from '../../_components/MetricCard';
 import AreaChartCard from '../../_components/charts/AreaChartCard';
 import { ChartSkeleton } from '../../_components/ChartSkeleton';
 
 export const metadata = { title: 'DEX Volume | CryptoBrainNews' };
+export const revalidate = 300;
 
-// 1. The Main Page (Instant Load)
 export default function DexVolumePage() {
   return (
     <div className="space-y-8">
@@ -1853,8 +1773,6 @@ export default function DexVolumePage() {
           Decentralized Exchange Trading Activity
         </p>
       </div>
-
-      {/* 2. The Suspense Boundary (Streaming) */}
       <Suspense fallback={<ChartSkeleton />}>
         <AsyncDexData />
       </Suspense>
@@ -1862,19 +1780,15 @@ export default function DexVolumePage() {
   );
 }
 
-// 3. The Data Fetching Component (Runs in background)
 async function AsyncDexData() {
-  // Fetch Llama first (fast)
   const llamaPromise = getDexVolume();
-  
-  // Fetch Dune (slow/timeout)
+
   const dunePromise = (async () => {
-    const queryId = QUERY_IDS.DAILY_DEX_VOLUME as number;
-    if (queryId === 0) return null;
     try {
-      // 15s timeout
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000));
-      return await Promise.race([getDailyDexVolume(30), timeout]) as any[];
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 15000)
+      );
+      return await Promise.race([getDEXDailyVolumes(30), timeout]);
     } catch {
       return null;
     }
@@ -1882,17 +1796,17 @@ async function AsyncDexData() {
 
   const [llamaVolume, duneVolume] = await Promise.all([llamaPromise, dunePromise]);
 
-  let chartData: any[] = llamaVolume;
-  let source = "DefiLlama";
-  let yKey = "volume";
-  let xKey = "date";
+  let chartData: Record<string, unknown>[] = llamaVolume as unknown as Record<string, unknown>[];
+  let source = 'DefiLlama';
+  let yKey = 'volume';
+  let xKey = 'date';
   let duneSuccess = false;
 
   if (duneVolume && duneVolume.length > 0) {
-    chartData = duneVolume;
-    source = "Dune Analytics";
-    yKey = "volume_usd";
-    xKey = "day";
+    chartData = duneVolume as Record<string, unknown>[];
+    source = 'Dune Analytics';
+    yKey = 'volume_usd';
+    xKey = 'day';
     duneSuccess = true;
   }
 
@@ -1901,18 +1815,17 @@ async function AsyncDexData() {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard 
-          label="30d Volume" 
-          value={totalVol >= 1e12 ? `$${(totalVol / 1e12).toFixed(2)}T` : `$${(totalVol / 1e9).toFixed(2)}B`} 
+        <MetricCard
+          label="30d Volume"
+          value={totalVol >= 1e12 ? `$${(totalVol / 1e12).toFixed(2)}T` : `$${(totalVol / 1e9).toFixed(2)}B`}
         />
         <MetricCard label="Source" value={source} />
         <MetricCard label="Data Points" value={String(chartData.length)} />
-        <MetricCard label="Status" value={duneSuccess ? "Live On-Chain" : "Aggregated"} />
+        <MetricCard label="Status" value={duneSuccess ? 'Live On-Chain' : 'Aggregated'} />
       </div>
-
       <AreaChartCard
         title="Global DEX Volume"
-        subtitle={duneSuccess ? "On-chain data directly from Dune Analytics" : "Aggregated data via DefiLlama"}
+        subtitle={duneSuccess ? 'On-chain data from Dune Analytics' : 'Aggregated via DefiLlama'}
         source={source}
         data={chartData}
         xKey={xKey}
@@ -1925,9 +1838,8 @@ async function AsyncDexData() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/error.tsx ---
+
 'use client';
 export default function DeFiError({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -1948,9 +1860,8 @@ export default function DeFiError({ error, reset }: { error: Error; reset: () =>
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/large-swaps/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/large-swaps/loading.tsx ---
+
 export default function LargeSwapsLoading() {
   return (
     <div className="space-y-8 animate-pulse">
@@ -1969,9 +1880,8 @@ export default function LargeSwapsLoading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/large-swaps/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/large-swaps/page.tsx ---
+
 import React from 'react';
 
 export const metadata = { title: 'Large DEX Swaps' };
@@ -2110,9 +2020,8 @@ export default async function LargeSwapsPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/lending/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/lending/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -2141,9 +2050,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/loading.tsx ---
+
 export default function DeFiLoading() {
   return (
     <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
@@ -2157,9 +2065,8 @@ export default function DeFiLoading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/page.tsx ---
+
 import React from 'react';
 import DeFiClient from './_components/DeFiClient';
 
@@ -2168,7 +2075,7 @@ export const metadata = {
   description: 'DeFi protocol TVL, yields, and decentralized finance analytics.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 async function getDeFiData() {
   try {
@@ -2199,9 +2106,8 @@ export default async function DeFiPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/revenue/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/revenue/page.tsx ---
+
 import React from 'react';
 
 export const metadata = { title: 'Protocol Revenue | CryptoBrainNews' };
@@ -2293,9 +2199,8 @@ export default async function ProtocolRevenuePage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/stablecoins/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/stablecoins/page.tsx ---
+
 import React from 'react';
 
 export const metadata = {
@@ -2303,7 +2208,7 @@ export const metadata = {
   description: 'Aggregate stablecoin market cap and liquidity flows.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 interface StablecoinData {
   date: Date;
@@ -2366,9 +2271,8 @@ export default async function StablecoinsPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/tvl/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/tvl/page.tsx ---
+
 import React from 'react';
 import { getDeFiProtocols } from '@/lib/api';
 
@@ -2377,7 +2281,7 @@ export const metadata = {
   description: 'DeFi Protocol Rankings by Total Value Locked.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export default async function TVLPage() {
   const protocols = await getDeFiProtocols();
@@ -2391,8 +2295,8 @@ export default async function TVLPage() {
   const formattedRows = protocols.map((p, i) => ({
     rank: i + 1,
     name: p.name,
-    category: p.category || 'N/A',
-    chain: 'Multi',
+    category: (p as unknown as Record<string, string>).category ?? 'N/A',
+    chain: (p as unknown as Record<string, string>).chain ?? 'Multi',
     tvl: p.tvl >= 1e9 ? `$${(p.tvl / 1e9).toFixed(2)}B` : `$${(p.tvl / 1e6).toFixed(1)}M`,
     change_1d: '—',
   }));
@@ -2425,10 +2329,10 @@ export default async function TVLPage() {
         </div>
       </div>
 
-      <div className="bg-card border border-border overflow-hidden">
+      <div className="bg-[#0a0a0a] border border-[#1a1a1a] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-secondary/50 text-[#555] uppercase tracking-wider font-mono border-b border-[#1a1a1a]">
+            <thead className="bg-[#080808] text-[#555] uppercase tracking-wider font-mono border-b border-[#1a1a1a]">
               <tr>
                 <th className="px-6 py-3">#</th>
                 <th className="px-6 py-3">Protocol</th>
@@ -2438,9 +2342,12 @@ export default async function TVLPage() {
                 <th className="px-6 py-3 text-right">24H</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-[#111]">
               {formattedRows.map((row, i) => (
-                <tr key={row.name} className={`hover:bg-primary/5 transition-colors ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#0b0b0b]'}`}>
+                <tr
+                  key={row.name}
+                  className={`hover:bg-[#111] transition-colors ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#0b0b0b]'}`}
+                >
                   <td className="px-6 py-3 text-[#555]">{row.rank}</td>
                   <td className="px-6 py-3 font-semibold text-white">{row.name}</td>
                   <td className="px-6 py-3 text-[#888] text-[10px]">{row.category}</td>
@@ -2458,9 +2365,8 @@ export default async function TVLPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/whale-watch/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/whale-watch/error.tsx ---
+
 'use client';
 
 export default function WhaleWatchError({
@@ -2490,9 +2396,8 @@ export default function WhaleWatchError({
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/whale-watch/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/whale-watch/loading.tsx ---
+
 export default function WhaleWatchLoading() {
   return (
     <div className="space-y-8 animate-pulse">
@@ -2513,19 +2418,21 @@ export default function WhaleWatchLoading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/whale-watch/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/whale-watch/page.tsx ---
+
+import React from 'react';
 import { getWhaleTransfers } from '@/lib/dune';
 
 export const metadata = { title: '🐋 Whale Watch' };
+export const revalidate = 300;
 
-function shortenAddress(addr: string | null | undefined): string {
-  if (!addr || addr.length < 10) return addr || '—';
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+function shortenAddress(addr: string | number | null | undefined): string {
+  const s = String(addr ?? '');
+  if (!s || s.length < 10) return s || '—';
+  return `${s.slice(0, 6)}…${s.slice(-4)}`;
 }
 
-function formatUsd(value: number | null | undefined): string {
+function formatUsd(value: string | number | null | undefined): string {
   const numValue = Number(value) || 0;
   if (numValue === 0) return '$0';
   if (numValue >= 1_000_000) return `$${(numValue / 1_000_000).toFixed(1)}M`;
@@ -2535,17 +2442,21 @@ function formatUsd(value: number | null | undefined): string {
 
 export default async function WhaleWatchPage() {
   const transfers = await getWhaleTransfers();
-  const totalVolume = transfers.reduce((s, t) => {
-    const amount = Number(t.amount_usd) || 0;
-    return s + amount;
-  }, 0);
-  const uniqueWhales = new Set(transfers.map((t) => t.whale_address || t.sender)).size;
+
+  const totalVolume = transfers.reduce((s, t) => s + (Number(t.amount_usd) || 0), 0);
+  const uniqueWhales = new Set(
+    transfers.map((t) => String(t.whale_address ?? t.sender ?? ''))
+  ).size;
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-black text-white font-heading uppercase tracking-tighter mb-1">🐋 Whale <span className="text-[#FABF2C]">Watch</span></h1>
-        <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em] mt-1">Large on‑chain transfers (last 24h)</p>
+        <h1 className="text-3xl font-black text-white font-heading uppercase tracking-tighter mb-1">
+          🐋 Whale <span className="text-[#FABF2C]">Watch</span>
+        </h1>
+        <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em] mt-1">
+          Large on-chain transfers (last 24h)
+        </p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -2570,7 +2481,9 @@ export default async function WhaleWatchPage() {
       {transfers.length === 0 ? (
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-12 text-center">
           <div className="text-4xl mb-4">🐋</div>
-          <p className="text-[#555] font-mono text-xs uppercase">No whale transfers found. Dune API key may not be configured.</p>
+          <p className="text-[#555] font-mono text-xs uppercase">
+            No whale transfers found. Dune API key may not be configured.
+          </p>
         </div>
       ) : (
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] overflow-hidden">
@@ -2588,35 +2501,63 @@ export default async function WhaleWatchPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#0a0a0a]">
-                {transfers.slice(0, 50).map((tx, i) => (
-                  <tr key={`${tx.tx_hash}-${i}`} className={`hover:bg-[#111] transition-colors ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#0b0b0b]'}`}>
-                    <td className="px-6 py-3 text-[#555] font-data whitespace-nowrap">
-                      {new Date(tx.block_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="px-6 py-3 font-semibold text-white">{tx.token_symbol || 'ETH'}</td>
-                    <td className="px-6 py-3 text-[#555] font-data">
-                      <a href={`https://etherscan.io/address/${tx.whale_address || tx.sender}`} target="_blank" rel="noopener" className="hover:text-[#FABF2C]">
-                        {shortenAddress(tx.whale_address || tx.sender)}
-                      </a>
-                    </td>
-                    <td className="px-6 py-3 text-[#555] font-data">
-                      <a href={`https://etherscan.io/address/${tx.recipient || tx.to}`} target="_blank" rel="noopener" className="hover:text-[#FABF2C]">
-                        {shortenAddress(tx.recipient || tx.to)}
-                      </a>
-                    </td>
-                    <td className="px-6 py-3 text-right font-data text-white">
-                      {Number(tx.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-6 py-3 text-right font-bold text-[#FABF2C]">
-                      {formatUsd(tx.amount_usd)}
-                    </td>
-                    <td className="px-6 py-3">
-                      <a href={`https://etherscan.io/tx/${tx.tx_hash}`} target="_blank" rel="noopener" className="text-[#FABF2C] hover:underline font-data">
-                        View ↗
-                      </a>
-                    </td>
-                  </tr>
-                ))}
+                {transfers.slice(0, 50).map((tx, i) => {
+                  const blockTime = String(tx.block_time ?? '');
+                  const timeStr = blockTime
+                    ? new Date(blockTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                    : '—';
+                  const fromAddr = tx.whale_address ?? tx.sender;
+                  const toAddr = tx.recipient ?? tx.to;
+                  const txHash = String(tx.tx_hash ?? '');
+
+                  return (
+                    <tr
+                      key={`${txHash}-${i}`}
+                      className={`hover:bg-[#111] transition-colors ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#0b0b0b]'}`}
+                    >
+                      <td className="px-6 py-3 text-[#555] font-mono whitespace-nowrap">{timeStr}</td>
+                      <td className="px-6 py-3 font-semibold text-white">
+                        {String(tx.token_symbol ?? 'ETH')}
+                      </td>
+                      <td className="px-6 py-3 text-[#555] font-mono">
+                        <a
+                          href={`https://etherscan.io/address/${String(fromAddr ?? '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-[#FABF2C]"
+                        >
+                          {shortenAddress(fromAddr)}
+                        </a>
+                      </td>
+                      <td className="px-6 py-3 text-[#555] font-mono">
+                        <a
+                          href={`https://etherscan.io/address/${String(toAddr ?? '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-[#FABF2C]"
+                        >
+                          {shortenAddress(toAddr)}
+                        </a>
+                      </td>
+                      <td className="px-6 py-3 text-right font-mono text-white">
+                        {Number(tx.amount ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-6 py-3 text-right font-bold text-[#FABF2C]">
+                        {formatUsd(tx.amount_usd)}
+                      </td>
+                      <td className="px-6 py-3">
+                        <a
+                          href={`https://etherscan.io/tx/${txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#FABF2C] hover:underline font-mono"
+                        >
+                          View ↗
+                        </a>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -2627,33 +2568,37 @@ export default async function WhaleWatchPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/defi/yields/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/defi/yields/page.tsx ---
+
 import React from 'react';
 import { getTopYields, type YieldPool } from '@/lib/api';
 import { MetricCard } from '../../_components/MetricCard';
-import DataTable from '../../_components/charts/DataTable';
 
 export const metadata = { title: 'DeFi Yields | CryptoBrainNews' };
+export const revalidate = 600;
 
 export default async function YieldsPage() {
   const yields = await getTopYields();
 
-  // Calculate stats
-  const avgApy = yields.reduce((sum, p) => sum + p.apy, 0) / yields.length;
-  const topPool = yields.reduce((prev, current) => (prev.apy > current.apy) ? prev : current);
+  if (yields.length === 0) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-black text-white font-heading uppercase tracking-tighter">
+            DeFi <span className="text-primary">Yields</span>
+          </h1>
+        </div>
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-12 text-center">
+          <p className="text-[#555] font-mono text-xs uppercase">No yield data available.</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Format for Table
-  const formattedRows = yields.map((row, i) => ({
-    rank: i + 1,
-    project: row.project,
-    chain: row.chain,
-    symbol: row.symbol,
-    tvl: `$${(row.tvlUsd / 1e6).toFixed(1)}M`,
-    apy: `${row.apy.toFixed(2)}%`,
-    trend: row.apyPct1D, // For color coding if we added it, simple string for now
-  }));
+  const avgApy = yields.reduce((sum: number, p: YieldPool) => sum + p.apy, 0) / yields.length;
+  const topPool = yields.reduce((prev: YieldPool, current: YieldPool) =>
+    prev.apy > current.apy ? prev : current
+  );
 
   return (
     <div className="space-y-8">
@@ -2673,25 +2618,60 @@ export default async function YieldsPage() {
         <MetricCard label="Source" value="DefiLlama API" />
       </div>
 
-      <DataTable
-        columns={[
-          { key: 'rank', label: '#' },
-          { key: 'project', label: 'Protocol' },
-          { key: 'chain', label: 'Chain' },
-          { key: 'symbol', label: 'Token' },
-          { key: 'tvl', label: 'TVL', align: 'right' },
-          { key: 'apy', label: 'APY', align: 'right' },
-        ]}
-        rows={formattedRows}
-      />
+      <div className="bg-[#0a0a0a] border border-[#1a1a1a] overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#080808] text-[#555] uppercase tracking-wider font-mono border-b border-[#1a1a1a]">
+              <tr>
+                <th className="px-6 py-3">#</th>
+                <th className="px-6 py-3">Protocol</th>
+                <th className="px-6 py-3">Chain</th>
+                <th className="px-6 py-3">Token</th>
+                <th className="px-6 py-3 text-right">TVL</th>
+                <th className="px-6 py-3 text-right">APY</th>
+                <th className="px-6 py-3 text-right">1D Δ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#111]">
+              {yields.map((pool: YieldPool, i: number) => (
+                <tr
+                  key={pool.pool || `${pool.project}-${i}`}
+                  className={`hover:bg-[#111] transition-colors ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#0b0b0b]'}`}
+                >
+                  <td className="px-6 py-3 text-[#555]">{i + 1}</td>
+                  <td className="px-6 py-3 font-semibold text-white">{pool.project}</td>
+                  <td className="px-6 py-3 text-[#888]">{pool.chain}</td>
+                  <td className="px-6 py-3 text-[#888]">{pool.symbol}</td>
+                  <td className="px-6 py-3 text-right text-[#888]">
+                    ${(pool.tvlUsd / 1e6).toFixed(1)}M
+                  </td>
+                  <td className="px-6 py-3 text-right font-bold text-[#FABF2C]">
+                    {pool.apy.toFixed(2)}%
+                  </td>
+                  <td className={`px-6 py-3 text-right font-mono ${
+                    (pool.apyPct1D ?? 0) > 0
+                      ? 'text-[#00d672]'
+                      : (pool.apyPct1D ?? 0) < 0
+                      ? 'text-[#ff4757]'
+                      : 'text-[#555]'
+                  }`}>
+                    {pool.apyPct1D != null
+                      ? `${pool.apyPct1D > 0 ? '+' : ''}${pool.apyPct1D.toFixed(2)}%`
+                      : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/etfs/bitcoin/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/etfs/bitcoin/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -2720,9 +2700,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/etfs/comparison/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/etfs/comparison/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -2751,9 +2730,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/etfs/_components/ETFsClient.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/etfs/_components/ETFsClient.tsx ---
+
 'use client';
 import React, { useState } from 'react';
 
@@ -2828,9 +2806,8 @@ export default function ETFsClient({ etfData }: { etfData: any }) {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/etfs/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/etfs/error.tsx ---
+
 'use client';
 export default function ETFsError({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -2851,9 +2828,8 @@ export default function ETFsError({ error, reset }: { error: Error; reset: () =>
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/etfs/ethereum/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/etfs/ethereum/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -2882,9 +2858,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/etfs/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/etfs/loading.tsx ---
+
 export default function ETFsLoading() {
   return (
     <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
@@ -2897,10 +2872,9 @@ export default function ETFsLoading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/etfs/page.tsx
-───────────────────────────────────────────────────────────────────
-import React from 'text';
+--- FILE: src/app/data/etfs/page.tsx ---
+
+import React from 'react';
 import ETFsClient from './_components/ETFsClient';
 
 export const metadata = {
@@ -2908,13 +2882,12 @@ export const metadata = {
   description: 'Bitcoin and Ethereum spot ETF flows and holdings data.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 async function getETFData() {
   try {
-    // Use public API — real data would come from SoSoValue or CoinShares
     const res = await fetch(
-      'https://api.glassnode.com/v1/metrics/assets/price_latest?assets=BTC,ETH',
+      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true',
       { next: { revalidate: 600 } }
     );
     if (!res.ok) throw new Error('Failed');
@@ -2941,13 +2914,19 @@ export default async function ETFsPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/exchanges/_components/ExchangesClient.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/exchanges/_components/ExchangesClient.tsx ---
+
 'use client';
 import React, { useState } from 'react';
 
-const MOCK_DEXES = [
+interface DexData {
+  name: string;
+  volume_24h: number;
+  volume_7d: number;
+  chain: string;
+}
+
+const MOCK_DEXES: DexData[] = [
   { name: 'Uniswap', volume_24h: 2100000000, volume_7d: 14200000000, chain: 'Multi' },
   { name: 'Curve', volume_24h: 1850000000, volume_7d: 12400000000, chain: 'Multi' },
   { name: 'Raydium', volume_24h: 890000000, volume_7d: 5200000000, chain: 'Solana' },
@@ -2955,14 +2934,20 @@ const MOCK_DEXES = [
 ];
 
 export default function ExchangesClient() {
-  const [timeframe, setTimeframe] = useState('24h');
+  const [timeframe, setTimeframe] = useState<'24h' | '7d'>('24h');
 
-  const totalVolume = MOCK_DEXES.reduce((sum, d) => sum + (timeframe === '24h' ? d.volume_24h : d.volume_7d), 0);
+  const totalVolume = MOCK_DEXES.reduce(
+    (sum, d) => sum + (timeframe === '24h' ? d.volume_24h : d.volume_7d),
+    0
+  );
+
+  const getVolume = (dex: DexData): number =>
+    timeframe === '24h' ? dex.volume_24h : dex.volume_7d;
 
   return (
     <div className="space-y-8">
       <div className="flex gap-3 flex-wrap">
-        {['24h', '7d'].map((tf) => (
+        {(['24h', '7d'] as const).map((tf) => (
           <button
             key={tf}
             onClick={() => setTimeframe(tf)}
@@ -2978,8 +2963,12 @@ export default function ExchangesClient() {
       </div>
 
       <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
-        <div className="text-2xl font-black text-[#FABF2C]">${(totalVolume / 1e9).toFixed(2)}B</div>
-        <div className="text-[9px] font-black text-[#555] uppercase tracking-widest mt-2">Total {timeframe} Volume</div>
+        <div className="text-2xl font-black text-[#FABF2C]">
+          ${(totalVolume / 1e9).toFixed(2)}B
+        </div>
+        <div className="text-[9px] font-black text-[#555] uppercase tracking-widest mt-2">
+          Total {timeframe} Volume
+        </div>
       </div>
 
       <div className="border border-[#1a1a1a] overflow-hidden">
@@ -2996,7 +2985,7 @@ export default function ExchangesClient() {
               <tr key={dex.name} className="border-b border-[#0a0a0a] hover:bg-[#0a0a0a]">
                 <td className="px-4 py-4 text-white font-bold">{dex.name}</td>
                 <td className="px-4 py-4 text-right text-[#FABF2C]">
-                  ${(timeframe === '24h' ? dex.volume_24h : dex.volume_7d) / 1e9).toFixed(2)}B
+                  ${(getVolume(dex) / 1e9).toFixed(2)}B
                 </td>
                 <td className="px-4 py-4 text-right text-[#aaa]">{dex.chain}</td>
               </tr>
@@ -3009,9 +2998,8 @@ export default function ExchangesClient() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/exchanges/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/exchanges/error.tsx ---
+
 'use client';
 export default function ExchangesError({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -3032,9 +3020,8 @@ export default function ExchangesError({ error, reset }: { error: Error; reset: 
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/exchanges/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/exchanges/loading.tsx ---
+
 export default function ExchangesLoading() {
   return (
     <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
@@ -3047,146 +3034,35 @@ export default function ExchangesLoading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/exchanges/page.tsx
-───────────────────────────────────────────────────────────────────
-'use client';
-import React, { useState, useMemo } from 'react';
+--- FILE: src/app/data/exchanges/page.tsx ---
 
-interface Props {
-  volumes: any[];
-}
+import React from 'react';
+import ExchangesClient from './_components/ExchangesClient';
 
-export default function ExchangesClient({ volumes }: Props) {
-  const [selectedDex, setSelectedDex] = useState<string | null>(null);
+export const metadata = {
+  title: 'DEX Volumes | CryptoBrainNews',
+  description: 'Decentralized exchange trading volumes by protocol.',
+};
 
-  const dexes = useMemo(() => {
-    const unique = new Set<string>();
-    volumes.forEach((v) => {
-      if (v.dex) unique.add(v.dex);
-    });
-    return Array.from(unique).sort();
-  }, [volumes]);
+export const revalidate = 300;
 
-  const filtered = useMemo(() => {
-    if (!selectedDex) return volumes.slice(0, 100);
-    return volumes.filter((v) => v.dex === selectedDex).slice(0, 100);
-  }, [volumes, selectedDex]);
-
-  const totalVolume = filtered.reduce((sum, v) => sum + (v.volume_usd || 0), 0);
-  const averageVolume = filtered.length > 0 ? totalVolume / filtered.length : 0;
-
+export default function ExchangesPage() {
   return (
-    <div className="space-y-8">
-      {/* Filter Buttons */}
-      <div className="flex gap-2 flex-wrap">
-        <button
-          onClick={() => setSelectedDex(null)}
-          className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest border transition-all ${
-            selectedDex === null
-              ? 'bg-[#FABF2C] text-black border-[#FABF2C]'
-              : 'bg-transparent text-[#555] border-[#1a1a1a] hover:text-white'
-          }`}
-        >
-          All DEXs ({dexes.length})
-        </button>
-        {dexes.slice(0, 10).map((dex) => (
-          <button
-            key={dex}
-            onClick={() => setSelectedDex(dex)}
-            className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest border transition-all ${
-              selectedDex === dex
-                ? 'bg-[#FABF2C] text-black border-[#FABF2C]'
-                : 'bg-transparent text-[#555] border-[#1a1a1a] hover:text-white'
-            }`}
-          >
-            {dex}
-          </button>
-        ))}
+    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
+      <div className="max-w-[1400px] mx-auto">
+        <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">DEX Volumes</h1>
+        <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em] mb-10">
+          Decentralized Exchange Trading Activity
+        </p>
+        <ExchangesClient />
       </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
-          <p className="text-[9px] font-mono text-[#555] uppercase mb-2">Total Volume</p>
-          <p className="text-2xl font-black text-[#FABF2C]">
-            ${(totalVolume / 1e9).toFixed(2)}B
-          </p>
-        </div>
-        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
-          <p className="text-[9px] font-mono text-[#555] uppercase mb-2">Avg Volume</p>
-          <p className="text-2xl font-black text-[#FABF2C]">
-            ${(averageVolume / 1e6).toFixed(1)}M
-          </p>
-        </div>
-        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
-          <p className="text-[9px] font-mono text-[#555] uppercase mb-2">Trades Count</p>
-          <p className="text-2xl font-black text-[#FABF2C]">
-            {filtered.reduce((sum, v) => sum + (v.trade_count || 0), 0).toLocaleString()}
-          </p>
-        </div>
-      </div>
-
-      {/* Data Table */}
-      <div className="border border-[#1a1a1a] overflow-hidden">
-        <table className="w-full text-xs">
-          <thead className="bg-[#0a0a0a] border-b border-[#1a1a1a]">
-            <tr>
-              <th className="px-4 py-3 text-left font-black text-[#555] uppercase tracking-wider">Date</th>
-              <th className="px-4 py-3 text-left font-black text-[#555] uppercase tracking-wider">DEX</th>
-              <th className="px-4 py-3 text-left font-black text-[#555] uppercase tracking-wider">Blockchain</th>
-              <th className="px-4 py-3 text-right font-black text-[#555] uppercase tracking-wider">Volume</th>
-              <th className="px-4 py-3 text-right font-black text-[#555] uppercase tracking-wider">Trades</th>
-              <th className="px-4 py-3 text-right font-black text-[#555] uppercase tracking-wider">Traders</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((vol, i) => (
-              <tr
-                key={i}
-                className={`border-b border-[#0a0a0a] hover:bg-[#0a0a0a] transition-colors ${
-                  i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#0b0b0b]'
-                }`}
-              >
-                <td className="px-4 py-3 text-[#aaa] font-mono">
-                  {typeof vol.day === 'string' ? vol.day.slice(0, 10) : '—'}
-                </td>
-                <td className="px-4 py-3 text-white font-black uppercase">{vol.dex || '—'}</td>
-                <td className="px-4 py-3 text-[#888] font-mono">{vol.blockchain || '—'}</td>
-                <td className="px-4 py-3 text-right text-[#FABF2C] font-black">
-                  ${(vol.volume_usd / 1e6).toFixed(1)}M
-                </td>
-                <td className="px-4 py-3 text-right text-[#888] font-mono">
-                  {vol.trade_count?.toLocaleString() || '—'}
-                </td>
-                <td className="px-4 py-3 text-right text-[#888] font-mono">
-                  {vol.unique_traders?.toLocaleString() || '—'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filtered.length === 0 && (
-          <div className="py-12 text-center">
-            <p className="text-[#555] text-xs font-mono uppercase">No DEX volume data</p>
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div className="text-[9px] text-[#555] font-mono uppercase">
-        <p>📊 Data includes top decentralized exchanges across major blockchains</p>
-        <p>🔄 Refreshed every hour • Last update: Today</p>
-      </div>
-    </div>
+    </main>
   );
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/governance/_components/GovernanceClient.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/governance/_components/GovernanceClient.tsx ---
+
 'use client';
 import React from 'react';
 
@@ -3240,9 +3116,8 @@ export default function GovernanceClient() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/governance/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/governance/error.tsx ---
+
 'use client';
 export default function GovernanceError({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -3263,9 +3138,8 @@ export default function GovernanceError({ error, reset }: { error: Error; reset:
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/governance/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/governance/loading.tsx ---
+
 export default function GovernanceLoading() {
   return (
     <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
@@ -3278,66 +3152,35 @@ export default function GovernanceLoading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/governance/page.tsx
-───────────────────────────────────────────────────────────────────
-'use client';
+--- FILE: src/app/data/governance/page.tsx ---
 
-interface Props {
-  data: any[];
-}
+import React from 'react';
+import GovernanceClient from './_components/GovernanceClient';
 
-export default function GovernanceClient({ data }: Props) {
+export const metadata = {
+  title: 'Governance | CryptoBrainNews',
+  description: 'DAO governance votes, proposals, and voting metrics.',
+};
+
+export const revalidate = 300;
+
+export default function GovernancePage() {
   return (
-    <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-8">
-      <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-6">
-        DAO Activity
-      </h3>
-      {data.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-[#555] text-xs font-mono uppercase">No governance data available</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {data.map((row: any, i: number) => (
-            <div key={i} className="border-b border-[#111] pb-4 last:border-0">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-[#FABF2C] font-black uppercase tracking-wide">
-                  {row.dao?.toUpperCase() || 'DAO'}
-                </span>
-                <span className="text-[#555] text-[9px] font-mono">
-                  {typeof row.day === 'string' ? row.day.slice(0, 10) : 'Today'}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="bg-[#050505] p-3 border border-[#111]">
-                  <p className="text-[#555] font-mono text-[9px] mb-1">Proposals</p>
-                  <p className="font-black text-white">{row.proposal_count || 0}</p>
-                </div>
-                <div className="bg-[#050505] p-3 border border-[#111]">
-                  <p className="text-[#555] font-mono text-[9px] mb-1">Votes</p>
-                  <p className="font-black text-white">{row.vote_count || 0}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Footer Info */}
-      <div className="mt-8 pt-6 border-t border-[#111]">
-        <p className="text-[9px] text-[#555] font-mono uppercase">
-          💡 Governance data is updated daily. Last refresh: Today
+    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
+      <div className="max-w-[1400px] mx-auto">
+        <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">Governance</h1>
+        <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em] mb-10">
+          DAO Votes, Proposals & Governance Tokens
         </p>
+        <GovernanceClient />
       </div>
-    </div>
+    </main>
   );
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/l2/_components/L2Client.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/l2/_components/L2Client.tsx ---
+
 'use client';
 import React from 'react';
 
@@ -3385,9 +3228,8 @@ export default function L2Client() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/l2/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/l2/error.tsx ---
+
 'use client';
 export default function L2Error({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -3408,9 +3250,8 @@ export default function L2Error({ error, reset }: { error: Error; reset: () => v
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/l2/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/l2/loading.tsx ---
+
 export default function L2Loading() {
   return (
     <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
@@ -3423,131 +3264,35 @@ export default function L2Loading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/l2/page.tsx
-───────────────────────────────────────────────────────────────────
-'use client';
+--- FILE: src/app/data/l2/page.tsx ---
 
-interface Props {
-  addresses: any[];
-  fees: any[];
-}
+import React from 'react';
+import L2Client from './_components/L2Client';
 
-export default function L2Client({ addresses, fees }: Props) {
-  const chains = ['arbitrum', 'optimism', 'base', 'zksync'];
+export const metadata = {
+  title: 'Layer 2 Data | CryptoBrainNews',
+  description: 'L2 scaling comparison: Arbitrum, Optimism, Base, ZkSync.',
+};
 
+export const revalidate = 300;
+
+export default function L2Page() {
   return (
-    <div className="space-y-8">
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {chains.map((chain) => {
-          const latestAddresses = addresses.find((a) => a.chain === chain);
-          const latestFees = fees.find((f) => f.chain === chain);
-
-          return (
-            <div key={chain} className="border border-[#1a1a1a] bg-[#0a0a0a] p-4">
-              <p className="text-[9px] text-[#555] uppercase font-black mb-2">
-                {chain.toUpperCase()}
-              </p>
-              <div className="space-y-2">
-                <div>
-                  <p className="text-[8px] text-[#444] font-mono">Active Addr</p>
-                  <p className="text-lg font-black text-[#FABF2C]">
-                    {latestAddresses?.active_addresses?.toLocaleString() || '—'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[8px] text-[#444] font-mono">Gas (gwei)</p>
-                  <p className="text-sm font-black text-[#00d672]">
-                    {latestFees?.avg_gas_price_gwei?.toFixed(2) || '—'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Active Addresses Chart */}
-      <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-6">
-        <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-6">
-          Active Addresses (90d)
-        </h3>
-        {addresses.length === 0 ? (
-          <p className="text-[#555] text-xs">Loading data...</p>
-        ) : (
-          <div className="space-y-4">
-            {addresses.slice(0, 20).map((row, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="text-[10px] font-mono text-[#555] w-16">
-                  {typeof row.day === 'string' ? row.day.slice(0, 10) : '—'}
-                </span>
-                <span className="text-[10px] font-black text-white w-20">
-                  {row.chain?.toUpperCase()}
-                </span>
-                <div className="flex-1 bg-[#050505] h-6 relative">
-                  <div
-                    className="h-full bg-[#FABF2C] transition-all"
-                    style={{
-                      width: `${Math.min(
-                        (row.active_addresses / 500000) * 100,
-                        100
-                      )}%`,
-                    }}
-                  />
-                </div>
-                <span className="text-[10px] font-black text-[#FABF2C] w-24 text-right">
-                  {(row.active_addresses / 1000).toFixed(0)}K
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Gas Fees Comparison */}
-      <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-6">
-        <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-6">
-          Average Gas Price (Gwei)
-        </h3>
-        {fees.length === 0 ? (
-          <p className="text-[#555] text-xs">Loading data...</p>
-        ) : (
-          <div className="space-y-3">
-            {fees.slice(0, 15).map((row, i) => (
-              <div key={i} className="flex justify-between items-center border-b border-[#111] pb-2">
-                <div>
-                  <p className="text-[10px] font-mono text-[#555]">
-                    {typeof row.day === 'string' ? row.day.slice(0, 10) : '—'}
-                  </p>
-                  <p className="text-[9px] font-black text-white">
-                    {row.chain?.toUpperCase()}
-                  </p>
-                </div>
-                <span className="text-[12px] font-black text-[#00d672]">
-                  {row.avg_gas_price_gwei?.toFixed(2) || '—'} Gwei
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Info Footer */}
-      <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-4">
-        <p className="text-[9px] text-[#555] font-mono uppercase">
-          📊 L2 data covers Arbitrum, Optimism, Base, and ZkSync • Updated: Daily
+    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
+      <div className="max-w-[1400px] mx-auto">
+        <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">Layer 2 Scaling</h1>
+        <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em] mb-10">
+          Arbitrum • Optimism • Base • ZkSync
         </p>
+        <L2Client />
       </div>
-    </div>
+    </main>
   );
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/layout.tsx
-───────────────────────────────────────────────────────────────────
-export const dynamic = 'force-dynamic';
+--- FILE: src/app/data/layout.tsx ---
+
 import React, { Suspense } from 'react';
 import { DataSidebar } from './_components/DataSidebar';
 import { DataBreadcrumb } from './_components/DataBreadcrumb';
@@ -3584,9 +3329,8 @@ export default function DataTerminalLayout({
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/_lib/formatters.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/_lib/formatters.ts ---
+
 export function formatNumber(value: number | string): string {
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(num)) return '—';
@@ -3607,9 +3351,8 @@ export function formatDate(timestamp: number | string): string {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/market/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/market/page.tsx ---
+
 import React from 'react';
 import Link from 'next/link';
 import { getLiveMarketPrices } from '@/lib/api';
@@ -3619,7 +3362,7 @@ export const metadata = {
   description: 'Cryptocurrency market overview and data sections.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 async function getMarketData() {
   try {
@@ -3753,9 +3496,8 @@ export default async function MarketsPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/markets/_components/MarketsClient.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/markets/_components/MarketsClient.tsx ---
+
 'use client';
 import React from 'react';
 import { formatNumber } from '../../_lib/formatters';
@@ -3829,9 +3571,8 @@ export default function MarketsClient({ global }: { global: any }) {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/markets/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/markets/error.tsx ---
+
 'use client';
 export default function MarketsError({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -3852,9 +3593,8 @@ export default function MarketsError({ error, reset }: { error: Error; reset: ()
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/markets/futures/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/markets/futures/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -3883,9 +3623,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/markets/indices/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/markets/indices/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -3914,9 +3653,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/markets/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/markets/loading.tsx ---
+
 export default function MarketsLoading() {
   return (
     <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
@@ -3934,9 +3672,8 @@ export default function MarketsLoading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/markets/options/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/markets/options/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -3965,9 +3702,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/markets/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/markets/page.tsx ---
+
 import React from 'react';
 import MarketsClient from './_components/MarketsClient';
 
@@ -3976,7 +3712,7 @@ export const metadata = {
   description: 'Global crypto market capitalization, trading volume, and price indexes.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 async function getMarketData() {
   try {
@@ -4010,9 +3746,8 @@ export default async function MarketsPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/markets/prices/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/markets/prices/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -4041,19 +3776,43 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/markets/spot/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/markets/spot/_components/CoinImage.tsx ---
+
+'use client';
+
+interface CoinImageProps {
+  src: string;
+  alt: string;
+}
+
+export default function CoinImage({ src, alt }: CoinImageProps) {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="w-5 h-5 rounded-full flex-shrink-0"
+      loading="lazy"
+      onError={(e) => {
+        e.currentTarget.style.display = 'none';
+      }}
+    />
+  );
+}
+
+
+--- FILE: src/app/data/markets/spot/page.tsx ---
+
 import React from 'react';
 import { getLiveMarketPrices } from '@/lib/api';
 import type { CoinMarketData } from '@/lib/types';
+import CoinImage from './_components/CoinImage';
 
 export const metadata = {
   title: 'Spot Markets | CryptoBrainNews',
   description: 'Real-time spot market prices and data.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 async function getSpotData(): Promise<CoinMarketData[]> {
   try {
@@ -4064,7 +3823,6 @@ async function getSpotData(): Promise<CoinMarketData[]> {
   }
 }
 
-// Format price with appropriate decimals
 function fmtPrice(price: number): string {
   if (price >= 1000) return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (price >= 1) return price.toFixed(2);
@@ -4072,16 +3830,14 @@ function fmtPrice(price: number): string {
   return price.toFixed(6);
 }
 
-// Format large numbers
 function fmtCompact(val: number): string {
   if (val >= 1e12) return `$${(val / 1e12).toFixed(2)}T`;
-  if (val >= 1e9) return `$${(val / 1e9).toFixed(2)}B`;
-  if (val >= 1e6) return `$${(val / 1e6).toFixed(1)}M`;
-  if (val >= 1e3) return `$${(val / 1e3).toFixed(0)}K`;
+  if (val >= 1e9)  return `$${(val / 1e9).toFixed(2)}B`;
+  if (val >= 1e6)  return `$${(val / 1e6).toFixed(1)}M`;
+  if (val >= 1e3)  return `$${(val / 1e3).toFixed(0)}K`;
   return `$${val.toFixed(0)}`;
 }
 
-// Color class for percentage change
 function changeColor(val: number | null | undefined): string {
   if (!val) return 'text-[#555]';
   if (val > 0) return 'text-[#00d672]';
@@ -4178,17 +3934,7 @@ export default async function SpotMarketPage() {
                     </td>
                     <td className="px-3 py-[10px]">
                       <div className="flex items-center gap-2.5 min-w-[140px]">
-                        {coin.image && (
-                          <img
-                            src={coin.image}
-                            alt={coin.name}
-                            className="w-5 h-5 rounded-full flex-shrink-0"
-                            loading="lazy"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        )}
+                        {coin.image && <CoinImage src={coin.image} alt={coin.name} />}
                         <div className="flex items-center gap-2">
                           <span className="text-[12px] font-bold text-white tracking-wide">
                             {coin.symbol.toUpperCase()}
@@ -4250,9 +3996,8 @@ export default async function SpotMarketPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/markets/volumes/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/markets/volumes/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -4281,9 +4026,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/nfts/collections/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/nfts/collections/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -4312,9 +4056,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/nfts/_components/NFTsClient.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/nfts/_components/NFTsClient.tsx ---
+
 'use client';
 import React, { useState } from 'react';
 
@@ -4392,9 +4135,8 @@ export default function NFTsClient({ nftData }: { nftData: any }) {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/nfts/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/nfts/error.tsx ---
+
 'use client';
 export default function NFTsError({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -4415,9 +4157,8 @@ export default function NFTsError({ error, reset }: { error: Error; reset: () =>
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/nfts/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/nfts/loading.tsx ---
+
 export default function NFTsLoading() {
   return (
     <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
@@ -4430,9 +4171,8 @@ export default function NFTsLoading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/nfts/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/nfts/page.tsx ---
+
 import React from 'react';
 import NFTsClient from './_components/NFTsClient';
 
@@ -4441,7 +4181,7 @@ export const metadata = {
   description: 'NFT collection volumes, floor prices, and market metrics.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 async function getNFTData() {
   try {
@@ -4473,9 +4213,8 @@ export default async function NFTsPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/nfts/volume/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/nfts/volume/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -4504,9 +4243,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/onchain/bitcoin/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/onchain/bitcoin/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -4535,9 +4273,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/onchain/_components/OnChainClient.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/onchain/_components/OnChainClient.tsx ---
+
 'use client';
 import React, { useState } from 'react';
 
@@ -4588,9 +4325,8 @@ export default function OnChainClient({ metrics }: { metrics: any }) {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/onchain/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/onchain/error.tsx ---
+
 'use client';
 export default function OnChainError({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -4611,9 +4347,8 @@ export default function OnChainError({ error, reset }: { error: Error; reset: ()
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/onchain/ethereum/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/onchain/ethereum/page.tsx ---
+
 import React from 'react';
 import { getETHActiveAddresses, getETHDailyTransactions } from '@/lib/dune';
 
@@ -4622,7 +4357,7 @@ export const metadata = {
   description: 'Ethereum active addresses and daily transactions.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 async function getETHData() {
   const [addresses, transactions] = await Promise.all([
@@ -4740,9 +4475,8 @@ export default async function EthereumPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/onchain/flows/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/onchain/flows/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -4771,9 +4505,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/onchain/gas/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/onchain/gas/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -4802,9 +4535,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/onchain/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/onchain/loading.tsx ---
+
 export default function OnChainLoading() {
   return (
     <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
@@ -4821,9 +4553,8 @@ export default function OnChainLoading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/onchain/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/onchain/page.tsx ---
+
 import React from 'react';
 import { cached } from '@/lib/cache';
 import OnChainClient from './_components/OnChainClient';
@@ -4833,7 +4564,7 @@ export const metadata = {
   description: 'Active addresses, transactions, whale movements, and on-chain metrics.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 async function getOnChainMetrics() {
   return cached(
@@ -4873,9 +4604,8 @@ export default async function OnChainPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/onchain/solana/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/onchain/solana/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -4904,9 +4634,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/page.tsx ---
+
 import React from 'react';
 import Link from 'next/link';
 
@@ -5009,9 +4738,8 @@ export default function DataIndexPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/scaling/l2-comparison/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/scaling/l2-comparison/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -5040,9 +4768,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/scaling/optimistic/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/scaling/optimistic/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -5071,9 +4798,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/scaling/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/scaling/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../_components/MetricCard';
 
@@ -5102,9 +4828,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/scaling/zk/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/scaling/zk/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -5133,9 +4858,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/stablecoins/chains/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/stablecoins/chains/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -5164,9 +4888,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/stablecoins/_components/StablecoinClient.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/stablecoins/_components/StablecoinClient.tsx ---
+
 'use client';
 import React from 'react';
 
@@ -5218,9 +4941,8 @@ export default function StablecoinClient({ stablecoins }: { stablecoins: any }) 
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/stablecoins/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/stablecoins/error.tsx ---
+
 'use client';
 export default function StablecoinsError({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -5241,9 +4963,8 @@ export default function StablecoinsError({ error, reset }: { error: Error; reset
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/stablecoins/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/stablecoins/loading.tsx ---
+
 export default function StablecoinsLoading() {
   return (
     <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
@@ -5256,9 +4977,8 @@ export default function StablecoinsLoading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/stablecoins/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/stablecoins/page.tsx ---
+
 import React from 'react';
 import StablecoinClient from './_components/StablecoinClient';
 
@@ -5267,7 +4987,7 @@ export const metadata = {
   description: 'Stablecoin supply, flows, and distribution across blockchains.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 async function getStablecoinData() {
   try {
@@ -5298,9 +5018,8 @@ export default async function StablecoinsPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/data/stablecoins/usd/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/data/stablecoins/usd/page.tsx ---
+
 import React from 'react';
 import { MetricCard } from '../../_components/MetricCard';
 
@@ -5329,9 +5048,8 @@ export default function Page() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/error.tsx ---
+
 'use client';
 
 import * as Sentry from '@sentry/nextjs';
@@ -5370,9 +5088,8 @@ export default function GlobalError({
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/events/_components/EventsClient.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/events/_components/EventsClient.tsx ---
+
 'use client';
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -5517,9 +5234,8 @@ function EventCard({
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/events/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/events/page.tsx ---
+
 import React from 'react';
 import { getSupabase } from '@/lib/supabase';
 import type { CryptoEvent } from '@/lib/types';
@@ -5530,7 +5246,7 @@ export const metadata = {
   description: 'Global crypto conferences, hackathons, and protocol milestones.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 async function getEvents(): Promise<CryptoEvent[]> {
   const supabase = getSupabase();
@@ -5566,9 +5282,8 @@ export default async function EventsPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/feed.xml/route.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/feed.xml/route.ts ---
+
 import { getAllArticles } from '@/lib/articles';
 
 export async function GET() {
@@ -5615,9 +5330,8 @@ export async function GET() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/go-alpha/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/go-alpha/page.tsx ---
+
 import React from 'react';
 import Header from '@/components/common/Header';
 import Icon from '@/components/ui/AppIcon';
@@ -5700,9 +5414,8 @@ export default function GoAlpha() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/layout.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/layout.tsx ---
+
 import React, { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { Merriweather, Inter, JetBrains_Mono, Space_Mono } from 'next/font/google';
@@ -5811,9 +5524,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/learning/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/learning/page.tsx ---
+
 import React from 'react';
 import Image from 'next/image';
 
@@ -5891,9 +5603,8 @@ export default function LearningHub() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/manifest.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/manifest.ts ---
+
 import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
@@ -5919,9 +5630,8 @@ export default function manifest(): MetadataRoute.Manifest {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/news/[id]/_components/ArticleSidebar.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/news/[id]/_components/ArticleSidebar.tsx ---
+
 import { getAllArticles } from '@/lib/articles';
 import Link from 'next/link';
 
@@ -5964,9 +5674,8 @@ export async function ArticleSidebar() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/news/[id]/_components/ReadingProgress.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/news/[id]/_components/ReadingProgress.tsx ---
+
 'use client';
 import { useState, useEffect } from 'react';
 
@@ -5989,9 +5698,8 @@ export function ReadingProgress() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/news/[id]/_components/StickyShareBar.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/news/[id]/_components/StickyShareBar.tsx ---
+
 'use client';
 import { useState, useEffect } from 'react';
 
@@ -6068,9 +5776,8 @@ export function StickyShareBar({ title, articleId }: { title: string; articleId:
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/news/[id]/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/news/[id]/page.tsx ---
+
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { getArticleById, getRelatedArticles, calculateReadingTime } from '@/lib/articles';
@@ -6247,9 +5954,8 @@ export default async function NewsArticlePage({
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/not-found.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/not-found.tsx ---
+
 'use client';
 
 import React from 'react';
@@ -6257,58 +5963,40 @@ import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
 
 export default function NotFound() {
-    const router = useRouter();
+  const router = useRouter();
 
-    const handleGoHome = () => {
-        router?.push('/homepage');
-    };
-
-    const handleGoBack = () => {
-        if (typeof window !== 'undefined') {
-            window.history?.back();
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-            <div className="text-center max-w-md">
-                <div className="flex justify-center mb-6">
-                    <div className="relative">
-                        <h1 className="text-9xl font-bold text-primary opacity-20">404</h1>
-                    </div>
-                </div>
-
-                <h2 className="text-2xl font-medium text-foreground mb-2">Page Not Found</h2>
-                <p className="text-muted-foreground mb-8">
-                    The page you're looking for doesn't exist. Let's get you back!
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button
-                        onClick={handleGoBack}
-                        className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors duration-200"
-                    >
-                        <Icon name="ArrowLeftIcon" size={16} />
-                        Go Back
-                    </button>
-
-                    <button
-                        onClick={handleGoHome}
-                        className="inline-flex items-center justify-center gap-2 border border-border bg-background text-foreground px-6 py-3 rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
-                    >
-                        <Icon name="HomeIcon" size={16} />
-                        Back to Home
-                    </button>
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black p-4">
+      <div className="text-center max-w-md">
+        <h1 className="text-9xl font-bold text-[#FABF2C] opacity-20">404</h1>
+        <h2 className="text-2xl font-black text-white uppercase mb-2">Page Not Found</h2>
+        <p className="text-[#555] font-mono text-xs uppercase tracking-widest mb-8">
+          The page you're looking for doesn't exist.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center justify-center gap-2 border border-[#1a1a1a] text-white px-6 py-3 text-xs font-black uppercase tracking-widest hover:border-[#FABF2C] transition-all"
+          >
+            <Icon name="ArrowLeftIcon" size={16} />
+            Go Back
+          </button>
+          <button
+            onClick={() => router.push('/')}
+            className="inline-flex items-center justify-center gap-2 bg-[#FABF2C] text-black px-6 py-3 text-xs font-black uppercase tracking-widest hover:bg-white transition-all"
+          >
+            <Icon name="HomeIcon" size={16} />
+            Home
+          </button>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/page.tsx ---
+
 import React from 'react';
 import { getAllArticles, getIntelligence } from '@/lib/articles';
 import Link from 'next/link';
@@ -6481,9 +6169,8 @@ export default async function HomePage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/price-indexes/components/MiniSparkline.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/price-indexes/_components/MiniSparkline.tsx ---
+
 'use client';
 import React, { useMemo } from 'react';
 
@@ -6514,9 +6201,8 @@ export default function MiniSparkline({ data, isPositive }: { data: number[], is
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/price-indexes/components/PriceIndexesTerminal.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/price-indexes/_components/PriceIndexesTerminal.tsx ---
+
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -6723,9 +6409,8 @@ export default function PriceIndexesTerminal({ prices }: Props) {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/price-indexes/components/TerminalHighlights.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/price-indexes/_components/TerminalHighlights.tsx ---
+
 'use client';
 import React, { useMemo } from 'react';
 import type { PriceTableRow, NewsArticle } from '@/lib/types';
@@ -6822,9 +6507,8 @@ export default function TerminalHighlights({ coins, news }: Props) {
   );
 }
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/price-indexes/components/TerminalTableRow.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/price-indexes/_components/TerminalTableRow.tsx ---
+
 'use client';
 
 import React from 'react';
@@ -6955,9 +6639,8 @@ export default function TerminalTableRow({ coin, isEven }: Props) {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/price-indexes/error.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/price-indexes/error.tsx ---
+
 // src/app/price-indexes/error.tsx
 'use client';
 
@@ -6989,9 +6672,8 @@ export default function PriceIndexesError({
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/price-indexes/loading.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/price-indexes/loading.tsx ---
+
 // src/app/price-indexes/loading.tsx
 export default function PriceIndexesLoading() {
   return (
@@ -7027,9 +6709,8 @@ export default function PriceIndexesLoading() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/app/price-indexes/page.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/app/price-indexes/page.tsx ---
+
 import React from 'react';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
@@ -7066,9 +6747,8 @@ export default async function PriceIndexesPage() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/components/auth/AlphaGate.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/components/auth/AlphaGate.tsx ---
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -7112,9 +6792,8 @@ export default function AlphaGate({ children }: { children: React.ReactNode }) {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/components/auth/AuthButton.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/components/auth/AuthButton.tsx ---
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -7259,9 +6938,8 @@ export default function AuthButton() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/components/common/Breadcrumb.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/components/common/Breadcrumb.tsx ---
+
 'use client';
 
 import React from 'react';
@@ -7375,9 +7053,8 @@ const Breadcrumb = ({ items, className = '' }: BreadcrumbProps) => {
 export default Breadcrumb;
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/components/common/CookieConsent.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/components/common/CookieConsent.tsx ---
+
 'use client';
 import { useState, useEffect } from 'react';
 
@@ -7435,9 +7112,8 @@ export default function CookieConsent() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/components/common/Header.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/components/common/Header.tsx ---
+
 'use client';
 
 import React, { useState } from 'react';
@@ -7590,9 +7266,8 @@ export default function Header() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/components/common/PriceTicker.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/components/common/PriceTicker.tsx ---
+
 // src/components/common/PriceTicker.tsx
 'use client';
 
@@ -7688,11 +7363,11 @@ export default function PriceTicker() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/components/layout/Footer.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/components/layout/Footer.tsx ---
+
 import React from 'react';
 import Link from 'next/link';
+import NewsletterForm from './NewsletterForm';
 
 export default function Footer() {
   return (
@@ -7711,9 +7386,12 @@ export default function Footer() {
               { id: 'tw', label: 'X' },
               { id: 'tg', label: 'TG' },
               { id: 'dc', label: 'DC' },
-              { id: 'li', label: 'IN' }
+              { id: 'li', label: 'IN' },
             ].map((social) => (
-              <div key={social.id} className="w-8 h-8 border border-[#1a1a1a] flex items-center justify-center text-[10px] text-[#444] hover:border-primary hover:text-primary cursor-pointer transition-all">
+              <div
+                key={social.id}
+                className="w-8 h-8 border border-[#1a1a1a] flex items-center justify-center text-[10px] text-[#444] hover:border-primary hover:text-primary cursor-pointer transition-all"
+              >
                 {social.label}
               </div>
             ))}
@@ -7723,39 +7401,32 @@ export default function Footer() {
         <div>
           <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6">Network</h4>
           <ul className="space-y-4">
-            {['News Hub', 'Data Terminal', 'Learning Hub', 'Go Alpha'].map((item) => (
-              <li key={item}>
-                <Link href="/homepage" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">{item}</Link>
-              </li>
-            ))}
+            <li><Link href="/news" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">News Hub</Link></li>
+            <li><Link href="/data" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Data Terminal</Link></li>
+            <li><Link href="/learning" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Learning Hub</Link></li>
+            <li><Link href="/go-alpha" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Go Alpha</Link></li>
           </ul>
         </div>
 
         <div>
           <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6">Policies</h4>
           <ul className="space-y-4">
-            {['Privacy Policy', 'Terms of Service', 'Cookie Policy', 'Editorial Guidelines'].map((item) => (
-              <li key={item}>
-                <Link href="/homepage" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">{item}</Link>
-              </li>
-            ))}
+            <li><Link href="/privacy" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Privacy Policy</Link></li>
+            <li><Link href="/terms" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Terms of Service</Link></li>
+            <li><Link href="/cookies" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Cookie Policy</Link></li>
+            <li><Link href="/editorial" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Editorial Guidelines</Link></li>
           </ul>
         </div>
 
         <div>
           <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6">Daily Briefing</h4>
-          <p className="text-[#444] text-xs mb-6 font-medium">Institutional alpha delivered to your inbox every morning.</p>
-          <form className="flex">
-            <input 
-              type="email" 
-              placeholder="Email address" 
-              className="bg-[#0a0a0a] border border-[#1a1a1a] px-4 py-2 text-xs text-white focus:outline-none focus:border-primary flex-grow"
-            />
-            <button className="bg-primary text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all">Join</button>
-          </form>
+          <p className="text-[#444] text-xs mb-6 font-medium">
+            Institutional alpha delivered to your inbox every morning.
+          </p>
+          <NewsletterForm />
         </div>
       </div>
-      
+
       <div className="container mx-auto mt-16 pt-8 border-t border-[#111] flex justify-between items-center">
         <p className="text-[9px] text-[#333] font-mono uppercase tracking-widest">
           © 2026 CryptoBrainNews. Market Data by DefiLlama.
@@ -7766,29 +7437,94 @@ export default function Footer() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/components/layout/Ticker.tsx
-───────────────────────────────────────────────────────────────────
+
+--- FILE: src/components/layout/NewsletterForm.tsx ---
+
+'use client';
+
+import React, { useState } from 'react';
+
+export default function NewsletterForm() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !email.includes('@')) return;
+
+    setStatus('loading');
+    try {
+      // TODO: Replace with your newsletter provider (Resend, Mailchimp, etc.)
+      // For now, just log and show success to prevent silent failure
+      console.log('[Newsletter] Signup:', email);
+      setStatus('success');
+      setEmail('');
+    } catch {
+      setStatus('error');
+    }
+  }
+
+  if (status === 'success') {
+    return (
+      <p className="text-[#00d672] font-mono text-xs uppercase tracking-widest">
+        ✓ You&apos;re on the list.
+      </p>
+    );
+  }
+
+  return (
+    <form className="flex" onSubmit={handleSubmit}>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email address"
+        required
+        disabled={status === 'loading'}
+        className="bg-[#0a0a0a] border border-[#1a1a1a] px-4 py-2 text-xs text-white focus:outline-none focus:border-primary flex-grow disabled:opacity-50"
+      />
+      <button
+        type="submit"
+        disabled={status === 'loading'}
+        className="bg-primary text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all disabled:opacity-50"
+      >
+        {status === 'loading' ? '...' : 'Join'}
+      </button>
+      {status === 'error' && (
+        <p className="text-[#ff4757] font-mono text-[10px] mt-1">Something went wrong.</p>
+      )}
+    </form>
+  );
+}
+
+
+--- FILE: src/components/layout/Ticker.tsx ---
+
 'use client';
 import useSWR from 'swr';
+
+const COINGECKO_URL = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,binancecoin,ripple,cardano,avalanche-2,chainlink,polkadot,uniswap&order=market_cap_desc&per_page=10&page=1';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function Ticker() {
-  const { data } = useSWR('/api/prices', fetcher, { refreshInterval: 30000 });
+  const { data } = useSWR(COINGECKO_URL, fetcher, { refreshInterval: 60000 });
 
-  if (!data || !Array.isArray(data)) return <div className="h-8 bg-black border-b border-white/5" />;
+  if (!data || !Array.isArray(data)) {
+    return <div className="h-8 bg-black border-b border-white/5" />;
+  }
+
+  const items = [...data, ...data]; // duplicate for seamless loop
 
   return (
     <div className="h-8 bg-black border-b border-white/5 overflow-hidden flex items-center">
       <div className="flex animate-marquee whitespace-nowrap gap-8 px-4">
-        {data.slice(0, 15).map((coin: any) => (
-          <div key={coin.id} className="flex items-center gap-2 font-mono text-[10px] uppercase">
+        {items.map((coin: any, i: number) => (
+          <div key={`${coin.id}-${i}`} className="flex items-center gap-2 font-mono text-[10px] uppercase">
             <span className="text-gray-500">{coin.symbol}</span>
-            <span className="text-white">${coin.current_price.toLocaleString()}</span>
+            <span className="text-white">${coin.current_price?.toLocaleString() ?? '—'}</span>
             <span className={coin.price_change_percentage_24h >= 0 ? 'text-green-500' : 'text-red-500'}>
-              {coin.price_change_percentage_24h >= 0 ? '▲' : '▼'} 
-              {Math.abs(coin.price_change_percentage_24h).toFixed(2)}%
+              {coin.price_change_percentage_24h >= 0 ? '▲' : '▼'}{Math.abs(coin.price_change_percentage_24h ?? 0).toFixed(2)}%
             </span>
           </div>
         ))}
@@ -7798,9 +7534,8 @@ export default function Ticker() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/components/news/AINewsFeed.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/components/news/AINewsFeed.tsx ---
+
 'use client';
 import useSWR from 'swr';
 
@@ -7864,9 +7599,8 @@ export default function AINewsFeed() {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/components/ui/AppIcon.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/components/ui/AppIcon.tsx ---
+
 'use client';
 
 import React from 'react';
@@ -7924,36 +7658,46 @@ function Icon({
 export default Icon;
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/components/ui/AppImage.tsx
-───────────────────────────────────────────────────────────────────
+--- FILE: src/components/ui/AppImage.tsx ---
+
 'use client';
-import Image from 'next/image';
+import Image, { type ImageProps } from 'next/image';
 import { useState } from 'react';
 
-export default function AppImage({ src, alt, fill, className, priority }: any) {
+const FALLBACK_SRC =
+  'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2000';
+
+interface AppImageProps extends Omit<ImageProps, 'src' | 'alt'> {
+  src?: string | null;
+  alt?: string;
+}
+
+export default function AppImage({
+  src,
+  alt = 'CryptoBrain',
+  className,
+  ...rest
+}: AppImageProps) {
   const [error, setError] = useState(false);
-  
-  // High-quality crypto placeholder if image fails
-  const fallback = "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2000";
+
+  const resolvedSrc = error || !src ? FALLBACK_SRC : src;
 
   return (
     <Image
-      src={error || !src ? fallback : src}
-      alt={alt || "CryptoBrain"}
-      fill={fill}
-      className={`${className} ${error ? 'opacity-50 grayscale' : ''}`}
-      priority={priority}
+      src={resolvedSrc}
+      alt={alt}
+      className={`${className ?? ''} ${error ? 'opacity-50 grayscale' : ''}`}
       onError={() => setError(true)}
-      unoptimized
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      {...rest}
     />
   );
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/lib/api.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/lib/api.ts ---
+
+import { fetchWithTimeout } from './fetch-with-timeout';
 import { cached } from './cache';
 import type { CoinMarketData, DeFiProtocol } from './types';
 import { FALLBACK_MARKET_DATA } from './fallback-data';
@@ -7962,16 +7706,14 @@ const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 const DEFI_LLAMA_BASE = 'https://api.llama.fi';
 
 // ─── Market Data ────────────────────────────────────────────────────────
+
 export async function getLiveMarketPrices(): Promise<CoinMarketData[]> {
   return cached(
     'market:prices',
     async () => {
       try {
-        const res = await fetch(
-          `${COINGECKO_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&sparkline=true&price_change_percentage=7d`,
-          { next: { revalidate: 300 } }
-        );
-        if (!res.ok) throw new Error('Failed to fetch');
+        const res = await fetchWithTimeout(`${COINGECKO_BASE}/coins/markets?...`, { next: { revalidate: 300 } });
+        if (!res.ok) throw new Error(`CoinGecko ${res.status}`);
         return await res.json();
       } catch {
         return FALLBACK_MARKET_DATA;
@@ -7981,30 +7723,34 @@ export async function getLiveMarketPrices(): Promise<CoinMarketData[]> {
   );
 }
 
+/** @alias getLiveMarketPrices — used by /api/prices route */
+export const getLivePrices = getLiveMarketPrices;
+
 export async function getCoinPrice(coinId: string): Promise<number | null> {
   try {
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `${COINGECKO_BASE}/simple/price?ids=${coinId}&vs_currencies=usd`,
       { next: { revalidate: 60 } }
     );
     if (!res.ok) return null;
     const data = await res.json();
-    return data[coinId]?.usd || null;
+    return data[coinId]?.usd ?? null;
   } catch {
     return null;
   }
 }
 
 // ─── DeFi Data ──────────────────────────────────────────────────────────
+
 export async function getDeFiProtocols(): Promise<DeFiProtocol[]> {
   return cached(
     'defi:protocols',
     async () => {
       try {
-        const res = await fetch(`${DEFI_LLAMA_BASE}/protocols`, {
+        const res = await fetchWithTimeout(`${DEFI_LLAMA_BASE}/protocols`, {
           next: { revalidate: 600 },
         });
-        if (!res.ok) throw new Error('Failed to fetch');
+        if (!res.ok) throw new Error(`DefiLlama ${res.status}`);
         return await res.json();
       } catch {
         return [];
@@ -8016,7 +7762,7 @@ export async function getDeFiProtocols(): Promise<DeFiProtocol[]> {
 
 export async function getChainTVL(chain: string): Promise<number | null> {
   try {
-    const res = await fetch(`${DEFI_LLAMA_BASE}/tvl/${chain}`, {
+    const res = await fetchWithTimeout(`${DEFI_LLAMA_BASE}/tvl/${chain}`, {
       next: { revalidate: 600 },
     });
     if (!res.ok) return null;
@@ -8026,9 +7772,83 @@ export async function getChainTVL(chain: string): Promise<number | null> {
   }
 }
 
-───────────────────────────────────────────────────────────────────
-FILE: src/lib/articles.ts
-───────────────────────────────────────────────────────────────────
+// ─── DEX Volume (DefiLlama) ─────────────────────────────────────────────
+
+export interface DexVolumeDataPoint {
+  date: string;
+  volume: number;
+}
+
+export async function getDexVolume(): Promise<DexVolumeDataPoint[]> {
+  return cached(
+    'dex:volume:llama',
+    async () => {
+      try {
+        const res = await fetchWithTimeout(`${DEFI_LLAMA_BASE}/overview/dexs?excludeTotalDataChart=false`, {
+          next: { revalidate: 600 },
+        });
+        if (!res.ok) throw new Error(`DefiLlama DEX ${res.status}`);
+        const json = await res.json();
+        const chart: Array<[number, number]> = json.totalDataChart ?? [];
+        return chart.map(([ts, vol]) => ({
+          date: new Date(ts * 1000).toISOString().slice(0, 10),
+          volume: vol,
+        }));
+      } catch {
+        return [];
+      }
+    },
+    600
+  );
+}
+
+// ─── Yields (DefiLlama) ─────────────────────────────────────────────────
+
+export interface YieldPool {
+  project: string;
+  chain: string;
+  symbol: string;
+  tvlUsd: number;
+  apy: number;
+  apyPct1D: number;
+  pool: string;
+}
+
+export async function getTopYields(): Promise<YieldPool[]> {
+  return cached(
+    'defi:yields',
+    async () => {
+      try {
+        const res = await fetchWithTimeout('https://yields.llama.fi/pools', {
+          next: { revalidate: 600 },
+        });
+        if (!res.ok) throw new Error(`Yields ${res.status}`);
+        const json = await res.json();
+        const pools: YieldPool[] = (json.data ?? [])
+          .filter((p: any) => p.tvlUsd > 1_000_000 && p.apy > 0 && p.apy < 1000)
+          .sort((a: any, b: any) => b.tvlUsd - a.tvlUsd)
+          .slice(0, 50)
+          .map((p: any): YieldPool => ({
+            project: p.project ?? 'Unknown',
+            chain: p.chain ?? 'Unknown',
+            symbol: p.symbol ?? '—',
+            tvlUsd: p.tvlUsd ?? 0,
+            apy: p.apy ?? 0,
+            apyPct1D: p.apyPct1D ?? 0,
+            pool: p.pool ?? '',
+          }));
+        return pools;
+      } catch {
+        return [];
+      }
+    },
+    600
+  );
+}
+
+
+--- FILE: src/lib/articles.ts ---
+
 import 'server-only';
 import { cached } from './cache';
 import { getSupabase } from './supabase';
@@ -8147,9 +7967,8 @@ export function calculateReadingTime(text: string): number {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/lib/cache.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/lib/cache.ts ---
+
 import 'server-only';
 import { Redis } from '@upstash/redis';
 
@@ -8260,67 +8079,69 @@ export async function cached<T>(
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/lib/dune.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/lib/dune.ts ---
+
+import { cached } from './cache';
 import 'server-only';
 
 // ═══ Dune Query IDs ═══
-// These must be created in your Dune dashboard and replace placeholder numbers below
 export const QUERY_IDS = {
-  BTC_ACTIVE_ADDRESSES:  6705328,
-  BTC_DAILY_TRANSACTIONS: 6705623,
-  ETH_ACTIVE_ADDRESSES: 6705462,
-  ETH_DAILY_TRANSACTIONS: 6705475,
+  BTC_ACTIVE_ADDRESSES:    6705328,
+  BTC_DAILY_TRANSACTIONS:  6705623,
+  ETH_ACTIVE_ADDRESSES:    6705462,
+  ETH_DAILY_TRANSACTIONS:  6705475,
   SOL_DAILY_TRANSACTIONS:  6704569,
-  SOL_DAILY_FEES: 6705036,
-  WHALE_TRANSFERS: 6705679,
-  STABLECOIN_SUPPLY: 6705686,
-  STABLECOIN_HOLDERS: 6705803,
-  DEX_DAILY_VOLUMES: 6705479,
-  DEX_TOP_PROTOCOLS:  6705632,
-  DEX_BY_BLOCKCHAIN: 6705655,
-  L2_ACTIVE_ADDRESSES: 6705808,
-  L2_GAS_FEES: 6704769,
-  NFT_TOP_COLLECTIONS: 6705026,
-  NFT_DAILY_VOLUMES: 6705030,
-  NFT_BY_BLOCKCHAIN: 6705034,
-  DEX_LIQUIDITY_POOLS: 6705658,
-  DEFI_PROTOCOL_USERS: 6705851,
-  UNISWAP_GOVERNANCE: 6705858,
-  DAO_ACTIVITY: 6705938,
-  CEX_DEX_VOLUME: 6705817,
-  TOP_TOKEN_PAIRS: 6705951,
+  SOL_DAILY_FEES:          6705036,
+  WHALE_TRANSFERS:         6705679,
+  STABLECOIN_SUPPLY:       6705686,
+  STABLECOIN_HOLDERS:      6705803,
+  DEX_DAILY_VOLUMES:       6705479,
+  DEX_TOP_PROTOCOLS:       6705632,
+  DEX_BY_BLOCKCHAIN:       6705655,
+  L2_ACTIVE_ADDRESSES:     6705808,
+  L2_GAS_FEES:             6704769,
+  NFT_TOP_COLLECTIONS:     6705026,
+  NFT_DAILY_VOLUMES:       6705030,
+  NFT_BY_BLOCKCHAIN:       6705034,
+  DEX_LIQUIDITY_POOLS:     6705658,
+  DEFI_PROTOCOL_USERS:     6705851,
+  UNISWAP_GOVERNANCE:      6705858,
+  DAO_ACTIVITY:            6705938,
+  CEX_DEX_VOLUME:          6705817,
+  TOP_TOKEN_PAIRS:         6705951,
 } as const;
 
-interface DuneRow {
+export interface DuneRow {
   [key: string]: string | number | null;
 }
 
 export interface DuneResponse {
   execution_id: string;
   state: 'QUERY_STATE_EXECUTING' | 'QUERY_STATE_COMPLETED' | 'QUERY_STATE_FAILED';
-  result?: {
-    rows: DuneRow[];
-  };
+  result?: { rows: DuneRow[] };
   error?: string;
 }
 
 const DUNE_API_KEY = process.env.DUNE_API_KEY;
 const DUNE_BASE_URL = 'https://api.dune.com/api/v1';
 
-// ─── Fetch with polling ─────────────────────────────────────────────────
+// Cache TTL constants (seconds)
+const TTL_30_MIN  = 1800;
+const TTL_1_HOUR  = 3600;
+const TTL_6_HOURS = 21600;
+
+// ─── Core fetch + poll (internal — never call directly from pages) ──────────
 async function fetchDuneQuery(
   queryId: number,
   parameters: Record<string, string | number> = {}
 ): Promise<DuneRow[]> {
   if (!DUNE_API_KEY) {
-    console.error('[Dune] API key not configured');
+    console.error('[Dune] API key not configured — set DUNE_API_KEY env var');
     return [];
   }
 
   try {
-    // 1. Execute query
+    // 1. Trigger execution
     const execRes = await fetch(`${DUNE_BASE_URL}/query/${queryId}/execute`, {
       method: 'POST',
       headers: {
@@ -8336,38 +8157,25 @@ async function fetchDuneQuery(
 
     const execData = (await execRes.json()) as { execution_id?: string };
     const executionId = execData.execution_id;
+    if (!executionId) throw new Error('[Dune] No execution_id returned');
 
-    if (!executionId) {
-      throw new Error('[Dune] No execution_id returned');
-    }
-
-    // 2. Poll for results (max 30 seconds)
-    let attempts = 0;
-    const maxAttempts = 60;
-    while (attempts < maxAttempts) {
+    // 2. Poll for results (max 30 seconds, 500ms interval)
+    for (let attempts = 0; attempts < 60; attempts++) {
       const statusRes = await fetch(
         `${DUNE_BASE_URL}/execution/${executionId}/results`,
-        {
-          headers: { 'X-DUNE-API-KEY': DUNE_API_KEY },
-        }
+        { headers: { 'X-DUNE-API-KEY': DUNE_API_KEY } }
       );
 
       if (!statusRes.ok) {
         throw new Error(`[Dune] Status check failed: ${statusRes.statusText}`);
       }
 
-      const statusData = (await statusRes.json()) as DuneResponse;
+      const data = (await statusRes.json()) as DuneResponse;
 
-      if (statusData.state === 'QUERY_STATE_COMPLETED') {
-        return statusData.result?.rows || [];
-      }
+      if (data.state === 'QUERY_STATE_COMPLETED') return data.result?.rows ?? [];
+      if (data.state === 'QUERY_STATE_FAILED')    throw new Error(`[Dune] Query failed: ${data.error}`);
 
-      if (statusData.state === 'QUERY_STATE_FAILED') {
-        throw new Error(`[Dune] Query failed: ${statusData.error}`);
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      attempts++;
+      await new Promise((r) => setTimeout(r, 500));
     }
 
     throw new Error('[Dune] Query timeout after 30 seconds');
@@ -8377,101 +8185,197 @@ async function fetchDuneQuery(
   }
 }
 
+// ─── Public exports — all wrapped with cached() ──────────────────────────────
+// Rule: fast-moving data (prices, volumes) = 30 min TTL
+//       slow-moving data (governance, holders) = 1–6 hour TTL
+
 export async function getBTCActiveAddresses(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.BTC_ACTIVE_ADDRESSES, { days });
+  return cached(
+    `dune:btc-active-addresses:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.BTC_ACTIVE_ADDRESSES, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getBTCDailyTransactions(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.BTC_DAILY_TRANSACTIONS, { days });
+  return cached(
+    `dune:btc-daily-txns:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.BTC_DAILY_TRANSACTIONS, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getETHActiveAddresses(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.ETH_ACTIVE_ADDRESSES, { days });
+  return cached(
+    `dune:eth-active-addresses:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.ETH_ACTIVE_ADDRESSES, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getETHDailyTransactions(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.ETH_DAILY_TRANSACTIONS, { days });
+  return cached(
+    `dune:eth-daily-txns:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.ETH_DAILY_TRANSACTIONS, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getSOLDailyTransactions(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.SOL_DAILY_TRANSACTIONS, { days });
+  return cached(
+    `dune:sol-daily-txns:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.SOL_DAILY_TRANSACTIONS, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getSOLDailyFees(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.SOL_DAILY_FEES, { days });
+  return cached(
+    `dune:sol-daily-fees:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.SOL_DAILY_FEES, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getWhaleTransfers(days = 30): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.WHALE_TRANSFERS, { days });
+  return cached(
+    `dune:whale-transfers:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.WHALE_TRANSFERS, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getStablecoinSupply(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.STABLECOIN_SUPPLY, { days });
+  return cached(
+    `dune:stablecoin-supply:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.STABLECOIN_SUPPLY, { days }),
+    TTL_1_HOUR
+  );
 }
 
 export async function getStablecoinHolders(): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.STABLECOIN_HOLDERS);
+  return cached(
+    'dune:stablecoin-holders',
+    () => fetchDuneQuery(QUERY_IDS.STABLECOIN_HOLDERS),
+    TTL_6_HOURS
+  );
 }
 
 export async function getDEXDailyVolumes(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.DEX_DAILY_VOLUMES, { days });
+  return cached(
+    `dune:dex-daily-volumes:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.DEX_DAILY_VOLUMES, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getDEXTopProtocols(): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.DEX_TOP_PROTOCOLS);
+  return cached(
+    'dune:dex-top-protocols',
+    () => fetchDuneQuery(QUERY_IDS.DEX_TOP_PROTOCOLS),
+    TTL_1_HOUR
+  );
 }
 
 export async function getDEXByBlockchain(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.DEX_BY_BLOCKCHAIN, { days });
+  return cached(
+    `dune:dex-by-blockchain:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.DEX_BY_BLOCKCHAIN, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getL2ActiveAddresses(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.L2_ACTIVE_ADDRESSES, { days });
+  return cached(
+    `dune:l2-active-addresses:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.L2_ACTIVE_ADDRESSES, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getL2GasFees(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.L2_GAS_FEES, { days });
+  return cached(
+    `dune:l2-gas-fees:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.L2_GAS_FEES, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getNFTTopCollections(): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.NFT_TOP_COLLECTIONS);
+  return cached(
+    'dune:nft-top-collections',
+    () => fetchDuneQuery(QUERY_IDS.NFT_TOP_COLLECTIONS),
+    TTL_1_HOUR
+  );
 }
 
 export async function getNFTDailyVolumes(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.NFT_DAILY_VOLUMES, { days });
+  return cached(
+    `dune:nft-daily-volumes:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.NFT_DAILY_VOLUMES, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getNFTByBlockchain(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.NFT_BY_BLOCKCHAIN, { days });
+  return cached(
+    `dune:nft-by-blockchain:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.NFT_BY_BLOCKCHAIN, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getDEXLiquidityPools(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.DEX_LIQUIDITY_POOLS, { days });
+  return cached(
+    `dune:dex-liquidity-pools:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.DEX_LIQUIDITY_POOLS, { days }),
+    TTL_1_HOUR
+  );
 }
 
 export async function getDeFiProtocolUsers(): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.DEFI_PROTOCOL_USERS);
+  return cached(
+    'dune:defi-protocol-users',
+    () => fetchDuneQuery(QUERY_IDS.DEFI_PROTOCOL_USERS),
+    TTL_1_HOUR
+  );
 }
 
 export async function getUniswapGovernance(): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.UNISWAP_GOVERNANCE);
+  return cached(
+    'dune:uniswap-governance',
+    () => fetchDuneQuery(QUERY_IDS.UNISWAP_GOVERNANCE),
+    TTL_6_HOURS
+  );
 }
 
 export async function getDAOActivity(): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.DAO_ACTIVITY);
+  return cached(
+    'dune:dao-activity',
+    () => fetchDuneQuery(QUERY_IDS.DAO_ACTIVITY),
+    TTL_6_HOURS
+  );
 }
 
 export async function getCEXDEXVolume(days = 90): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.CEX_DEX_VOLUME, { days });
+  return cached(
+    `dune:cex-dex-volume:${days}`,
+    () => fetchDuneQuery(QUERY_IDS.CEX_DEX_VOLUME, { days }),
+    TTL_30_MIN
+  );
 }
 
 export async function getTopTokenPairs(): Promise<DuneRow[]> {
-  return fetchDuneQuery(QUERY_IDS.TOP_TOKEN_PAIRS);
+  return cached(
+    'dune:top-token-pairs',
+    () => fetchDuneQuery(QUERY_IDS.TOP_TOKEN_PAIRS),
+    TTL_1_HOUR
+  );
 }
 
-───────────────────────────────────────────────────────────────────
-FILE: src/lib/fallback-data.ts
-───────────────────────────────────────────────────────────────────
+
+--- FILE: src/lib/fallback-data.ts ---
+
 import type { CoinMarketData } from './types';
 
 export const FALLBACK_MARKET_DATA: CoinMarketData[] = [
@@ -8528,9 +8432,72 @@ export const FALLBACK_MARKET_DATA: CoinMarketData[] = [
   },
 ];
 
-───────────────────────────────────────────────────────────────────
-FILE: src/lib/sidebar-config.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/lib/fetch-with-timeout.ts ---
+
+import 'server-only';
+
+export async function fetchWithTimeout(
+  url: string,
+  options: RequestInit & { next?: { revalidate?: number } } = {},
+  timeoutMs = 8_000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer); // always clean up the timer
+  }
+}
+
+
+--- FILE: src/lib/rate-limit.ts ---
+
+import 'server-only';
+
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+
+// In-memory store (works per serverless instance; use Redis for distributed)
+const store = new Map<string, RateLimitEntry>();
+
+/**
+ * Simple rate limiter.
+ * @returns true if the request should be BLOCKED
+ */
+export function isRateLimited(
+  identifier: string,
+  maxRequests: number = 5,
+  windowMs: number = 60_000
+): boolean {
+  const now = Date.now();
+  const entry = store.get(identifier);
+
+  if (!entry || now > entry.resetAt) {
+    store.set(identifier, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+
+  entry.count++;
+  if (entry.count > maxRequests) {
+    return true;
+  }
+
+  return false;
+}
+
+
+ 
+
+ 
+
+ 
+ 
+
+--- FILE: src/lib/sidebar-config.ts ---
+
 // src/lib/sidebar-config.ts
 // ─── Data Terminal Navigation Configuration ──────────────────────────────
 import type { SidebarSection } from './types';
@@ -8623,9 +8590,8 @@ export const DATA_SECTIONS: SidebarSection[] = [
 ];
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/lib/supabase-server.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/lib/supabase-server.ts ---
+
 // src/lib/supabase-server.ts
 // ─── Server-only Supabase client ─────────────────────────────────────────
 import 'server-only';
@@ -8650,9 +8616,8 @@ export function getServerSupabase(): SupabaseClient {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/lib/supabase.ts
-───────────────────────────────────────────────────────────────────
+--- FILE: src/lib/supabase.ts ---
+
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 let _client: SupabaseClient | null = null;
@@ -8664,7 +8629,15 @@ export function getSupabase(): SupabaseClient {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    _client = createClient('https://placeholder.supabase.co', 'placeholder-key');
+    console.error(
+      '[Supabase] CRITICAL: Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. ' +
+      'All database operations will fail. Set these environment variables.'
+    );
+    // Still create a client to avoid null crashes, but log prominently
+    _client = createClient(
+      url || 'https://placeholder.supabase.co',
+      key || 'placeholder-key'
+    );
   } else {
     _client = createClient(url, key);
   }
@@ -8672,10 +8645,20 @@ export function getSupabase(): SupabaseClient {
   return _client;
 }
 
+/**
+ * Check if Supabase is properly configured.
+ * Use this in health checks and startup validation.
+ */
+export function isSupabaseConfigured(): boolean {
+  return !!(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+}
 
-───────────────────────────────────────────────────────────────────
-FILE: src/lib/types.ts
-───────────────────────────────────────────────────────────────────
+
+--- FILE: src/lib/types.ts ---
+
 export interface NewsArticle {
   id: string;
   title: string;
@@ -8797,9 +8780,8 @@ export interface PriceTableRow {
 }
 
 
-───────────────────────────────────────────────────────────────────
-FILE: src/styles/globals.css
-───────────────────────────────────────────────────────────────────
+--- FILE: src/styles/globals.css ---
+
 /* src/styles/globals.css */
 @tailwind base;
 @tailwind components;
@@ -8941,56 +8923,101 @@ h1, h2, h3, h4 {
 }
 
 
-═══════════════════════════════════════════════════════════════════
-⚙️  CONFIG FILES
-═══════════════════════════════════════════════════════════════════
+========== CONFIG FILES ==========
 
-───────────────────────────────────────────────────────────────────
-FILE: next.config.ts
-───────────────────────────────────────────────────────────────────
-import type { NextConfig } from 'next';
+--- next.config.mjs ---
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'assets.coingecko.com' },
       { protocol: 'https', hostname: 'images.cryptocompare.com' },
-      { protocol: 'https', hostname: 'img.rocket.new' }, // Keep for legacy mock data
+      { protocol: 'https', hostname: 'resources.cryptocompare.com' },
+      { protocol: 'https', hostname: 'resources.cryptocompare.com' },
+      { protocol: 'https', hostname: 'img.rocket.new' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'i.imgur.com' },
     ],
     dangerouslyAllowSVG: true,
   },
+  allowedDevOrigins: ['*.cloudworkstations.dev'],
   experimental: {
     serverActions: {
-      allowedOrigins: ['*'], // Required for IDX/Vercel flexibility
+      allowedOrigins: ['localhost:3000', 'cryptobrainnews.com', '*.vercel.app'],
     },
   },
-  // Security Headers
   async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
-        ],
-      },
-    ];
+    return [{
+      source: '/(.*)',
+      headers: [
+        { key: 'X-Frame-Options', value: 'DENY' },
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
+      ],
+    }];
   },
-  // Redirects (Consolidating Routes)
   async redirects() {
-    return [
-      { source: '/homepage', destination: '/', permanent: true },
-    ];
+    return [{ source: '/homepage', destination: '/', permanent: true }];
   },
 };
-
 export default nextConfig;
 
-───────────────────────────────────────────────────────────────────
-FILE: tsconfig.json
-───────────────────────────────────────────────────────────────────
+
+--- package.json ---
+
+{
+  "name": "cryptobrainnews",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@ai-sdk/groq": "^3.0.24",
+    "@duneanalytics/client-sdk": "^0.3.5",
+    "@heroicons/react": "^2.2.0",
+    "@sentry/nextjs": "^10.39.0",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.95.3",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/typography": "^0.5.19",
+    "@upstash/redis": "^1.36.2",
+    "@vercel/analytics": "^1.6.1",
+    "@vercel/speed-insights": "^1.3.1",
+    "ai": "^6.0.86",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.563.0",
+    "next": "16.0.8",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
+    "recharts": "^3.7.0",
+    "server-only": "^0.0.1",
+    "swr": "^2.4.0",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20.19.33",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.8",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5"
+  }
+}
+
+
+--- tsconfig.json ---
+
 {
   "compilerOptions": {
     "target": "ES2017",
@@ -9026,9 +9053,9 @@ FILE: tsconfig.json
   "exclude": ["node_modules"]
 }
 
-───────────────────────────────────────────────────────────────────
-FILE: tailwind.config.ts
-───────────────────────────────────────────────────────────────────
+
+--- tailwind.config.ts ---
+
 import type { Config } from "tailwindcss";
 
 const config: Config = {
@@ -9094,9 +9121,9 @@ export default config;
 //   },
 // }
 
-───────────────────────────────────────────────────────────────────
-FILE: postcss.config.mjs
-───────────────────────────────────────────────────────────────────
+
+--- postcss.config.mjs ---
+
 export default {
   plugins: {
     tailwindcss: {},
@@ -9104,9 +9131,9 @@ export default {
   },
 };
 
-───────────────────────────────────────────────────────────────────
-FILE: eslint.config.mjs
-───────────────────────────────────────────────────────────────────
+
+--- eslint.config.mjs ---
+
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
@@ -9126,13 +9153,11 @@ const eslintConfig = defineConfig([
 
 export default eslintConfig;
 
-═══════════════════════════════════════════════════════════════════
-📊 SENTRY CONFIGURATION
-═══════════════════════════════════════════════════════════════════
 
-───────────────────────────────────────────────────────────────────
-FILE: sentry.client.config.ts
-───────────────────────────────────────────────────────────────────
+========== SENTRY CONFIGS ==========
+
+--- sentry.client.config.ts ---
+
 import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
@@ -9144,9 +9169,9 @@ Sentry.init({
   enabled: process.env.NODE_ENV === 'production',
 });
 
-───────────────────────────────────────────────────────────────────
-FILE: sentry.server.config.ts
-───────────────────────────────────────────────────────────────────
+
+--- sentry.server.config.ts ---
+
 import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
@@ -9156,9 +9181,9 @@ Sentry.init({
   enabled: process.env.NODE_ENV === 'production',
 });
 
-───────────────────────────────────────────────────────────────────
-FILE: sentry.edge.config.ts
-───────────────────────────────────────────────────────────────────
+
+--- sentry.edge.config.ts ---
+
 import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
@@ -9168,7 +9193,7 @@ Sentry.init({
   enabled: process.env.NODE_ENV === 'production',
 });
 
-════════════════════════════════════════════════════════════════════
-✅ EXPORT COMPLETE
-📊 Total files included: 139
-════════════════════════════════════════════════════════════════════
+
+=========================================
+END OF CONTEXT
+=========================================

@@ -80,7 +80,8 @@ function SectionGroup({
           size={12}
         />
       </button>
-      {open && (
+      {/* FIX: Added section.children check to satisfy strict TypeScript */}
+      {open && section.children && (
         <div className="ml-4 mt-1 space-y-0.5 border-l border-[#333] pl-3">
           {section.children.map((item) => {
             const isItemActive = pathname === item.href;
