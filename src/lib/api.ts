@@ -1,12 +1,13 @@
 import { fetchWithTimeout } from './fetch-with-timeout';
 import { cached } from './cache';
-import type { CoinMarketData, DeFiProtocol, DexVolumePoint } from './types';
+import type { CoinMarketData, DeFiProtocol } from './types';
 import { FALLBACK_MARKET_DATA } from './fallback-data';
 
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 const DEFI_LLAMA_BASE = 'https://api.llama.fi';
 
-// Updated to accept currency and fetch 1h data!
+// ─── Market Data ────────────────────────────────────────────────────────
+
 export async function getLiveMarketPrices(currency = 'usd'): Promise<CoinMarketData[]> {
   return cached(`market:prices:${currency}`, async () => {
     try {
@@ -24,6 +25,22 @@ export async function getLiveMarketPrices(currency = 'usd'): Promise<CoinMarketD
 
 export const getLivePrices = getLiveMarketPrices;
 
+export async function getCoinPrice(coinId: string): Promise<number | null> {
+  try {
+    const res = await fetchWithTimeout(
+      `${COINGECKO_BASE}/simple/price?ids=${coinId}&vs_currencies=usd`,
+      { next: { revalidate: 60 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data[coinId]?.usd ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── DeFi Data ──────────────────────────────────────────────────────────
+
 export async function getDeFiProtocols(): Promise<DeFiProtocol[]> {
   return cached('defi:protocols', async () => {
     try {
@@ -36,7 +53,24 @@ export async function getDeFiProtocols(): Promise<DeFiProtocol[]> {
   }, 600);
 }
 
-export interface DexVolumeDataPoint { date: string; volume: number; }
+export async function getChainTVL(chain: string): Promise<number | null> {
+  try {
+    const res = await fetchWithTimeout(`${DEFI_LLAMA_BASE}/tvl/${chain}`, {
+      next: { revalidate: 600 },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+// ─── DEX Volume (DefiLlama) ─────────────────────────────────────────────
+
+export interface DexVolumeDataPoint {
+  date: string;
+  volume: number;
+}
 
 export async function getDexVolume(): Promise<DexVolumeDataPoint[]> {
   return cached('dex:volume:llama', async () => {
@@ -49,6 +83,43 @@ export async function getDexVolume(): Promise<DexVolumeDataPoint[]> {
         date: new Date(ts * 1000).toISOString().slice(0, 10),
         volume: vol,
       }));
+    } catch {
+      return [];
+    }
+  }, 600);
+}
+
+// ─── Yields (DefiLlama) ─────────────────────────────────────────────────
+
+export interface YieldPool {
+  project: string;
+  chain: string;
+  symbol: string;
+  tvlUsd: number;
+  apy: number;
+  apyPct1D: number;
+  pool: string;
+}
+
+export async function getTopYields(): Promise<YieldPool[]> {
+  return cached('defi:yields', async () => {
+    try {
+      const res = await fetchWithTimeout('https://yields.llama.fi/pools', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Yields ${res.status}`);
+      const json = await res.json();
+      return (json.data ?? [])
+        .filter((p: any) => p.tvlUsd > 1_000_000 && p.apy > 0 && p.apy < 1000)
+        .sort((a: any, b: any) => b.tvlUsd - a.tvlUsd)
+        .slice(0, 50)
+        .map((p: any): YieldPool => ({
+          project: p.project ?? 'Unknown',
+          chain: p.chain ?? 'Unknown',
+          symbol: p.symbol ?? '—',
+          tvlUsd: p.tvlUsd ?? 0,
+          apy: p.apy ?? 0,
+          apyPct1D: p.apyPct1D ?? 0,
+          pool: p.pool ?? '',
+        }));
     } catch {
       return [];
     }
