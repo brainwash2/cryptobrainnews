@@ -1,9 +1,7 @@
 import os
 import sys
 import requests
-from bs4 import BeautifulSoup
 from supabase import create_client, Client
-import feedparser
 import time
 import re
 
@@ -17,17 +15,9 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-}
-
-FEEDS = [
-    {"source": "Cointelegraph", "url": "https://cointelegraph.com/rss"}
-]
-
 def make_slug(title):
     slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
-    return slug[:50]
+    return slug[:50] + "-" + str(int(time.time()))
 
 def summarize_with_groq(text, title):
     url = "https://api.groq.com/openai/v1/chat/completions"
@@ -43,58 +33,57 @@ def summarize_with_groq(text, title):
     return None
 
 def fetch_and_process():
-    print("Starting Scraper Job...")
-    for feed in FEEDS:
-        try:
-            response = requests.get(feed['url'], headers=HEADERS, timeout=10)
-            if response.status_code != 200:
+    print("Starting Scraper Job via RSS2JSON...")
+    # Use rss2json to bypass Cloudflare/Bot protection
+    rss_url = "https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss"
+    
+    try:
+        response = requests.get(rss_url, timeout=15)
+        data = response.json()
+        
+        if data.get('status') != 'ok':
+            print("Failed to fetch RSS")
+            return
+
+        for item in data['items'][:4]:
+            # Check duplication
+            existing = supabase.table('articles').select('id').eq('title', item['title']).execute()
+            if len(existing.data) > 0:
+                print(f"Skipping duplicate: {item['title']}")
                 continue
-            parsed = feedparser.parse(response.content)
             
-            for entry in parsed.entries[:3]:
-                # Check duplication
-                existing = supabase.table('articles').select('id').eq('title', entry.title).execute()
-                if len(existing.data) > 0:
-                    continue
-                
-                raw_summary = entry.description if hasattr(entry, 'description') else entry.title
-                soup = BeautifulSoup(raw_summary, "html.parser")
-                clean_text = soup.get_text(separator=" ").strip()
-                
-                analysis = summarize_with_groq(clean_text, entry.title)
-                if not analysis:
-                    analysis = f"{entry.title}\n\n{clean_text}"
+            clean_text = re.sub(r'<[^>]+>', '', item['description']).strip()
+            
+            analysis = summarize_with_groq(clean_text, item['title'])
+            if not analysis:
+                analysis = f"{item['title']}\n\n{clean_text}"
 
-                parts = analysis.split('\n\n', 1)
-                final_title = parts[0].replace('**', '').replace('Title:', '').strip()
-                final_body = parts[1].strip() if len(parts) > 1 else clean_text
-                
-                image_url = "https://images.unsplash.com/photo-1621761191319-c6fb62004040?auto=format&fit=crop&q=80&w=1000"
-                if hasattr(entry, 'media_content'):
-                    image_url = entry.media_content[0]['url']
-                
-                slug = make_slug(final_title) + "-" + str(int(time.time()))
+            parts = analysis.split('\n\n', 1)
+            final_title = parts[0].replace('**', '').replace('Title:', '').strip()
+            final_content = parts[1].strip() if len(parts) > 1 else clean_text
+            
+            image_url = item.get('thumbnail') or item.get('enclosure', {}).get('link') or "https://images.unsplash.com/photo-1621761191319-c6fb62004040?q=80&w=1000"
 
-                data = {
-                    "title": final_title,
-                    "slug": slug,
-                    "body": final_body,
-                    "content": final_body,
-                    "image_url": image_url,
-                    "category": "Market News",
-                    "author_name": feed['source'],
-                    "source": feed['source'],
-                    "external_url": entry.link
-                }
-                
-                try:
-                    res = supabase.table('articles').insert(data).execute()
-                    print(f"✅ Published: {final_title}")
-                except Exception as e:
-                    print(f"❌ DB Error: {e}")
-                time.sleep(2)
-        except Exception as e:
-            print(f"Feed Error: {e}")
+            # EXACT MATCH WITH SUPABASE COLUMNS
+            db_payload = {
+                "title": final_title,
+                "slug": make_slug(final_title),
+                "content": final_content,
+                "excerpt": final_content[:150] + "...",
+                "image_url": image_url,
+                "category": "Market News",
+                "author": "Cointelegraph"
+            }
+            
+            try:
+                supabase.table('articles').insert(db_payload).execute()
+                print(f"✅ Published: {final_title}")
+            except Exception as e:
+                print(f"❌ DB Error: {e}")
+            time.sleep(2)
+            
+    except Exception as e:
+        print(f"Critical Error: {e}")
 
 if __name__ == "__main__":
     fetch_and_process()
