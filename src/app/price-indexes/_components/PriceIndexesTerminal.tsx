@@ -1,203 +1,191 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
-import type { CoinMarketData } from '@/lib/types';
-import TerminalTableRow from './TerminalTableRow';
-import TerminalHighlights from './TerminalHighlights';
+import React, { useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { CoinMarketData, NewsArticle } from '@/lib/types';
+import MiniSparkline from './MiniSparkline';
 
 interface Props {
   prices: CoinMarketData[];
+  news: NewsArticle[];
 }
 
-type SortField = 'market_cap_rank' | 'current_price' | 'price_change_percentage_24h' | 'price_change_percentage_7d' | 'market_cap' | 'total_volume';
-type SortDir = 'asc' | 'desc';
+const CATEGORIES = [
+  'All Coins', 'Solana Ecosystem', 'Stablecoin', 'Ethereum Ecosystem', 'Meme', 'AI Agents',
+  'DeFi', 'Gaming', 'Real World Assets', 'Layer 1', 'Layer 2', 'ZK Proofs', 'DePIN'
+];
 
-export default function PriceIndexesTerminal({ prices }: Props) {
-  const [sortField, setSortField] = useState<SortField>('market_cap_rank');
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
-  const [searchQuery, setSearchQuery] = useState('');
+const CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'KRW', 'CAD', 'AUD'];
 
-  const handleSort = useCallback((field: SortField) => {
-    if (sortField === field) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortField(field);
-      setSortDir(field === 'market_cap_rank' ? 'asc' : 'desc');
+export default function PriceIndexesTerminal({ prices, news }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentCurrency = (searchParams.get('currency') || 'usd').toUpperCase();
+  const [activeCat, setActiveCat] = useState('All Coins');
+  const [search, setSearch] = useState('');
+
+  // Hot News extraction
+  const hotNews = news.slice(0, 3);
+  const topGainers = [...prices].sort((a, b) => (b.price_change_percentage_24h || 0) - (a.price_change_percentage_24h || 0)).slice(0, 3);
+  const topLosers = [...prices].sort((a, b) => (a.price_change_percentage_24h || 0) - (b.price_change_percentage_24h || 0)).slice(0, 3);
+
+  const formatUsd = (val: number, isPrice = false) => {
+    const symbol = currentCurrency === 'EUR' ? '€' : currentCurrency === 'GBP' ? '£' : '$';
+    if (isPrice) {
+      if (val >= 1000) return `${symbol}${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+      if (val >= 1) return `${symbol}${val.toFixed(2)}`;
+      return `${symbol}${val.toFixed(6)}`;
     }
-  }, [sortField]);
+    if (val >= 1e12) return `${symbol}${(val / 1e12).toFixed(2)}T`;
+    if (val >= 1e9) return `${symbol}${(val / 1e9).toFixed(2)}B`;
+    if (val >= 1e6) return `${symbol}${(val / 1e6).toFixed(2)}M`;
+    return `${symbol}${val.toLocaleString()}`;
+  };
 
-  const filteredAndSorted = useMemo(() => {
-    let result = [...prices];
-
-    // Filter by search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          c.symbol.toLowerCase().includes(q)
-      );
-    }
-
-    // Sort
-    result.sort((a, b) => {
-      let aVal: number = 0;
-      let bVal: number = 0;
-
-      switch (sortField) {
-        case 'market_cap_rank':
-          aVal = a.market_cap_rank || 999;
-          bVal = b.market_cap_rank || 999;
-          break;
-        case 'current_price':
-          aVal = a.current_price || 0;
-          bVal = b.current_price || 0;
-          break;
-        case 'price_change_percentage_24h':
-          aVal = a.price_change_percentage_24h || 0;
-          bVal = b.price_change_percentage_24h || 0;
-          break;
-        case 'price_change_percentage_7d':
-          aVal = a.price_change_percentage_7d || 0;
-          bVal = b.price_change_percentage_7d || 0;
-          break;
-        case 'market_cap':
-          aVal = a.market_cap || 0;
-          bVal = b.market_cap || 0;
-          break;
-        case 'total_volume':
-          aVal = a.total_volume || 0;
-          bVal = b.total_volume || 0;
-          break;
-      }
-
-      const multiplier = sortDir === 'asc' ? 1 : -1;
-      return (aVal - bVal) * multiplier;
-    });
-
-    return result;
-  }, [prices, sortField, sortDir, searchQuery]);
-
-  const SortHeader = ({
-    field,
-    label,
-    align = 'right',
-  }: {
-    field: SortField;
-    label: string;
-    align?: 'left' | 'right';
-  }) => {
-    const isActive = sortField === field;
+  const ColorPct = ({ val }: { val?: number | null }) => {
+    if (!val) return <span className="text-[#555]">—</span>;
+    const isPos = val >= 0;
     return (
-      <th
-        className={`px-3 py-2 cursor-pointer select-none group whitespace-nowrap ${
-          align === 'right' ? 'text-right' : 'text-left'
-        }`}
-        onClick={() => handleSort(field)}
-      >
-        <span
-          className={`text-[10px] font-black uppercase tracking-wider transition-colors ${
-            isActive
-              ? 'text-[#FABF2C]'
-              : 'text-[#555] group-hover:text-[#888]'
-          }`}
-        >
-          {label}
-          {isActive && (
-            <span className="ml-1">{sortDir === 'asc' ? '▲' : '▼'}</span>
-          )}
-        </span>
-      </th>
+      <span className={`font-mono font-bold ${isPos ? 'text-[#00d672]' : 'text-[#ff4757]'}`}>
+        {isPos ? '▲' : '▼'} {Math.abs(val).toFixed(2)}%
+      </span>
     );
   };
 
   return (
-    <div className="space-y-6">
-      {/* Terminal Header */}
-      <div className="flex items-end justify-between gap-4">
+    <div className="space-y-8 max-w-full overflow-hidden">
+      {/* HEADER ROW: Title + Currency */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-[10px] font-mono text-green-500 uppercase tracking-[0.3em]">
-              LIVE
-            </span>
-          </div>
-          <h1 className="text-3xl font-black uppercase tracking-tight text-white">
-            Price <span className="text-[#FABF2C]">Index</span>
+          <h1 className="text-4xl font-black text-white uppercase tracking-tighter">
+            Cryptocurrency <span className="text-[#FABF2C]">Prices</span>
           </h1>
-          <p className="text-[10px] font-mono text-[#555] uppercase tracking-[0.2em] mt-1">
-            TOP {prices.length} ASSETS BY MARKET CAP • USD
+          <p className="text-[10px] font-mono text-[#555] uppercase mt-2">
+            Global market cap is {formatUsd(prices.reduce((s, p) => s + (p.market_cap || 0), 0))}
           </p>
         </div>
-
-        {/* Search */}
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="SEARCH ASSET..."
-            className="bg-[#0a0a0a] border border-[#1a1a1a] text-white font-mono text-[11px] 
-                       px-4 py-2 w-64 outline-none focus:border-[#FABF2C]/50 placeholder:text-[#333]
-                       uppercase tracking-wider"
-          />
+        <div className="flex items-center gap-2 bg-[#0a0a0a] border border-[#1a1a1a] p-1">
+          {CURRENCIES.map(c => (
+            <button 
+              key={c}
+              onClick={() => router.push(`?currency=${c.toLowerCase()}`)}
+              className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest ${currentCurrency === c ? 'bg-[#FABF2C] text-black' : 'text-[#555] hover:text-white'}`}
+            >
+              {c}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Highlight Cards */}
-      <TerminalHighlights coins={prices} news={[]} />
+      {/* HOT MARKET NEWS & GAINERS/LOSERS GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 border border-[#1a1a1a] bg-[#0a0a0a] p-6">
+          <h2 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-6">Hot Market News</h2>
+          <div className="space-y-4">
+            {hotNews.map(n => (
+              <a key={n.id} href={n.url} target="_blank" rel="noreferrer" className="flex gap-4 group">
+                <div className="w-24 h-16 relative shrink-0 overflow-hidden border border-white/5">
+                  <img src={n.image} alt={n.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-300 group-hover:text-[#FABF2C] transition-colors leading-tight">{n.title}</h3>
+                  <span className="text-[9px] font-mono text-[#555] uppercase">{n.source}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+        
+        <div className="space-y-6">
+          <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-6">
+            <h2 className="text-[10px] font-black text-[#00d672] uppercase tracking-[0.3em] mb-4">Top Gainers 24h</h2>
+            {topGainers.map(c => (
+              <div key={c.id} className="flex justify-between items-center mb-2 last:mb-0">
+                <div className="flex items-center gap-2">
+                  <img src={c.image} alt={c.name} className="w-4 h-4 rounded-full" />
+                  <span className="text-xs font-bold text-white uppercase">{c.symbol}</span>
+                </div>
+                <ColorPct val={c.price_change_percentage_24h} />
+              </div>
+            ))}
+          </div>
+          <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-6">
+            <h2 className="text-[10px] font-black text-[#ff4757] uppercase tracking-[0.3em] mb-4">Top Losers 24h</h2>
+            {topLosers.map(c => (
+              <div key={c.id} className="flex justify-between items-center mb-2 last:mb-0">
+                <div className="flex items-center gap-2">
+                  <img src={c.image} alt={c.name} className="w-4 h-4 rounded-full" />
+                  <span className="text-xs font-bold text-white uppercase">{c.symbol}</span>
+                </div>
+                <ColorPct val={c.price_change_percentage_24h} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
-      {/* ─── THE TABLE ─────────────────────────────────────────────── */}
+      {/* CATEGORIES SCROLLER */}
+      <div className="flex overflow-x-auto pb-2 gap-2 scrollbar-hide border-b border-[#1a1a1a]">
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCat(cat)}
+            className={`whitespace-nowrap px-4 py-2 text-[10px] font-black uppercase tracking-widest border transition-all ${
+              activeCat === cat ? 'bg-[#FABF2C] text-black border-[#FABF2C]' : 'bg-[#0a0a0a] text-[#888] border-[#1a1a1a] hover:border-[#333]'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* TABLE */}
       <div className="border border-[#1a1a1a] bg-[#080808] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            {/* STICKY HEADER */}
-            <thead className="sticky top-0 z-10 bg-[#0a0a0a] border-b-2 border-[#1a1a1a]">
+          <table className="w-full border-collapse whitespace-nowrap">
+            <thead className="bg-[#0a0a0a] border-b-2 border-[#1a1a1a]">
               <tr>
-                <SortHeader field="market_cap_rank" label="#" align="left" />
-                <th className="px-3 py-2 text-left">
-                  <span className="text-[10px] font-black text-[#555] uppercase tracking-wider">
-                    Asset
-                  </span>
-                </th>
-                <SortHeader field="current_price" label="Price" />
-                <SortHeader field="price_change_percentage_24h" label="24H %" />
-                <SortHeader field="price_change_percentage_7d" label="7D %" />
-                <SortHeader field="market_cap" label="Mkt Cap" />
-                <SortHeader field="total_volume" label="Vol 24H" />
-                <th className="px-3 py-2 text-right">
-                  <span className="text-[10px] font-black text-[#555] uppercase tracking-wider">
-                    7D Chart
-                  </span>
-                </th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-[#555] uppercase">#</th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-[#555] uppercase">Name</th>
+                <th className="px-4 py-3 text-right text-[10px] font-black text-[#555] uppercase">Price</th>
+                <th className="px-4 py-3 text-right text-[10px] font-black text-[#555] uppercase">1h %</th>
+                <th className="px-4 py-3 text-right text-[10px] font-black text-[#555] uppercase">24h %</th>
+                <th className="px-4 py-3 text-right text-[10px] font-black text-[#555] uppercase">7d %</th>
+                <th className="px-4 py-3 text-right text-[10px] font-black text-[#555] uppercase">Market Cap</th>
+                <th className="px-4 py-3 text-right text-[10px] font-black text-[#555] uppercase">24h Volume</th>
+                <th className="px-4 py-3 text-right text-[10px] font-black text-[#555] uppercase">7d Chart</th>
               </tr>
             </thead>
-
             <tbody>
-              {filteredAndSorted.map((coin, index) => (
-                <TerminalTableRow
-                  key={coin.id}
-                  coin={coin}
-                  isEven={index % 2 === 0}
-                />
+              {prices.map((coin, idx) => (
+                <tr key={coin.id} className={`border-b border-[#111] hover:bg-[#0f0f0f] ${idx % 2 === 0 ? 'bg-[#080808]' : 'bg-[#0b0b0b]'}`}>
+                  <td className="px-4 py-4 text-[11px] font-mono text-[#444]">{coin.market_cap_rank || '—'}</td>
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      {coin.image && <img src={coin.image} alt={coin.name} className="w-6 h-6 rounded-full" />}
+                      <div>
+                        <span className="text-[12px] font-bold text-white block">{coin.name}</span>
+                        <span className="text-[10px] font-mono text-[#666] uppercase">{coin.symbol}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-right text-[12px] font-mono font-bold text-white">{formatUsd(coin.current_price, true)}</td>
+                  {/* @ts-ignore - injecting 1h from API */}
+                  <td className="px-4 py-4 text-right text-[11px]"><ColorPct val={coin.price_change_percentage_1h_in_currency} /></td>
+                  <td className="px-4 py-4 text-right text-[11px]"><ColorPct val={coin.price_change_percentage_24h} /></td>
+                  <td className="px-4 py-4 text-right text-[11px]"><ColorPct val={coin.price_change_percentage_7d} /></td>
+                  <td className="px-4 py-4 text-right text-[11px] font-mono text-[#888]">{formatUsd(coin.market_cap)}</td>
+                  <td className="px-4 py-4 text-right text-[11px] font-mono text-[#666]">{formatUsd(coin.total_volume)}</td>
+                  <td className="px-4 py-4 w-[100px]">
+                    {coin.sparkline_in_7d?.price && (
+                      <MiniSparkline data={coin.sparkline_in_7d.price} isPositive={(coin.price_change_percentage_7d || 0) >= 0} />
+                    )}
+                  </td>
+                </tr>
               ))}
             </tbody>
           </table>
         </div>
-
-        {filteredAndSorted.length === 0 && (
-          <div className="py-20 text-center">
-            <p className="text-[#333] font-mono text-xs uppercase tracking-widest">
-              No assets match "{searchQuery}"
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Terminal footer */}
-      <div className="flex justify-between items-center text-[9px] font-mono text-[#333] uppercase tracking-widest px-1">
-        <span>DATA: COINGECKO API • REFRESH: 60S</span>
-        <span>{filteredAndSorted.length} ASSETS</span>
       </div>
     </div>
   );

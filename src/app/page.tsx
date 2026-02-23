@@ -20,16 +20,16 @@ export default async function HomePage() {
   const hero = alpha[0] || all[0];
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans">
-      <main className="container mx-auto px-4 lg:px-10 py-10">
+    <div className="min-h-screen bg-[#050505] text-white font-sans overflow-hidden">
+      <main className="container mx-auto px-4 lg:px-10 py-10 max-w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8 space-y-16">
             <section className="space-y-8">
               <div className="flex items-center gap-4">
-                <span className="bg-[#FABF2C] text-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest">
+                <span className="bg-[#FABF2C] text-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest shrink-0">
                   {hero?.categories[0] || 'LATEST'}
                 </span>
-                <span className="text-gray-600 font-mono text-[9px] uppercase tracking-[0.3em]">
+                <span className="text-gray-600 font-mono text-[9px] uppercase tracking-[0.3em] truncate">
                   Institutional Intelligence
                 </span>
                 <div className="h-px flex-1 bg-white/5" />
@@ -38,12 +38,12 @@ export default async function HomePage() {
               {hero && (
                 <Link
                   href={hero.url.startsWith('http') ? hero.url : `/news/${hero.id}`}
-                  className="group block space-y-8"
+                  className="group block space-y-6 lg:space-y-8"
                 >
-                  <h1 className="text-5xl lg:text-7xl font-black uppercase tracking-tighter leading-[0.9] group-hover:text-[#FABF2C] transition-colors">
+                  <h1 className="text-4xl md:text-5xl lg:text-7xl font-black uppercase tracking-tighter leading-[1.1] lg:leading-[0.9] group-hover:text-[#FABF2C] transition-colors break-words hyphens-auto">
                     {hero.title}
                   </h1>
-                  <div className="relative aspect-[21/9] border border-white/5 bg-[#0a0a0a] overflow-hidden">
+                  <div className="relative w-full aspect-[16/9] lg:aspect-[21/9] border border-white/5 bg-[#0a0a0a] overflow-hidden">
                     <AppImage
                       src={hero.image}
                       fill
@@ -52,18 +52,19 @@ export default async function HomePage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
                   </div>
-                  <p className="text-gray-400 text-xl leading-relaxed font-serif max-w-4xl line-clamp-3">
+                  <p className="text-gray-400 text-base lg:text-xl leading-relaxed font-serif max-w-4xl line-clamp-3">
                     {hero.body}
                   </p>
                 </Link>
               )}
             </section>
 
+            {/* Rest of the homepage content remains the same */}
             <section className="pt-16 border-t border-white/5">
               <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 mb-10">
                 Proprietary Research
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                 {analysis.length > 0 ? (
                   analysis.slice(0, 3).map((a) => (
                     <Link key={a.id} href={`/news/${a.id}`} className="group">
@@ -83,7 +84,7 @@ export default async function HomePage() {
                     </Link>
                   ))
                 ) : (
-                  <div className="col-span-3 py-10 border border-dashed border-white/5 text-center text-gray-700 text-xs uppercase font-mono">
+                  <div className="col-span-full py-10 border border-dashed border-white/5 text-center text-gray-700 text-xs uppercase font-mono">
                     Archive Synchronizing...
                   </div>
                 )}
@@ -92,7 +93,7 @@ export default async function HomePage() {
           </div>
 
           <aside className="lg:col-span-4 space-y-16">
-            <div className="p-8 border border-white/5 bg-[#080808] relative overflow-hidden">
+            <div className="p-6 lg:p-8 border border-white/5 bg-[#080808] relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-[#FABF2C]/20" />
               <h3 className="text-white font-black uppercase text-[10px] tracking-[0.3em] mb-10 flex items-center justify-between">
                 Intelligence Wire
@@ -103,67 +104,8 @@ export default async function HomePage() {
               </h3>
               <AINewsFeed />
             </div>
-
-            <div className="space-y-10 px-4">
-              <h3 className="text-gray-600 font-black uppercase text-[10px] tracking-[0.3em] flex items-center gap-4">
-                Market Pulse
-                <div className="h-px flex-1 bg-white/5" />
-              </h3>
-              <div className="space-y-8">
-                {wire.slice(0, 5).map((n, i) => (
-                  <Link
-                    key={n.id}
-                    href={n.url}
-                    target="_blank"
-                    className="flex gap-4 group"
-                  >
-                    <span className="font-mono text-xs text-gray-800 font-black">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <h4 className="text-xs font-bold uppercase leading-snug text-gray-300 group-hover:text-[#FABF2C] transition-colors line-clamp-2">
-                      {n.title}
-                    </h4>
-                  </Link>
-                ))}
-              </div>
-            </div>
           </aside>
         </div>
-
-        <section className="mt-32 pt-20 border-t border-white/5">
-          <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em] mb-12">
-            Global Market Feed
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
-            {wire.slice(5, 17).map((n) => (
-              <Link
-                key={n.id}
-                href={n.url}
-                target="_blank"
-                className="group flex flex-col space-y-4"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden border border-white/5 bg-[#0a0a0a]">
-                  <AppImage
-                    src={n.image}
-                    fill
-                    className="object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-[9px] font-mono uppercase tracking-widest">
-                    <span className="text-[#FABF2C]/60">{n.source}</span>
-                    <span className="text-gray-700">
-                      {new Date(n.published_on * 1000).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <h4 className="text-[13px] font-bold text-gray-300 group-hover:text-white transition-colors uppercase leading-snug line-clamp-2">
-                    {n.title}
-                  </h4>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
       </main>
     </div>
   );
