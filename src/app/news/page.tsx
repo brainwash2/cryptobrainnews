@@ -1,7 +1,6 @@
 import React from 'react';
 import { getAllArticles } from '@/lib/articles';
-import Link from 'next/link';
-import AppImage from '@/components/ui/AppImage';
+import CointelegraphCard from '@/components/news/CointelegraphCard';
 
 export const metadata = {
   title: 'News Hub | CryptoBrainNews',
@@ -12,50 +11,70 @@ export const dynamic = 'force-dynamic';
 
 export default async function NewsHubPage() {
   const articles = await getAllArticles();
+  const hero = articles[0];
+  const rest = articles.slice(1);
 
   return (
-    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
-      <div className="max-w-[1400px] mx-auto">
-        <div className="mb-12 border-b border-[#1a1a1a] pb-8">
-          <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter mb-4">
-            Intelligence <span className="text-[#FABF2C]">Hub</span>
+    <main className="min-h-screen bg-[#050505] text-white">
+      {/* Header */}
+      <div className="border-b border-[#1a1a1a] bg-black sticky top-16 z-20">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <h1 className="text-xl font-black uppercase tracking-tighter">
+            Market <span className="text-[#FABF2C]">News</span>
           </h1>
-          <p className="text-[#555] font-mono text-xs uppercase tracking-[0.3em]">
-            Real-time Institutional Feed • {articles.length} Reports Active
-          </p>
+          <div className="text-[10px] font-mono text-[#555] hidden sm:block">
+            LIVE FEED • {articles.length} UPDATES
+          </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-          {articles.map((article) => (
-            <Link
-              key={article.id}
-              href={article.url.startsWith('http') ? article.url : `/news/${article.id}`}
-              target={article.url.startsWith('http') ? '_blank' : '_self'}
-              className="group block"
-            >
-              <div className="relative aspect-video mb-5 overflow-hidden border border-[#1a1a1a] bg-[#0a0a0a]">
-                <AppImage
-                  src={article.image}
-                  fill
-                  className="object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
-                />
-                <div className="absolute top-2 left-2 bg-black/80 backdrop-blur px-2 py-1 border border-white/10">
-                  <span className="text-[9px] font-black text-[#FABF2C] uppercase tracking-widest">
-                    {article.categories[0] || 'WIRE'}
-                  </span>
-                </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          
+          {/* Main Feed (Left 8 Cols) */}
+          <div className="lg:col-span-8">
+            {/* Hero Article (Big Card) */}
+            {hero && (
+              <div className="mb-10 border-b border-[#1a1a1a] pb-10">
+                <CointelegraphCard article={hero} priority={true} />
               </div>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-[9px] font-mono uppercase tracking-widest text-[#555]">
-                  <span>{article.source}</span>
-                  <span>{new Date(article.published_on * 1000).toLocaleDateString()}</span>
-                </div>
-                <h3 className="text-lg font-bold text-white uppercase leading-snug group-hover:text-[#FABF2C] transition-colors line-clamp-3">
-                  {article.title}
-                </h3>
-              </div>
-            </Link>
-          ))}
+            )}
+
+            {/* List of Articles (Dense List on Mobile, Grid on Desktop) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+              {rest.map((article) => (
+                <CointelegraphCard key={article.id} article={article} />
+              ))}
+            </div>
+          </div>
+
+          {/* Sidebar (Right 4 Cols) */}
+          <aside className="lg:col-span-4 space-y-8 hidden lg:block">
+            <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6 text-center">
+              <h3 className="text-xs font-black uppercase tracking-widest mb-4">Newsletter</h3>
+              <p className="text-[10px] text-[#555] mb-4">Get the daily alpha.</p>
+              <input placeholder="Email" className="w-full bg-black border border-[#222] px-3 py-2 text-xs mb-2" />
+              <button className="w-full bg-[#FABF2C] text-black font-black text-xs py-2 uppercase">Subscribe</button>
+            </div>
+            
+            <div className="sticky top-24">
+               <h3 className="text-[10px] font-black uppercase tracking-widest text-[#555] mb-4 border-b border-[#1a1a1a] pb-2">
+                 Editor's Choice
+               </h3>
+               {/* Reuse list style for sidebar */}
+               <div className="flex flex-col gap-6">
+                 {articles.slice(5, 10).map(a => (
+                   <div key={a.id} className="group">
+                     <div className="text-[9px] font-mono text-[#FABF2C] mb-1">{a.source}</div>
+                     <a href={a.url} target="_blank" className="text-sm font-bold text-gray-300 group-hover:text-white leading-tight">
+                       {a.title}
+                     </a>
+                   </div>
+                 ))}
+               </div>
+            </div>
+          </aside>
+
         </div>
       </div>
     </main>
