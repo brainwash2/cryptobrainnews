@@ -2,22 +2,7 @@ import { NextResponse } from 'next/server';
 import { generateText } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 
-interface CryptoCompareArticle {
-  id: number;
-  title: string;
-  url: string;
-  source_info?: { name?: string };
-  body?: string;
-}
-
-interface EnrichedArticle {
-  id: string;
-  title: string;
-  url: string;
-  source: string;
-  bullets: string[];
-  sentiment: string;
-}
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const groqKey = process.env.GROQ_API_KEY?.trim();
@@ -26,26 +11,21 @@ export async function GET() {
   const groq = createGroq({ apiKey: groqKey });
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10_000);
+    // 1. Fetch Cointelegraph RSS
+    const rssRes = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss', { next: { revalidate: 300 } });
+    const rssData = await rssRes.json();
+    
+    if (rssData.status !== 'ok' || !rssData.items) return NextResponse.json([]);
+    
+    const rawArticles = rssData.items.slice(0, 4);
 
-    const newsRes = await fetch(
-      'https://min-api.cryptocompare.com/data/v2/news/?lang=EN',
-      { next: { revalidate: 600 }, signal: controller.signal }
-    );
-    clearTimeout(timeout);
-
-    if (!newsRes.ok) return NextResponse.json([]);
-
-    const newsData = await newsRes.json();
-    const rawArticles: CryptoCompareArticle[] = (newsData.Data ?? []).slice(0, 4);
-
-    const enriched: (EnrichedArticle | null)[] = await Promise.all(
-      rawArticles.map(async (article): Promise<EnrichedArticle | null> => {
+    // 2. Generate AI Summaries
+    const enriched = await Promise.all(
+      rawArticles.map(async (article: any) => {
         try {
           const { text } = await generateText({
             model: groq('llama-3.3-70b-versatile'),
-            prompt: `Task: Summarize this headline into 3 bullets (6 words max each). End with SENTIMENT: [Positive/Negative/Neutral].\nHeadline: "${article.title}"`,
+            prompt: `Task: Summarize this crypto headline into 3 highly institutional bullets (max 8 words each). End with SENTIMENT: [Positive/Negative/Neutral].\nHeadline: "${article.title}"\nContext: "${article.description.replace(/<[^>]+>/g, '')}"`,
           });
 
           const [bulletsRaw = '', sentimentRaw = 'Neutral'] = text.split('SENTIMENT:');
@@ -57,10 +37,10 @@ export async function GET() {
             .slice(0, 3);
 
           return {
-            id: String(article.id),
+            id: article.guid || article.link,
             title: article.title,
-            url: article.url,
-            source: article.source_info?.name ?? 'Wire',
+            url: article.link,
+            source: 'Cointelegraph',
             bullets,
             sentiment: sentimentRaw.trim().replace(/[.\s]/g, ''),
           };
@@ -71,7 +51,8 @@ export async function GET() {
     );
 
     return NextResponse.json(enriched.filter(Boolean));
-  } catch {
+  } catch (err) {
+    console.error('[AI News Error]', err);
     return NextResponse.json([]);
   }
 }

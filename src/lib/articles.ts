@@ -3,8 +3,6 @@ import { cached } from './cache';
 import { getSupabase } from './supabase';
 import type { NewsArticle, WeightedArticle } from './types';
 
-const NEWS_API = 'https://min-api.cryptocompare.com/data/v2/news/?lang=EN';
-
 export const SOURCE_WEIGHTS = {
   editorial: 100,
   alpha: 90,
@@ -12,27 +10,39 @@ export const SOURCE_WEIGHTS = {
   wire: 30,
 } as const;
 
+// 🚀 NEW: Cointelegraph RSS Fetcher
 async function fetchWireNews(): Promise<WeightedArticle[]> {
   try {
-    const res = await fetch(NEWS_API, { next: { revalidate: 300 } });
+    const rssUrl = 'https://cointelegraph.com/rss';
+    // Use rss2json to safely parse XML to JSON without heavy NPM packages
+    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`, { 
+      next: { revalidate: 300 } 
+    });
+    
     if (!res.ok) return [];
     const data = await res.json();
-    if (!data?.Data) return [];
+    if (data.status !== 'ok' || !data.items) return [];
 
-    return data.Data.slice(0, 40).map((a: any): WeightedArticle => ({
-      id: String(a.id),
-      title: a.title,
-      body: a.body || '',
-      image: a.imageurl,
-      source: a.source_info?.name || 'News Wire',
-      published_on: a.published_on,
-      url: a.url,
-      categories: a.categories?.split('|') || ['General'],
-      tags: a.tags?.split('|') || [],
-      weight: SOURCE_WEIGHTS.wire,
-      sourceType: 'wire',
-    }));
-  } catch {
+    return data.items.slice(0, 30).map((a: any): WeightedArticle => {
+      // Strip HTML tags from description
+      const cleanBody = (a.description || '').replace(/<[^>]+>/g, '').trim();
+      
+      return {
+        id: a.guid || a.link,
+        title: a.title,
+        body: cleanBody,
+        image: a.thumbnail || a.enclosure?.link || 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1200',
+        source: 'Cointelegraph',
+        published_on: Math.floor(new Date(a.pubDate).getTime() / 1000),
+        url: a.link,
+        categories: a.categories?.length ? a.categories : ['Market'],
+        tags: [],
+        weight: SOURCE_WEIGHTS.wire,
+        sourceType: 'wire',
+      };
+    });
+  } catch (err) {
+    console.error('[RSS] Fetch failed:', err);
     return [];
   }
 }
@@ -55,10 +65,10 @@ async function fetchEditorialNews(): Promise<WeightedArticle[]> {
         title: a.title,
         body: a.body || '',
         image: a.image_url || '',
-        source: 'CryptoBrain',
-        published_on: Math.floor(new Date(a.published_at).getTime() / 1000),
+        source: a.source || 'CryptoBrain',
+        published_on: Math.floor(new Date(a.created_at || a.published_at).getTime() / 1000),
         url: `/news/${a.id}`,
-        categories: [a.category],
+        categories: [a.category || 'News'],
         tags: a.tags || [],
         weight: isAlpha ? SOURCE_WEIGHTS.alpha : SOURCE_WEIGHTS.editorial,
         sourceType: isAlpha ? 'alpha' : 'editorial',
@@ -73,7 +83,7 @@ async function fetchEditorialNews(): Promise<WeightedArticle[]> {
 
 export async function getAllArticles(): Promise<WeightedArticle[]> {
   return cached(
-    'articles:weighted',
+    'articles:weighted:v2',
     async () => {
       const [editorial, wire] = await Promise.all([
         fetchEditorialNews(),
@@ -97,10 +107,7 @@ export async function getArticleById(id: string): Promise<WeightedArticle | null
   return articles.find((a) => a.id === id) || null;
 }
 
-export async function getRelatedArticles(
-  id: string,
-  limit = 4
-): Promise<WeightedArticle[]> {
+export async function getRelatedArticles(id: string, limit = 4): Promise<WeightedArticle[]> {
   const all = await getAllArticles();
   return all.filter((a) => a.id !== id).slice(0, limit);
 }

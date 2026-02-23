@@ -9,6 +9,8 @@ export const metadata = {
   description: 'Institutional-grade crypto intelligence, DeFi data, and on-chain analytics.',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const [all, alpha, analysis] = await Promise.all([
     getAllArticles(),
@@ -18,13 +20,16 @@ export default async function HomePage() {
 
   const wire = all.filter((a) => a.source !== 'CryptoBrain').slice(0, 20);
   const hero = alpha[0] || all[0];
+  
+  // If database is empty, fallback to wire news to prevent empty gaps
+  const displayAnalysis = analysis.length > 0 ? analysis : wire.slice(1, 4);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans overflow-hidden">
       <main className="container mx-auto px-4 lg:px-10 py-10 max-w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8 space-y-16">
-            <section className="space-y-8">
+            <section className="space-y-6">
               <div className="flex items-center gap-4">
                 <span className="bg-[#FABF2C] text-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest shrink-0">
                   {hero?.categories[0] || 'LATEST'}
@@ -38,9 +43,10 @@ export default async function HomePage() {
               {hero && (
                 <Link
                   href={hero.url.startsWith('http') ? hero.url : `/news/${hero.id}`}
-                  className="group block space-y-6 lg:space-y-8"
+                  className="group block space-y-6"
                 >
-                  <h1 className="text-4xl md:text-5xl lg:text-7xl font-black uppercase tracking-tighter leading-[1.1] lg:leading-[0.9] group-hover:text-[#FABF2C] transition-colors break-words hyphens-auto">
+                  {/* MOBILE FIX: text-3xl for small screens, up to 6xl for desktop */}
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter leading-[1.1] lg:leading-[1] group-hover:text-[#FABF2C] transition-colors break-words">
                     {hero.title}
                   </h1>
                   <div className="relative w-full aspect-[16/9] lg:aspect-[21/9] border border-white/5 bg-[#0a0a0a] overflow-hidden">
@@ -52,42 +58,35 @@ export default async function HomePage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
                   </div>
-                  <p className="text-gray-400 text-base lg:text-xl leading-relaxed font-serif max-w-4xl line-clamp-3">
+                  <p className="text-gray-400 text-sm md:text-lg lg:text-xl leading-relaxed font-serif max-w-4xl line-clamp-3">
                     {hero.body}
                   </p>
                 </Link>
               )}
             </section>
 
-            {/* Rest of the homepage content remains the same */}
             <section className="pt-16 border-t border-white/5">
               <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 mb-10">
-                Proprietary Research
+                {analysis.length > 0 ? 'Proprietary Research' : 'Trending Now'}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-                {analysis.length > 0 ? (
-                  analysis.slice(0, 3).map((a) => (
-                    <Link key={a.id} href={`/news/${a.id}`} className="group">
-                      <div className="relative aspect-video mb-4 overflow-hidden border border-white/5 bg-[#0a0a0a]">
-                        <AppImage
-                          src={a.image}
-                          fill
-                          className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-                        />
-                      </div>
-                      <h3 className="text-sm font-bold uppercase leading-tight mb-2 group-hover:text-[#FABF2C] transition-colors">
-                        {a.title}
-                      </h3>
-                      <span className="text-[9px] font-mono text-gray-600 uppercase">
-                        {a.source} Research
-                      </span>
-                    </Link>
-                  ))
-                ) : (
-                  <div className="col-span-full py-10 border border-dashed border-white/5 text-center text-gray-700 text-xs uppercase font-mono">
-                    Archive Synchronizing...
-                  </div>
-                )}
+                {displayAnalysis.slice(0, 3).map((a) => (
+                  <Link key={a.id} href={a.url.startsWith('http') ? a.url : `/news/${a.id}`} className="group">
+                    <div className="relative aspect-video mb-4 overflow-hidden border border-white/5 bg-[#0a0a0a]">
+                      <AppImage
+                        src={a.image}
+                        fill
+                        className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                      />
+                    </div>
+                    <h3 className="text-sm font-bold uppercase leading-tight mb-2 group-hover:text-[#FABF2C] transition-colors line-clamp-2">
+                      {a.title}
+                    </h3>
+                    <span className="text-[9px] font-mono text-gray-600 uppercase">
+                      {a.source}
+                    </span>
+                  </Link>
+                ))}
               </div>
             </section>
           </div>
@@ -103,6 +102,26 @@ export default async function HomePage() {
                 </span>
               </h3>
               <AINewsFeed />
+            </div>
+            
+            {/* Market Pulse list */}
+            <div className="space-y-8 px-4">
+              <h3 className="text-gray-600 font-black uppercase text-[10px] tracking-[0.3em] flex items-center gap-4">
+                Market Pulse
+                <div className="h-px flex-1 bg-white/5" />
+              </h3>
+              <div className="space-y-6">
+                {wire.slice(4, 9).map((n, i) => (
+                  <Link key={n.id} href={n.url} target="_blank" className="flex gap-4 group">
+                    <span className="font-mono text-xs text-gray-800 font-black">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <h4 className="text-xs font-bold uppercase leading-snug text-gray-300 group-hover:text-[#FABF2C] transition-colors line-clamp-2">
+                      {n.title}
+                    </h4>
+                  </Link>
+                ))}
+              </div>
             </div>
           </aside>
         </div>
