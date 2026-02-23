@@ -20,15 +20,13 @@ export default async function HomePage() {
 
   const wire = all.filter((a) => a.source !== 'CryptoBrain').slice(0, 20);
   const hero = alpha[0] || all[0];
-  
-  // If database is empty, fallback to wire news to prevent empty gaps
   const displayAnalysis = analysis.length > 0 ? analysis : wire.slice(1, 4);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans overflow-hidden">
-      <main className="container mx-auto px-4 lg:px-10 py-10 max-w-full">
+    <div className="min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden">
+      <main className="container mx-auto px-4 lg:px-10 py-10 w-full max-w-[100vw]">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <div className="lg:col-span-8 space-y-16">
+          <div className="lg:col-span-8 space-y-12">
             <section className="space-y-6">
               <div className="flex items-center gap-4">
                 <span className="bg-[#FABF2C] text-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest shrink-0">
@@ -45,10 +43,11 @@ export default async function HomePage() {
                   href={hero.url.startsWith('http') ? hero.url : `/news/${hero.id}`}
                   className="group block space-y-6"
                 >
-                  {/* MOBILE FIX: text-3xl for small screens, up to 6xl for desktop */}
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter leading-[1.1] lg:leading-[1] group-hover:text-[#FABF2C] transition-colors break-words">
+                  {/* MOBILE FIX: Added break-words and explicit smaller font sizes */}
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black uppercase tracking-tighter leading-[1.1] lg:leading-[0.9] group-hover:text-[#FABF2C] transition-colors break-words hyphens-auto w-full">
                     {hero.title}
                   </h1>
+                  
                   <div className="relative w-full aspect-[16/9] lg:aspect-[21/9] border border-white/5 bg-[#0a0a0a] overflow-hidden">
                     <AppImage
                       src={hero.image}
@@ -58,6 +57,7 @@ export default async function HomePage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
                   </div>
+                  
                   <p className="text-gray-400 text-sm md:text-lg lg:text-xl leading-relaxed font-serif max-w-4xl line-clamp-3">
                     {hero.body}
                   </p>
@@ -65,13 +65,13 @@ export default async function HomePage() {
               )}
             </section>
 
-            <section className="pt-16 border-t border-white/5">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 mb-10">
+            <section className="pt-12 border-t border-white/5">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 mb-8">
                 {analysis.length > 0 ? 'Proprietary Research' : 'Trending Now'}
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 {displayAnalysis.slice(0, 3).map((a) => (
-                  <Link key={a.id} href={a.url.startsWith('http') ? a.url : `/news/${a.id}`} className="group">
+                  <Link key={a.id} href={a.url.startsWith('http') ? a.url : `/news/${a.id}`} className="group block">
                     <div className="relative aspect-video mb-4 overflow-hidden border border-white/5 bg-[#0a0a0a]">
                       <AppImage
                         src={a.image}
@@ -91,10 +91,10 @@ export default async function HomePage() {
             </section>
           </div>
 
-          <aside className="lg:col-span-4 space-y-16">
-            <div className="p-6 lg:p-8 border border-white/5 bg-[#080808] relative overflow-hidden">
+          <aside className="lg:col-span-4 space-y-12">
+            <div className="p-6 border border-white/5 bg-[#080808] relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-[#FABF2C]/20" />
-              <h3 className="text-white font-black uppercase text-[10px] tracking-[0.3em] mb-10 flex items-center justify-between">
+              <h3 className="text-white font-black uppercase text-[10px] tracking-[0.3em] mb-8 flex items-center justify-between">
                 Intelligence Wire
                 <span className="flex gap-1">
                   <span className="w-1 h-1 bg-[#FABF2C] rounded-full animate-ping" />
@@ -104,8 +104,7 @@ export default async function HomePage() {
               <AINewsFeed />
             </div>
             
-            {/* Market Pulse list */}
-            <div className="space-y-8 px-4">
+            <div className="space-y-6 px-2">
               <h3 className="text-gray-600 font-black uppercase text-[10px] tracking-[0.3em] flex items-center gap-4">
                 Market Pulse
                 <div className="h-px flex-1 bg-white/5" />
