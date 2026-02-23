@@ -6,7 +6,7 @@ import AppImage from '@/components/ui/AppImage';
 
 export const metadata = {
   title: 'CryptoBrainNews | Institutional Terminal',
-  description: 'Institutional-grade crypto intelligence, DeFi data, and on-chain analytics.',
+  description: 'Institutional-grade crypto intelligence.',
 };
 
 export const dynamic = 'force-dynamic';
@@ -32,8 +32,8 @@ export default async function HomePage() {
                 <span className="bg-[#FABF2C] text-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest shrink-0">
                   {hero?.categories[0] || 'LATEST'}
                 </span>
-                <span className="text-gray-600 font-mono text-[9px] uppercase tracking-[0.3em] truncate">
-                  Institutional Intelligence
+                <span className="text-green-500 font-mono text-[9px] uppercase tracking-[0.3em] truncate">
+                  ● LIVE FEED v2.0
                 </span>
                 <div className="h-px flex-1 bg-white/5" />
               </div>
@@ -43,22 +43,21 @@ export default async function HomePage() {
                   href={hero.url.startsWith('http') ? hero.url : `/news/${hero.id}`}
                   className="group block space-y-6"
                 >
-                  {/* MOBILE FIX: Added break-words and explicit smaller font sizes */}
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black uppercase tracking-tighter leading-[1.1] lg:leading-[0.9] group-hover:text-[#FABF2C] transition-colors break-words hyphens-auto w-full">
+                  {/* MOBILE FIX: text-3xl and break-words prevents overflow */}
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black uppercase tracking-tighter leading-tight group-hover:text-[#FABF2C] transition-colors break-words w-full">
                     {hero.title}
                   </h1>
                   
-                  <div className="relative w-full aspect-[16/9] lg:aspect-[21/9] border border-white/5 bg-[#0a0a0a] overflow-hidden">
+                  <div className="relative w-full aspect-[16/9] border border-white/5 bg-[#0a0a0a] overflow-hidden">
                     <AppImage
                       src={hero.image}
                       fill
                       className="object-cover group-hover:scale-105 transition-all duration-1000"
                       priority
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
                   </div>
                   
-                  <p className="text-gray-400 text-sm md:text-lg lg:text-xl leading-relaxed font-serif max-w-4xl line-clamp-3">
+                  <p className="text-gray-400 text-sm md:text-lg leading-relaxed font-serif max-w-4xl line-clamp-3">
                     {hero.body}
                   </p>
                 </Link>
@@ -73,18 +72,11 @@ export default async function HomePage() {
                 {displayAnalysis.slice(0, 3).map((a) => (
                   <Link key={a.id} href={a.url.startsWith('http') ? a.url : `/news/${a.id}`} className="group block">
                     <div className="relative aspect-video mb-4 overflow-hidden border border-white/5 bg-[#0a0a0a]">
-                      <AppImage
-                        src={a.image}
-                        fill
-                        className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-                      />
+                      <AppImage src={a.image} fill className="object-cover grayscale group-hover:grayscale-0 transition-all" />
                     </div>
                     <h3 className="text-sm font-bold uppercase leading-tight mb-2 group-hover:text-[#FABF2C] transition-colors line-clamp-2">
                       {a.title}
                     </h3>
-                    <span className="text-[9px] font-mono text-gray-600 uppercase">
-                      {a.source}
-                    </span>
                   </Link>
                 ))}
               </div>
@@ -92,35 +84,12 @@ export default async function HomePage() {
           </div>
 
           <aside className="lg:col-span-4 space-y-12">
-            <div className="p-6 border border-white/5 bg-[#080808] relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-[#FABF2C]/20" />
+            <div className="p-6 border border-white/5 bg-[#080808]">
               <h3 className="text-white font-black uppercase text-[10px] tracking-[0.3em] mb-8 flex items-center justify-between">
                 Intelligence Wire
-                <span className="flex gap-1">
-                  <span className="w-1 h-1 bg-[#FABF2C] rounded-full animate-ping" />
-                  <span className="w-1 h-1 bg-[#FABF2C] rounded-full" />
-                </span>
+                <span className="w-2 h-2 bg-[#FABF2C] rounded-full animate-pulse" />
               </h3>
               <AINewsFeed />
-            </div>
-            
-            <div className="space-y-6 px-2">
-              <h3 className="text-gray-600 font-black uppercase text-[10px] tracking-[0.3em] flex items-center gap-4">
-                Market Pulse
-                <div className="h-px flex-1 bg-white/5" />
-              </h3>
-              <div className="space-y-6">
-                {wire.slice(4, 9).map((n, i) => (
-                  <Link key={n.id} href={n.url} target="_blank" className="flex gap-4 group">
-                    <span className="font-mono text-xs text-gray-800 font-black">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <h4 className="text-xs font-bold uppercase leading-snug text-gray-300 group-hover:text-[#FABF2C] transition-colors line-clamp-2">
-                      {n.title}
-                    </h4>
-                  </Link>
-                ))}
-              </div>
             </div>
           </aside>
         </div>

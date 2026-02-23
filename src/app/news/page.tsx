@@ -45,7 +45,6 @@ export default async function NewsHubPage() {
                   </span>
                 </div>
               </div>
-              
               <div className="space-y-3">
                 <div className="flex justify-between items-center text-[9px] font-mono uppercase tracking-widest text-[#555]">
                   <span>{article.source}</span>
@@ -54,21 +53,10 @@ export default async function NewsHubPage() {
                 <h3 className="text-lg font-bold text-white uppercase leading-snug group-hover:text-[#FABF2C] transition-colors line-clamp-3">
                   {article.title}
                 </h3>
-                <p className="text-xs text-[#888] line-clamp-2 font-serif leading-relaxed">
-                  {article.body.slice(0, 150)}...
-                </p>
               </div>
             </Link>
           ))}
         </div>
-
-        {articles.length === 0 && (
-          <div className="py-32 text-center border border-dashed border-[#1a1a1a]">
-            <p className="text-[#333] font-mono text-xs uppercase tracking-widest animate-pulse">
-              Syncing Global Wire...
-            </p>
-          </div>
-        )}
       </div>
     </main>
   );
