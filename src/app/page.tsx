@@ -21,7 +21,7 @@ export default async function HomePage() {
 
   const wire = all.filter((a) => a.source !== 'CryptoBrain').slice(0, 20);
   const hero = alpha[0] || all[0];
-  const displayAnalysis = analysis.length > 0 ? analysis : wire.slice(1, 5);
+  const displayAnalysis = analysis.length > 0 ? analysis : wire.slice(1, 7);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden">
@@ -31,9 +31,9 @@ export default async function HomePage() {
           {/* Main Feed */}
           <div className="lg:col-span-8 space-y-12">
             
-            {/* Hero Article */}
-            <section className="space-y-5 border-b border-[#1a1a1a] pb-10">
-              <div className="flex items-center gap-3">
+            {/* HERO SECTION - Fixed Aspect Ratio and Font Sizing */}
+            <section className="border-b border-[#1a1a1a] pb-10">
+              <div className="flex items-center gap-3 mb-6">
                 <span className="bg-[#FABF2C] text-black px-2 py-0.5 text-[9px] font-black uppercase tracking-widest">
                   {hero?.categories[0] || 'LATEST'}
                 </span>
@@ -43,27 +43,27 @@ export default async function HomePage() {
               </div>
 
               {hero && (
-                <Link href={hero.url.startsWith('http') ? hero.url : `/news/${hero.id}`} className="group block space-y-4">
-                  {/* Clamped Font Size */}
-                  <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-[1.1] group-hover:text-[#FABF2C] transition-colors line-clamp-3">
+                <Link href={hero.url.startsWith('http') ? hero.url : `/news/${hero.id}`} className="group block">
+                  <h1 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-tighter leading-[1.05] group-hover:text-[#FABF2C] transition-colors mb-6 break-words">
                     {hero.title}
                   </h1>
-                  <div className="relative w-full aspect-[16/9] border border-[#1a1a1a] bg-[#0a0a0a] overflow-hidden">
+                  {/* Aspect video (16:9) guarantees it won't squish */}
+                  <div className="relative w-full aspect-video border border-[#1a1a1a] bg-[#0a0a0a] overflow-hidden mb-6">
                     <AppImage src={hero.image} fill className="object-cover group-hover:scale-105 transition-all duration-700" priority />
                   </div>
-                  <p className="text-[#888] text-sm md:text-base leading-relaxed font-serif line-clamp-2">
+                  <p className="text-[#888] text-sm md:text-base leading-relaxed font-serif line-clamp-3">
                     {hero.body}
                   </p>
                 </Link>
               )}
             </section>
 
-            {/* Dense Cointelegraph List */}
+            {/* Cointelegraph Grid Style */}
             <section>
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#555] mb-6">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#555] mb-6 border-b border-[#1a1a1a] pb-2">
                 Market Updates
               </h2>
-              <div className="flex flex-col">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-10">
                 {displayAnalysis.map((a) => (
                   <CointelegraphCard key={a.id} article={a as any} />
                 ))}
@@ -73,7 +73,7 @@ export default async function HomePage() {
 
           {/* Sidebar */}
           <aside className="lg:col-span-4 space-y-10">
-            <div className="p-6 border border-[#1a1a1a] bg-[#080808]">
+            <div className="p-6 border border-[#1a1a1a] bg-[#0a0a0a]">
               <h3 className="text-white font-black uppercase text-[10px] tracking-[0.3em] mb-6 flex items-center justify-between">
                 Intelligence Wire
                 <span className="w-1.5 h-1.5 bg-[#FABF2C] rounded-full animate-pulse" />
