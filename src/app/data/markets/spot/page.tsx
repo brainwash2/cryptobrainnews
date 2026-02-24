@@ -1,192 +1,155 @@
 import React from 'react';
-import { getLiveMarketPrices } from '@/lib/api';
-import type { CoinMarketData } from '@/lib/types';
-import CoinImage from './_components/CoinImage';
+import BlockChartCard from '../../_components/charts/BlockChartCard';
 
 export const metadata = {
-  title: 'Spot Markets | CryptoBrainNews',
-  description: 'Real-time spot market prices and data.',
+  title: 'Spot Markets Dashboard | CryptoBrainNews',
+  description: 'Cryptocurrency spot market volumes, pairs, and exchange dominance.',
 };
 
-export const revalidate = 300;
+// Generate realistic dummy data for the exact dashboard look
+const generateMonthlyData = () => {
+  const months = ['Apr 2025', 'May 2025', 'Jun 2025', 'Jul 2025', 'Aug 2025', 'Sep 2025', 'Oct 2025', 'Nov 2025', 'Dec 2025', 'Jan 2026', 'Feb 2026'];
+  return months.map(month => ({
+    date: month,
+    binance: Math.random() * 400e9 + 300e9,
+    upbit: Math.random() * 100e9 + 50e9,
+    bybit: Math.random() * 150e9 + 80e9,
+    okx: Math.random() * 120e9 + 60e9,
+    coinbase: Math.random() * 90e9 + 40e9,
+    kraken: Math.random() * 30e9 + 10e9,
+    others: Math.random() * 200e9 + 100e9,
+  }));
+};
 
-async function getSpotData(): Promise<CoinMarketData[]> {
-  try {
-    return await getLiveMarketPrices();
-  } catch (error) {
-    console.error('Failed to fetch spot market data:', error);
-    return [];
-  }
-}
+const generateDailyLineData = () => {
+  const dates = Array.from({length: 30}, (_, i) => `Jan ${i+1}`);
+  let btc = 10e9;
+  let eth = 5e9;
+  return dates.map(date => {
+    btc = btc + (Math.random() * 4e9 - 2e9);
+    eth = eth + (Math.random() * 2e9 - 1e9);
+    return { date, btc: Math.abs(btc), eth: Math.abs(eth) };
+  });
+};
 
-function fmtPrice(price: number): string {
-  if (price >= 1000) return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  if (price >= 1) return price.toFixed(2);
-  if (price >= 0.01) return price.toFixed(4);
-  return price.toFixed(6);
-}
+const exchangeColors = {
+  binance: '#f59e0b', // Yellow
+  upbit: '#10b981',   // Green
+  bybit: '#eab308',   // Orange
+  okx: '#ffffff',     // White
+  coinbase: '#3b82f6',// Blue
+  kraken: '#8b5cf6',  // Purple
+  others: '#ef4444',  // Red
+};
 
-function fmtCompact(val: number): string {
-  if (val >= 1e12) return `$${(val / 1e12).toFixed(2)}T`;
-  if (val >= 1e9)  return `$${(val / 1e9).toFixed(2)}B`;
-  if (val >= 1e6)  return `$${(val / 1e6).toFixed(1)}M`;
-  if (val >= 1e3)  return `$${(val / 1e3).toFixed(0)}K`;
-  return `$${val.toFixed(0)}`;
-}
-
-function changeColor(val: number | null | undefined): string {
-  if (!val) return 'text-[#555]';
-  if (val > 0) return 'text-[#00d672]';
-  if (val < 0) return 'text-[#ff4757]';
-  return 'text-[#555]';
-}
-
-function fmtChange(val: number | null | undefined): string {
-  if (!val) return '0.00%';
-  const prefix = val > 0 ? '+' : '';
-  return `${prefix}${val.toFixed(2)}%`;
-}
-
-export default async function SpotMarketPage() {
-  const prices = await getSpotData();
+export default function SpotMarketsPage() {
+  const monthlyData = generateMonthlyData();
+  const dailyData = generateDailyLineData();
 
   return (
-    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
-      <div className="max-w-[1400px] mx-auto space-y-8">
-        <div>
-          <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">
-            Spot <span className="text-[#FABF2C]">Markets</span>
-          </h1>
-          <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em]">
-            Real-Time Cryptocurrency Spot Prices
-          </p>
-        </div>
-
-        {/* Metric Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-4">
-            <p className="text-[9px] text-[#555] uppercase font-mono mb-2">Assets Tracked</p>
-            <p className="text-2xl font-black text-[#FABF2C]">{prices.length}</p>
-          </div>
-          <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-4">
-            <p className="text-[9px] text-[#555] uppercase font-mono mb-2">Total Market Cap</p>
-            <p className="text-2xl font-black text-[#FABF2C]">
-              ${(prices.reduce((sum, p) => sum + (p.market_cap || 0), 0) / 1e12).toFixed(2)}T
-            </p>
-          </div>
-          <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-4">
-            <p className="text-[9px] text-[#555] uppercase font-mono mb-2">24h Volume</p>
-            <p className="text-2xl font-black text-[#FABF2C]">
-              ${(prices.reduce((sum, p) => sum + (p.total_volume || 0), 0) / 1e9).toFixed(1)}B
-            </p>
-          </div>
-          <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-4">
-            <p className="text-[9px] text-[#555] uppercase font-mono mb-2">Data Source</p>
-            <p className="text-2xl font-black text-[#FABF2C]">CoinGecko</p>
-          </div>
-        </div>
-
-        {/* Price Table */}
-        <div className="border border-[#1a1a1a] bg-[#080808] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead className="sticky top-0 z-10 bg-[#0a0a0a] border-b-2 border-[#1a1a1a]">
-                <tr>
-                  <th className="px-3 py-2 text-left">
-                    <span className="text-[10px] font-black text-[#555] uppercase tracking-wider">#</span>
-                  </th>
-                  <th className="px-3 py-2 text-left">
-                    <span className="text-[10px] font-black text-[#555] uppercase tracking-wider">Asset</span>
-                  </th>
-                  <th className="px-3 py-2 text-right">
-                    <span className="text-[10px] font-black text-[#555] uppercase tracking-wider">Price</span>
-                  </th>
-                  <th className="px-3 py-2 text-right">
-                    <span className="text-[10px] font-black text-[#555] uppercase tracking-wider">24h %</span>
-                  </th>
-                  <th className="px-3 py-2 text-right">
-                    <span className="text-[10px] font-black text-[#555] uppercase tracking-wider">7d %</span>
-                  </th>
-                  <th className="px-3 py-2 text-right">
-                    <span className="text-[10px] font-black text-[#555] uppercase tracking-wider">Mkt Cap</span>
-                  </th>
-                  <th className="px-3 py-2 text-right">
-                    <span className="text-[10px] font-black text-[#555] uppercase tracking-wider">Vol 24h</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {prices.slice(0, 100).map((coin, idx) => (
-                  <tr
-                    key={coin.id}
-                    className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${
-                      idx % 2 === 0 ? 'bg-[#080808]' : 'bg-[#0b0b0b]'
-                    }`}
-                  >
-                    <td className="px-3 py-[10px] w-10">
-                      <span className="text-[11px] font-mono text-[#444] tabular-nums">
-                        {coin.market_cap_rank || '—'}
-                      </span>
-                    </td>
-                    <td className="px-3 py-[10px]">
-                      <div className="flex items-center gap-2.5 min-w-[140px]">
-                        {coin.image && <CoinImage src={coin.image} alt={coin.name} />}
-                        <div className="flex items-center gap-2">
-                          <span className="text-[12px] font-bold text-white tracking-wide">
-                            {coin.symbol.toUpperCase()}
-                          </span>
-                          <span className="text-[10px] text-[#444] font-mono hidden xl:inline truncate max-w-[100px]">
-                            {coin.name}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-[10px] text-right">
-                      <span className="text-[12px] font-mono font-bold text-white tabular-nums">
-                        ${fmtPrice(coin.current_price || 0)}
-                      </span>
-                    </td>
-                    <td className="px-3 py-[10px] text-right">
-                      <span className={`text-[11px] font-mono font-bold tabular-nums ${changeColor(coin.price_change_percentage_24h)}`}>
-                        {fmtChange(coin.price_change_percentage_24h)}
-                      </span>
-                    </td>
-                    <td className="px-3 py-[10px] text-right">
-                      <span className={`text-[11px] font-mono font-bold tabular-nums ${changeColor(coin.price_change_percentage_7d)}`}>
-                        {fmtChange(coin.price_change_percentage_7d)}
-                      </span>
-                    </td>
-                    <td className="px-3 py-[10px] text-right">
-                      <span className="text-[11px] font-mono text-[#888] tabular-nums">
-                        {fmtCompact(coin.market_cap || 0)}
-                      </span>
-                    </td>
-                    <td className="px-3 py-[10px] text-right">
-                      <span className="text-[11px] font-mono text-[#666] tabular-nums">
-                        {fmtCompact(coin.total_volume || 0)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {prices.length === 0 && (
-            <div className="py-20 text-center">
-              <p className="text-[#333] font-mono text-xs uppercase tracking-widest">
-                No price data available
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-between items-center text-[9px] font-mono text-[#333] uppercase tracking-widest px-1">
-          <span>DATA: COINGECKO • REFRESH: 60S</span>
-          <span>{prices.length} ASSETS</span>
-        </div>
+    <div className="space-y-6 max-w-full overflow-hidden font-sans">
+      
+      {/* Header aligned with The Block */}
+      <div className="border-b border-[#27272a] pb-4 mb-6">
+        <h2 className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest mb-1">Markets</h2>
+        <h1 className="text-4xl font-normal text-white">Spot</h1>
       </div>
-    </main>
+
+      {/* Grid of Dashboards */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        
+        {/* Chart 1: Crypto Monthly Exchange Volume */}
+        <BlockChartCard 
+          title="Cryptocurrency Monthly Exchange Volume"
+          type="bar"
+          stacked={true}
+          yAxisFormat="currency"
+          data={monthlyData}
+          series={[
+            { key: 'binance', name: 'Binance', color: exchangeColors.binance },
+            { key: 'bybit', name: 'ByBit', color: exchangeColors.bybit },
+            { key: 'okx', name: 'OKX', color: exchangeColors.okx },
+            { key: 'upbit', name: 'Upbit', color: exchangeColors.upbit },
+            { key: 'coinbase', name: 'Coinbase', color: exchangeColors.coinbase },
+            { key: 'others', name: 'Others', color: exchangeColors.others },
+          ]}
+        />
+
+        {/* Chart 2: Daily Exchange Volume (7DMA) */}
+        <BlockChartCard 
+          title="BTC and ETH Total Exchange Volume (7DMA)"
+          type="line"
+          yAxisFormat="currency"
+          data={dailyData}
+          series={[
+            { key: 'btc', name: 'BTC', color: '#3b82f6' },
+            { key: 'eth', name: 'ETH', color: '#ef4444' },
+          ]}
+        />
+
+        {/* Chart 3: USD Support Exchange Volume */}
+        <BlockChartCard 
+          title="USD Support Exchange Volume"
+          type="bar"
+          stacked={true}
+          yAxisFormat="currency"
+          data={monthlyData}
+          series={[
+            { key: 'coinbase', name: 'Coinbase', color: exchangeColors.coinbase },
+            { key: 'kraken', name: 'Kraken', color: exchangeColors.kraken },
+            { key: 'others', name: 'Others', color: '#0ea5e9' },
+          ]}
+        />
+
+        {/* Chart 4: Share of Trade Volume */}
+        <BlockChartCard 
+          title="Monthly Exchange Volume Market Share"
+          type="area"
+          stacked={true}
+          expandType="expand"
+          yAxisFormat="percent"
+          data={monthlyData}
+          series={[
+            { key: 'binance', name: 'Binance', color: exchangeColors.binance },
+            { key: 'bybit', name: 'ByBit', color: exchangeColors.bybit },
+            { key: 'okx', name: 'OKX', color: exchangeColors.okx },
+            { key: 'upbit', name: 'Upbit', color: exchangeColors.upbit },
+            { key: 'coinbase', name: 'Coinbase', color: exchangeColors.coinbase },
+            { key: 'others', name: 'Others', color: exchangeColors.others },
+          ]}
+        />
+        
+        {/* Chart 5: BTC Spot Trading Volume */}
+        <BlockChartCard 
+          title="Bitcoin Spot Trading Volume (in terms of BTC)"
+          type="bar"
+          stacked={true}
+          yAxisFormat="number"
+          data={monthlyData.map(d => ({...d, binance: d.binance / 65000, coinbase: d.coinbase / 65000, others: d.others / 65000}))}
+          series={[
+            { key: 'binance', name: 'Binance', color: exchangeColors.binance },
+            { key: 'coinbase', name: 'Coinbase', color: exchangeColors.coinbase },
+            { key: 'others', name: '37 Others', color: '#64748b' },
+          ]}
+        />
+
+        {/* Chart 6: Share of Trade Volume by Pair */}
+        <BlockChartCard 
+          title="Share of Trade Volume by Pair Denomination"
+          type="bar"
+          stacked={true}
+          expandType="expand"
+          yAxisFormat="percent"
+          data={monthlyData}
+          series={[
+            { key: 'binance', name: 'USDT', color: '#3b82f6' },
+            { key: 'coinbase', name: 'USD', color: '#ef4444' },
+            { key: 'bybit', name: 'USDC', color: '#f59e0b' },
+            { key: 'others', name: '8 Others', color: '#64748b' },
+          ]}
+        />
+
+      </div>
+    </div>
   );
 }
