@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip, Defs, LinearGradient
+  XAxis, YAxis, CartesianGrid, Tooltip
 } from 'recharts';
 
 export default function BlockChartCard({ title, type, data, series, stacked = false, expandType = 'none', yAxisFormat = 'number', description }: any) {
@@ -100,14 +100,12 @@ export default function BlockChartCard({ title, type, data, series, stacked = fa
         </AreaChart>
       );
     }
-    // DUAL AXIS LINE CHART (Fixes the Flat Line issue)
+    // DUAL AXIS LINE CHART
     return (
       <LineChart {...common}>
         <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
         <XAxis dataKey="date" {...axisProps} dy={10} minTickGap={30} />
-        {/* Left Axis */}
         <YAxis yAxisId="left" {...axisProps} tickFormatter={formatYAxis} width={45} />
-        {/* Right Axis (Only if multiple series, for better scaling) */}
         {series.length > 1 && <YAxis yAxisId="right" orientation="right" {...axisProps} tickFormatter={formatYAxis} width={45} />}
         
         <Tooltip content={<CustomTooltip />} />
@@ -130,14 +128,12 @@ export default function BlockChartCard({ title, type, data, series, stacked = fa
 
   return (
     <div className="bg-[#18181b] border border-[#27272a] rounded-sm flex flex-col font-sans overflow-hidden shadow-lg h-[460px]">
-      {/* Header */}
       <div className="flex justify-between items-center px-4 py-3 border-b border-[#27272a] bg-[#18181b]">
         <div className="w-8 h-8 border border-[#3f3f46] rounded-sm flex items-center justify-center">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
         </div>
       </div>
 
-      {/* Title & Legend */}
       <div className="pt-6 pb-4 px-4 text-center">
         <h3 className="text-white text-[16px] font-medium tracking-tight mb-4">{title}</h3>
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
@@ -150,7 +146,6 @@ export default function BlockChartCard({ title, type, data, series, stacked = fa
         </div>
       </div>
       
-      {/* Chart Area */}
       <div className="w-full h-[240px] px-2 relative">
         {!isMounted ? (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -163,7 +158,6 @@ export default function BlockChartCard({ title, type, data, series, stacked = fa
         )}
       </div>
 
-      {/* Footer Controls */}
       <div className="px-4 py-3 flex justify-between items-end mt-auto">
         <div className="text-[9px] text-[#71717a] font-mono leading-relaxed">
           <p className="font-bold text-[#a1a1aa]">SOURCE: REAL-TIME API</p>
@@ -177,7 +171,6 @@ export default function BlockChartCard({ title, type, data, series, stacked = fa
         </div>
       </div>
 
-      {/* Action Bar */}
       <div className="flex border-t border-[#27272a] bg-[#111113]">
         <button className="flex-1 py-2.5 text-[10px] text-[#2563eb] hover:text-[#3b82f6] font-bold flex items-center justify-center gap-2 border-r border-[#27272a] transition-colors bg-[#2563eb]/5">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
