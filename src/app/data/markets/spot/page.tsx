@@ -5,80 +5,92 @@ import { getLivePrices, getDexVolume } from '@/lib/api';
 export const metadata = { title: 'Spot Markets Dashboard | CryptoBrainNews' };
 export const dynamic = 'force-dynamic';
 
+const colors = {
+  binance: '#f59e0b', coinbase: '#3b82f6', upbit: '#10b981', kraken: '#8b5cf6', 
+  others: '#ef4444', usdt: '#10b981', usdc: '#3b82f6', gray: '#3f3f46'
+};
+
 export default async function SpotMarketsPage() {
-  // 1. THIS IS 100% REAL LIVE DATA FROM YOUR APIS
   const [prices, dexVolumes] = await Promise.all([
     getLivePrices('usd'),
     getDexVolume()
   ]);
 
-  // Transform Data: 7-Day Asset Trajectories
+  // 1. 7D Trajectory (Fixed Flat Line Issue)
   const btc = prices.find(p => p.id === 'bitcoin');
   const eth = prices.find(p => p.id === 'ethereum');
-  const hourlyData = (btc?.sparkline_in_7d?.price || []).map((price, i) => {
-    if (i % 24 !== 0) return null;
-    return { date: `Day ${Math.floor(i / 24) + 1}`, btc: price, eth: eth?.sparkline_in_7d?.price[i] || 0 };
+  const hourlyData = (btc?.sparkline_in_7d?.price ||[]).map((price, i) => {
+    if (i % 6 !== 0) return null; // Sample every 6 hours for smoother curve
+    return { 
+      date: `Hr ${i}`, 
+      btc: price, 
+      eth: eth?.sparkline_in_7d?.price[i] || 0 
+    };
   }).filter(Boolean);
 
-  // Transform Data: Live 24H Volume (Top 5)
+  // 2. 24H Volume Stacked
   const topVolume = [...prices].sort((a, b) => b.total_volume - a.total_volume).slice(0, 5);
-  const volumeData = [{
+  const volumeData =[{
     date: 'Last 24H',
     ...topVolume.reduce((acc, coin) => ({...acc, [coin.symbol]: coin.total_volume}), {})
   }];
   const volumeSeries = topVolume.map((c, i) => ({
-    key: c.symbol, name: c.symbol.toUpperCase(), color: ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444'][i]
+    key: c.symbol, name: c.symbol.toUpperCase(), color: Object.values(colors)[i]
   }));
 
-  // Transform Data: Real 30D DEX Volume
+  // 3. 30D DEX Volume
   const realDexData = dexVolumes.slice(-30).map(v => ({
     date: new Date(v.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     volume: v.volume
   }));
 
-  // Transform Data: Real Live Market Cap Dominance
+  // 4. Market Cap Dominance
   const totalMcap = prices.reduce((sum, p) => sum + p.market_cap, 0);
   const top4Mcap = prices.slice(0, 4);
-  const mcapDominanceData = [{
+  const mcapDominanceData =[{
     date: 'Live Market Share',
     ...top4Mcap.reduce((acc, coin) => ({...acc, [coin.symbol]: coin.market_cap}), {}),
     others: totalMcap - top4Mcap.reduce((sum, coin) => sum + coin.market_cap, 0)
   }];
-  const mcapSeries = [
-    ...top4Mcap.map((c, i) => ({ key: c.symbol, name: c.symbol.toUpperCase(), color: ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'][i] })),
-    { key: 'others', name: 'OTHERS', color: '#3f3f46' }
+  const mcapSeries =[
+    ...top4Mcap.map((c, i) => ({ key: c.symbol, name: c.symbol.toUpperCase(), color: Object.values(colors)[i] })),
+    { key: 'others', name: 'OTHERS', color: colors.gray }
   ];
 
   return (
-    <div className="space-y-6 max-w-full overflow-hidden font-sans pb-20 mt-4 lg:mt-0">
+    <div className="space-y-6 max-w-full overflow-hidden font-sans pb-20 pt-6 lg:pt-0">
       
-      <div className="border-b border-[#27272a] pb-4 mb-6">
-        <h2 className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest mb-1">Data Terminal</h2>
-        <h1 className="text-4xl font-normal text-white">Spot Markets</h1>
+      <div className="border-b border-[#27272a] pb-6 mb-8 flex flex-col md:flex-row justify-between md:items-end gap-4">
+        <div>
+          <h2 className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
+            Data Terminal <span className="text-[#3f3f46]">/</span> Markets
+          </h2>
+          <h1 className="text-4xl lg:text-5xl font-normal text-white tracking-tight">Spot</h1>
+        </div>
+        <div className="inline-flex items-center gap-2 bg-[#09090b] border border-[#27272a] px-3 py-1.5 rounded text-[10px] font-mono text-green-500 uppercase self-start md:self-auto">
+          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse mr-1" />
+          Live APIs Active
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-6 gap-y-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-8">
         
-        {/* REAL CHART 1: 30D DEX Volume */}
         <BlockChartCard 
           title="Daily Global DEX Volume (30D)" type="area" yAxisFormat="currency" data={realDexData}
-          series={[{ key: 'volume', name: 'Volume', color: '#3b82f6' }]}
+          series={[{ key: 'volume', name: 'Volume', color: colors.coinbase }]}
         />
 
-        {/* REAL CHART 2: Market Cap Dominance */}
         <BlockChartCard 
-          title="Live Market Cap Dominance" type="bar" stacked expandType="expand" yAxisFormat="percent" data={mcapDominanceData} series={mcapSeries}
+          title="Market Cap Dominance" type="area" stacked expandType="expand" yAxisFormat="percent" data={mcapDominanceData} series={mcapSeries}
         />
 
-        {/* REAL CHART 3: 7D Price Trajectory */}
         <BlockChartCard 
           title="BTC & ETH Trajectories (7D)" type="line" yAxisFormat="currency" data={hourlyData}
-          series={[{ key: 'btc', name: 'BTC', color: '#f59e0b' }, { key: 'eth', name: 'ETH', color: '#3b82f6' }]}
+          series={[{ key: 'btc', name: 'Bitcoin', color: colors.binance }, { key: 'eth', name: 'Ethereum', color: colors.kraken }]}
         />
 
-        {/* REAL CHART 4: Top 24H Volume */}
         <BlockChartCard 
-          title="Top 5 Assets by 24H Volume" type="bar" yAxisFormat="currency" data={volumeData} series={volumeSeries}
+          title="Top Assets by 24H Volume" type="bar" yAxisFormat="currency" data={volumeData} series={volumeSeries}
         />
 
       </div>
