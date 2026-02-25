@@ -2,108 +2,106 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
-import Icon from '@/components/ui/AppIcon';
-import { DATA_SECTIONS } from '@/lib/sidebar-config';
-import type { SidebarSection } from '@/lib/types';
+import { useState, useEffect } from 'react';
+
+const DATA_MENU = [
+  {
+    title: 'Markets',
+    links: [
+      { label: 'Spot', href: '/data/markets/spot' },
+      { label: 'Prices', href: '/price-indexes' },
+      { label: 'Overview', href: '/data/markets' },
+    ]
+  },
+  {
+    title: 'DeFi',
+    links: [
+      { label: 'Exchange Volume', href: '/data/defi/dex-volume' },
+      { label: 'TVL Rankings', href: '/data/defi/tvl' },
+    ]
+  },
+  {
+    title: 'On-Chain',
+    links: [
+      { label: 'Ethereum Data', href: '/data/onchain/ethereum' },
+      { label: 'Whale Watch', href: '/data/defi/whale-watch' },
+    ]
+  }
+];
 
 export function DataSidebar() {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = 'auto';
+  }, [isOpen]);
 
   return (
     <>
-      {/* Mobile toggle */}
-      <button
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed bottom-4 right-4 z-50 w-12 h-12 bg-primary text-black flex items-center justify-center shadow-xl"
-        aria-label="Toggle sidebar"
-      >
-        <Icon name={mobileOpen ? 'XMarkIcon' : 'Bars3Icon'} size={20} />
-      </button>
+      {/* Mobile Sticky Toggle Bar */}
+      <div className="lg:hidden fixed top-14 left-0 right-0 z-[40] bg-[#0a0a0a] border-b border-[#1a1a1a] flex items-center px-4 py-3 shadow-md">
+        <button 
+          onClick={() => setIsOpen(true)}
+          className="flex items-center gap-2 text-[11px] font-black text-[#888] uppercase tracking-widest hover:text-white"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          Dashboard Menu
+        </button>
+      </div>
 
-      {/* Sidebar */}
+      {/* Sidebar Overlay (Mobile) */}
+      {isOpen && (
+        <div className="lg:hidden fixed inset-0 z-[45] bg-black/80 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+      )}
+
+      {/* Actual Sidebar Content */}
       <aside
         className={`
-          w-64 shrink-0 border-r border-[#1a1a1a] bg-black min-h-screen sticky top-[6.5rem] self-start
-          ${mobileOpen ? 'fixed inset-0 z-40 block' : 'hidden lg:block'}
+          fixed lg:sticky top-14 left-0 z-[50] lg:z-0
+          w-64 h-[calc(100vh-3.5rem)] bg-[#050505] 
+          border-r border-[#1a1a1a] 
+          transform transition-transform duration-300 ease-in-out overflow-y-auto
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        <div className="p-4 h-[calc(100vh-6.5rem)] overflow-y-auto">
-          <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-6 font-mono">
-            Data Terminal
+        <div className="p-5 font-sans">
+          {/* Close button for mobile inside drawer */}
+          <div className="flex justify-end lg:hidden mb-4">
+            <button onClick={() => setIsOpen(false)} className="text-[#888] hover:text-white">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
           </div>
-          <nav className="space-y-1">
-            {DATA_SECTIONS.map((section) => (
-              <SectionGroup
-                key={section.label}
-                section={section}
-                pathname={pathname}
-              />
-            ))}
-          </nav>
+
+          {DATA_MENU.map((section) => (
+            <div key={section.title} className="mb-8">
+              <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4">
+                {section.title}
+              </h3>
+              <div className="flex flex-col space-y-1 border-l border-[#1a1a1a] ml-1">
+                {section.links.map((link) => {
+                  const active = pathname === link.href;
+                  return (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`text-[13px] block pl-4 py-1.5 transition-colors ${
+                        active 
+                          ? 'border-l-2 border-[#FABF2C] text-[#FABF2C] font-bold -ml-[1px]' 
+                          : 'border-l-2 border-transparent text-[#888] hover:text-white -ml-[1px]'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </aside>
     </>
-  );
-}
-
-function SectionGroup({
-  section,
-  pathname,
-}: {
-  section: SidebarSection;
-  pathname: string;
-}) {
-  const isActive = section.children?.some(
-    (c) => pathname === c.href || pathname.startsWith(c.href + '/')
-  );
-  const [open, setOpen] = useState(isActive);
-
-  return (
-    <div className="mb-2">
-      <button
-        onClick={() => setOpen(!open)}
-        className={`
-          w-full flex items-center justify-between px-3 py-2 text-xs font-bold
-          text-gray-300 hover:text-white hover:bg-white/5 rounded transition-colors
-          uppercase tracking-wide
-          ${isActive ? 'bg-white/10 text-white' : ''}
-        `}
-      >
-        <span className="flex items-center gap-2">
-          <Icon name={section.icon} size={14} className="text-primary" />
-          {section.label}
-        </span>
-        <Icon
-          name={open ? 'ChevronDownIcon' : 'ChevronRightIcon'}
-          size={12}
-        />
-      </button>
-      {/* FIX: Added section.children check to satisfy strict TypeScript */}
-      {open && section.children && (
-        <div className="ml-4 mt-1 space-y-0.5 border-l border-[#333] pl-3">
-          {section.children.map((item) => {
-            const isItemActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`
-                  block px-3 py-1.5 text-[11px] font-medium rounded transition-colors
-                  ${
-                    isItemActive
-                      ? 'text-primary bg-primary/10 border-r-2 border-primary'
-                      : 'text-gray-500 hover:text-white'
-                  }
-                `}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </div>
   );
 }
