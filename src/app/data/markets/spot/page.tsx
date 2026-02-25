@@ -1,11 +1,11 @@
 import React from 'react';
-import LazyChart from './_components/LazyChart';
 
 export const metadata = {
-  title: 'Spot Markets Dashboard | CryptoBrainNews',
-  description: 'Live cryptocurrency spot market volumes, pairs, and exchange dominance.',
+  title: 'Spot Markets | CryptoBrainNews',
+  description: 'Live cryptocurrency spot market volumes and exchange dominance.',
 };
 
+// 100% REAL DATA EMBEDS FROM THE BLOCK
 const CHARTS = [
   { title: "Cryptocurrency Monthly Exchange Volume", src: "https://www.theblock.co/data/crypto-markets/spot/cryptocurrency-exchange-volume-monthly/embed" },
   { title: "Daily Exchange Volume (7DMA)", src: "https://www.theblock.co/data/crypto-markets/spot/total-exchange-volume-daily/embed" },
@@ -33,35 +33,36 @@ const CHARTS = [
 
 export default function SpotMarketsPage() {
   return (
-    <div className="space-y-8 max-w-full overflow-hidden font-sans pb-20">
+    <div className="space-y-6 max-w-full overflow-hidden font-sans pb-20">
       
-      {/* Header aligned with Institutional Look */}
-      <div className="border-b border-[#27272a] pb-6 mb-8 flex justify-between items-end">
-        <div>
-          <h2 className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
-            Data Terminal <span className="text-[#3f3f46]">/</span> Markets
-          </h2>
-          <h1 className="text-4xl lg:text-5xl font-normal text-white tracking-tight">Spot</h1>
-        </div>
-        <div className="hidden md:flex items-center gap-2 bg-[#09090b] border border-[#27272a] px-3 py-1.5 rounded text-[10px] font-mono text-[#a1a1aa] uppercase">
-          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse mr-1" />
-          Live Exchange Feeds
-        </div>
+      {/* Header */}
+      <div className="border-b border-[#27272a] pb-4 mb-8">
+        <h2 className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest mb-1">Data Terminal</h2>
+        <h1 className="text-4xl font-normal text-white">Spot Markets</h1>
       </div>
 
-      {/* Grid of 22 Live Embedded Dashboards */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-6 gap-y-8">
+      {/* Grid of Iframes */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-6 gap-y-10">
         {CHARTS.map((chart, idx) => (
-          <LazyChart key={idx} title={chart.title} src={chart.src} />
+          <div key={idx} className="w-full flex justify-center">
+            {/* 
+              Notice: No borders, no background colors. 
+              Height is increased to 450 to ensure The Block's footer buttons aren't cut off.
+              loading="lazy" ensures the page doesn't freeze on initial load.
+            */}
+            <iframe 
+              width="100%" 
+              height="450" 
+              frameBorder="0" 
+              src={chart.src} 
+              title={chart.title}
+              loading="lazy"
+              className="bg-transparent"
+            ></iframe>
+          </div>
         ))}
       </div>
 
-      {/* Data Attribution Footer */}
-      <div className="pt-12 text-center">
-        <p className="text-[10px] text-[#555] font-mono uppercase tracking-widest">
-          Market Data Provider: The Block Pro • Real-Time Institutional Feeds
-        </p>
-      </div>
     </div>
   );
 }
