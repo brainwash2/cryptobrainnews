@@ -1,68 +1,128 @@
 import React from 'react';
+import BlockChartCard from '../../_components/charts/BlockChartCard';
+import { getLivePrices, getDexVolume } from '@/lib/api';
 
 export const metadata = {
-  title: 'Spot Markets | CryptoBrainNews',
+  title: 'Spot Markets Dashboard | CryptoBrainNews',
   description: 'Live cryptocurrency spot market volumes and exchange dominance.',
 };
+export const dynamic = 'force-dynamic';
 
-// 100% REAL DATA EMBEDS FROM THE BLOCK
-const CHARTS = [
-  { title: "Cryptocurrency Monthly Exchange Volume", src: "https://www.theblock.co/data/crypto-markets/spot/cryptocurrency-exchange-volume-monthly/embed" },
-  { title: "Daily Exchange Volume (7DMA)", src: "https://www.theblock.co/data/crypto-markets/spot/total-exchange-volume-daily/embed" },
-  { title: "USD Support Exchange Volume", src: "https://www.theblock.co/data/crypto-markets/spot/usd-support-exchange-volume/embed" },
-  { title: "Monthly Exchange Volume Market Share", src: "https://www.theblock.co/data/crypto-markets/spot/the-block-legitimate-index-market-share/embed" },
-  { title: "Bitcoin Spot Trading Volume (in terms of BTC)", src: "https://www.theblock.co/data/crypto-markets/spot/the-block-legitimate-volume-index-btc-only/embed" },
-  { title: "Ether Spot Trading Volume (in terms of ETH)", src: "https://www.theblock.co/data/crypto-markets/spot/the-block-legitimate-volume-index-eth-only/embed" },
-  { title: "Share of Trade Volume by Pair Denomination", src: "https://www.theblock.co/data/crypto-markets/spot/share-of-trade-volume-by-pair-denomination/embed" },
-  { title: "Monthly Spot Pairs for Exchanges", src: "https://www.theblock.co/data/crypto-markets/spot/monthly-spot-pairs-for-exchanges/embed" },
-  { title: "BTC Spot to Futures Volume (30DMA)", src: "https://www.theblock.co/data/crypto-markets/spot/btc-spot-to-futures-volume/embed" },
-  { title: "ETH Spot to Futures Volume (30DMA)", src: "https://www.theblock.co/data/crypto-markets/spot/eth-spot-to-futures-volume/embed" },
-  { title: "Asia-Based Customer Exchange Volume", src: "https://www.theblock.co/data/crypto-markets/spot/asia-based-customer-exchange-volume/embed" },
-  { title: "Europe-Based Customer Exchange Volume", src: "https://www.theblock.co/data/crypto-markets/spot/europe-based-customer-exchange-volume/embed" },
-  { title: "North America-Based Customer Exchange Volume", src: "https://www.theblock.co/data/crypto-markets/spot/north-america-based-customer-exchange-volume/embed" },
-  { title: "South America-Based Exchange Volume", src: "https://www.theblock.co/data/crypto-markets/spot/south-america-based-exchange-volume/embed" },
-  { title: "BTC/EUR Volumes (in BTC)", src: "https://www.theblock.co/data/crypto-markets/spot/btc-eur-volumes/embed" },
-  { title: "ETH/EUR Volumes (in ETH)", src: "https://www.theblock.co/data/crypto-markets/spot/eth-eur-volumes-in-eth/embed" },
-  { title: "Share of BUSD Trading on Binance", src: "https://www.theblock.co/data/crypto-markets/spot/share-of-busd-trading-on-binance/embed" },
-  { title: "Binance Share of Volume by Fee Type", src: "https://www.theblock.co/data/crypto-markets/spot/binance-share-of-volume-by-fee-type/embed" },
-  { title: "Spot Volume by Asset", src: "https://www.theblock.co/data/crypto-markets/spot/spot-volume-by-asset/embed" },
-  { title: "Share of TUSD Trading on Binance", src: "https://www.theblock.co/data/crypto-markets/spot/share-of-tusd-trading-on-binance/embed" },
-  { title: "Share of FDUSD Trading on Binance", src: "https://www.theblock.co/data/crypto-markets/spot/share-of-fdusd-trading-on-binance/embed" },
-  { title: "Spot Volume Share by Asset", src: "https://www.theblock.co/data/crypto-markets/spot/spot-volume-share-by-asset/embed" }
-];
+export default async function SpotMarketsPage() {
+  // FETCH 100% REAL DATA FROM APIS
+  const [prices, dexVolumes] = await Promise.all([
+    getLivePrices('usd'),
+    getDexVolume()
+  ]);
 
-export default function SpotMarketsPage() {
+  // 1. Chart Data: Real 7-Day Trajectory for Top Assets (Line Chart)
+  const btc = prices.find(p => p.id === 'bitcoin');
+  const eth = prices.find(p => p.id === 'ethereum');
+  const sol = prices.find(p => p.id === 'solana');
+  
+  const hourlyTrajectoryData = (btc?.sparkline_in_7d?.price || []).map((price, i) => {
+    // Show 1 data point per day for cleaner chart (168 hours / 24 = 7 days)
+    if (i % 24 !== 0) return null;
+    return {
+      date: `Day ${Math.floor(i / 24) + 1}`,
+      btc: price,
+      eth: eth?.sparkline_in_7d?.price[i] || 0,
+      sol: sol?.sparkline_in_7d?.price[i] || 0,
+    };
+  }).filter(Boolean);
+
+  // 2. Chart Data: Real Top 5 Assets by 24h Volume (Bar Chart)
+  const topVolume = [...prices].sort((a, b) => b.total_volume - a.total_volume).slice(0, 5);
+  const realVolumeData = [{
+    date: 'Last 24H',
+    ...topVolume.reduce((acc, coin) => ({...acc, [coin.symbol]: coin.total_volume}), {})
+  }];
+  const volumeSeries = topVolume.map((c, i) => ({
+    key: c.symbol, name: c.symbol.toUpperCase(), 
+    color: ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444'][i]
+  }));
+
+  // 3. Chart Data: Real DEX Volume Timeline (Area Chart)
+  const realDexData = dexVolumes.slice(-30).map(v => ({
+    date: new Date(v.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    volume: v.volume
+  }));
+
+  // 4. Chart Data: Real Market Cap Dominance (100% Stacked Area)
+  const totalMcap = prices.reduce((sum, p) => sum + p.market_cap, 0);
+  const top4Mcap = prices.slice(0, 4);
+  const mcapDominanceData = [{
+    date: 'Live Market Share',
+    ...top4Mcap.reduce((acc, coin) => ({...acc, [coin.symbol]: coin.market_cap}), {}),
+    others: totalMcap - top4Mcap.reduce((sum, coin) => sum + coin.market_cap, 0)
+  }];
+  const mcapSeries = [
+    ...top4Mcap.map((c, i) => ({ 
+      key: c.symbol, name: c.symbol.toUpperCase(), 
+      color: ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'][i] 
+    })),
+    { key: 'others', name: 'OTHERS', color: '#64748b' }
+  ];
+
   return (
     <div className="space-y-6 max-w-full overflow-hidden font-sans pb-20">
       
-      {/* Header */}
-      <div className="border-b border-[#27272a] pb-4 mb-8">
-        <h2 className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest mb-1">Data Terminal</h2>
-        <h1 className="text-4xl font-normal text-white">Spot Markets</h1>
+      {/* Header aligned with The Block */}
+      <div className="border-b border-[#27272a] pb-4 mb-6 flex justify-between items-end">
+        <div>
+          <h2 className="text-[#a1a1aa] text-xs font-bold uppercase tracking-widest mb-1">Data Terminal</h2>
+          <h1 className="text-4xl font-normal text-white">Spot Markets</h1>
+        </div>
+        <div className="hidden sm:flex items-center gap-2 bg-[#09090b] border border-[#27272a] px-3 py-1.5 rounded text-[10px] font-mono text-green-500 uppercase">
+          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse mr-1" />
+          Live Network Data
+        </div>
       </div>
 
-      {/* Grid of Iframes */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-6 gap-y-10">
-        {CHARTS.map((chart, idx) => (
-          <div key={idx} className="w-full flex justify-center">
-            {/* 
-              Notice: No borders, no background colors. 
-              Height is increased to 450 to ensure The Block's footer buttons aren't cut off.
-              loading="lazy" ensures the page doesn't freeze on initial load.
-            */}
-            <iframe 
-              width="100%" 
-              height="450" 
-              frameBorder="0" 
-              src={chart.src} 
-              title={chart.title}
-              loading="lazy"
-              className="bg-transparent"
-            ></iframe>
-          </div>
-        ))}
-      </div>
+      {/* Grid of Real Data Dashboards */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        
+        {/* CHART 1: Real Daily DEX Volume */}
+        <BlockChartCard 
+          title="Global DEX Trading Volume (30D)"
+          type="area"
+          yAxisFormat="currency"
+          data={realDexData}
+          series={[{ key: 'volume', name: 'Total Volume', color: '#3b82f6' }]}
+        />
 
+        {/* CHART 2: Real 7-Day Asset Trajectories */}
+        <BlockChartCard 
+          title="Major Asset Price Trajectories (7D)"
+          type="line"
+          yAxisFormat="currency"
+          data={hourlyTrajectoryData}
+          series={[
+            { key: 'btc', name: 'Bitcoin', color: '#f59e0b' },
+            { key: 'eth', name: 'Ethereum', color: '#8b5cf6' },
+          ]}
+        />
+
+        {/* CHART 3: Real 24h Volume by Asset */}
+        <BlockChartCard 
+          title="24H Trading Volume by Asset"
+          type="bar"
+          yAxisFormat="currency"
+          data={realVolumeData}
+          series={volumeSeries}
+        />
+
+        {/* CHART 4: Real Market Dominance */}
+        <BlockChartCard 
+          title="Total Market Cap Dominance"
+          type="bar"
+          stacked={true}
+          expandType="expand"
+          yAxisFormat="percent"
+          data={mcapDominanceData}
+          series={mcapSeries}
+        />
+      </div>
     </div>
   );
 }
