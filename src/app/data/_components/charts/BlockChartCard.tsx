@@ -1,28 +1,42 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, AreaChart, Area, LineChart, Line 
+  Tooltip, AreaChart, Area, LineChart, Line 
 } from 'recharts';
-import { TrendingUp, BarChart3, PieChart } from 'lucide-react';
+import { BarChart3, TrendingUp, PieChart, DownloadCloud, Share2, Box } from 'lucide-react';
 
 interface BlockChartCardProps {
   title: string;
   data: any[];
   type: 'barStack' | 'lineDual' | 'area100';
   colors: Record<string, string>;
+  description?: string;
 }
 
-export default function BlockChartCard({ title, data, type, colors }: BlockChartCardProps) {
+export default function BlockChartCard({ title, data, type, colors, description = "Market data provided via live public APIs." }: BlockChartCardProps) {
   const [isMounted, setIsMounted] = useState(false);
-  const [days, setDays] = useState('ALL');
+  const[zoom, setZoom] = useState('ALL');
 
   useEffect(() => { setIsMounted(true); },[]);
 
-  const icon = type === 'barStack' ? <BarChart3 className="w-5 h-5 text-[#F0B90B]" /> : 
-               type === 'lineDual' ? <TrendingUp className="w-5 h-5 text-white" /> : 
-               <PieChart className="w-5 h-5 text-white" />;
+  // THE FIX: Actual Interactive Data Slicing for the Zoom Buttons
+  const slicedData = useMemo(() => {
+    if (!data || data.length === 0) return[];
+    const isDaily = data.length > 20; // Heuristic to check if data is daily or monthly
+    
+    if (zoom === '1M') return data.slice(-(isDaily ? 30 : 1));
+    if (zoom === '3M') return data.slice(-(isDaily ? 90 : 3));
+    if (zoom === '12M') return data.slice(-(isDaily ? 365 : 12));
+    if (zoom === 'YTD') return data.slice(-(isDaily ? 180 : 6));
+    
+    return data; // 'ALL'
+  }, [data, zoom]);
+
+  const icon = type === 'barStack' ? <BarChart3 className="w-4 h-4 text-[#a1a1aa]" /> : 
+               type === 'lineDual' ? <TrendingUp className="w-4 h-4 text-[#a1a1aa]" /> : 
+               <PieChart className="w-4 h-4 text-[#a1a1aa]" />;
 
   const formatYAxis = (v: number) => {
     if (type === 'area100') return `${v}%`;
@@ -36,13 +50,13 @@ export default function BlockChartCard({ title, data, type, colors }: BlockChart
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#18181b] border border-[#27272a] p-3 text-xs text-white shadow-2xl rounded-sm min-w-[150px] font-sans">
-          <p className="text-[#a1a1aa] mb-2 pb-2 border-b border-[#27272a] uppercase tracking-wider">{label}</p>
+        <div className="bg-[#18181b] border border-[#27272a] p-3 text-xs text-white shadow-2xl rounded-sm min-w-[160px] font-sans">
+          <p className="text-[#a1a1aa] mb-2 pb-2 border-b border-[#27272a] uppercase tracking-wider font-bold">{label}</p>
           {payload.map((entry: any, i: number) => (
-            <div key={i} className="flex justify-between items-center gap-6 mb-1.5">
+            <div key={i} className="flex justify-between items-center gap-8 mb-1.5">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                <span className="text-[#e4e4e7]">{entry.name}</span>
+                <span className="text-[#e4e4e7] font-medium">{entry.name}</span>
               </div>
               <span className="font-mono font-bold">
                 {type === 'area100' ? `${Number(entry.value).toFixed(2)}%` : 
@@ -60,57 +74,62 @@ export default function BlockChartCard({ title, data, type, colors }: BlockChart
   const axisProps = { stroke: "#71717a", fontSize: 10, tickLine: false, axisLine: false };
 
   return (
-    <div className="bg-[#18181b] border border-[#27272a] rounded-xl flex flex-col text-white font-sans shadow-lg h-[460px]">
-      {/* Header matching The Block exactly */}
-      <div className="flex items-center justify-between p-6 border-b border-[#27272a]">
-        <div className="flex items-center gap-3">
-          <div className="p-1.5 border border-[#3f3f46] rounded-md bg-[#27272a]/50">
-            {icon}
-          </div>
-          <h3 className="text-lg font-bold tracking-tight">{title}</h3>
+    <div className="bg-[#18181b] border border-[#27272a] rounded-xl flex flex-col text-white font-sans shadow-2xl overflow-hidden">
+      
+      {/* 1. Header (The Block Style) */}
+      <div className="flex items-center justify-between p-3 border-b border-[#27272a] bg-[#18181b]">
+        <div className="w-8 h-8 rounded border border-[#3f3f46] flex items-center justify-center bg-[#27272a]/30">
+          <Box className="w-4 h-4 text-[#a1a1aa]" />
         </div>
-        <div className="hidden sm:flex items-center gap-1 bg-[#09090b] p-1 rounded-md border border-[#27272a]">
-          <span className="text-[9px] text-[#71717a] font-bold px-2 uppercase tracking-widest">Zoom</span>
-          {['ALL', 'YTD', '12M', '3M', '1M'].map(d => (
-            <button key={d} onClick={() => setDays(d)} className={`px-2 py-1 text-[9px] font-bold rounded transition-colors ${days === d ? 'bg-[#27272a] text-white' : 'text-[#71717a] hover:text-white'}`}>
-              {d}
-            </button>
+        <button className="text-[#71717a] hover:text-white transition-colors">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      {/* 2. Centered Title & Legend */}
+      <div className="pt-6 pb-2 text-center px-4">
+        <h3 className="text-xl font-medium tracking-tight mb-4">{title}</h3>
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+          {Object.keys(colors).map((key) => (
+            <div key={key} className="flex items-center gap-2 cursor-pointer hover:opacity-80">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors[key] }} />
+              <span className="text-[11px] font-bold text-[#a1a1aa] uppercase">{key === 'btc' ? 'Bitcoin' : key === 'eth' ? 'Ethereum' : key}</span>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Chart Area */}
-      <div className="flex-1 p-4 pb-0 relative">
+      {/* 3. The Chart (Fixed Height kills the -1 error) */}
+      <div style={{ height: '320px', width: '100%' }} className="px-4 mt-4">
         {!isMounted ? (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center">
             <span className="w-6 h-6 border-2 border-[#3f3f46] border-t-[#2563eb] rounded-full animate-spin"/>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             {type === 'barStack' ? (
-              <BarChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+              <BarChart data={slicedData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                 <XAxis dataKey="date" {...axisProps} dy={10} minTickGap={30} />
-                <YAxis {...axisProps} tickFormatter={formatYAxis} width={50} />
+                <YAxis {...axisProps} tickFormatter={formatYAxis} width={50} dx={-5} />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: '#ffffff', opacity: 0.05 }} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 {Object.keys(colors).map((key) => (
                   <Bar key={key} dataKey={key} name={key.charAt(0).toUpperCase() + key.slice(1)} stackId="a" fill={colors[key]} maxBarSize={45} isAnimationActive={false} />
                 ))}
               </BarChart>
             ) : type === 'lineDual' ? (
-              <LineChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+              <LineChart data={slicedData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                 <XAxis dataKey="date" {...axisProps} dy={10} minTickGap={30} />
-                <YAxis yAxisId="left" {...axisProps} tickFormatter={formatYAxis} width={50} stroke={colors.btc} />
-                <YAxis yAxisId="right" orientation="right" {...axisProps} tickFormatter={formatYAxis} width={50} stroke={colors.eth} />
+                <YAxis yAxisId="left" {...axisProps} tickFormatter={formatYAxis} width={50} dx={-5} />
+                <YAxis yAxisId="right" orientation="right" {...axisProps} tickFormatter={formatYAxis} width={50} dx={5} />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                <Line yAxisId="left" type="monotone" dataKey="btc" name="BTC" stroke={colors.btc} strokeWidth={2.5} dot={false} isAnimationActive={false} />
-                <Line yAxisId="right" type="monotone" dataKey="eth" name="ETH" stroke={colors.eth} strokeWidth={2.5} dot={false} isAnimationActive={false} />
+                {Object.keys(colors).map((key, i) => (
+                  <Line key={key} yAxisId={i === 0 ? "left" : "right"} type="monotone" dataKey={key} name={key.toUpperCase()} stroke={colors[key]} strokeWidth={2.5} dot={false} isAnimationActive={false} />
+                ))}
               </LineChart>
             ) : (
-              <AreaChart data={data} stackOffset="expand" margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+              <AreaChart data={slicedData} stackOffset="expand" margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                 <defs>
                   {Object.keys(colors).map((key) => (
                     <linearGradient key={key} id={`grad-${key}`} x1="0" y1="0" x2="0" y2="1">
@@ -121,11 +140,10 @@ export default function BlockChartCard({ title, data, type, colors }: BlockChart
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                 <XAxis dataKey="date" {...axisProps} dy={10} minTickGap={30} />
-                <YAxis {...axisProps} tickFormatter={formatYAxis} width={40} />
+                <YAxis {...axisProps} tickFormatter={formatYAxis} width={40} dx={-5} />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 {Object.keys(colors).map((key) => (
-                  <Area key={key} type="monotone" dataKey={key} name={key.charAt(0).toUpperCase() + key.slice(1)} stackId="1" stroke={colors[key]} fill={`url(#grad-${key})`} isAnimationActive={false} />
+                  <Area key={key} type="monotone" dataKey={key} name={key.toUpperCase()} stackId="1" stroke={colors[key]} fill={`url(#grad-${key})`} isAnimationActive={false} />
                 ))}
               </AreaChart>
             )}
@@ -133,17 +151,38 @@ export default function BlockChartCard({ title, data, type, colors }: BlockChart
         )}
       </div>
 
-      {/* Footer Info & Actions */}
-      <div className="mt-4 p-4 bg-[#09090b] border-t border-[#27272a] flex flex-col sm:flex-row justify-between items-center gap-4 rounded-b-xl">
-        <div className="text-[10px] text-[#71717a] font-mono">
-          SOURCE: THE BLOCK / COINGECKO • UPDATED: {new Date().toLocaleDateString('en-US', { month:'short', day:'numeric'})}
+      {/* 4. Zoom & Source Text (Inside Chart Area) */}
+      <div className="flex justify-between items-end px-6 pb-5 pt-2">
+        <div className="text-[10px] text-[#71717a] font-mono leading-relaxed font-bold tracking-widest">
+          <p>SOURCE: THE BLOCK (REPLICA)</p>
+          <p>UPDATED: {new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year: 'numeric'})}</p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2">
-            Request Data
+        <div className="flex items-center gap-1 bg-[#09090b] p-0.5 rounded border border-[#27272a]">
+          <span className="text-[10px] text-white font-bold px-2 uppercase tracking-widest">Zoom</span>
+          {['ALL', 'YTD', '12M', '3M', '1M'].map(d => (
+            <button 
+              key={d} 
+              onClick={() => setZoom(d)} 
+              className={`px-3 py-1 text-[10px] font-bold rounded transition-colors ${zoom === d ? 'bg-[#27272a] text-white' : 'text-[#71717a] hover:text-white'}`}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 5. Dark Footer Actions */}
+      <div className="bg-[#09090b] border-t border-[#27272a] p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 rounded-b-xl">
+        <div>
+          <h4 className="text-white font-bold text-sm tracking-tight mb-1">ABOUT THIS GRAPH</h4>
+          <p className="text-[#a1a1aa] text-xs max-w-sm leading-relaxed">{description}</p>
+        </div>
+        <div className="flex gap-3 w-full md:w-auto">
+          <button className="flex-1 md:flex-none bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-5 py-2.5 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2">
+            <DownloadCloud size={16} /> Request Data
           </button>
-          <button className="flex-1 sm:flex-none bg-[#27272a] hover:bg-[#3f3f46] text-white px-4 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2">
-            Share
+          <button className="flex-1 md:flex-none bg-[#27272a] hover:bg-[#3f3f46] text-white px-5 py-2.5 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2">
+            <Share2 size={16} /> Share
           </button>
         </div>
       </div>
