@@ -5,17 +5,16 @@ const nextConfig = {
       { protocol: 'https', hostname: 'assets.coingecko.com' },
       { protocol: 'https', hostname: 'images.cryptocompare.com' },
       { protocol: 'https', hostname: 'resources.cryptocompare.com' },
-      { protocol: 'https', hostname: 'resources.cryptocompare.com' },
       { protocol: 'https', hostname: 'img.rocket.new' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'i.imgur.com' },
     ],
     dangerouslyAllowSVG: true,
   },
-  allowedDevOrigins: ['*.cloudworkstations.dev'],
+  allowedDevOrigins: ['*.cloudworkstations.dev', 'localhost:3000'], // ← added
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'cryptobrainnews.com', '*.vercel.app'],
+      allowedOrigins: ['localhost:3000', 'cryptobrainnews.com', '*.vercel.app', '*.cloudworkstations.dev'],
     },
   },
   async headers() {

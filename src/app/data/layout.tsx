@@ -1,33 +1,18 @@
 import React, { Suspense } from 'react';
-import { DataSidebar } from './_components/DataSidebar';
+import DataSidebar from './_components/DataSidebar';
 import { DataBreadcrumb } from './_components/DataBreadcrumb';
 
-export const metadata = {
-  title: 'Data Terminal | CryptoBrainNews',
-  description: 'Institutional-grade on-chain data, DeFi analytics, and market intelligence.',
-};
+export const dynamic = 'force-dynamic';   // ← Fixes all Redis/Dune dynamic fetch errors
 
-export default function DataTerminalLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DataLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex max-w-[2000px] mx-auto border-x border-[#1a1a1a] min-h-screen">
+    <div className="flex min-h-screen bg-[#050505]">
       <DataSidebar />
-      <main className="flex-1 min-w-0 bg-[#050505] p-4 sm:p-6 lg:p-10">
-        <DataBreadcrumb />
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center h-64">
-              <span className="text-primary font-mono text-xs animate-pulse uppercase tracking-[0.3em]">
-                Loading terminal data...
-              </span>
-            </div>
-          }
-        >
+      <main className="flex-1 pl-0 lg:pl-72">
+        <div className="max-w-[1600px] mx-auto px-6 py-10">
+          <DataBreadcrumb />
           {children}
-        </Suspense>
+        </div>
       </main>
     </div>
   );

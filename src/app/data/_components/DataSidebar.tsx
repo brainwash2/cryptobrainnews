@@ -1,47 +1,170 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
-const DATA_MENU = [
-  { title: 'Markets', links: [{ label: 'Overview', href: '/data/markets' }, { label: 'Spot', href: '/data/markets/spot' }, { label: 'Futures', href: '/data/markets/futures' }, { label: 'Prices', href: '/data/markets/prices' }] },
-  { title: 'ETFs', links: [{ label: 'Overview', href: '/data/etfs' }, { label: 'Bitcoin ETFs', href: '/data/etfs/bitcoin' }, { label: 'Ethereum ETFs', href: '/data/etfs/ethereum' }] },
-  { title: 'Stablecoins', links: [{ label: 'Overview', href: '/data/stablecoins' }, { label: 'USD Pegged', href: '/data/stablecoins/usd' }] },
-  { title: 'On-Chain', links: [{ label: 'Overview', href: '/data/onchain' }, { label: 'Ethereum', href: '/data/onchain/ethereum' }] },
-  { title: 'DeFi', links: [{ label: 'Overview', href: '/data/defi' }, { label: 'DEX Volume', href: '/data/defi/dex-volume' }, { label: 'TVL Rankings', href: '/data/defi/tvl' }, { label: 'Whale Watch', href: '/data/defi/whale-watch' }] },
-  { title: 'NFTs', links: [{ label: 'Overview', href: '/data/nfts' }] }
+interface SidebarLink {
+  label: string;
+  href: string;
+}
+
+interface SidebarSection {
+  title: string;
+  icon: string;
+  children: SidebarLink[];
+}
+
+const SECTIONS: SidebarSection[] = [
+  {
+    title: 'Markets',
+    icon: '📊',
+    children: [
+      { label: 'Spot', href: '/data/markets/spot' },
+      { label: 'Futures', href: '/data/markets/futures' },
+      { label: 'Crypto Indices', href: '/data/markets/indices' },
+      { label: 'CME COTs', href: '/data/markets/cme-cots' },
+      { label: 'Options', href: '/data/markets/options' },
+      { label: 'Prices', href: '/data/markets/prices' },
+      { label: 'Companies', href: '/data/markets/companies' },
+      { label: 'Exchange Tokens', href: '/data/markets/exchange-tokens' },
+      { label: 'Sports Tokens', href: '/data/markets/sports-tokens' },
+    ],
+  },
+  {
+    title: 'ETFs',
+    icon: '📈',
+    children: [
+      { label: 'Bitcoin ETFs', href: '/data/etfs/bitcoin' },
+      { label: 'Ethereum ETFs', href: '/data/etfs/ethereum' },
+      { label: 'Solana ETFs', href: '/data/etfs/solana' },
+      { label: 'XRP ETFs', href: '/data/etfs/xrp' },
+      { label: 'Crypto ETFs', href: '/data/etfs/crypto' },
+      { label: 'ETF Comparison', href: '/data/etfs/comparison' },
+    ],
+  },
+  {
+    title: 'Treasuries',
+    icon: '🏦',
+    children: [
+      { label: 'Bitcoin Treasuries', href: '/data/treasuries/bitcoin' },
+      { label: 'Ethereum Treasuries', href: '/data/treasuries/ethereum' },
+      { label: 'Solana Treasuries', href: '/data/treasuries/solana' },
+      { label: 'Crypto Treasuries', href: '/data/treasuries/crypto' },
+    ],
+  },
+  {
+    title: 'Stablecoins',
+    icon: '💵',
+    children: [
+      { label: 'USD Pegged', href: '/data/stablecoins/usd' },
+      { label: 'Non-USD Pegged', href: '/data/stablecoins/non-usd' },
+      { label: 'Non-Fiat Pegged', href: '/data/stablecoins/non-fiat' },
+    ],
+  },
+  {
+    title: 'On-Chain Metrics',
+    icon: '⛓️',
+    children: [
+      { label: 'Bitcoin', href: '/data/onchain/bitcoin' },
+      { label: 'Ethereum', href: '/data/onchain/ethereum' },
+      { label: 'Solana', href: '/data/onchain/solana' },
+      { label: 'Avalanche', href: '/data/onchain/avalanche' },
+      { label: 'Aptos', href: '/data/onchain/aptos' },
+      { label: 'Comparison', href: '/data/onchain/comparison' },
+      { label: 'Flows', href: '/data/onchain/flows' },
+    ],
+  },
+  {
+    title: 'Scaling Solutions',
+    icon: '⚡',
+    children: [
+      { label: 'Overview', href: '/data/scaling' },
+      { label: 'Layer 1: EVM Blockchains', href: '/data/scaling/l1-evm' },
+      { label: 'Layer 1: Non-EVM Blockchains', href: '/data/scaling/l1-non-evm' },
+      { label: 'Layer 2: Optimistic Rollups', href: '/data/scaling/optimistic' },
+      { label: 'Layer 2: ZK Rollups', href: '/data/scaling/zk' },
+      { label: 'Data Availability', href: '/data/scaling/data-availability' },
+    ],
+  },
+  {
+    title: 'DeFi',
+    icon: '🔄',
+    children: [
+      { label: 'Exchange', href: '/data/defi/dex-volume' },
+      { label: 'Restaking', href: '/data/defi/restaking' },
+      { label: 'Lending', href: '/data/defi/lending' },
+      { label: 'Launchpads', href: '/data/defi/launchpads' },
+      { label: 'Prediction Markets and Betting', href: '/data/defi/prediction' },
+      { label: 'Derivatives', href: '/data/defi/derivatives' },
+      { label: 'RWA', href: '/data/defi/rwa' },
+      { label: 'Exploits', href: '/data/defi/exploits' },
+      { label: 'Protocol Revenue', href: '/data/defi/revenue' },
+      { label: 'Value Locked', href: '/data/defi/tvl' },
+      { label: 'Social', href: '/data/defi/social' },
+    ],
+  },
+  {
+    title: 'NFTs',
+    icon: '🖼️',
+    children: [
+      { label: 'Overview', href: '/data/nfts' },
+      { label: 'Art and Collectibles', href: '/data/nfts/art' },
+      { label: 'Gaming', href: '/data/nfts/gaming' },
+      { label: 'Marketplaces', href: '/data/nfts/marketplaces' },
+    ],
+  },
 ];
 
-export function DataSidebar() {
+export default function DataSidebar() {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<string[]>(['Markets']);
+
+  const toggleSection = (title: string) => {
+    setOpenSections((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
+    );
+  };
 
   return (
-    <>
-      <div className="lg:hidden fixed top-14 left-0 right-0 z-[40] bg-[#0a0a0a] border-b border-[#1a1a1a] flex items-center px-4 py-3">
-        <button onClick={() => setIsOpen(true)} className="flex items-center gap-2 text-[11px] font-black text-[#888] uppercase tracking-widest">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Dashboard Menu
-        </button>
-      </div>
-      {isOpen && <div className="lg:hidden fixed inset-0 z-[45] bg-black/80" onClick={() => setIsOpen(false)} />}
-      <aside className={`fixed lg:sticky top-14 left-0 z-[50] lg:z-0 w-64 h-[calc(100vh-3.5rem)] bg-[#050505] border-r border-[#1a1a1a] transform transition-transform duration-300 overflow-y-auto ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-5">
-          <div className="flex justify-end lg:hidden mb-4"><button onClick={() => setIsOpen(false)} className="text-[#888]"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
-          {DATA_MENU.map((section) => (
+    <aside className="w-72 bg-[#050505] border-r border-[#1a1a1a] h-[calc(100vh-3.5rem)] overflow-y-auto sticky top-14 hidden lg:block font-mono text-xs">
+      <div className="p-6">
+        <div className="uppercase text-[10px] tracking-[0.2em] text-[#FABF2C] mb-6 font-black">DATA TERMINAL</div>
+        
+        {SECTIONS.map((section) => {
+          const isOpen = openSections.includes(section.title);
+          return (
             <div key={section.title} className="mb-6">
-              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-[0.2em] mb-3">{section.title}</h3>
-              <div className="flex flex-col space-y-1 border-l border-[#1a1a1a] ml-1">
-                {section.links.map((link) => (
-                  <Link key={link.label} href={link.href} onClick={() => setIsOpen(false)} className={`text-xs block pl-4 py-1.5 font-bold uppercase tracking-wider ${pathname === link.href ? 'border-l-2 border-[#FABF2C] text-[#FABF2C] -ml-[1px]' : 'border-l-2 border-transparent text-[#888] hover:text-white -ml-[1px]'}`}>
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
+              <button
+                onClick={() => toggleSection(section.title)}
+                className="flex w-full items-center justify-between py-2 text-white hover:text-[#FABF2C] transition-colors font-black uppercase tracking-widest text-left"
+              >
+                <span className="flex items-center gap-2">
+                  <span>{section.icon}</span> {section.title}
+                </span>
+                {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+              
+              {isOpen && (
+                <div className="pl-6 border-l border-[#1a1a1a] mt-1 space-y-0.5">
+                  {section.children.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`block py-1.5 px-3 rounded transition-all text-[#888] hover:text-white hover:bg-[#1a1a1a] ${
+                        pathname === link.href ? 'text-[#FABF2C] bg-[#1a1a1a] font-bold' : ''
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      </aside>
-    </>
+          );
+        })}
+      </div>
+    </aside>
   );
 }

@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, AreaChart, Area, LineChart, Line 
 } from 'recharts';
-import { BarChart3, TrendingUp, PieChart, DownloadCloud, Share2, Box } from 'lucide-react';
+import { BarChart3, DownloadCloud, Share2, Maximize2 } from 'lucide-react';
 
 interface BlockChartCardProps {
   title: string;
@@ -15,177 +15,142 @@ interface BlockChartCardProps {
   description?: string;
 }
 
-export default function BlockChartCard({ title, data, type, colors, description = "Market data provided via live public APIs." }: BlockChartCardProps) {
+export default function BlockChartCard({ title, data, type, colors, description = "Live via Dune + CoinGecko" }: BlockChartCardProps) {
   const [isMounted, setIsMounted] = useState(false);
-  const[zoom, setZoom] = useState('ALL');
+  const [zoom, setZoom] = useState<'ALL' | 'YTD' | '12M' | '3M' | '1M'>('ALL');
+  const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => { setIsMounted(true); },[]);
+  useEffect(() => { setIsMounted(true); }, []);
 
-  // THE FIX: Actual Interactive Data Slicing for the Zoom Buttons
   const slicedData = useMemo(() => {
-    if (!data || data.length === 0) return[];
-    const isDaily = data.length > 20; // Heuristic to check if data is daily or monthly
-    
+    if (!data || data.length === 0) return [];
+    const isDaily = data.length > 20;
     if (zoom === '1M') return data.slice(-(isDaily ? 30 : 1));
     if (zoom === '3M') return data.slice(-(isDaily ? 90 : 3));
     if (zoom === '12M') return data.slice(-(isDaily ? 365 : 12));
     if (zoom === 'YTD') return data.slice(-(isDaily ? 180 : 6));
-    
-    return data; // 'ALL'
+    return [...data]; // force new reference for re-render
   }, [data, zoom]);
 
-  const icon = type === 'barStack' ? <BarChart3 className="w-4 h-4 text-[#a1a1aa]" /> : 
-               type === 'lineDual' ? <TrendingUp className="w-4 h-4 text-[#a1a1aa]" /> : 
-               <PieChart className="w-4 h-4 text-[#a1a1aa]" />;
-
   const formatYAxis = (v: number) => {
-    if (type === 'area100') return `${v}%`;
     if (v >= 1e12) return `$${(v / 1e12).toFixed(1)}T`;
     if (v >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
     if (v >= 1e6) return `$${(v / 1e6).toFixed(0)}M`;
-    if (v >= 1e3) return `$${(v / 1e3).toFixed(0)}k`;
-    return `$${v}`;
+    return `$${v.toLocaleString()}`;
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-[#18181b] border border-[#27272a] p-3 text-xs text-white shadow-2xl rounded-sm min-w-[160px] font-sans">
-          <p className="text-[#a1a1aa] mb-2 pb-2 border-b border-[#27272a] uppercase tracking-wider font-bold">{label}</p>
-          {payload.map((entry: any, i: number) => (
-            <div key={i} className="flex justify-between items-center gap-8 mb-1.5">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                <span className="text-[#e4e4e7] font-medium">{entry.name}</span>
-              </div>
-              <span className="font-mono font-bold">
-                {type === 'area100' ? `${Number(entry.value).toFixed(2)}%` : 
-                 entry.value >= 1000 ? `$${Number(entry.value).toLocaleString(undefined, { maximumFractionDigits: 0 })}` :
-                 `$${Number(entry.value).toLocaleString()}`}
-              </span>
+    if (!active || !payload) return null;
+    return (
+      <div className="bg-[#18181b] border border-[#27272a] p-4 rounded text-xs shadow-2xl min-w-[180px]">
+        <p className="text-[#a1a1aa] mb-3 font-bold">{label}</p>
+        {payload.map((entry: any, i: number) => (
+          <div key={i} className="flex justify-between gap-8 mb-1.5">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
+              <span className="text-white">{entry.name}</span>
             </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
+            <span className="font-mono font-bold">{formatYAxis(Number(entry.value))}</span>
+          </div>
+        ))}
+      </div>
+    );
   };
 
-  const axisProps = { stroke: "#71717a", fontSize: 10, tickLine: false, axisLine: false };
+  const handleShare = () => navigator.share?.({ title, url: window.location.href });
 
   return (
-    <div className="bg-[#18181b] border border-[#27272a] rounded-xl flex flex-col text-white font-sans shadow-2xl overflow-hidden">
-      
-      {/* 1. Header (The Block Style) */}
-      <div className="flex items-center justify-between p-3 border-b border-[#27272a] bg-[#18181b]">
-        <div className="w-8 h-8 rounded border border-[#3f3f46] flex items-center justify-center bg-[#27272a]/30">
-          <Box className="w-4 h-4 text-[#a1a1aa]" />
-        </div>
-        <button className="text-[#71717a] hover:text-white transition-colors">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-
-      {/* 2. Centered Title & Legend */}
-      <div className="pt-6 pb-2 text-center px-4">
-        <h3 className="text-xl font-medium tracking-tight mb-4">{title}</h3>
-        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-          {Object.keys(colors).map((key) => (
-            <div key={key} className="flex items-center gap-2 cursor-pointer hover:opacity-80">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors[key] }} />
-              <span className="text-[11px] font-bold text-[#a1a1aa] uppercase">{key === 'btc' ? 'Bitcoin' : key === 'eth' ? 'Ethereum' : key}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 3. The Chart (Fixed Height kills the -1 error) */}
-      <div style={{ height: '320px', width: '100%' }} className="px-4 mt-4">
-        {!isMounted ? (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="w-6 h-6 border-2 border-[#3f3f46] border-t-[#2563eb] rounded-full animate-spin"/>
+    <div className={`bg-[#18181b] border border-[#27272a] rounded-xl overflow-hidden ${expanded ? 'fixed inset-4 z-[100]' : ''}`}>
+      <div className="flex items-center justify-between px-6 py-4 border-b border-[#27272a]">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded border border-[#3f3f46] flex items-center justify-center bg-[#27272a]">
+            <BarChart3 className="w-4 h-4 text-[#a1a1aa]" />
           </div>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <div>
+            <h3 className="font-medium text-lg tracking-tight">{title}</h3>
+            <p className="text-[10px] text-[#71717a] font-mono">The Block Replica • Live</p>
+          </div>
+        </div>
+        <button onClick={() => setExpanded(!expanded)} className="text-[#71717a] hover:text-white"><Maximize2 size={18} /></button>
+      </div>
+
+      <div className="px-6 pt-6 pb-2 flex flex-wrap gap-x-6 gap-y-2 text-[11px]">
+        {Object.keys(colors).map(key => (
+          <div key={key} className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors[key] }} />
+            <span className="uppercase font-bold text-[#a1a1aa]">{key}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ height: expanded ? 'calc(100vh - 280px)' : '340px', minHeight: '300px' }} className="px-6">
+        {isMounted ? (
+          <ResponsiveContainer width="100%" height="100%" key={zoom}> {/* ← key forces re-render on zoom */}
             {type === 'barStack' ? (
-              <BarChart data={slicedData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="date" {...axisProps} dy={10} minTickGap={30} />
-                <YAxis {...axisProps} tickFormatter={formatYAxis} width={50} dx={-5} />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#ffffff', opacity: 0.05 }} />
-                {Object.keys(colors).map((key) => (
-                  <Bar key={key} dataKey={key} name={key.charAt(0).toUpperCase() + key.slice(1)} stackId="a" fill={colors[key]} maxBarSize={45} isAnimationActive={false} />
+              <BarChart data={slicedData} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
+                <CartesianGrid stroke="#27272a" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="date" stroke="#71717a" fontSize={10} tickLine={false} />
+                <YAxis stroke="#71717a" fontSize={10} tickFormatter={formatYAxis} tickLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                {Object.keys(colors).map(key => (
+                  <Bar key={key} dataKey={key} stackId="a" fill={colors[key]} maxBarSize={42} radius={2} />
                 ))}
               </BarChart>
             ) : type === 'lineDual' ? (
-              <LineChart data={slicedData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="date" {...axisProps} dy={10} minTickGap={30} />
-                <YAxis yAxisId="left" {...axisProps} tickFormatter={formatYAxis} width={50} dx={-5} />
-                <YAxis yAxisId="right" orientation="right" {...axisProps} tickFormatter={formatYAxis} width={50} dx={5} />
+              <LineChart data={slicedData}>
+                <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
+                <XAxis dataKey="date" stroke="#71717a" fontSize={10} />
+                <YAxis yAxisId="left" stroke="#71717a" tickFormatter={formatYAxis} />
+                <YAxis yAxisId="right" orientation="right" stroke="#71717a" tickFormatter={formatYAxis} />
                 <Tooltip content={<CustomTooltip />} />
                 {Object.keys(colors).map((key, i) => (
-                  <Line key={key} yAxisId={i === 0 ? "left" : "right"} type="monotone" dataKey={key} name={key.toUpperCase()} stroke={colors[key]} strokeWidth={2.5} dot={false} isAnimationActive={false} />
+                  <Line key={key} yAxisId={i === 0 ? "left" : "right"} type="monotone" dataKey={key} stroke={colors[key]} strokeWidth={3} dot={false} />
                 ))}
               </LineChart>
             ) : (
-              <AreaChart data={slicedData} stackOffset="expand" margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+              <AreaChart data={slicedData} stackOffset="expand">
                 <defs>
-                  {Object.keys(colors).map((key) => (
+                  {Object.keys(colors).map(key => (
                     <linearGradient key={key} id={`grad-${key}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={colors[key]} stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor={colors[key]} stopOpacity={0.2}/>
+                      <stop offset="5%" stopColor={colors[key]} stopOpacity={0.85} />
+                      <stop offset="95%" stopColor={colors[key]} stopOpacity={0.05} />
                     </linearGradient>
                   ))}
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="date" {...axisProps} dy={10} minTickGap={30} />
-                <YAxis {...axisProps} tickFormatter={formatYAxis} width={40} dx={-5} />
+                <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
+                <XAxis dataKey="date" stroke="#71717a" fontSize={10} />
+                <YAxis stroke="#71717a" tickFormatter={formatYAxis} />
                 <Tooltip content={<CustomTooltip />} />
-                {Object.keys(colors).map((key) => (
-                  <Area key={key} type="monotone" dataKey={key} name={key.toUpperCase()} stackId="1" stroke={colors[key]} fill={`url(#grad-${key})`} isAnimationActive={false} />
+                {Object.keys(colors).map(key => (
+                  <Area key={key} type="monotone" dataKey={key} stackId="1" stroke={colors[key]} fill={`url(#grad-${key})`} />
                 ))}
               </AreaChart>
             )}
           </ResponsiveContainer>
+        ) : (
+          <div className="h-full flex items-center justify-center text-[#444]">Loading chart...</div>
         )}
       </div>
 
-      {/* 4. Zoom & Source Text (Inside Chart Area) */}
-      <div className="flex justify-between items-end px-6 pb-5 pt-2">
-        <div className="text-[10px] text-[#71717a] font-mono leading-relaxed font-bold tracking-widest">
-          <p>SOURCE: THE BLOCK (REPLICA)</p>
-          <p>UPDATED: {new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year: 'numeric'})}</p>
-        </div>
-        <div className="flex items-center gap-1 bg-[#09090b] p-0.5 rounded border border-[#27272a]">
-          <span className="text-[10px] text-white font-bold px-2 uppercase tracking-widest">Zoom</span>
-          {['ALL', 'YTD', '12M', '3M', '1M'].map(d => (
+      <div className="px-6 py-4 border-t border-[#27272a] flex items-center justify-between bg-[#09090b]">
+        <div className="flex gap-1">
+          {(['ALL','YTD','12M','3M','1M'] as const).map(z => (
             <button 
-              key={d} 
-              onClick={() => setZoom(d)} 
-              className={`px-3 py-1 text-[10px] font-bold rounded transition-colors ${zoom === d ? 'bg-[#27272a] text-white' : 'text-[#71717a] hover:text-white'}`}
+              key={z}
+              onClick={() => setZoom(z)}
+              className={`px-3 py-1 text-[10px] font-bold rounded transition-all ${zoom === z ? 'bg-[#27272a] text-white' : 'text-[#71717a] hover:text-white'}`}
             >
-              {d}
+              {z}
             </button>
           ))}
         </div>
+        <div className="flex gap-2">
+          <button onClick={handleShare} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-[#71717a] hover:text-white"><Share2 size={14} /> Share</button>
+          <button className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#2563eb] text-white rounded hover:bg-[#1d4ed8]"><DownloadCloud size={14} /> Export</button>
+        </div>
       </div>
 
-      {/* 5. Dark Footer Actions */}
-      <div className="bg-[#09090b] border-t border-[#27272a] p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 rounded-b-xl">
-        <div>
-          <h4 className="text-white font-bold text-sm tracking-tight mb-1">ABOUT THIS GRAPH</h4>
-          <p className="text-[#a1a1aa] text-xs max-w-sm leading-relaxed">{description}</p>
-        </div>
-        <div className="flex gap-3 w-full md:w-auto">
-          <button className="flex-1 md:flex-none bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-5 py-2.5 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2">
-            <DownloadCloud size={16} /> Request Data
-          </button>
-          <button className="flex-1 md:flex-none bg-[#27272a] hover:bg-[#3f3f46] text-white px-5 py-2.5 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2">
-            <Share2 size={16} /> Share
-          </button>
-        </div>
-      </div>
+      {description && <div className="px-6 py-5 text-[10px] text-[#71717a] border-t border-[#27272a] font-mono bg-[#09090b]">{description}</div>}
     </div>
   );
 }
