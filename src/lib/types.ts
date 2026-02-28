@@ -50,8 +50,6 @@ export interface AdLead {
   message: string;
 }
 
-// Add these exports to your existing types.ts file
-
 export interface SidebarSection {
   label: string;
   icon: string;
@@ -81,6 +79,8 @@ export interface CoinMarketData {
 export interface DeFiProtocol {
   name: string;
   tvl: number;
+  category?: string;
+  chain?: string;
   chainTvls?: Record<string, number>;
 }
 
@@ -101,19 +101,4 @@ export interface StablecoinPoint {
   total_stablecoin_volume: number;
   dominance_pct: number;
 }
-
-export interface PriceTableRow {
-  id: string;
-  market_cap_rank: number;
-  name: string;
-  symbol: string;
-  image: string;
-  current_price: number;
-  price_change_percentage_24h: number;
-  price_change_percentage_7d: number;
-  market_cap: number;
-  total_volume: number;
-  sparkline_in_7d?: {
-    price: number[];
-  };
-}
+export type PriceTableRow = CoinMarketData;
