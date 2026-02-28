@@ -6,8 +6,6 @@ import { FALLBACK_MARKET_DATA } from './fallback-data';
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 const DEFI_LLAMA_BASE = 'https://api.llama.fi';
 
-// ─── Market Data ────────────────────────────────────────────────────────
-
 export async function getLiveMarketPrices(currency = 'usd'): Promise<CoinMarketData[]> {
   return cached(`market:prices:${currency}`, async () => {
     try {
@@ -15,8 +13,11 @@ export async function getLiveMarketPrices(currency = 'usd'): Promise<CoinMarketD
         `${COINGECKO_BASE}/coins/markets?vs_currency=${currency}&order=market_cap_desc&per_page=100&page=1&sparkline=true&price_change_percentage=1h,24h,7d`, 
         { cache: 'no-store' }
       );
-      if (!res.ok) throw new Error(`CoinGecko ${res.status}`);
-      return await res.json();
+      if (!res.ok) return FALLBACK_MARKET_DATA;
+      const data = await res.json();
+      // CRITICAL FIX: Ensure it is an array so .map() doesn't crash the server
+      if (!Array.isArray(data)) return FALLBACK_MARKET_DATA;
+      return data;
     } catch {
       return FALLBACK_MARKET_DATA;
     }
@@ -25,58 +26,40 @@ export async function getLiveMarketPrices(currency = 'usd'): Promise<CoinMarketD
 
 export const getLivePrices = getLiveMarketPrices;
 
-export async function getCoinPrice(coinId: string): Promise<number | null> {
+export async function getCoinPrice(coinId: string): Promise<number> {
   try {
     const res = await fetchWithTimeout(
       `${COINGECKO_BASE}/simple/price?ids=${coinId}&vs_currencies=usd`,
       { next: { revalidate: 60 } }
     );
-    if (!res.ok) return null;
+    if (!res.ok) return 0;
     const data = await res.json();
-    return data[coinId]?.usd ?? null;
+    return typeof data[coinId]?.usd === 'number' ? data[coinId].usd : 0;
   } catch {
-    return null;
+    return 0;
   }
 }
-
-// ─── DeFi Data ──────────────────────────────────────────────────────────
 
 export async function getDeFiProtocols(): Promise<DeFiProtocol[]> {
   return cached('defi:protocols', async () => {
     try {
       const res = await fetchWithTimeout(`${DEFI_LLAMA_BASE}/protocols`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`DefiLlama ${res.status}`);
-      return await res.json();
+      if (!res.ok) return[];
+      const data = await res.json();
+      return Array.isArray(data) ? data :[];
     } catch {
-      return [];
+      return[];
     }
   }, 600);
 }
 
-export async function getChainTVL(chain: string): Promise<number | null> {
-  try {
-    const res = await fetchWithTimeout(`${DEFI_LLAMA_BASE}/tvl/${chain}`, {
-      next: { revalidate: 600 },
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-// ─── DEX Volume (DefiLlama) ─────────────────────────────────────────────
-
-export interface DexVolumeDataPoint {
-  date: string;
-  volume: number;
-}
+export interface DexVolumeDataPoint { date: string; volume: number; }
 
 export async function getDexVolume(): Promise<DexVolumeDataPoint[]> {
   return cached('dex:volume:llama', async () => {
     try {
       const res = await fetchWithTimeout(`${DEFI_LLAMA_BASE}/overview/dexs?excludeTotalDataChart=false`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`DefiLlama DEX ${res.status}`);
+      if (!res.ok) return[];
       const json = await res.json();
       const chart: Array<[number, number]> = json.totalDataChart ?? [];
       return chart.map(([ts, vol]) => ({
@@ -84,44 +67,32 @@ export async function getDexVolume(): Promise<DexVolumeDataPoint[]> {
         volume: vol,
       }));
     } catch {
-      return [];
+      return[];
     }
   }, 600);
 }
 
-// ─── Yields (DefiLlama) ─────────────────────────────────────────────────
-
 export interface YieldPool {
-  project: string;
-  chain: string;
-  symbol: string;
-  tvlUsd: number;
-  apy: number;
-  apyPct1D: number;
-  pool: string;
+  project: string; chain: string; symbol: string; tvlUsd: number; apy: number; apyPct1D: number; pool: string;
 }
 
 export async function getTopYields(): Promise<YieldPool[]> {
   return cached('defi:yields', async () => {
     try {
       const res = await fetchWithTimeout('https://yields.llama.fi/pools', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`Yields ${res.status}`);
+      if (!res.ok) return[];
       const json = await res.json();
-      return (json.data ?? [])
+      if (!json.data || !Array.isArray(json.data)) return[];
+      return json.data
         .filter((p: any) => p.tvlUsd > 1_000_000 && p.apy > 0 && p.apy < 1000)
         .sort((a: any, b: any) => b.tvlUsd - a.tvlUsd)
         .slice(0, 50)
         .map((p: any): YieldPool => ({
-          project: p.project ?? 'Unknown',
-          chain: p.chain ?? 'Unknown',
-          symbol: p.symbol ?? '—',
-          tvlUsd: p.tvlUsd ?? 0,
-          apy: p.apy ?? 0,
-          apyPct1D: p.apyPct1D ?? 0,
-          pool: p.pool ?? '',
+          project: p.project ?? 'Unknown', chain: p.chain ?? 'Unknown', symbol: p.symbol ?? '—',
+          tvlUsd: p.tvlUsd ?? 0, apy: p.apy ?? 0, apyPct1D: p.apyPct1D ?? 0, pool: p.pool ?? '',
         }));
     } catch {
-      return [];
+      return[];
     }
   }, 600);
 }

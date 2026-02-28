@@ -15,17 +15,14 @@ const BTC_ETFS =[
 ];
 
 async function BitcoinEtfData() {
-  const btcPrice = await getCoinPrice('bitcoin') || 65000;
+  let btcPrice = await getCoinPrice('bitcoin');
+  if (!btcPrice || btcPrice === 0) btcPrice = 65000;
   
   const totalAum = BTC_ETFS.reduce((sum, etf) => sum + etf.aum, 0);
 
   return (
     <div className="space-y-8">
-      <DataHeader 
-        title="Bitcoin Spot ETFs" 
-        description="Assets Under Management (AUM) and institutional holdings across US Spot BTC ETFs." 
-      />
-
+      <DataHeader title="Bitcoin Spot ETFs" description="Assets Under Management (AUM) and holdings." />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
           <div className="text-[#555] text-[10px] font-black tracking-widest uppercase">Total BTC ETF AUM</div>
@@ -40,12 +37,10 @@ async function BitcoinEtfData() {
           <div className="text-3xl font-black text-white mt-2 tabular-nums">{BTC_ETFS.length}</div>
         </div>
       </div>
-
       <div className="border border-[#1a1a1a] bg-[#0a0a0a]">
         <DataTable
           columns={[
-            { key: 'ticker', label: 'Ticker' },
-            { key: 'issuer', label: 'Issuer' },
+            { key: 'ticker', label: 'Ticker' }, { key: 'issuer', label: 'Issuer' },
             { key: 'aum', label: 'AUM (USD)', format: (v) => `$${(Number(v) / 1e9).toFixed(2)}B`, align: 'right' },
             { key: 'fee', label: 'Sponsor Fee', align: 'right' },
           ]}
@@ -59,9 +54,7 @@ async function BitcoinEtfData() {
 export default function BitcoinEtfsPage() {
   return (
     <main className="pb-20">
-      <Suspense fallback={<div className="animate-pulse h-64 bg-[#0a0a0a] border border-[#1a1a1a]" />}>
-        <BitcoinEtfData />
-      </Suspense>
+      <Suspense fallback={<div className="animate-pulse h-64 bg-[#0a0a0a] border border-[#1a1a1a]" />}><BitcoinEtfData /></Suspense>
     </main>
   );
 }
