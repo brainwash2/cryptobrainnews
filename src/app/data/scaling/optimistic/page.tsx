@@ -1,26 +1,64 @@
-import React from 'react';
-import { MetricCard } from '../../_components/MetricCard';
+import React, { Suspense } from 'react';
+import { getL2ActiveAddresses, getL2GasFees } from '@/lib/dune';
+import BlockChartCard from '../../_components/charts/BlockChartCard';
+import { DataHeader } from '../../_components/DataHeader';
+import { ChartSkeleton } from '../../_components/ChartSkeleton';
 
-export const metadata = { title: 'scaling / optimistic | CryptoBrainNews' };
+export const metadata = { title: 'Optimistic Rollups | CryptoBrainNews' };
+export const revalidate = 3600;
 
-export default function Page() {
+async function OptimisticData() {
+  const[addresses, fees] = await Promise.all([
+    getL2ActiveAddresses(30).catch(() => []),
+    getL2GasFees(30).catch(() =>[])
+  ]);
+
+  const pivotAddresses: Record<string, any> = {};
+  addresses.filter(r => r.chain !== 'base').forEach(row => {
+    const d = String(row.day).slice(0, 10);
+    if (!pivotAddresses[d]) pivotAddresses[d] = { date: d, arbitrum: 0, optimism: 0 };
+    pivotAddresses[d][String(row.chain).toLowerCase()] = Number(row.active_addresses || 0);
+  });
+
+  const pivotFees: Record<string, any> = {};
+  fees.filter(r => r.chain !== 'base').forEach(row => {
+    const d = String(row.day).slice(0, 10);
+    if (!pivotFees[d]) pivotFees[d] = { date: d, arbitrum: 0, optimism: 0 };
+    pivotFees[d][String(row.chain).toLowerCase()] = Number(row.avg_gas_price_gwei || 0);
+  });
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-white font-heading uppercase tracking-tighter">
-          scaling / optimistic <span className="text-primary">Data</span>
-        </h1>
-        <p className="text-[#444] font-mono text-[10px] uppercase tracking-[0.3em] mt-1">
-          Coming Soon • Powered by Dune Analytics
-        </p>
-      </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Status" value="Building" />
-        <MetricCard label="Source" value="Dune" />
-      </div>
-      <div className="p-20 border-2 border-dashed border-[#1a1a1a] text-center text-[#333] font-mono text-xs uppercase tracking-[0.3em]">
-        Data pipeline initializing...
+      <DataHeader 
+        title="Optimistic Rollups" 
+        description="Performance metrics for Arbitrum and Optimism." 
+      />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <BlockChartCard 
+          title="Daily Active Addresses" 
+          type="lineDual" 
+          yAxisFormat="number"
+          data={Object.values(pivotAddresses).sort((a, b) => a.date.localeCompare(b.date))} 
+          colors={{ arbitrum: '#3b82f6', optimism: '#ef4444' }} 
+        />
+        <BlockChartCard 
+          title="Average Gas Price (Gwei)" 
+          type="barStack" 
+          yAxisFormat="number"
+          data={Object.values(pivotFees).sort((a, b) => a.date.localeCompare(b.date))} 
+          colors={{ arbitrum: '#3b82f6', optimism: '#ef4444' }} 
+        />
       </div>
     </div>
+  );
+}
+
+export default function OptimisticPage() {
+  return (
+    <main className="pb-20">
+      <Suspense fallback={<ChartSkeleton />}>
+        <OptimisticData />
+      </Suspense>
+    </main>
   );
 }

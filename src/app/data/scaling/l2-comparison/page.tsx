@@ -1,25 +1,23 @@
 import React from 'react';
-import { MetricCard } from '../../_components/MetricCard';
+import { DataHeader } from '../../_components/DataHeader';
+import Link from 'next/link';
 
-export const metadata = { title: 'scaling / l2 comparison | CryptoBrainNews' };
-
-export default function Page() {
+export default function L2ComparisonPage() {
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-white font-heading uppercase tracking-tighter">
-          scaling / l2 comparison <span className="text-primary">Data</span>
-        </h1>
-        <p className="text-[#444] font-mono text-[10px] uppercase tracking-[0.3em] mt-1">
-          Coming Soon • Powered by Dune Analytics
+    <div className="space-y-8 pb-20">
+      <DataHeader title="L2 Comparison" description="Cross-chain performance analytics." />
+      <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-12 text-center">
+        <p className="text-[#888] font-mono text-xs uppercase tracking-widest mb-6">
+          Please view individual sector pages for detailed metrics.
         </p>
-      </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Status" value="Building" />
-        <MetricCard label="Source" value="Dune" />
-      </div>
-      <div className="p-20 border-2 border-dashed border-[#1a1a1a] text-center text-[#333] font-mono text-xs uppercase tracking-[0.3em]">
-        Data pipeline initializing...
+        <div className="flex justify-center gap-4">
+          <Link href="/data/scaling/optimistic" className="border border-[#3b82f6] text-[#3b82f6] px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-[#3b82f6] hover:text-white transition-colors">
+            Optimistic Rollups
+          </Link>
+          <Link href="/data/scaling" className="border border-[#ef4444] text-[#ef4444] px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-[#ef4444] hover:text-white transition-colors">
+            Overview
+          </Link>
+        </div>
       </div>
     </div>
   );
