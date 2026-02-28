@@ -1,26 +1,57 @@
-import React from 'react';
-import { MetricCard } from '../../_components/MetricCard';
+import React, { Suspense } from 'react';
+import { getDexVolume } from '@/lib/api';
+import BlockChartCard from '../../_components/charts/BlockChartCard';
+import { DataHeader } from '../../_components/DataHeader';
+import { ChartSkeleton } from '../../_components/ChartSkeleton';
 
-export const metadata = { title: 'markets / volumes | CryptoBrainNews' };
+export const metadata = { title: 'Exchange Volumes | CryptoBrainNews' };
+export const revalidate = 3600;
 
-export default function Page() {
+async function VolumesData() {
+  const dexVolumes = await getDexVolume();
+
+  const realDexData = dexVolumes.slice(-90).map(v => ({
+    date: new Date(v.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    volume: v.volume
+  }));
+
+  const last24h = realDexData[realDexData.length - 1]?.volume || 0;
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-white font-heading uppercase tracking-tighter">
-          markets / volumes <span className="text-primary">Data</span>
-        </h1>
-        <p className="text-[#444] font-mono text-[10px] uppercase tracking-[0.3em] mt-1">
-          Coming Soon • Powered by Dune Analytics
-        </p>
+      <DataHeader 
+        title="Exchange Volumes" 
+        description="Aggregated decentralized exchange (DEX) trading volumes across all major liquidity pools." 
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+          <div className="text-[#555] text-[10px] font-black tracking-widest uppercase">24H DEX Volume</div>
+          <div className="text-3xl font-black text-[#FABF2C] mt-2 tabular-nums">
+            ${(last24h / 1e9).toFixed(2)}B
+          </div>
+        </div>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Status" value="Building" />
-        <MetricCard label="Source" value="Dune" />
-      </div>
-      <div className="p-20 border-2 border-dashed border-[#1a1a1a] text-center text-[#333] font-mono text-xs uppercase tracking-[0.3em]">
-        Data pipeline initializing...
+
+      <div className="grid grid-cols-1 gap-6">
+        <BlockChartCard 
+          title="Global DEX Trading Volume (90D)" 
+          type="area" 
+          yAxisFormat="currency" 
+          data={realDexData} 
+          colors={{ volume: '#3b82f6' }} 
+        />
       </div>
     </div>
+  );
+}
+
+export default function VolumesPage() {
+  return (
+    <main className="pb-20">
+      <Suspense fallback={<ChartSkeleton />}>
+        <VolumesData />
+      </Suspense>
+    </main>
   );
 }

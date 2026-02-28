@@ -1,26 +1,56 @@
-import React from 'react';
-import { MetricCard } from '../../_components/MetricCard';
+import React, { Suspense } from 'react';
+import { getStablecoinSupply } from '@/lib/dune';
+import BlockChartCard from '../../_components/charts/BlockChartCard';
+import { DataHeader } from '../../_components/DataHeader';
+import { ChartSkeleton } from '../../_components/ChartSkeleton';
 
-export const metadata = { title: 'stablecoins / usd | CryptoBrainNews' };
+export const metadata = { title: 'USD Stablecoins | CryptoBrainNews' };
+export const revalidate = 3600;
 
-export default function Page() {
+async function StablecoinData() {
+  // Catching errors to prevent build failures if Dune API is exhausted
+  const supplyData = await getStablecoinSupply(30).catch(() =>[]);
+
+  // Map Dune rows into Recharts format
+  const formattedData = supplyData.map((d) => ({
+    date: String(d.day).slice(0, 10),
+    volume: Number(d.daily_volume || 0),
+    transfers: Number(d.transfer_count || 0)
+  }));
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-white font-heading uppercase tracking-tighter">
-          stablecoins / usd <span className="text-primary">Data</span>
-        </h1>
-        <p className="text-[#444] font-mono text-[10px] uppercase tracking-[0.3em] mt-1">
-          Coming Soon • Powered by Dune Analytics
-        </p>
-      </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Status" value="Building" />
-        <MetricCard label="Source" value="Dune" />
-      </div>
-      <div className="p-20 border-2 border-dashed border-[#1a1a1a] text-center text-[#333] font-mono text-xs uppercase tracking-[0.3em]">
-        Data pipeline initializing...
+      <DataHeader 
+        title="USD Stablecoins" 
+        description="Daily transaction volumes and transfer counts for major USD-pegged stablecoins." 
+      />
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <BlockChartCard 
+          title="Stablecoin Daily Transfer Volume" 
+          type="barStack" 
+          yAxisFormat="currency"
+          data={formattedData} 
+          colors={{ volume: '#22c55e' }} 
+        />
+        <BlockChartCard 
+          title="Stablecoin Transfer Count" 
+          type="area" 
+          yAxisFormat="number"
+          data={formattedData} 
+          colors={{ transfers: '#f59e0b' }} 
+        />
       </div>
     </div>
+  );
+}
+
+export default function StablecoinsUsdPage() {
+  return (
+    <main className="pb-20">
+      <Suspense fallback={<ChartSkeleton />}>
+        <StablecoinData />
+      </Suspense>
+    </main>
   );
 }

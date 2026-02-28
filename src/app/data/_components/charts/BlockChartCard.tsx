@@ -16,17 +16,17 @@ export interface SeriesConfig {
 export interface BlockChartCardProps {
   title: string;
   data: Record<string, unknown>[];
-  type: 'barStack' | 'lineDual' | 'area100';
+  type: 'barStack' | 'lineDual' | 'area100' | 'area' | 'bar' | 'line';
   colors: Record<string, string>;
   description?: string;
   yAxisFormat?: 'currency' | 'percent' | 'number';
 }
 
-// 1. Define strict custom types for the Tooltip to bypass Recharts broken generics
+// 1. Define our own strict Tooltip types to bypass Recharts' broken ones
 interface TooltipPayloadItem {
-  color: string;
-  name: string;
-  value: number | string;
+  color?: string;
+  name?: string;
+  value?: number | string;
 }
 
 interface CustomTooltipProps {
@@ -39,10 +39,10 @@ export default function BlockChartCard({
   title, data, type, colors, description = "Market data provided via live public APIs.", yAxisFormat = 'number' 
 }: BlockChartCardProps) {
   const [isMounted, setIsMounted] = useState(false);
-  const[zoom, setZoom] = useState<'ALL' | 'YTD' | '12M' | '3M' | '1M'>('ALL');
+  const [zoom, setZoom] = useState<'ALL' | 'YTD' | '12M' | '3M' | '1M'>('ALL');
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => { setIsMounted(true); },[]);
+  useEffect(() => { setIsMounted(true); }, []);
 
   const slicedData = useMemo(() => {
     if (!data?.length) return[];
@@ -51,7 +51,7 @@ export default function BlockChartCard({
     if (zoom === '12M') return data.slice(-365);
     if (zoom === 'YTD') return data.slice(-180);
     return data;
-  },[data, zoom]);
+  }, [data, zoom]);
 
   const formatYAxis = (v: number) => {
     if (type === 'area100') return `${v.toFixed(0)}%`;
@@ -61,7 +61,7 @@ export default function BlockChartCard({
     return `$${v.toLocaleString()}`;
   };
 
-  // 2. Use our Custom interface here
+  // 2. Use our CustomTooltipProps interface
   const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (!active || !payload) return null;
     return (
@@ -83,6 +83,8 @@ export default function BlockChartCard({
   };
 
   const axisProps = { stroke: "#555", fontSize: 10, tickLine: false, axisLine: false };
+  const isBar = type.includes('bar');
+  const isLine = type.includes('line');
 
   return (
     <div className={`bg-[#0a0a0a] border border-[#1a1a1a] rounded-none overflow-hidden flex flex-col font-sans ${expanded ? 'fixed inset-4 z-[9999] shadow-2xl' : 'h-[480px]'}`}>
@@ -116,29 +118,29 @@ export default function BlockChartCard({
           <div className="w-full h-full flex items-center justify-center text-[#555] animate-pulse font-mono text-xs uppercase tracking-widest">Rendering...</div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            {type === 'barStack' ? (
+            {isBar ? (
               <BarChart data={slicedData} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
                 <CartesianGrid stroke="#1a1a1a" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="date" {...axisProps} dy={10} minTickGap={30} />
                 <YAxis {...axisProps} tickFormatter={formatYAxis} width={55} />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: '#ffffff', opacity: 0.05 }} />
                 {Object.keys(colors).map(key => (
-                  <Bar key={key} dataKey={key} name={key.toUpperCase()} stackId="a" fill={colors[key]} maxBarSize={40} isAnimationActive={false} />
+                  <Bar key={key} dataKey={key} name={key.toUpperCase()} stackId={type === 'barStack' ? "a" : undefined} fill={colors[key]} maxBarSize={40} isAnimationActive={false} />
                 ))}
               </BarChart>
-            ) : type === 'lineDual' ? (
+            ) : isLine ? (
               <LineChart data={slicedData} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
                 <CartesianGrid stroke="#1a1a1a" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="date" {...axisProps} dy={10} minTickGap={30} />
                 <YAxis yAxisId="left" {...axisProps} tickFormatter={formatYAxis} width={50} />
-                <YAxis yAxisId="right" orientation="right" {...axisProps} tickFormatter={formatYAxis} width={50} />
+                {type === 'lineDual' && <YAxis yAxisId="right" orientation="right" {...axisProps} tickFormatter={formatYAxis} width={50} />}
                 <Tooltip content={<CustomTooltip />} />
                 {Object.keys(colors).map((key, i) => (
-                  <Line key={key} yAxisId={i === 0 ? "left" : "right"} type="monotone" dataKey={key} name={key.toUpperCase()} stroke={colors[key]} strokeWidth={2} dot={false} isAnimationActive={false} />
+                  <Line key={key} yAxisId={type === 'lineDual' ? (i === 0 ? "left" : "right") : "left"} type="monotone" dataKey={key} name={key.toUpperCase()} stroke={colors[key]} strokeWidth={2} dot={false} isAnimationActive={false} />
                 ))}
               </LineChart>
             ) : (
-              <AreaChart data={slicedData} stackOffset="expand" margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
+              <AreaChart data={slicedData} stackOffset={type === 'area100' ? "expand" : "none"} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
                 <defs>
                   {Object.keys(colors).map(key => (
                     <linearGradient key={key} id={`grad-${key}`} x1="0" y1="0" x2="0" y2="1">
@@ -152,7 +154,7 @@ export default function BlockChartCard({
                 <YAxis {...axisProps} tickFormatter={formatYAxis} width={45} />
                 <Tooltip content={<CustomTooltip />} />
                 {Object.keys(colors).map(key => (
-                  <Area key={key} type="monotone" dataKey={key} name={key.toUpperCase()} stackId="1" stroke={colors[key]} fill={`url(#grad-${key})`} isAnimationActive={false} />
+                  <Area key={key} type="monotone" dataKey={key} name={key.toUpperCase()} stackId={type === 'area100' ? "1" : undefined} stroke={colors[key]} fill={type === 'area100' ? colors[key] : `url(#grad-${key})`} isAnimationActive={false} />
                 ))}
               </AreaChart>
             )}
