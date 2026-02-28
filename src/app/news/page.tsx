@@ -2,33 +2,35 @@ import React from 'react';
 import { getAllArticles } from '@/lib/articles';
 import CointelegraphCard from '@/components/news/CointelegraphCard';
 
-export const metadata = { title: 'News | CryptoBrainNews' };
-export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Crypto News | CryptoBrainNews' };
+export const revalidate = 300;
 
-export default async function NewsHubPage() {
+export default async function NewsPage() {
   const articles = await getAllArticles();
-
+  
   return (
-    <main className="min-h-screen bg-[#050505] font-sans pt-6">
-      <div className="container mx-auto px-4 max-w-[1200px]">
-        
-        {/* Mock Tabs */}
-        <div className="flex border-b border-[#222] mb-6">
-          <button className="px-6 py-3 border-b-2 border-[#FABF2C] text-[#FABF2C] font-bold text-lg bg-[#FABF2C]/5">
-            Editor's choice
-          </button>
-          <button className="px-6 py-3 text-gray-500 font-bold text-lg hover:text-white">
-            Hot stories
-          </button>
+    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8 font-sans">
+      <div className="max-w-[1400px] mx-auto">
+        <div className="mb-10 border-b border-[#1a1a1a] pb-6">
+          <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter mb-2">
+            Latest <span className="text-[#FABF2C]">Intelligence</span>
+          </h1>
+          <p className="text-[#888] font-mono text-xs uppercase tracking-widest">
+            Real-time market updates, alpha calls, and institutional analysis.
+          </p>
         </div>
-
-        {/* Cointelegraph Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {articles.map((article) => (
             <CointelegraphCard key={article.id} article={article} />
           ))}
         </div>
-
+        
+        {articles.length === 0 && (
+          <div className="py-32 text-center border border-dashed border-[#1a1a1a]">
+            <p className="text-[#555] font-mono text-xs uppercase tracking-widest">Syncing with global wire...</p>
+          </div>
+        )}
       </div>
     </main>
   );
