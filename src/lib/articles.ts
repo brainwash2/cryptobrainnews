@@ -1,7 +1,8 @@
 import 'server-only';
 import { cached } from './cache';
 import { getSupabase } from './supabase';
-import type { NewsArticle, WeightedArticle } from './types';
+import { fetchCryptoNews } from './news';
+import type { WeightedArticle } from './types';
 
 export const SOURCE_WEIGHTS = {
   editorial: 100,
@@ -9,43 +10,6 @@ export const SOURCE_WEIGHTS = {
   ai_summary: 70,
   wire: 30,
 } as const;
-
-// 🚀 NEW: Cointelegraph RSS Fetcher
-async function fetchWireNews(): Promise<WeightedArticle[]> {
-  try {
-    const rssUrl = 'https://cointelegraph.com/rss';
-    // Use rss2json to safely parse XML to JSON without heavy NPM packages
-    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`, { 
-      next: { revalidate: 300 } 
-    });
-    
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (data.status !== 'ok' || !data.items) return [];
-
-    return data.items.slice(0, 30).map((a: any): WeightedArticle => {
-      // Strip HTML tags from description
-      const cleanBody = (a.description || '').replace(/<[^>]+>/g, '').trim();
-      
-      return {
-        id: a.guid || a.link,
-        title: a.title,
-        body: cleanBody,
-        image: a.thumbnail || a.enclosure?.link || 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1200',
-        source: 'Cointelegraph',
-        published_on: Math.floor(new Date(a.pubDate).getTime() / 1000),
-        url: a.link,
-        categories: a.categories?.length ? a.categories : ['Market'],
-        tags: [],
-        weight: SOURCE_WEIGHTS.wire,
-        sourceType: 'wire',
-      };
-    });
-  } catch (err) {
-    console.error('[RSS] Fetch failed:', err);
-    return [];
-  }
-}
 
 async function fetchEditorialNews(): Promise<WeightedArticle[]> {
   try {
@@ -56,38 +20,38 @@ async function fetchEditorialNews(): Promise<WeightedArticle[]> {
       .order('published_at', { ascending: false })
       .limit(50);
 
-    if (error || !data) return [];
+    if (error || !data) return[];
 
     return data.map((a: any): WeightedArticle => {
       const isAlpha = a.category === 'Alpha Call';
       return {
         id: a.id,
         title: a.title,
-        body: a.body || '',
+        body: a.content || a.body || '',
         image: a.image_url || '',
-        source: a.source || 'CryptoBrain',
+        source: a.author || a.source || 'CryptoBrain',
         published_on: Math.floor(new Date(a.created_at || a.published_at).getTime() / 1000),
         url: `/news/${a.id}`,
         categories: [a.category || 'News'],
-        tags: a.tags || [],
+        tags: a.tags ||[],
         weight: isAlpha ? SOURCE_WEIGHTS.alpha : SOURCE_WEIGHTS.editorial,
         sourceType: isAlpha ? 'alpha' : 'editorial',
-        author_name: a.author_name,
+        author_name: a.author_name || a.author,
         author_bio: a.author_bio,
       };
     });
   } catch {
-    return [];
+    return[];
   }
 }
 
 export async function getAllArticles(): Promise<WeightedArticle[]> {
   return cached(
-    'articles:weighted:v2',
+    'articles:weighted:v3',
     async () => {
       const [editorial, wire] = await Promise.all([
         fetchEditorialNews(),
-        fetchWireNews(),
+        fetchCryptoNews(30),
       ]);
 
       const all = [...editorial, ...wire];
