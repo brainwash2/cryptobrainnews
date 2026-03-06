@@ -45,8 +45,9 @@ export default async function AlphaGuidesPage(props: { searchParams: Promise<{ u
                   </div>
                   <p className="text-[#888] leading-relaxed mb-6">Download our pre-configured YAML routing files. Plug them directly into your local agent orchestrator to autonomously bridge, swap, and provide liquidity across target networks.</p>
                   <div className="bg-black border border-[#222] p-4 font-mono text-xs text-[#00d672] rounded">
-                     > openclaw run --playbook hyperliquid_farmer.yml<br/>
-                     [Agent] Session initialized. Target volume: $10,000.<br/>[Agent] Bridging 1 ETH from Arbitrum... Success.<br/>
+                     {'>'} openclaw run --playbook hyperliquid_farmer.yml<br/>
+                     [Agent] Session initialized. Target volume: $10,000.<br/>
+                     [Agent] Bridging 1 ETH from Arbitrum... Success.<br/>
                      [Agent] Executing randomized volume loops...
                   </div>
                </div>
