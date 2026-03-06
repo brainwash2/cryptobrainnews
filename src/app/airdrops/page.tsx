@@ -53,6 +53,21 @@ export default async function AirdropsPage() {
           Airdrop <span className="text-[#FABF2C]">Radar</span>
         </h1>
         <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em] mb-10">
+        <div className="mb-10 bg-[#0a0a0a] border border-[#1a1a1a] p-4 flex flex-col md:flex-row items-center justify-between gap-4 rounded-lg">
+          <div className="flex items-center gap-4">
+             <div className="w-10 h-10 bg-[#111] flex items-center justify-center rounded-full">
+               <ShieldCheck size={20} className="text-[#ff4757]" />
+             </div>
+             <div>
+               <h4 className="text-sm font-black text-white uppercase tracking-tight">Protect Your Airdrops</h4>
+               <p className="text-xs text-[#888]">Never farm on a hot wallet. Secure your allocations.</p>
+             </div>
+          </div>
+          <a href="https://shop.ledger.com/?r=YOUR_AFFILIATE_ID" target="_blank" rel="noopener noreferrer sponsored" className="bg-[#1a1a1a] border border-[#ff4757]/30 text-[#ff4757] hover:bg-[#ff4757] hover:text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-colors rounded whitespace-nowrap">
+            Get a Ledger Nano X
+          </a>
+        </div>
+
           Algorithmic Detection of Tokenless Protocols (Excluding CEXs)
         </p>
 

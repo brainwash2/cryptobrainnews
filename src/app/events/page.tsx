@@ -13,9 +13,15 @@ export default async function EventsPage() {
   
   const events = data ? (data as CryptoEvent[]) :[];
 
+  // Travala Affiliate Integration Strategy
   const getTravalaLink = (city: string, date: string) => {
-    const formattedDate = date ? date.slice(0, 10) : '';
-    return `https://www.travala.com/search?location=${encodeURIComponent(city || '')}&checkIn=${formattedDate}&a_aid=YOUR_TRAVALA_ID`;
+    // We add a 2-day buffer before the event for check-in
+    const checkIn = new Date(date);
+    checkIn.setDate(checkIn.getDate() - 2);
+    const formattedDate = checkIn.toISOString().slice(0, 10);
+    const TRAVALA_AFFILIATE_ID = 'YOUR_AFFILIATE_ID'; // Replace this with your Travala ID
+    
+    return `https://www.travala.com/search?location=${encodeURIComponent(city || '')}&checkIn=${formattedDate}&a_aid=${TRAVALA_AFFILIATE_ID}`;
   };
 
   return (
@@ -32,7 +38,7 @@ export default async function EventsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => (
-            <div key={event.id} className="border border-[#1a1a1a] bg-[#0a0a0a] p-6 hover:border-[#FABF2C]/50 transition-all flex flex-col h-full group">
+            <div key={event.id} className="border border-[#1a1a1a] bg-[#0a0a0a] p-6 hover:border-[#FABF2C]/50 transition-all flex flex-col h-full group relative overflow-hidden">
               <div className="flex justify-between items-start mb-4">
                 <span className="bg-[#111] text-[#FABF2C] px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded flex items-center gap-2">
                   <Calendar size={12} /> {new Date(event.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -43,16 +49,16 @@ export default async function EventsPage() {
                   </span>
                 )}
               </div>
-              <h3 className="text-lg font-black text-white uppercase mb-2 leading-snug group-hover:text-[#FABF2C] transition-colors">{event.title}</h3>
-              <p className="text-[#888] text-xs mb-4 flex items-center gap-2"><MapPin size={12}/> {event.location_city}, {event.location_country}</p>
-              <p className="text-sm text-[#ccc] mb-8 font-body flex-grow leading-relaxed">{event.description}</p>
+              <h3 className="text-xl font-black text-white uppercase mb-2 leading-snug group-hover:text-[#FABF2C] transition-colors">{event.title}</h3>
+              <p className="text-[#888] text-xs mb-4 flex items-center gap-2 font-bold"><MapPin size={12}/> {event.location_city}, {event.location_country}</p>
+              <p className="text-sm text-[#ccc] mb-10 font-body flex-grow leading-relaxed">{event.description}</p>
               
-              <div className="flex gap-2 mt-auto">
-                <a href={event.url || '#'} target="_blank" rel="noopener noreferrer" className="flex-1 border border-[#1a1a1a] text-white text-center py-3 text-[10px] font-black uppercase tracking-widest hover:bg-[#FABF2C] hover:text-black hover:border-[#FABF2C] transition-colors rounded flex items-center justify-center gap-2">
-                  Website <ExternalLink size={14} />
+              <div className="flex flex-col gap-3 mt-auto">
+                <a href={getTravalaLink(event.location_city, event.start_date)} target="_blank" rel="noopener noreferrer sponsored" className="w-full bg-[#111] border border-[#FABF2C]/30 text-[#FABF2C] hover:bg-[#FABF2C] hover:text-black text-center py-4 text-[11px] font-black uppercase tracking-widest transition-colors rounded flex items-center justify-center gap-2">
+                  Book Hotel in {event.location_city} <PlaneTakeoff size={14} />
                 </a>
-                <a href={getTravalaLink(event.location_city, event.start_date)} target="_blank" rel="noopener noreferrer sponsored" className="flex-1 bg-[#1a1a1a] text-[#00d672] border border-[#00d672]/30 text-center py-3 text-[10px] font-black uppercase tracking-widest hover:bg-[#00d672] hover:text-black transition-colors rounded flex items-center justify-center gap-2">
-                  Book Hotel <PlaneTakeoff size={14} />
+                <a href={event.url || '#'} target="_blank" rel="noopener noreferrer" className="w-full text-[#555] hover:text-white text-center py-2 text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                  Official Website <ExternalLink size={12} />
                 </a>
               </div>
             </div>
