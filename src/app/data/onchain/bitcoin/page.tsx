@@ -1,26 +1,61 @@
-import React from 'react';
-import { MetricCard } from '../../_components/MetricCard';
+import React, { Suspense } from 'react';
+import { getBTCActiveAddresses, getBTCDailyTransactions } from '@/lib/dune';
+import BlockChartCard from '../../_components/charts/BlockChartCard';
+import { DataHeader } from '../../_components/DataHeader';
+import { ChartSkeleton } from '../../_components/ChartSkeleton';
 
-export const metadata = { title: 'onchain / bitcoin | CryptoBrainNews' };
+export const metadata = { title: 'Bitcoin On-Chain | CryptoBrainNews' };
+export const revalidate = 300;
 
-export default function Page() {
+async function BitcoinData() {
+  const [addresses, txns] = await Promise.all([
+    getBTCActiveAddresses(30).catch(() => []),
+    getBTCDailyTransactions(30).catch(() =>[])
+  ]);
+
+  // Map Dune rows to Recharts compatible format
+  const activeData = addresses.map((d: any) => ({
+    date: String(d.day).slice(0, 10),
+    active_addresses: Number(d.tx_count || 0)
+  }));
+
+  const txnData = txns.map((d: any) => ({
+    date: String(d.day).slice(0, 10),
+    transactions: Number(d.tx_count || 0)
+  }));
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-white font-heading uppercase tracking-tighter">
-          onchain / bitcoin <span className="text-primary">Data</span>
-        </h1>
-        <p className="text-[#444] font-mono text-[10px] uppercase tracking-[0.3em] mt-1">
-          Coming Soon • Powered by Dune Analytics
-        </p>
-      </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Status" value="Building" />
-        <MetricCard label="Source" value="Dune" />
-      </div>
-      <div className="p-20 border-2 border-dashed border-[#1a1a1a] text-center text-[#333] font-mono text-xs uppercase tracking-[0.3em]">
-        Data pipeline initializing...
+      <DataHeader 
+        title="Bitcoin On-Chain" 
+        description="Daily network activity and transactions on the Bitcoin blockchain." 
+      />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <BlockChartCard 
+          title="Bitcoin Daily Transactions" 
+          type="barStack" 
+          yAxisFormat="number"
+          data={txnData} 
+          colors={{ transactions: '#FABF2C' }} 
+        />
+        <BlockChartCard 
+          title="Bitcoin Active Network Usage" 
+          type="area" 
+          yAxisFormat="number"
+          data={activeData} 
+          colors={{ active_addresses: '#f97316' }} 
+        />
       </div>
     </div>
+  );
+}
+
+export default function BitcoinPage() {
+  return (
+    <main className="pb-20">
+      <Suspense fallback={<ChartSkeleton />}>
+        <BitcoinData />
+      </Suspense>
+    </main>
   );
 }

@@ -1,9 +1,10 @@
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import { getAllArticles } from '@/lib/articles';
 import CointelegraphCard from '@/components/news/CointelegraphCard';
 
 export const metadata = { title: 'Crypto News | CryptoBrainNews' };
-export const revalidate = 300;
 
 export default async function NewsPage() {
   const articles = await getAllArticles();

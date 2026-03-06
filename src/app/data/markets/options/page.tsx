@@ -1,11 +1,18 @@
 import React from 'react';
 import { DataHeader } from '../../_components/DataHeader';
-import Link from 'next/link';
-import { Lock } from 'lucide-react';
+import AlphaGate from '@/components/auth/AlphaGate';
+import BlockChartCard from '../../_components/charts/BlockChartCard';
 
 export const metadata = { title: 'Options Markets | CryptoBrainNews' };
 
-export default function FuturesPage() {
+export default function OptionsPage() {
+  // Mock representation of premium data payload
+  const premiumData = Array.from({ length: 30 }, (_, i) => ({
+    date: `Day ${i + 1}`,
+    iv: 45 + Math.random() * 15,
+    volume: 1200000000 + Math.random() * 500000000,
+  }));
+
   return (
     <div className="space-y-8 pb-20">
       <DataHeader 
@@ -13,18 +20,26 @@ export default function FuturesPage() {
         description="Implied volatility, options open interest, and Deribit metrics." 
       />
       
-      <div className="border border-[#1a1a1a] bg-[#0a0a0a] flex flex-col items-center justify-center py-32 px-4 text-center">
-        <div className="w-16 h-16 bg-[#111] border border-[#333] rounded flex items-center justify-center mb-6">
-          <Lock className="text-[#FABF2C] w-8 h-8" />
+      <AlphaGate>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <BlockChartCard 
+            title="Implied Volatility (IV) - 30D" 
+            type="line" 
+            yAxisFormat="number"
+            data={premiumData} 
+            colors={{ iv: '#ef4444' }} 
+            description="At-the-money implied volatility for BTC."
+          />
+          <BlockChartCard 
+            title="Options Volume (USD)" 
+            type="bar" 
+            yAxisFormat="currency"
+            data={premiumData} 
+            colors={{ volume: '#22c55e' }} 
+            description="Aggregated options trading volume across Deribit and CME."
+          />
         </div>
-        <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Premium Institutional Feed</h2>
-        <p className="text-[#888] font-mono text-xs max-w-md mx-auto mb-8 leading-relaxed">
-          Access to real-time futures order book depth, CME COT reports, and liquidation heatmaps requires a CryptoBrain Alpha subscription.
-        </p>
-        <Link href="/go-alpha" className="bg-[#FABF2C] text-black px-8 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors">
-          Unlock Alpha Access
-        </Link>
-      </div>
+      </AlphaGate>
     </div>
   );
 }

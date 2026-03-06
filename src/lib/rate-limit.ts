@@ -5,8 +5,20 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
-// In-memory store (works per serverless instance; use Redis for distributed)
+// In-memory store fallback
 const store = new Map<string, RateLimitEntry>();
+
+// Prevent memory leaks by sweeping expired rate-limit records
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of store.entries()) {
+      if (now > entry.resetAt) {
+        store.delete(key);
+      }
+    }
+  }, 60_000).unref();
+}
 
 /**
  * Simple rate limiter.
@@ -32,11 +44,3 @@ export function isRateLimited(
 
   return false;
 }
-
-
- 
-
- 
-
- 
- 

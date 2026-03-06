@@ -1,11 +1,16 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
 import type { WeightedArticle } from '@/lib/types';
 
 export default function CointelegraphCard({ article }: { article: WeightedArticle }) {
-  const timeAgo = new Date(article.published_on * 1000).toLocaleDateString();
+  const [timeAgo, setTimeAgo] = useState<string>('');
+
+  useEffect(() => {
+    // Delays date formatting to the client to prevent hydration mismatch with the server
+    setTimeAgo(new Date(article.published_on * 1000).toLocaleDateString());
+  }, [article.published_on]);
 
   return (
     <Link href={article.url} className="group flex flex-col font-sans mb-8">
@@ -23,7 +28,7 @@ export default function CointelegraphCard({ article }: { article: WeightedArticl
       <div className="text-[10px] text-[#555] font-mono uppercase tracking-widest flex gap-2">
         <span>{article.author_name || article.source}</span>
         <span>•</span>
-        <span>{timeAgo}</span>
+        <span suppressHydrationWarning>{timeAgo || '...'}</span>
       </div>
     </Link>
   );

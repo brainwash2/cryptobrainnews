@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import AffiliateLink from '@/components/monetization/AffiliateLink';
 
 interface SidebarLink {
   label: string;
@@ -16,110 +17,72 @@ interface SidebarSection {
   children: SidebarLink[];
 }
 
-const SECTIONS: SidebarSection[] = [
+const SECTIONS: SidebarSection[] =[
   {
     title: 'Markets',
     icon: '📊',
-    children: [
+    children:[
       { label: 'Spot', href: '/data/markets/spot' },
       { label: 'Futures', href: '/data/markets/futures' },
       { label: 'Crypto Indices', href: '/data/markets/indices' },
       { label: 'CME COTs', href: '/data/markets/cme-cots' },
       { label: 'Options', href: '/data/markets/options' },
       { label: 'Prices', href: '/data/markets/prices' },
-      { label: 'Companies', href: '/data/markets/companies' },
-      { label: 'Exchange Tokens', href: '/data/markets/exchange-tokens' },
-      { label: 'Sports Tokens', href: '/data/markets/sports-tokens' },
-    ],
-  },
-  {
-    title: 'ETFs',
-    icon: '📈',
-    children: [
-      { label: 'Bitcoin ETFs', href: '/data/etfs/bitcoin' },
-      { label: 'Ethereum ETFs', href: '/data/etfs/ethereum' },
-      { label: 'Solana ETFs', href: '/data/etfs/solana' },
-      { label: 'XRP ETFs', href: '/data/etfs/xrp' },
-      { label: 'Crypto ETFs', href: '/data/etfs/crypto' },
-      { label: 'ETF Comparison', href: '/data/etfs/comparison' },
-    ],
-  },
-  {
-    title: 'Treasuries',
-    icon: '🏦',
-    children: [
-      { label: 'Bitcoin Treasuries', href: '/data/treasuries/bitcoin' },
-      { label: 'Ethereum Treasuries', href: '/data/treasuries/ethereum' },
-      { label: 'Solana Treasuries', href: '/data/treasuries/solana' },
-      { label: 'Crypto Treasuries', href: '/data/treasuries/crypto' },
-    ],
-  },
-  {
-    title: 'Stablecoins',
-    icon: '💵',
-    children: [
-      { label: 'USD Pegged', href: '/data/stablecoins/usd' },
-      { label: 'Non-USD Pegged', href: '/data/stablecoins/non-usd' },
-      { label: 'Non-Fiat Pegged', href: '/data/stablecoins/non-fiat' },
+      { label: 'Volumes', href: '/data/markets/volumes' },
     ],
   },
   {
     title: 'On-Chain Metrics',
     icon: '⛓️',
-    children: [
+    children:[
       { label: 'Bitcoin', href: '/data/onchain/bitcoin' },
       { label: 'Ethereum', href: '/data/onchain/ethereum' },
       { label: 'Solana', href: '/data/onchain/solana' },
-      { label: 'Avalanche', href: '/data/onchain/avalanche' },
-      { label: 'Aptos', href: '/data/onchain/aptos' },
-      { label: 'Comparison', href: '/data/onchain/comparison' },
       { label: 'Flows', href: '/data/onchain/flows' },
-    ],
-  },
-  {
-    title: 'Scaling Solutions',
-    icon: '⚡',
-    children: [
-      { label: 'Overview', href: '/data/scaling' },
-      { label: 'Layer 1: EVM Blockchains', href: '/data/scaling/l1-evm' },
-      { label: 'Layer 1: Non-EVM Blockchains', href: '/data/scaling/l1-non-evm' },
-      { label: 'Layer 2: Optimistic Rollups', href: '/data/scaling/optimistic' },
-      { label: 'Layer 2: ZK Rollups', href: '/data/scaling/zk' },
-      { label: 'Data Availability', href: '/data/scaling/data-availability' },
     ],
   },
   {
     title: 'DeFi',
     icon: '🔄',
-    children: [
-      { label: 'Exchange', href: '/data/defi/dex-volume' },
-      { label: 'Restaking', href: '/data/defi/restaking' },
-      { label: 'Lending', href: '/data/defi/lending' },
-      { label: 'Launchpads', href: '/data/defi/launchpads' },
-      { label: 'Prediction Markets and Betting', href: '/data/defi/prediction' },
-      { label: 'Derivatives', href: '/data/defi/derivatives' },
-      { label: 'RWA', href: '/data/defi/rwa' },
-      { label: 'Exploits', href: '/data/defi/exploits' },
-      { label: 'Protocol Revenue', href: '/data/defi/revenue' },
+    children:[
+      { label: 'Exchange Volume', href: '/data/defi/dex-volume' },
       { label: 'Value Locked', href: '/data/defi/tvl' },
-      { label: 'Social', href: '/data/defi/social' },
+      { label: 'Yields', href: '/data/defi/yields' },
+      { label: 'Protocol Revenue', href: '/data/defi/revenue' },
+      { label: 'Whale Watch', href: '/data/defi/whale-watch' },
+    ],
+  },
+  {
+    title: 'Stablecoins',
+    icon: '💵',
+    children:[
+      { label: 'USD Pegged', href: '/data/stablecoins/usd' },
+      { label: 'Non-USD Pegged', href: '/data/stablecoins/non-usd' },
+      { label: 'By Chain', href: '/data/stablecoins/chains' },
+    ],
+  },
+  {
+    title: 'Scaling & L2',
+    icon: '⚡',
+    children:[
+      { label: 'Overview', href: '/data/scaling' },
+      { label: 'Optimistic Rollups', href: '/data/scaling/optimistic' },
+      { label: 'ZK Rollups', href: '/data/scaling/zk' },
     ],
   },
   {
     title: 'NFTs',
     icon: '🖼️',
-    children: [
-      { label: 'Overview', href: '/data/nfts' },
-      { label: 'Art and Collectibles', href: '/data/nfts/art' },
-      { label: 'Gaming', href: '/data/nfts/gaming' },
-      { label: 'Marketplaces', href: '/data/nfts/marketplaces' },
+    children:[
+      { label: 'Top Collections', href: '/data/nfts/collections' },
+      { label: 'Sales Volume', href: '/data/nfts/volume' },
     ],
   },
 ];
 
 export default function DataSidebar() {
   const pathname = usePathname();
-  const [openSections, setOpenSections] = useState<string[]>(['Markets']);
+  const [openSections, setOpenSections] = useState<string[]>(['Markets', 'On-Chain Metrics']);
 
   const toggleSection = (title: string) => {
     setOpenSections((prev) =>
@@ -128,8 +91,8 @@ export default function DataSidebar() {
   };
 
   return (
-    <aside className="w-72 bg-[#050505] border-r border-[#1a1a1a] h-[calc(100vh-3.5rem)] overflow-y-auto sticky top-14 hidden lg:block font-mono text-xs">
-      <div className="p-6">
+    <aside className="w-72 bg-[#050505] border-r border-[#1a1a1a] h-[calc(100vh-3.5rem)] overflow-y-auto sticky top-14 hidden lg:flex flex-col font-mono text-xs">
+      <div className="p-6 flex-1">
         <div className="uppercase text-[10px] tracking-[0.2em] text-[#FABF2C] mb-6 font-black">DATA TERMINAL</div>
         
         {SECTIONS.map((section) => {
@@ -164,6 +127,20 @@ export default function DataSidebar() {
             </div>
           );
         })}
+      </div>
+
+      {/* Monetization Block */}
+      <div className="p-6 border-t border-[#1a1a1a] bg-[#0a0a0a]">
+        <h4 className="text-[10px] font-black text-[#FABF2C] uppercase tracking-[0.2em] mb-2">Trade the Data</h4>
+        <p className="text-[#888] text-[10px] mb-4 leading-relaxed">
+          Execute your thesis. Get up to $5,000 in bonuses on our partner exchange.
+        </p>
+        <AffiliateLink 
+          exchange="bybit" 
+          className="block w-full text-center bg-[#111] border border-[#1a1a1a] hover:bg-[#FABF2C] text-[#888] hover:text-black py-3 text-[10px] uppercase tracking-widest transition-all"
+        >
+          Claim Bonus
+        </AffiliateLink>
       </div>
     </aside>
   );

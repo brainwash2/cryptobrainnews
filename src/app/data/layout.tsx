@@ -2,7 +2,8 @@ import React, { Suspense } from 'react';
 import DataSidebar from './_components/DataSidebar';
 import { DataBreadcrumb } from './_components/DataBreadcrumb';
 
-export const dynamic = 'force-dynamic';   // ← Fixes all Redis/Dune dynamic fetch errors
+// Restored `force-dynamic` to prevent build crashes from Upstash Redis `no-store` fetches
+export const dynamic = 'force-dynamic';
 
 export default function DataLayout({ children }: { children: React.ReactNode }) {
   return (

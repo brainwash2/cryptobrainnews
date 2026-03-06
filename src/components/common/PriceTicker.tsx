@@ -1,93 +1,80 @@
-// src/components/common/PriceTicker.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+
+interface CoinData {
+  id: string;
+  symbol: string;
+  current_price: number;
+  price_change_percentage_24h: number;
+}
 
 export default function PriceTicker() {
-  const [prices, setPrices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [prices, setPrices] = useState<CoinData[]>([]);
 
   useEffect(() => {
-    let mounted = true;
-    const controller = new AbortController();
-
-    async function fetchPrices() {
+    const fetchPrices = async () => {
       try {
-        const res = await fetch('/api/prices', { signal: controller.signal });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const res = await fetch('/api/prices');
         const data = await res.json();
-
-        if (mounted && Array.isArray(data)) {
-          setPrices(
-            data.map((c: any) => ({
-              symbol: (c.symbol || '').toUpperCase(),
-              price: Number(c.current_price ?? 0),
-              change: Number(c.price_change_percentage_24h ?? 0),
-            }))
-          );
+        if (Array.isArray(data)) {
+          setPrices(data.slice(0, 20)); // Take top 20 for the ticker
         }
-      } catch (e: any) {
-        if (e.name !== 'AbortError') {
-          console.warn('[Ticker] Fetch failed');
-        }
-      } finally {
-        if (mounted) setLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch ticker prices via CoinGecko proxy", error);
       }
-    }
+    };
 
     fetchPrices();
     const interval = setInterval(fetchPrices, 60000);
+    return () => clearInterval(interval);
+  },[]);
 
-    return () => {
-      mounted = false;
-      controller.abort();
-      clearInterval(interval);
-    };
-  }, []);
-
-  if (loading || prices.length === 0) {
+  if (prices.length === 0) {
     return (
-      <div className="fixed top-16 left-0 right-0 z-[999] bg-black border-b border-primary/20 h-10 flex items-center px-4">
-        <span className="text-[10px] font-mono text-primary animate-pulse tracking-[0.2em]">
-          CONNECTING TO DATA FEED...
+      <div className="fixed top-14 left-0 right-0 z-[998] bg-black border-b border-[#1a1a1a] h-10 flex items-center px-4">
+        <span className="text-[10px] font-mono text-[#FABF2C] animate-pulse tracking-[0.2em]">
+          CONNECTING TO TAPE...
         </span>
       </div>
     );
   }
 
-  // Double the array for seamless infinite scroll
-  const displayPrices = [...prices, ...prices];
-
   return (
-    <div className="fixed top-16 left-0 right-0 z-[999] bg-black border-b border-[#1a1a1a] h-10 flex items-center overflow-hidden">
-      <div className="flex ticker-scroll whitespace-nowrap gap-6 px-4">
-        {displayPrices.map((crypto, index) => (
-          <div
-            key={`${crypto.symbol}-${index}`}
-            className="flex items-center gap-2"
-          >
-            <span className="text-[11px] font-black text-primary font-mono">
-              {crypto.symbol}
-            </span>
-            <span className="text-[11px] font-bold text-white font-mono tabular-nums">
-              $
-              {crypto.price > 1
-                ? crypto.price.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })
-                : crypto.price.toFixed(4)}
-            </span>
-            <span
-              className={`text-[10px] font-bold font-mono tabular-nums ${
-                crypto.change >= 0 ? 'text-[#00d672]' : 'text-[#ff4757]'
-              }`}
-            >
-              {crypto.change >= 0 ? '▲' : '▼'}{' '}
-              {Math.abs(crypto.change).toFixed(2)}%
-            </span>
-          </div>
-        ))}
+    <div className="fixed top-14 left-0 right-0 z-[998] bg-black border-b border-[#1a1a1a] h-10 flex items-center overflow-hidden">
+      <div className="flex whitespace-nowrap w-max">
+        
+        <div className="flex animate-scroll hover:[animation-play-state:paused]">
+          {prices.map((coin) => (
+            <TickerItem key={coin.id} coin={coin} />
+          ))}
+        </div>
+
+        <div className="flex animate-scroll hover:[animation-play-state:paused]" aria-hidden="true">
+          {prices.map((coin) => (
+            <TickerItem key={`${coin.id}-duplicate`} coin={coin} />
+          ))}
+        </div>
+
       </div>
     </div>
+  );
+}
+
+function TickerItem({ coin }: { coin: CoinData }) {
+  const price = Number(coin.current_price || 0);
+  const formattedPrice = price > 1 ? price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : price.toFixed(4);
+  const change = Number(coin.price_change_percentage_24h || 0);
+  const isPositive = change >= 0;
+
+  return (
+    <Link href={`/coins/${coin.id.toLowerCase()}`} className="mx-6 flex items-center space-x-2 text-[11px] font-mono hover:opacity-70 transition-opacity">
+      <span className="text-[#FABF2C] font-black">{coin.symbol.toUpperCase()}</span>
+      <span className="text-white font-bold">${formattedPrice}</span>
+      <span className={isPositive ? "text-[#00d672]" : "text-[#ff4757]"}>
+        {isPositive ? "▲" : "▼"} {Math.abs(change).toFixed(2)}%
+      </span>
+    </Link>
   );
 }

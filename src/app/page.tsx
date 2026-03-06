@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import { getAllArticles, getIntelligence } from '@/lib/articles';
 import Link from 'next/link';
@@ -9,8 +11,6 @@ export const metadata = {
   title: 'CryptoBrainNews | Institutional Terminal',
   description: 'Institutional-grade crypto intelligence, DeFi data, and on-chain analytics.',
 };
-
-export const revalidate = 300;
 
 export default async function HomePage() {
   const [all, alpha, analysis] = await Promise.all([
@@ -131,6 +131,36 @@ export default async function HomePage() {
         </div>
 
         {/* Global Market Feed Grid */}
+        {/* Airdrops & Events Discovery */}
+        <section className="mt-20 pt-16 border-t border-[#1a1a1a]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xs font-black text-[#FABF2C] uppercase tracking-[0.3em]">Airdrop Radar</h2>
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00d672] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00d672]"></span>
+                </span>
+              </div>
+              <p className="text-sm text-[#888] mb-8 leading-relaxed">
+                Our algorithms are currently tracking highly-funded protocols across Ethereum and Solana that have not yet launched a token. Early interaction often leads to high-value protocol distributions.
+              </p>
+              <Link href="/airdrops" className="inline-block bg-[#1a1a1a] text-white hover:bg-[#FABF2C] hover:text-black px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-colors">
+                View Potential Airdrops →
+              </Link>
+            </div>
+            <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-8">
+              <h2 className="text-xs font-black text-[#FABF2C] uppercase tracking-[0.3em] mb-6">Global Events</h2>
+              <p className="text-sm text-[#888] mb-8 leading-relaxed">
+                Track network upgrades, mainnet launches, and global institutional conferences. We aggregate data directly from CoinMarketCal and protocol announcements to keep your thesis ahead of the market.
+              </p>
+              <Link href="/events" className="inline-block bg-[#1a1a1a] text-white hover:bg-[#FABF2C] hover:text-black px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-colors">
+                Open Event Calendar →
+              </Link>
+            </div>
+          </div>
+        </section>
+
         <section className="mt-32 pt-20 border-t border-[#1a1a1a]">
           <div className="flex justify-between items-end mb-12">
             <h2 className="text-[10px] font-black text-[#555] uppercase tracking-[0.4em]">

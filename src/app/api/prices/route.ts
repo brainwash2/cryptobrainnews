@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { getLivePrices } from '@/lib/api';
 import { FALLBACK_MARKET_DATA } from '@/lib/fallback-data';
 
+// Upstash fetch calls are dynamic, so this route must be dynamic
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const prices = await getLivePrices();

@@ -4,16 +4,17 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import AuthButton from '@/components/auth/AuthButton';
 
-const NAV_ITEMS = [
+const NAV_ITEMS =[
   { label: 'NEWS', href: '/' },
   { label: 'DATA', href: '/data/markets/spot' },
   { label: 'PRICES', href: '/price-indexes' },
   { label: 'EVENTS', href: '/events' },
+  { label: 'AIRDROPS', href: '/airdrops' },
   { label: 'LEARNING', href: '/learning' },
 ];
 
 export default function Header() {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const[mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
