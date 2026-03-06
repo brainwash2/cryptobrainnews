@@ -97,3 +97,7 @@
 ## Phase 15: Deep Monetization (Events & Airdrops)
 - Inject Travala/Booking widgets into Event pages based on city/date.
 - Expand Airdrops "Liquidity Loop" with Quest and Hardware Wallet affiliate layers.
+
+## Phase 17: The Agentic Pivot
+- Pivot `/alpha-guides` to target the 2026 Agentic Economy.
+- Redesign value prop around OpenClaw playbooks, Sybil-evasion variables, and automated orchestration.
