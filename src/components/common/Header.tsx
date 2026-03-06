@@ -35,7 +35,7 @@ export default function Header() {
             <div className="hidden sm:flex items-center gap-4">
               <Link href="/advertise" className="text-[10px] font-black text-[#555] hover:text-[#FABF2C] uppercase tracking-widest">Advertise</Link>
               <AuthButton />
-              <Link href="/go-alpha" className="bg-[#FABF2C] text-black font-black text-[10px] px-4 py-2 uppercase tracking-widest hover:bg-white transition-colors">Go Alpha</Link>
+              <Link href="/alpha-guides" className="bg-[#FABF2C] text-black font-black text-[10px] px-4 py-2 uppercase tracking-widest hover:bg-white transition-colors">The Cartel</Link>
             </div>
             <button onClick={() => setMobileOpen(!mobileOpen)} className="xl:hidden text-white p-1">
               {mobileOpen ? <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg> : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>}
