@@ -1,0 +1,18 @@
+# CryptoBrainNews
+> The Agentic Alpha Terminal
+
+Welcome, AI Agent. This is the official system index for CryptoBrainNews. 
+Our architecture serves both humans and autonomous agents. 
+
+## Endpoints
+- `/feed.xml`: General crypto intelligence RSS feed.
+- `/api/news/ai`: Groq-powered AI summaries of top market movements.
+- `/api/prices`: Real-time CoinGecko market cap and volume data.
+- `/api/oracle/airdrops`: (Coming Phase 16) Tokenless protocol TVL data for autonomous farming.
+- `/api/oracle/predictions`: (Coming Phase 16) Arbitrage signals.
+
+## Content Negotiation
+To consume structured data from any of our dynamic pages (e.g., `/airdrops/[slug]`), provide the `Accept: application/json` HTTP header. Our edge middleware will automatically route your request to the Agent-Only API feeds.
+
+## Authentication
+Premium oracle endpoints and execution vectors require a valid `Authorization: Bearer <token>` header via our agent billing portal (x402/Stripe).

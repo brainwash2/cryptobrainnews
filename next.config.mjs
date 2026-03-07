@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    remotePatterns: [
+    remotePatterns:[
       { protocol: 'https', hostname: 'assets.coingecko.com' },
       { protocol: 'https', hostname: 'images.cryptocompare.com' },
       { protocol: 'https', hostname: 'resources.cryptocompare.com' },
@@ -11,24 +11,26 @@ const nextConfig = {
     ],
     dangerouslyAllowSVG: true,
   },
-  allowedDevOrigins: ['*.cloudworkstations.dev', 'localhost:3000'], // ← added
+  allowedDevOrigins:['*.cloudworkstations.dev', 'localhost:3000'],
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'cryptobrainnews.com', '*.vercel.app', '*.cloudworkstations.dev'],
+      allowedOrigins:['localhost:3000', 'cryptobrainnews.com', '*.vercel.app', '*.cloudworkstations.dev'],
     },
   },
   async headers() {
     return [{
       source: '/(.*)',
-      headers: [
+      headers:[
         { key: 'X-Frame-Options', value: 'DENY' },
         { key: 'X-Content-Type-Options', value: 'nosniff' },
         { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
+        { key: 'X-Llms-Txt', value: '/llms.txt' },
+        { key: 'Link', value: '< /llms.txt >; rel="alternate"; type="text/markdown"' },
       ],
     }];
   },
   async redirects() {
-    return [{ source: '/homepage', destination: '/', permanent: true }];
+    return[{ source: '/homepage', destination: '/', permanent: true }];
   },
 };
 export default nextConfig;
