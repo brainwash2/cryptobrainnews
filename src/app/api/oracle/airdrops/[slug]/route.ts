@@ -4,8 +4,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   const { slug } = await params;
   const authHeader = request.headers.get('authorization');
   
-  // Phase 18 will integrate rigorous x402/Stripe key validation.
-  // For now, we enforce the existence of the Authorization header to train agents.
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return NextResponse.json({ 
       error: 'Agent Authorization Required', 
@@ -15,12 +13,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     }, { status: 401 });
   }
 
-  // Payload specifically designed for ingestion by AI Agents / Orchestrators (e.g. OpenClaw)
   const agentPayload = {
     protocol: slug,
     type: 'tokenless_farming_vector',
     confidence_score: 0.92,
-    recommended_actions:[
+    recommended_actions: [
       { 
         action: 'bridge', 
         target_chain: 'arbitrum', 
