@@ -9,6 +9,7 @@ import Header from '@/components/common/Header';
 import PriceTicker from '@/components/common/PriceTicker';
 import Footer from '@/components/layout/Footer';
 import CookieConsent from '@/components/common/CookieConsent';
+import { getActiveNotifications } from '@/lib/sanity';
 
 const merriweather = Merriweather({
   subsets: ['latin'],
@@ -29,7 +30,7 @@ const jetbrains = JetBrains_Mono({
 });
 const space = Space_Mono({
   subsets: ['latin'],
-  weight: ['400', '700'],
+  weight:['400', '700'],
   variable: '--font-data',
   display: 'swap',
 });
@@ -58,7 +59,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const notifications = await getActiveNotifications().catch(() =>[]);
+
   return (
     <html
       lang="en"
@@ -68,6 +71,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <PriceTicker />
         <main className="flex-grow pt-[calc(4rem+2.5rem)]">
+          {notifications.length > 0 && (
+            <div className="w-full bg-[#FABF2C] text-black border-b border-black text-center py-2 px-4 z-[900] relative">
+              {notifications.map((notif: any) => (
+                <div key={notif._id} className="text-[10px] font-black uppercase tracking-widest">
+                  {notif.type === 'warning' && <span className="mr-2">⚠️</span>}
+                  {notif.type === 'success' && <span className="mr-2">✓</span>}
+                  {notif.link ? (
+                    <a href={notif.link} className="hover:text-white transition-colors underline decoration-black">
+                      {notif.message}
+                    </a>
+                  ) : (
+                    <span>{notif.message}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           <Suspense
             fallback={
               <div className="flex items-center justify-center h-[50vh]">

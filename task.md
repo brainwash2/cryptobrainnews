@@ -233,3 +233,7 @@
 	•	Reference: Task 17.2 (Sanity Events Migration)
 	•	New Status: COMPLETED
 	•	Notes: Successfully disconnected Supabase from `/events` and `/api/events`, replacing it with `getSanityEvents()`. Preserved the Travala monetization logic and mapped Sanity's camelCase variables to the UI.
+[2026-03-08] STATUS UPDATE
+	•	Reference: Task 17.3 & 17.4 (Glossary & Notifications)
+	•	New Status: COMPLETED
+	•	Notes: Built an inline regex parser in `/news/[id]/page.tsx` to automatically inject `<GlossaryTooltip>` components for keywords dynamically fetched from Sanity. Converted `RootLayout` to an async server component to fetch and display active site-wide notifications from Sanity above the main content flow.

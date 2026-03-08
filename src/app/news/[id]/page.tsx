@@ -1,10 +1,14 @@
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { getArticleById, getRelatedArticles, calculateReadingTime } from '@/lib/articles';
+import { getSanityGlossary } from '@/lib/sanity';
 import { ReadingProgress } from './_components/ReadingProgress';
 import { StickyShareBar } from './_components/StickyShareBar';
 import { ArticleSidebar } from './_components/ArticleSidebar';
 import AppImage from '@/components/ui/AppImage';
+import GlossaryTooltip from '@/components/common/GlossaryTooltip';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -21,15 +25,44 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function NewsArticlePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [article, related] = await Promise.all([
+  const [article, related, glossary] = await Promise.all([
     getArticleById(id),
     getRelatedArticles(id, 4),
+    getSanityGlossary().catch(() => [])
   ]);
 
   if (!article) notFound();
 
   const readingTime = calculateReadingTime(article.body);
   const paragraphs = article.body.split('\n').filter(Boolean);
+
+  // Helper function to auto-link glossary terms within paragraphs
+  function renderParagraph(text: string, glossaryTerms: any[]) {
+    if (!glossaryTerms || glossaryTerms.length === 0) return <>{text}</>;
+    
+    // Sort terms to match longest first (e.g., "Smart Contract" before "Contract")
+    const sortedTerms =[...glossaryTerms].sort((a, b) => b.term.length - a.term.length);
+    const escapedTerms = sortedTerms.map(t => t.term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const regex = new RegExp(`\\b(${escapedTerms.join('|')})\\b`, 'gi');
+
+    const parts = text.split(regex);
+
+    return (
+      <>
+        {parts.map((part, i) => {
+          const termObj = sortedTerms.find(t => t.term.toLowerCase() === part.toLowerCase());
+          if (termObj) {
+            return (
+              <GlossaryTooltip key={i} term={termObj.term} definition={termObj.definition}>
+                <span className="text-[#FABF2C] hover:text-white transition-colors">{part}</span>
+              </GlossaryTooltip>
+            );
+          }
+          return <span key={i}>{part}</span>;
+        })}
+      </>
+    );
+  }
 
   return (
     <>
@@ -71,7 +104,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ id
               {paragraphs.map((para, idx) => (
                 <React.Fragment key={idx}>
                   <p className="mb-6 text-lg text-[#ccc] leading-relaxed">
-                    {para}
+                    {renderParagraph(para, glossary)}
                   </p>
                   {/* Inject an Ad after the 2nd paragraph */}
                   {idx === 1 && <AdUnit />}
