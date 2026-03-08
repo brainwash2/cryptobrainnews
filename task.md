@@ -212,3 +212,20 @@
 	•	Reference: Sanity CMS Cleanup & Schema Migration
 	•	New Status: COMPLETED
 	•	Notes: Migrated duplicate root Sanity schemas into the `src/sanity/schemas` directory. Updated `src/sanity/sanity.config.ts` to load all schemas via a new `index.ts` file, ensuring they appear in the embedded `/studio`. Deleted the unused standalone `/sanity` root folder. Organized SQL database files into a new `/scripts` directory to maintain a clean root.
+
+[2026-03-08] STATUS UPDATE
+	•	Reference: Phase 17 (Sanity Depth & Web3 Identity)
+	•	New Status: PLANNING
+	•	Notes: Outlined tasks for full Sanity integration across Alpha Guides, Events, Glossary, and Notifications. Planned Gitcoin Passport (human) and KYA registry (agent) verification.
+
+## Pending (Phase 17)
+- [ ] Task 17.1: Replace hardcoded Alpha Guides with Sanity `playbook` schema.
+- [ ] Task 17.2: Migrate `/events` to fetch from Sanity instead of Supabase.
+- [ ] Task 17.3: Implement Glossary Term tooltips parsing within Sanity Article body.
+- [ ] Task 17.4: Inject global Site Notifications into main layout.
+- [ ] Task 17.5: Integrate Gitcoin Passport for human verification.
+- [ ] Task 17.6: Build KYA (Know Your Agent) registry mapping.
+[2026-03-08] STATUS UPDATE
+	•	Reference: Task 17.1 (Sanity Playbooks)
+	•	New Status: COMPLETED
+	•	Notes: Refactored `/alpha-guides/page.tsx` to map over `getSanityPlaybooks()`. YAML configurations and Sybil params are now fully dynamic and manageable via Sanity Studio, while maintaining the paywall blur/overlay UI.
