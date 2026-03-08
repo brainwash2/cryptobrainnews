@@ -80,7 +80,6 @@ export interface DeFiProtocol {
   name: string;
   tvl: number;
   symbol?: string;
-  symbol?: string;
   category?: string;
   chain?: string;
   chainTvls?: Record<string, number>;
