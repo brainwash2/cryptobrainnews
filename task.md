@@ -229,3 +229,7 @@
 	•	Reference: Task 17.1 (Sanity Playbooks)
 	•	New Status: COMPLETED
 	•	Notes: Refactored `/alpha-guides/page.tsx` to map over `getSanityPlaybooks()`. YAML configurations and Sybil params are now fully dynamic and manageable via Sanity Studio, while maintaining the paywall blur/overlay UI.
+[2026-03-08] STATUS UPDATE
+	•	Reference: Task 17.2 (Sanity Events Migration)
+	•	New Status: COMPLETED
+	•	Notes: Successfully disconnected Supabase from `/events` and `/api/events`, replacing it with `getSanityEvents()`. Preserved the Travala monetization logic and mapped Sanity's camelCase variables to the UI.

@@ -1,33 +1,21 @@
 import { NextResponse } from 'next/server';
-import { cached } from '@/lib/cache';
-import { getSupabase } from '@/lib/supabase';
-import type { CryptoEvent } from '@/lib/types';
+import { getSanityEvents } from '@/lib/sanity';
+
+export const revalidate = 300;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const type = searchParams.get('type');
   const featured = searchParams.get('featured');
 
-  const events = await cached(
-    `events:${type || 'all'}:${featured || 'all'}`,
-    async () => {
-      const supabase = getSupabase();
-      let query = supabase
-        .from('events')
-        .select('*')
-        .gte('start_date', new Date().toISOString())
-        .order('start_date', { ascending: true });
+  try {
+    let events = await getSanityEvents();
 
-      if (type) query = query.eq('event_type', type);
-      if (featured === 'true') query = query.eq('is_featured', true);
+    if (featured === 'true') {
+      events = events.filter((e: any) => e.isFeatured);
+    }
 
-      const { data, error } = await query.limit(100);
-      if (error || !data) return [];
-
-      return data as CryptoEvent[];
-    },
-    300
-  );
-
-  return NextResponse.json(events);
+    return NextResponse.json(events);
+  } catch (error) {
+    return NextResponse.json([]);
+  }
 }
