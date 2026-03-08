@@ -237,3 +237,7 @@
 	•	Reference: Task 17.3 & 17.4 (Glossary & Notifications)
 	•	New Status: COMPLETED
 	•	Notes: Built an inline regex parser in `/news/[id]/page.tsx` to automatically inject `<GlossaryTooltip>` components for keywords dynamically fetched from Sanity. Converted `RootLayout` to an async server component to fetch and display active site-wide notifications from Sanity above the main content flow.
+[2026-03-08] STATUS UPDATE
+	•	Reference: Task 17.5 (Gitcoin Passport)
+	•	New Status: COMPLETED
+	•	Notes: Added `GitcoinPassport` component and `/api/verify-passport` route. Connected the human verification fallback to the `/alpha-guides` paywall, giving highly-scored human users (Score > 20) free access to premium agent data.

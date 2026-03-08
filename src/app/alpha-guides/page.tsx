@@ -4,6 +4,7 @@ import React from 'react';
 import { Lock, Zap, Terminal, ShieldAlert, Cpu, Network } from 'lucide-react';
 import type { Metadata } from 'next';
 import { getSanityPlaybooks } from '@/lib/sanity';
+import GitcoinPassport from '@/components/auth/GitcoinPassport';
 
 export const metadata: Metadata = {
   title: 'Agentic Alpha Tier | CryptoBrainNews',
@@ -14,10 +15,7 @@ export default async function AlphaGuidesPage(props: { searchParams: Promise<{ u
   const searchParams = await props.searchParams;
   const isUnlocked = searchParams?.unlocked === 'true';
 
-  // Fetch playbooks from Sanity CMS
   const playbooks = await getSanityPlaybooks().catch(() =>[]);
-
-  // Replace with your actual Stripe Payment Link
   const STRIPE_CHECKOUT_URL = 'https://stripe.com'; 
 
   return (
@@ -45,14 +43,12 @@ export default async function AlphaGuidesPage(props: { searchParams: Promise<{ u
             )}
 
             {playbooks.map((pb: any, index: number) => {
-              // Progressively blur items if locked
               const blurAmt = index * 2 + 6;
               const opacityAmt = Math.max(10, 40 - index * 10);
               const lockedStyles = !isUnlocked ? `blur-[${blurAmt}px] opacity-${opacityAmt}` : '';
 
               return (
                 <div key={pb._id} className={`space-y-8 ${lockedStyles}`}>
-                  {/* Agent Playbook YAML Block */}
                   <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-8 rounded-lg flex flex-col md:flex-row gap-8 items-start">
                      <div className="w-12 h-12 bg-[#111] rounded-full flex items-center justify-center shrink-0">
                        <Cpu className="text-[#00d672]" />
@@ -73,7 +69,6 @@ export default async function AlphaGuidesPage(props: { searchParams: Promise<{ u
                      </div>
                   </div>
 
-                  {/* Sybil Parameters Block */}
                   {pb.sybilParams && (
                     <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-8 rounded-lg flex flex-col md:flex-row gap-8 items-start">
                        <div className="w-12 h-12 bg-[#111] rounded-full flex items-center justify-center shrink-0">
@@ -94,7 +89,6 @@ export default async function AlphaGuidesPage(props: { searchParams: Promise<{ u
               );
             })}
 
-            {/* Static Infrastructure Block */}
             <div className={`bg-[#0a0a0a] border border-[#1a1a1a] p-8 rounded-lg flex flex-col md:flex-row gap-8 items-start ${!isUnlocked ? 'blur-[10px] opacity-20' : ''}`}>
                <div className="w-12 h-12 bg-[#111] rounded-full flex items-center justify-center shrink-0">
                  <Network className="text-[#3b82f6]" />
@@ -106,27 +100,26 @@ export default async function AlphaGuidesPage(props: { searchParams: Promise<{ u
             </div>
           </div>
 
-          {/* The Paywall Overlay */}
           {!isUnlocked && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gradient-to-t from-[#050505] via-[#050505]/95 to-transparent pt-40">
-              <div className="bg-[#0a0a0a] border border-[#FABF2C]/50 p-8 rounded-xl max-w-md text-center shadow-[0_0_50px_rgba(250,191,44,0.15)]">
+              <div className="bg-[#0a0a0a] border border-[#FABF2C]/50 p-8 rounded-xl max-w-md text-center shadow-[0_0_50px_rgba(250,191,44,0.15)] pointer-events-auto">
                 <Lock size={32} className="text-[#FABF2C] mx-auto mb-6" />
                 <h3 className="text-2xl font-black uppercase mb-2">Join The Vanguard</h3>
                 <p className="text-[#888] text-sm mb-8 leading-relaxed">
                   Information is free. Autonomous execution is scarce. Equip your AI agents with the configurations required to win.
                 </p>
-                <div className="space-y-3 mb-8 text-left">
-                  <div className="flex items-center gap-3 text-sm text-[#ccc]"><Cpu size={16} className="text-[#FABF2C]"/> Plug-and-play Agent YAML configs</div>
-                  <div className="flex items-center gap-3 text-sm text-[#ccc]"><ShieldAlert size={16} className="text-[#FABF2C]"/> Sybil-clustering Defense Metrics</div>
-                  <div className="flex items-center gap-3 text-sm text-[#ccc]"><Terminal size={16} className="text-[#FABF2C]"/> Private Orchestration Discord</div>
-                </div>
+                
                 <a 
                   href={STRIPE_CHECKOUT_URL}
-                  className="block w-full bg-[#FABF2C] text-black py-4 text-xs font-black uppercase tracking-widest rounded hover:bg-white transition-all flex items-center justify-center gap-2"
+                  className="block w-full bg-[#FABF2C] text-black py-4 text-xs font-black uppercase tracking-widest rounded hover:bg-white transition-all flex items-center justify-center gap-2 mb-2"
                 >
                   <Zap size={14} /> Subscribe Now - $29/mo
                 </a>
-                <p className="text-[10px] text-[#555] font-mono mt-4 uppercase">Secure checkout via Stripe</p>
+                <p className="text-[10px] text-[#555] font-mono uppercase text-center">Secure checkout via Stripe</p>
+
+                {/* Gitcoin Human Verification Injection */}
+                <GitcoinPassport />
+                
               </div>
             </div>
           )}

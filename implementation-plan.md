@@ -127,3 +127,8 @@
 - Create `/api/execute` endpoint with x402 microtransactions.
 - Design pricing page with Free / Human Pro / Agent Pro tiers.
 - Integrate Stripe (humans) and x402 (agents).
+
+## Phase 17: Sanity Depth & Web3 Identity
+- **Data Binding:** Wire `getSanityPlaybooks()`, `getSanityEvents()`, `getSanityGlossary()`, and `getActiveNotifications()` to their respective frontend components.
+- **Verification Layer:** Implement Gitcoin Passport scoring for humans to unlock freemium gated sections without payment.
+- **Agent Registry:** Create KYA (ERC-8004 inspired) registry to map paying API agents to on-chain identities.
