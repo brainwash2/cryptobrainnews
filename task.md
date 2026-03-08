@@ -187,3 +187,18 @@
 	•	Reference: Phase 17 Complete
 	•	New Status: COMPLETED
 	•	Notes: Successfully rebuilt the Premium Tier UI. The page now explicitly targets the 2026 Agentic Economy, positioning the subscription as an essential infrastructure layer (Playbooks, Sybil-defense, RPCs) for automated AI farming agents.
+
+[2026-03-07] STATUS UPDATE
+	•	Reference: Merged Dual‑Audience & Agent‑Native Architecture
+	•	New Status: PLANNING
+	•	Notes: Adding Phases 14‑18 to serve both humans and agents. Monetization integrated for both: affiliate links for humans, API subscriptions for agents. Verification: Gitcoin (human) + KYA (agent). Execution: Copy button (free) + x402 API (paid).
+
+[2026-03-07] STATUS UPDATE
+	•	Reference: Phase 14 (Foundation for Both Audiences)
+	•	New Status: COMPLETED
+	•	Notes: Created `public/llms.txt` and `src/app/robots.ts` to explicitly whitelist and document the API for AI Agents. Injected `X-Llms-Txt` and `Link` HTTP headers into `next.config.mjs` for algorithmic discovery. Implemented `src/middleware.ts` to perform content negotiation, automatically rewriting `Accept: application/json` requests from human paths to our upcoming `/api/oracle/*` agent feeds.
+
+[2026-03-07] STATUS UPDATE
+	•	Reference: Phase 15 (Unified Airdrop Engine)
+	•	New Status: COMPLETED
+	•	Notes: Created `/airdrops/[slug]` page rendering a beautiful human guide with JSON-LD schema, hardware wallet warnings, and affiliate links. Created corresponding `/api/oracle/airdrops/[slug]` route which acts as the restricted (HTTP 401 Auth) data feed for AI agents requesting the same URL via `Accept: application/json`.

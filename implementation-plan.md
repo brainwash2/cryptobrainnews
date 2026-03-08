@@ -101,3 +101,29 @@
 ## Phase 17: The Agentic Pivot
 - Pivot `/alpha-guides` to target the 2026 Agentic Economy.
 - Redesign value prop around OpenClaw playbooks, Sybil-evasion variables, and automated orchestration.
+
+## Phase 14: Foundation for Both Audiences
+- Create `public/llms.txt` (agent index) and update `robots.txt`.
+- Add content negotiation headers for JSON responses.
+- Enhance human UI with newsletter/social CTAs.
+
+## Phase 15: Unified Airdrop Engine
+- Build `/airdrops/[slug]` with dual rendering: human UI + JSON‑LD.
+- Include affiliate links in both views.
+- Add API key check for raw JSON feed.
+
+## Phase 16: Alpha Oracle – Agent‑Only API Feeds
+- Create `/api/oracle/airdrops` (tokenless protocol signals).
+- Create `/api/oracle/predictions` (arbitrage opportunities).
+- Implement API key authentication (Stripe for agents).
+
+## Phase 17: Verification & Identity
+- Integrate Gitcoin Passport for human verification (score‑gated content).
+- Build KYA registry (ERC‑8004) for agents (paid tier).
+- Gate premium content behind verified human or agent.
+
+## Phase 18: Execution Layer & Subscription
+- Add "Copy for Agent" button (free) to all strategies.
+- Create `/api/execute` endpoint with x402 microtransactions.
+- Design pricing page with Free / Human Pro / Agent Pro tiers.
+- Integrate Stripe (humans) and x402 (agents).
