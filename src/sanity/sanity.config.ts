@@ -8,7 +8,7 @@ export default defineConfig({
   name: 'CryptoBrain_Studio',
   title: 'CryptoBrainNews CMS',
 
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || 'REPLACE_ME',
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || '9z1iv2c9',
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
 
   plugins:[structureTool(), visionTool()],
