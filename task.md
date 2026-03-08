@@ -202,3 +202,8 @@
 	•	Reference: Phase 15 (Unified Airdrop Engine)
 	•	New Status: COMPLETED
 	•	Notes: Created `/airdrops/[slug]` page rendering a beautiful human guide with JSON-LD schema, hardware wallet warnings, and affiliate links. Created corresponding `/api/oracle/airdrops/[slug]` route which acts as the restricted (HTTP 401 Auth) data feed for AI agents requesting the same URL via `Accept: application/json`.
+
+[2026-03-08] STATUS UPDATE
+	•	Reference: Phase 16 (Revised: Dynamic Data & Sanity Expansion)
+	•	New Status: COMPLETED
+	•	Notes: Replaced hardcoded prediction data with live Polymarket and Kalshi APIs (`src/lib/predictions.ts`), introducing real-time arbitrage spread calculations. Updated `/predictions` and `/api/oracle/predictions` to consume this live feed. Injected 6 new Sanity schemas (Airdrops, Events, Playbooks, Sponsored, Glossary, Notifications) and their respective GROQ queries to empower a no-code editorial workflow. Built `GlossaryTooltip` component for future content enhancement.
