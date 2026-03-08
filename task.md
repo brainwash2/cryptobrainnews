@@ -207,3 +207,8 @@
 	•	Reference: Phase 16 (Revised: Dynamic Data & Sanity Expansion)
 	•	New Status: COMPLETED
 	•	Notes: Replaced hardcoded prediction data with live Polymarket and Kalshi APIs (`src/lib/predictions.ts`), introducing real-time arbitrage spread calculations. Updated `/predictions` and `/api/oracle/predictions` to consume this live feed. Injected 6 new Sanity schemas (Airdrops, Events, Playbooks, Sponsored, Glossary, Notifications) and their respective GROQ queries to empower a no-code editorial workflow. Built `GlossaryTooltip` component for future content enhancement.
+
+[2026-03-08] STATUS UPDATE
+	•	Reference: Sanity CMS Cleanup & Schema Migration
+	•	New Status: COMPLETED
+	•	Notes: Migrated duplicate root Sanity schemas into the `src/sanity/schemas` directory. Updated `src/sanity/sanity.config.ts` to load all schemas via a new `index.ts` file, ensuring they appear in the embedded `/studio`. Deleted the unused standalone `/sanity` root folder. Organized SQL database files into a new `/scripts` directory to maintain a clean root.
