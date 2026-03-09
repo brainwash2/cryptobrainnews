@@ -65,7 +65,7 @@ export default function AdminCMS() {
           </button>
           {aiStatus && (
             <div className="mt-6 p-4 bg-black border border-[#222] font-mono text-xs text-[#00d672] break-words">
-              > {aiStatus}
+              {`> ${aiStatus}`}
             </div>
           )}
         </div>
