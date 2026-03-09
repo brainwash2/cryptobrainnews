@@ -253,3 +253,7 @@
         •       Reference: Task 18.1 (Unified Pricing Page)
         •       New Status: COMPLETED
         •       Notes: Built `/pricing` with a brutalist 3-tier card system: Free Reader, Human Pro (Stripe), and Agent API (x402). Injected the Gitcoin Passport module below the grid as a Sybil-resistant "Proof of Humanity" bypass to earn the Pro tier organically.
+[2026-03-09] STATUS UPDATE
+	•	Reference: Task 18.2 (L402 API Endpoint)
+	•	New Status: COMPLETED
+	•	Notes: Created `/api/execute` endpoint enforcing the L402 protocol. Agents making unauthenticated POST requests are rejected with a 402 Payment Required status and receive a mock Lightning invoice via the `WWW-Authenticate` header to simulate Pay-per-Compute mechanics.
