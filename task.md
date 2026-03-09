@@ -261,3 +261,11 @@
 	•	Reference: Task 18.3 (Agent UI Handoff)
 	•	New Status: COMPLETED
 	•	Notes: Updated `/airdrops/[slug]/page.tsx` to include an "Agent Handoff" section with a copyable `curl` command targeting the `/api/execute` endpoint. Created reusable `AgentHandoff` component to display the payload and instructions. This completes the end-to-end human → agent orchestration flow.
+
+## Pending (Phase 19)
+- [ ] Task 19.1: Build `generate-airdrop` AI orchestration route linking DefiLlama to Sanity.
+- [ ] Task 19.2: Implement the AI Automation trigger UI in `/admin`.
+[2026-03-09] STATUS UPDATE
+	•	Reference: Task 19.1 (AI Orchestration Route) & Task 19.2 (Admin AI Trigger)
+	•	New Status: COMPLETED
+	•	Notes: Successfully built the `/api/admin/generate-airdrop` endpoint mapping DefiLlama TVL data directly to Groq's LLM, converting it into Sanity structured JSON. Updated `/admin` UI to include an execution panel. Note: To push real inserts to Sanity, `SANITY_API_WRITE_TOKEN` must be added to the `.env` file, otherwise it logs success locally.

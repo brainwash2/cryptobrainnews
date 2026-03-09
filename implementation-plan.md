@@ -132,3 +132,7 @@
 - **Data Binding:** Wire `getSanityPlaybooks()`, `getSanityEvents()`, `getSanityGlossary()`, and `getActiveNotifications()` to their respective frontend components.
 - **Verification Layer:** Implement Gitcoin Passport scoring for humans to unlock freemium gated sections without payment.
 - **Agent Registry:** Create KYA (ERC-8004 inspired) registry to map paying API agents to on-chain identities.
+
+## Phase 19: Content Automation & Ecosystem Scaling
+- Build `/api/admin/generate-airdrop` to orchestrate DefiLlama data extraction and Groq LLM content synthesis.
+- Update `/admin` dashboard with AI Automation panel to trigger playbook drafting directly into Sanity.
