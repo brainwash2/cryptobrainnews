@@ -257,3 +257,7 @@
 	•	Reference: Task 18.2 (L402 API Endpoint)
 	•	New Status: COMPLETED
 	•	Notes: Created `/api/execute` endpoint enforcing the L402 protocol. Agents making unauthenticated POST requests are rejected with a 402 Payment Required status and receive a mock Lightning invoice via the `WWW-Authenticate` header to simulate Pay-per-Compute mechanics.
+[2026-03-09] STATUS UPDATE
+	•	Reference: Task 18.3 (Agent UI Handoff)
+	•	New Status: COMPLETED
+	•	Notes: Updated `/airdrops/[slug]/page.tsx` to include an "Agent Handoff" section with a copyable `curl` command targeting the `/api/execute` endpoint. Created reusable `AgentHandoff` component to display the payload and instructions. This completes the end-to-end human → agent orchestration flow.

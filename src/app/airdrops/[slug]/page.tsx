@@ -3,8 +3,9 @@ export const dynamic = 'force-dynamic';
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ShieldCheck, Droplets, Cpu, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Droplets, Cpu, Terminal, Copy, CheckCircle } from 'lucide-react';
 import AffiliateLink from '@/components/monetization/AffiliateLink';
+import AgentHandoff from '@/components/agent/AgentHandoff'; // we'll create this next
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -19,7 +20,6 @@ export default async function AirdropDetailPage({ params }: { params: Promise<{ 
   const { slug } = await params;
   const name = slug.charAt(0).toUpperCase() + slug.slice(1);
 
-  // Standard JSON-LD Schema for human SEO (Google rich snippets)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "HowTo",
@@ -91,25 +91,19 @@ export default async function AirdropDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        {/* Agentic Execution Block */}
+        {/* Agentic Execution Handoff */}
         <div className="mt-16 pt-10 border-t border-[#1a1a1a]">
           <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3">
-            <Cpu className="text-[#00d672]" /> Agentic Execution
+            <Cpu className="text-[#00d672]" /> Handoff to Your AI Agent
           </h2>
           <div className="bg-[#050505] border border-[#00d672]/30 p-8 rounded relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#00d672]/5 blur-[60px]" />
             <p className="text-[#ccc] text-sm mb-6 relative z-10 leading-relaxed">
-              Automate this strategy using your local OpenClaw or AutoGPT instance. Our Oracle API provides the exact YAML configuration and Sybil-evasion delays required to farm {name} undetected.
+              Instruct your local OpenClaw or AutoGPT instance to execute this strategy on-chain. 
+              Use the following payload with the L402 payment endpoint.
             </p>
-            <div className="bg-black border border-[#222] p-4 rounded font-mono text-xs text-[#00d672] mb-6 overflow-x-auto relative z-10">
-              $ curl -H "Accept: application/json" -H "Authorization: Bearer YOUR_KEY" \<br/>
-              &nbsp;&nbsp;https://cryptobrainnews.vercel.app/airdrops/{slug}
-            </div>
-            <div className="flex gap-4 relative z-10">
-              <Link href="/alpha-guides" className="bg-[#00d672] text-black px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors rounded">
-                Get Oracle API Key
-              </Link>
-            </div>
+            
+            <AgentHandoff protocol={name} />
           </div>
         </div>
 
