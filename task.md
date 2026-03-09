@@ -241,3 +241,7 @@
 	•	Reference: Task 17.5 (Gitcoin Passport)
 	•	New Status: COMPLETED
 	•	Notes: Added `GitcoinPassport` component and `/api/verify-passport` route. Connected the human verification fallback to the `/alpha-guides` paywall, giving highly-scored human users (Score > 20) free access to premium agent data.
+[2026-03-09] STATUS UPDATE
+	•	Reference: Task 17.6 (KYA Registry)
+	•	New Status: COMPLETED
+	•	Notes: Created `/agent-registry` to serve as the Know Your Agent (KYA) onboarding portal. Simulated ERC-8004 pubkey registration and issued `x-agent-key` for programmatic Oracle access. Phase 17 is now complete.
