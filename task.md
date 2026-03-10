@@ -308,3 +308,7 @@
 	•	Reference: Phase 22 (Security Hardening)
 	•	New Status: COMPLETED
 	•	Notes: Deployed all security mechanisms. `api/execute` now requires `x-api-key`, maps identities securely via hashed DB lookups, and logs executions using a restricted Neon role.
+[2026-03-10] STATUS UPDATE
+	•	Reference: Hotfix (Vercel Build Failure)
+	•	New Status: COMPLETED
+	•	Notes: Resolved TypeScript `Promise<boolean>` type error in `src/app/api/ad-leads/route.ts` by adding the `await` keyword to the asynchronous `checkRateLimit` call. Also installed `@neondatabase/serverless` package.

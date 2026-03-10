@@ -7,7 +7,9 @@ export async function POST(request: Request) {
     // Rate limit by IP
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
-    if (checkRateLimit(`ad-leads:${ip}`, 3, 60_000)) {
+    
+    // FIX: Await the asynchronous Redis rate limiter
+    if (await checkRateLimit(`ad-leads:${ip}`, 3, 60_000)) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         { status: 429 }
@@ -17,7 +19,7 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Validation
-    const required = ['company_name', 'email', 'budget_range', 'package_interest'] as const;
+    const required =['company_name', 'email', 'budget_range', 'package_interest'] as const;
     for (const field of required) {
       if (!body[field] || typeof body[field] !== 'string' || body[field].trim() === '') {
         return NextResponse.json(
@@ -38,8 +40,8 @@ export async function POST(request: Request) {
     }
 
     // Allowed values validation
-    const validBudgets = ['$1k-$5k', '$5k-$15k', '$15k-$50k', '$50k+'];
-    const validPackages = ['signal', 'alpha', 'institutional', 'event'];
+    const validBudgets =['$1k-$5k', '$5k-$15k', '$15k-$50k', '$50k+'];
+    const validPackages =['signal', 'alpha', 'institutional', 'event'];
     if (!validBudgets.includes(body.budget_range)) {
       return NextResponse.json({ error: 'Invalid budget range' }, { status: 400 });
     }
@@ -66,7 +68,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }
