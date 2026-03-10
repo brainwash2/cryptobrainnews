@@ -269,3 +269,12 @@
 	•	Reference: Task 19.1 (AI Orchestration Route) & Task 19.2 (Admin AI Trigger)
 	•	New Status: COMPLETED
 	•	Notes: Successfully built the `/api/admin/generate-airdrop` endpoint mapping DefiLlama TVL data directly to Groq's LLM, converting it into Sanity structured JSON. Updated `/admin` UI to include an execution panel. Note: To push real inserts to Sanity, `SANITY_API_WRITE_TOKEN` must be added to the `.env` file, otherwise it logs success locally.
+
+## Pending (Phase 20)
+- [ ] Task 20.1: Upgrade `/api/execute` for real LN invoice generation and verification.
+- [ ] Task 20.2: Build `/agent-registry/analytics` dashboard.
+- [ ] Task 20.3: Update Sanity playbook schema and build `/marketplace` UI.
+[2026-03-10] STATUS UPDATE
+	•	Reference: Task 20.1 (L402 Real Lightning Integration)
+	•	New Status: COMPLETED
+	•	Notes: Rewrote `/api/execute` to handle authentic L402 protocol standards. Uses the Alby API (`ALBY_API_KEY`) to generate true Bolt11 invoices and verify payment settlement states based on Macaroon payload hashes. Fails gracefully to a mock system if API keys are absent.

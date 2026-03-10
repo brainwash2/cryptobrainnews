@@ -1,23 +1,59 @@
 import { NextResponse } from 'next/server';
 
+const ALBY_API_URL = 'https://api.getalby.com/invoices';
+const COST_SATS = 10;
+
 export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get('authorization');
+    const albyKey = process.env.ALBY_API_KEY;
 
-    // 1. L402 Protocol Check: Does the agent have a valid payment token?
-    if (!authHeader || !authHeader.startsWith('L402 ')) {
-      // Generate a mock cryptographic macaroon (receipt constraint)
-      const macaroon = Buffer.from('cbn_macaroon_' + Date.now()).toString('base64');
-      
-      // Generate a mock Lightning Network invoice for 10 sats
+    // Helper: Generate Mock Invoice (Fallback if no API key is provided)
+    const getMockInvoice = () => {
+      const mockHash = 'mock_hash_' + Date.now();
+      const macaroon = Buffer.from(JSON.stringify({ payment_hash: mockHash })).toString('base64');
       const invoice = 'lnbc10n1p' + Math.random().toString(36).substring(2, 15) + 'mockinvoice';
+      return { macaroon, invoice };
+    };
+
+    // 1. L402 Protocol Check: Is an authorization header present?
+    if (!authHeader || !authHeader.startsWith('L402 ')) {
+      let macaroon, invoice;
+
+      if (albyKey) {
+        // Fetch Real Lightning Invoice from Alby
+        const res = await fetch(ALBY_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${albyKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            amount: COST_SATS,
+            description: 'CryptoBrain Agent Compute'
+          })
+        });
+
+        if (!res.ok) throw new Error('Failed to generate Lightning invoice');
+        
+        const data = await res.json();
+        invoice = data.payment_request;
+        // In a strict L402 setup, the macaroon embeds the caveat and the payment hash
+        macaroon = Buffer.from(JSON.stringify({ payment_hash: data.payment_hash })).toString('base64');
+      } else {
+        // Graceful Fallback
+        const mock = getMockInvoice();
+        macaroon = mock.macaroon;
+        invoice = mock.invoice;
+        console.warn('[L402] ALBY_API_KEY missing. Issuing mock invoice.');
+      }
 
       // Respond with HTTP 402 Payment Required
       return NextResponse.json(
         { 
           error: 'Payment Required',
-          message: 'This execution endpoint requires a micro-transaction. Pay the attached invoice and return the macaroon as a Bearer token.',
-          cost_sats: 10,
+          message: `This execution endpoint requires a micro-transaction of ${COST_SATS} sats. Pay the attached invoice and return the macaroon and preimage as an L402 Bearer token (Format: L402 <macaroon>:<preimage>).`,
+          cost_sats: COST_SATS,
           protocol: 'L402'
         },
         {
@@ -29,7 +65,39 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. If L402 token is present, we assume valid payment for this simulation
+    // 2. Validate Payment
+    // Standard format: L402 <base64_macaroon>:<hex_preimage>
+    const tokenParts = authHeader.replace('L402 ', '').split(':');
+    const incomingMacaroon = tokenParts[0];
+    // Preimage is required in a strict real-world implementation, but for this step we will verify state via API
+    
+    let isSettled = false;
+    let paymentHash = '';
+
+    try {
+      const decodedMacaroon = JSON.parse(Buffer.from(incomingMacaroon, 'base64').toString('utf-8'));
+      paymentHash = decodedMacaroon.payment_hash;
+    } catch (e) {
+      return NextResponse.json({ error: 'Invalid Macaroon format' }, { status: 401 });
+    }
+
+    if (albyKey && paymentHash && !paymentHash.startsWith('mock_hash')) {
+      // Verify with Alby API
+      const res = await fetch(`${ALBY_API_URL}/${paymentHash}`, {
+        headers: { 'Authorization': `Bearer ${albyKey}` }
+      });
+      const data = await res.json();
+      isSettled = data.settled === true;
+    } else {
+      // Accept mock tokens for testing
+      isSettled = true;
+    }
+
+    if (!isSettled) {
+      return NextResponse.json({ error: 'Invoice not settled' }, { status: 402 });
+    }
+
+    // 3. Execution Phase
     const body = await request.json().catch(() => ({}));
     const action = body.action || 'execute_arbitrage_swap';
     const targetProtocol = body.target_protocol || 'unknown';

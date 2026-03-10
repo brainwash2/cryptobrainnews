@@ -136,3 +136,8 @@
 ## Phase 19: Content Automation & Ecosystem Scaling
 - Build `/api/admin/generate-airdrop` to orchestrate DefiLlama data extraction and Groq LLM content synthesis.
 - Update `/admin` dashboard with AI Automation panel to trigger playbook drafting directly into Sanity.
+
+## Phase 20: Agent Ecosystem & Real Monetization
+- Upgrade `/api/execute` to use real Lightning Network invoices (Alby/Strike API) and L402 preimage verification.
+- Build `/agent-registry/analytics` dashboard for KYA-verified agents.
+- Create `/marketplace` directory for third-party playbooks with Stripe Connect logic.
