@@ -5,7 +5,7 @@ export const client = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || 'REPLACE_ME',
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
   apiVersion: '2024-03-04',
-  useCdn: true, // Use CDN for production performance
+  useCdn: true,
 })
 
 export async function getSanityPosts() {
@@ -35,7 +35,7 @@ export async function getSanityEvents() {
 export async function getSanityPlaybooks() {
   return cached('sanity:playbooks', async () => {
     return client.fetch(`*[_type == "playbook"] {
-      _id, title, protocol, yamlConfig, sybilParams, tier
+      _id, title, protocol, yamlConfig, sybilParams, tier, isThirdParty, authorName, stripeAccountId, priceUsd
     }`);
   }, 300);
 }

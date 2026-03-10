@@ -282,3 +282,7 @@
 	•	Reference: Task 20.2 (Agent Analytics Dashboard)
 	•	New Status: COMPLETED
 	•	Notes: Created `/agent-registry/analytics` featuring a responsive brutalist UI. Implemented `recharts` for L402 compute usage over 30 days and added an executions log table. Includes a back navigation link to seamlessly link with the KYA registry.
+[2026-03-10] STATUS UPDATE
+	•	Reference: Task 20.3 (Marketplace & Stripe Connect Logic)
+	•	New Status: COMPLETED
+	•	Notes: Updated Sanity playbook schema with third‑party fields. Updated `src/lib/sanity.ts` to fetch them. Built `/marketplace` UI with mocked Stripe Connect checkout. Phase 20 is now complete.
