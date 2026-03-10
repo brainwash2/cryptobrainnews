@@ -141,3 +141,8 @@
 - Upgrade `/api/execute` to use real Lightning Network invoices (Alby/Strike API) and L402 preimage verification.
 - Build `/agent-registry/analytics` dashboard for KYA-verified agents.
 - Create `/marketplace` directory for third-party playbooks with Stripe Connect logic.
+
+## Phase 21: Infrastructure Scale & Performance (Priority 3)
+- Move AI Agent Oracle API feeds (`/api/oracle/*`) to Vercel's global Edge network.
+- Add robust `Cache-Control` strategies to reduce Regional Node.js Function invocations and latency.
+- Prepare architecture for migration to scalable PostgreSQL solution for recording x402 payment executions and high-throughput agent logs.

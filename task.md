@@ -286,3 +286,12 @@
 	•	Reference: Task 20.3 (Marketplace & Stripe Connect Logic)
 	•	New Status: COMPLETED
 	•	Notes: Updated Sanity playbook schema with third‑party fields. Updated `src/lib/sanity.ts` to fetch them. Built `/marketplace` UI with mocked Stripe Connect checkout. Phase 20 is now complete.
+
+## Pending (Phase 21)
+- [ ] Task 21.1: Migrate Oracle APIs to Edge runtime and implement Cache-Control headers.
+- [ ] Task 21.2: Design PostgreSQL database schema for agent execution logging.
+
+[2026-03-10] STATUS UPDATE
+	•	Reference: Task 21.1 (Edge Caching for Oracle APIs)
+	•	New Status: COMPLETED
+	•	Notes: Added `runtime = 'edge'` to all routes under `/api/oracle/*`. Injected `Cache-Control: public, max-age=60, stale-while-revalidate=300` into `NextResponse` configurations to optimize performance for high-frequency AI agent requests.

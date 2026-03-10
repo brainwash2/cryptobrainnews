@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const authHeader = request.headers.get('authorization');
@@ -17,7 +19,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     protocol: slug,
     type: 'tokenless_farming_vector',
     confidence_score: 0.92,
-    recommended_actions: [
+    recommended_actions:[
       { 
         action: 'bridge', 
         target_chain: 'arbitrum', 
@@ -48,5 +50,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     }
   };
 
-  return NextResponse.json(agentPayload);
+  return NextResponse.json(agentPayload, {
+    headers: {
+      'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+    }
+  });
 }

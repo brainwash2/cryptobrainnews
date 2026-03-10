@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getLivePredictions } from '@/lib/predictions';
 
+export const runtime = 'edge';
 export const revalidate = 300;
 
 export async function GET(request: Request) {
@@ -23,5 +24,9 @@ export async function GET(request: Request) {
     timestamp: new Date().toISOString(),
     count: signals.length,
     signals 
+  }, {
+    headers: {
+      'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+    }
   });
 }

@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getDeFiProtocols } from '@/lib/api';
 
+export const runtime = 'edge';
 export const revalidate = 300;
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
   
-  // For testing, we can temporarily disable auth or keep it as is.
-  // We'll keep the auth check to mirror the predictions API.
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return NextResponse.json({ 
       error: 'Agent Authorization Required', 
@@ -50,6 +49,10 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
       count: signals.length, 
       signals 
+    }, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+      }
     });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to process on-chain data' }, { status: 500 });
