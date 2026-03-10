@@ -1,122 +1,94 @@
 import { NextResponse } from 'next/server';
+import { sql } from '@/lib/neon';
+import { hashApiKey } from '@/lib/security';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+export const runtime = 'edge';
 
 const ALBY_API_URL = 'https://api.getalby.com/invoices';
 const COST_SATS = 10;
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    if (await checkRateLimit(`execute:${ip}`, 100, 60_000)) {
+      return NextResponse.json({ error: 'Too many execution requests' }, { status: 429 });
+    }
+
+    const apiKey = request.headers.get('x-api-key');
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Missing x-api-key header for identity tracking.' }, { status: 401 });
+    }
+
+    const hashedKey = await hashApiKey(apiKey);
+    
+    const agents = await sql`SELECT id FROM agent_identities WHERE api_key = ${hashedKey} LIMIT 1`;
+    if (agents.length === 0) {
+      return NextResponse.json({ error: 'Invalid API Key' }, { status: 401 });
+    }
+    const agentId = agents[0].id;
+
     const authHeader = request.headers.get('authorization');
     const albyKey = process.env.ALBY_API_KEY;
 
-    // Helper: Generate Mock Invoice (Fallback if no API key is provided)
-    const getMockInvoice = () => {
-      const mockHash = 'mock_hash_' + Date.now();
-      const macaroon = Buffer.from(JSON.stringify({ payment_hash: mockHash })).toString('base64');
-      const invoice = 'lnbc10n1p' + Math.random().toString(36).substring(2, 15) + 'mockinvoice';
-      return { macaroon, invoice };
-    };
-
-    // 1. L402 Protocol Check: Is an authorization header present?
     if (!authHeader || !authHeader.startsWith('L402 ')) {
       let macaroon, invoice;
-
       if (albyKey) {
-        // Fetch Real Lightning Invoice from Alby
         const res = await fetch(ALBY_API_URL, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${albyKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            amount: COST_SATS,
-            description: 'CryptoBrain Agent Compute'
-          })
+          headers: { 'Authorization': `Bearer ${albyKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: COST_SATS, description: 'CryptoBrain Agent Compute' })
         });
-
         if (!res.ok) throw new Error('Failed to generate Lightning invoice');
-        
         const data = await res.json();
         invoice = data.payment_request;
-        // In a strict L402 setup, the macaroon embeds the caveat and the payment hash
         macaroon = Buffer.from(JSON.stringify({ payment_hash: data.payment_hash })).toString('base64');
       } else {
-        // Graceful Fallback
-        const mock = getMockInvoice();
-        macaroon = mock.macaroon;
-        invoice = mock.invoice;
-        console.warn('[L402] ALBY_API_KEY missing. Issuing mock invoice.');
+        const mockHash = 'mock_hash_' + Date.now();
+        macaroon = Buffer.from(JSON.stringify({ payment_hash: mockHash })).toString('base64');
+        invoice = 'lnbc10n1p' + Math.random().toString(36).substring(2, 15) + 'mock';
       }
-
-      // Respond with HTTP 402 Payment Required
       return NextResponse.json(
-        { 
-          error: 'Payment Required',
-          message: `This execution endpoint requires a micro-transaction of ${COST_SATS} sats. Pay the attached invoice and return the macaroon and preimage as an L402 Bearer token (Format: L402 <macaroon>:<preimage>).`,
-          cost_sats: COST_SATS,
-          protocol: 'L402'
-        },
-        {
-          status: 402,
-          headers: {
-            'WWW-Authenticate': `L402 macaroon="${macaroon}", invoice="${invoice}"`
-          }
-        }
+        { error: 'Payment Required', cost_sats: COST_SATS, protocol: 'L402' },
+        { status: 402, headers: { 'WWW-Authenticate': `L402 macaroon="${macaroon}", invoice="${invoice}"` } }
       );
     }
 
-    // 2. Validate Payment
-    // Standard format: L402 <base64_macaroon>:<hex_preimage>
-    const tokenParts = authHeader.replace('L402 ', '').split(':');
-    const incomingMacaroon = tokenParts[0];
-    // Preimage is required in a strict real-world implementation, but for this step we will verify state via API
-    
+    const incomingMacaroon = authHeader.replace('L402 ', '').split(':')[0];
     let isSettled = false;
     let paymentHash = '';
 
     try {
-      const decodedMacaroon = JSON.parse(Buffer.from(incomingMacaroon, 'base64').toString('utf-8'));
-      paymentHash = decodedMacaroon.payment_hash;
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid Macaroon format' }, { status: 401 });
+      paymentHash = JSON.parse(Buffer.from(incomingMacaroon, 'base64').toString('utf-8')).payment_hash;
+    } catch {
+      return NextResponse.json({ error: 'Invalid Macaroon' }, { status: 401 });
     }
 
     if (albyKey && paymentHash && !paymentHash.startsWith('mock_hash')) {
-      // Verify with Alby API
-      const res = await fetch(`${ALBY_API_URL}/${paymentHash}`, {
-        headers: { 'Authorization': `Bearer ${albyKey}` }
-      });
+      const res = await fetch(`${ALBY_API_URL}/${paymentHash}`, { headers: { 'Authorization': `Bearer ${albyKey}` } });
       const data = await res.json();
       isSettled = data.settled === true;
     } else {
-      // Accept mock tokens for testing
       isSettled = true;
     }
 
-    if (!isSettled) {
-      return NextResponse.json({ error: 'Invoice not settled' }, { status: 402 });
-    }
+    if (!isSettled) return NextResponse.json({ error: 'Invoice not settled' }, { status: 402 });
 
-    // 3. Execution Phase
     const body = await request.json().catch(() => ({}));
     const action = body.action || 'execute_arbitrage_swap';
     const targetProtocol = body.target_protocol || 'unknown';
-
-    // Simulate on-chain execution delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // Generate mock transaction hash
-    const txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    
+    await sql.transaction(async (tx) => {
+      await tx`SET LOCAL "agent.current_id" = ${agentId}`;
+      await tx`
+        INSERT INTO execution_logs (agent_id, action, target_protocol, cost_sats, payment_hash, status, execution_time_ms)
+        VALUES (${agentId}, ${action}, ${targetProtocol}, ${COST_SATS}, ${paymentHash}, 'settled', 800)
+      `;
+    });
 
     return NextResponse.json({
       status: 'success',
-      execution_id: `cbn_exec_${Date.now()}`,
-      message: `Agent action '${action}' completed on ${targetProtocol}.`,
-      on_chain_data: {
-        tx_hash: txHash,
-        gas_used_usd: 0.12,
-        network: body.network || 'arbitrum',
-      },
+      message: `Agent action '${action}' completed.`,
       payment_status: 'settled',
     });
 

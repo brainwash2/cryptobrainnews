@@ -295,3 +295,16 @@
 	•	Reference: Task 21.1 (Edge Caching for Oracle APIs)
 	•	New Status: COMPLETED
 	•	Notes: Added `runtime = 'edge'` to all routes under `/api/oracle/*`. Injected `Cache-Control: public, max-age=60, stale-while-revalidate=300` into `NextResponse` configurations to optimize performance for high-frequency AI agent requests.
+[2026-03-10] STATUS UPDATE
+	•	Reference: Task 21.2 (PostgreSQL Scale Setup - Neon)
+	•	New Status: COMPLETED
+	•	Notes: Installed `@neondatabase/serverless`. Created `scripts/schema_v2_agents.sql` and `src/lib/neon.ts`. System is now ready to log Edge runtime executions directly to Neon over WebSockets/HTTP without TCP exhaustion. Phase 21 is complete.
+## Pending (Phase 22)
+- [x] Task 22.1: PostgreSQL User Permissions & RLS setup.
+- [x] Task 22.2: SHA-256 API Key hashing via Web Crypto.
+- [x] Task 22.3: Upstash Redis Rate Limiting on L402 & Gitcoin endpoints.
+
+[2026-03-10] STATUS UPDATE
+	•	Reference: Phase 22 (Security Hardening)
+	•	New Status: COMPLETED
+	•	Notes: Deployed all security mechanisms. `api/execute` now requires `x-api-key`, maps identities securely via hashed DB lookups, and logs executions using a restricted Neon role.

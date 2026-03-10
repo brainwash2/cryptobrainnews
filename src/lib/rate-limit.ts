@@ -1,46 +1,39 @@
 import 'server-only';
+import { Redis } from '@upstash/redis';
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
+    : null;
 
-// In-memory store fallback
-const store = new Map<string, RateLimitEntry>();
+const memoryStore = new Map<string, { count: number; resetAt: number }>();
 
-// Prevent memory leaks by sweeping expired rate-limit records
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of store.entries()) {
-      if (now > entry.resetAt) {
-        store.delete(key);
-      }
-    }
-  }, 60_000).unref();
-}
-
-/**
- * Simple rate limiter.
- * @returns true if the request should be BLOCKED
- */
-export function isRateLimited(
+export async function checkRateLimit(
   identifier: string,
   maxRequests: number = 5,
   windowMs: number = 60_000
-): boolean {
-  const now = Date.now();
-  const entry = store.get(identifier);
+): Promise<boolean> {
+  if (redis) {
+    try {
+      const count = await redis.incr(identifier);
+      if (count === 1) {
+        await redis.pexpire(identifier, windowMs);
+      }
+      return count > maxRequests;
+    } catch (e) {
+      console.warn('[RateLimit] Redis failed, falling back to memory');
+    }
+  }
 
+  const now = Date.now();
+  const entry = memoryStore.get(identifier);
   if (!entry || now > entry.resetAt) {
-    store.set(identifier, { count: 1, resetAt: now + windowMs });
+    memoryStore.set(identifier, { count: 1, resetAt: now + windowMs });
     return false;
   }
-
   entry.count++;
-  if (entry.count > maxRequests) {
-    return true;
-  }
-
-  return false;
+  return entry.count > maxRequests;
 }
