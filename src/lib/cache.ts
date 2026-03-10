@@ -25,7 +25,7 @@ if (typeof setInterval !== 'undefined') {
     for (const [key, entry] of memoryStore.entries()) {
       if (now > entry.expiresAt) memoryStore.delete(key);
     }
-  }, 60000).unref();
+  }, 60000);
 }
 
 async function setRedisChunked<T>(key: string, data: T, ttl: number): Promise<void> {
