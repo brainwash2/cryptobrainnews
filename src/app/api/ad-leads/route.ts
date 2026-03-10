@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
-import { isRateLimited } from '@/lib/rate-limit';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
     // Rate limit by IP
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
-    if (isRateLimited(`ad-leads:${ip}`, 3, 60_000)) {
+    if (checkRateLimit(`ad-leads:${ip}`, 3, 60_000)) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         { status: 429 }
