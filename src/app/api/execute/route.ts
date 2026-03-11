@@ -24,9 +24,11 @@ export async function POST(request: Request) {
 
     const hashedKey = await hashApiKey(apiKey);
     
+    // Telemetry
     console.log('[Auth Debug] Incoming Plain Key:', apiKey.substring(0, 15) + '...');
     console.log('[Auth Debug] Derived SHA-256 Hash:', hashedKey);
     
+    // Admin query to find agent (Authentication Phase)
     const agents = await sql`SELECT id FROM agent_identities WHERE api_key = ${hashedKey} LIMIT 1`;
     if (agents.length === 0) {
       console.warn('[Auth Debug] Hash not found in agent_identities table.');
@@ -86,10 +88,10 @@ export async function POST(request: Request) {
     const action = body.action || 'execute_arbitrage_swap';
     const targetProtocol = body.target_protocol || 'unknown';
     
-    // Neon Serverless HTTP Batch Transaction
-    // Fix: Use a parameterized query for SET LOCAL – the driver handles it correctly
+    // FIX: Use set_config to safely parameterize the transaction-scoped session variable.
+    // The third parameter `true` means is_local (equivalent to SET LOCAL).
     await sql.transaction([
-      sql`SET LOCAL "agent.current_id" = ${agentId}::text`,
+      sql`SELECT set_config('agent.current_id', ${agentId}::text, true)`,
       sql`
         INSERT INTO execution_logs (agent_id, action, target_protocol, cost_sats, payment_hash, status, execution_time_ms)
         VALUES (${agentId}, ${action}, ${targetProtocol}, ${COST_SATS}, ${paymentHash}, 'settled', 800)

@@ -325,3 +325,7 @@
 	•	Reference: Phase 23 Tasks
 	•	New Status: COMPLETED
 	•	Notes: Safe lookup policy created. Telemetry injected.
+[2026-03-11] STATUS UPDATE
+	•	Reference: Hotfix (PostgreSQL SET LOCAL Parameterization)
+	•	New Status: COMPLETED
+	•	Notes: Resolved `NeonDbError: syntax error at or near "$1"` by replacing `SET LOCAL` with `SELECT set_config('agent.current_id', $1, true)`. This securely supports driver-level parametrization inside the Neon batched transaction array while remaining fully strict-TypeScript compliant.
