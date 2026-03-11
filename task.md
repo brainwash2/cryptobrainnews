@@ -364,3 +364,11 @@
 	•	Reference: Phase 27 Tasks
 	•	New Status: COMPLETED
 	•	Notes: Implemented native window.ethereum wallet connection. Built Operator Dashboard fetching agent identities securely from Neon DB based on the connected cryptographic pubkey.
+
+## Pending (Phase 28)
+- [ ] Task 28.1: Create `referrals` Neon schema and update `.env.example`.
+- [ ] Task 28.2: Build Gitcoin verification endpoint (`POST /api/referrals`).
+- [ ] Task 28.3: Update `KYAForm` to track conversions and `Dashboard` to show rewards.[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 28 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Built Sybil-resistant referral program. Operators can share links; new KYA registrations trigger a Gitcoin Passport check. Verified humans (score >= 20) generate 5000 sat rewards for the referrer.

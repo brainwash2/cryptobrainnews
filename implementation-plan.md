@@ -180,3 +180,9 @@
 - Implement native EIP-1193 browser wallet connection (MetaMask, Rabby, etc.).
 - Build the secure `Web3Provider` context and `ConnectWallet` UI component.
 - Create the Operator Dashboard (`/dashboard`) for users to view their registered AI agents.
+
+## Phase 28: Gitcoin-Gated Referral Program (Priority 4)
+- Implement Sybil-resistant referral tracking via `referrals` SQL table.
+- Build `/api/referrals` endpoint integrating Gitcoin Passport Scorer API.
+- Update KYA Form to silently capture `?ref=` and process conversions.
+- Add Referral Hub to Operator Dashboard for link generation and metrics.

@@ -1,14 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Copy, CheckCircle, Terminal } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Copy, CheckCircle } from 'lucide-react';
 
 export default function KYAForm() {
-  const [form, setForm] = useState({ agentName: '', pubkey: '', webhook: '' });
-  const [status, setStatus] = useState<'idle' | 'generating' | 'success' | 'error'>('idle');
-  const[apiKey, setApiKey] = useState('');
+  const[form, setForm] = useState({ agentName: '', pubkey: '', webhook: '' });
+  const[status, setStatus] = useState<'idle' | 'generating' | 'success' | 'error'>('idle');
+  const [apiKey, setApiKey] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const[copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [referrer, setReferrer] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Capture referral code from URL without forcing a Suspense boundary
+    const ref = new URLSearchParams(window.location.search).get('ref');
+    if (ref) setReferrer(ref);
+  },[]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +33,16 @@ export default function KYAForm() {
       
       setApiKey(data.apiKey);
       setStatus('success');
+
+      // Process Referral Conversion silently
+      if (referrer) {
+        fetch('/api/referrals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referrer, referred: form.pubkey })
+        }).catch(err => console.error('Referral log failed:', err));
+      }
+
     } catch (err: any) {
       setErrorMsg(err.message);
       setStatus('error');
@@ -68,7 +85,7 @@ export default function KYAForm() {
         <label className="block text-[10px] font-black uppercase text-[#555] tracking-widest mb-2">Cryptographic Pubkey (ERC-8004)</label>
         <input required type="text" placeholder="0x..." value={form.pubkey} onChange={(e) => setForm({ ...form, pubkey: e.target.value })} className={inputCls} />
       </div>
-      <button type="submit" disabled={status === 'generating'} className="w-full bg-[#FABF2C] text-black py-4 text-xs font-black uppercase tracking-widest hover:bg-white transition-all disabled:opacity-50 mt-4">
+      <button type="submit" disabled={status === 'generating'} className="w-full bg-[#FABF2C] text-black py-4 text-xs font-black uppercase tracking-widest hover:bg-white transition-colors disabled:opacity-50 mt-4">
         {status === 'generating' ? 'INITIALIZING KYA HANDSHAKE...' : 'REGISTER AGENT'}
       </button>
       {status === 'error' && <p className="text-red-500 text-[10px] font-mono mt-2 uppercase">{errorMsg}</p>}
