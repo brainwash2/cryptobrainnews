@@ -87,9 +87,9 @@ export async function POST(request: Request) {
     const targetProtocol = body.target_protocol || 'unknown';
     
     // Neon Serverless HTTP Batch Transaction
-    // Fix: Use sql.unsafe for SET LOCAL because parameters are not allowed in that context.
+    // Fix: Use a parameterized query for SET LOCAL – the driver handles it correctly
     await sql.transaction([
-      sql.unsafe(`SET LOCAL "agent.current_id" = '${agentId}'`),
+      sql`SET LOCAL "agent.current_id" = ${agentId}::text`,
       sql`
         INSERT INTO execution_logs (agent_id, action, target_protocol, cost_sats, payment_hash, status, execution_time_ms)
         VALUES (${agentId}, ${action}, ${targetProtocol}, ${COST_SATS}, ${paymentHash}, 'settled', 800)
