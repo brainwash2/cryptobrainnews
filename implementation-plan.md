@@ -175,3 +175,8 @@
 - Build a developer-centric API documentation portal at `/docs`.
 - Document KYA authentication, `x-api-key` usage, and L402 Lightning payment challenge flows.
 - Provide copy-pasteable endpoint schemas and Python integration snippets to drive user/agent growth.
+
+## Phase 27: Web3 Wallet Login & Operator Dashboard (Priority 4)
+- Implement native EIP-1193 browser wallet connection (MetaMask, Rabby, etc.).
+- Build the secure `Web3Provider` context and `ConnectWallet` UI component.
+- Create the Operator Dashboard (`/dashboard`) for users to view their registered AI agents.

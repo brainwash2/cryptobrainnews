@@ -355,3 +355,12 @@
 	•	Reference: Phase 26 Tasks
 	•	New Status: COMPLETED
 	•	Notes: Created the developer documentation portal. Included complete integration guides for the dual-layer authentication system (API keys + L402), endpoint schemas, and Python code examples.
+
+## Pending (Phase 27)
+- [ ] Task 27.1: Build native `Web3Provider` and `ConnectWallet` components.
+- [ ] Task 27.2: Create `GET /api/operator/agents` route to fetch agents by pubkey.
+- [ ] Task 27.3: Build `/dashboard` UI to display the connected operator's ecosystem.
+[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 27 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Implemented native window.ethereum wallet connection. Built Operator Dashboard fetching agent identities securely from Neon DB based on the connected cryptographic pubkey.
