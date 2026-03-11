@@ -329,3 +329,11 @@
 	•	Reference: Hotfix (PostgreSQL SET LOCAL Parameterization)
 	•	New Status: COMPLETED
 	•	Notes: Resolved `NeonDbError: syntax error at or near "$1"` by replacing `SET LOCAL` with `SELECT set_config('agent.current_id', $1, true)`. This securely supports driver-level parametrization inside the Neon batched transaction array while remaining fully strict-TypeScript compliant.
+
+## Pending (Phase 24)
+- [ ] Task 24.1: Write live Neon SQL queries for dashboard aggregations.
+- [ ] Task 24.2: Build the Server Component UI for `/agent-registry/analytics`.
+[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 24 Tasks (Live Analytics)
+	•	New Status: COMPLETED
+	•	Notes: Replaced mock data in `/agent-registry/analytics` with live queries against `agent_identities` and `execution_logs`. Implemented 60-second ISR caching to protect the database from DoS while providing real-time ecosystem observability.

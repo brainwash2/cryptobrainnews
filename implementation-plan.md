@@ -161,3 +161,8 @@
 	•	Reference: Phase 23 (RLS Authentication Hotfix)
 	•	New Status: COMPLETED
 	•	Notes: Replaced restrictive identity RLS policy with a safe lookup policy. Added hash telemetry to the execution endpoint.
+
+## Phase 24: Real-Time Analytics Dashboard (Priority 6)
+- Replace mocked agent data with live Neon PostgreSQL aggregations.
+- Implement Next.js Incremental Static Regeneration (ISR) to cache heavy queries.
+- Build UI for global KPIs (Total Agents, Executions, Sats Earned) and a live execution feed.
