@@ -170,3 +170,8 @@
 ## Phase 25: Agent Sandbox & Developer Console (Priority 5)
 - Implement `x-sandbox-mode` header in the `/api/execute` endpoint to bypass real L402 payments and isolate logs.
 - Build an interactive Developer Console (`/agent-registry/sandbox`) to test Oracle APIs and L402 execution flows.
+
+## Phase 26: Public API Documentation (Priority 4)
+- Build a developer-centric API documentation portal at `/docs`.
+- Document KYA authentication, `x-api-key` usage, and L402 Lightning payment challenge flows.
+- Provide copy-pasteable endpoint schemas and Python integration snippets to drive user/agent growth.
