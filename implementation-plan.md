@@ -154,3 +154,10 @@
 	•	Reference: Phase 22 (Database & Endpoint Security Hardening)
 	•	New Status: COMPLETED
 	•	Notes: Applied SHA-256 API key hashing, PostgreSQL RLS with `agent_logger` role, and Upstash Redis rate limiting for sensitive endpoints.
+
+## Phase 23: RLS Authentication Hotfix
+- Resolve Row-Level Security "Chicken-and-Egg" paradox on `agent_identities` table.
+- Allow `agent_logger` role to query the hashed `api_key` for identity verification prior to setting transaction variables.[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 23 (RLS Authentication Hotfix)
+	•	New Status: COMPLETED
+	•	Notes: Replaced restrictive identity RLS policy with a safe lookup policy. Added hash telemetry to the execution endpoint.

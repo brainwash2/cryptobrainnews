@@ -24,9 +24,15 @@ export async function POST(request: Request) {
 
     const hashedKey = await hashApiKey(apiKey);
     
+    // --- TELEMETRY ADDED ---
+    // Monitor this in Vercel Logs to ensure it matches the database hash
+    console.log('[Auth Debug] Incoming Plain Key:', apiKey.substring(0, 15) + '...');
+    console.log('[Auth Debug] Derived SHA-256 Hash:', hashedKey);
+    
     // Admin query to find agent (Authentication Phase)
     const agents = await sql`SELECT id FROM agent_identities WHERE api_key = ${hashedKey} LIMIT 1`;
     if (agents.length === 0) {
+      console.warn('[Auth Debug] Hash not found in agent_identities table.');
       return NextResponse.json({ error: 'Invalid API Key' }, { status: 401 });
     }
     const agentId = agents[0].id;
@@ -83,9 +89,7 @@ export async function POST(request: Request) {
     const action = body.action || 'execute_arbitrage_swap';
     const targetProtocol = body.target_protocol || 'unknown';
     
-    // FIX: Neon Serverless HTTP Batch Transaction
-    // Because the connection is HTTP and stateless, Neon requires an array 
-    // of queries to execute them together in a single request.
+    // Neon Serverless HTTP Batch Transaction
     await sql.transaction([
       sql`SET LOCAL "agent.current_id" = ${agentId}`,
       sql`

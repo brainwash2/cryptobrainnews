@@ -316,3 +316,12 @@
 	•	Reference: Hotfix (Vercel Build Failure - Neon Transaction)
 	•	New Status: COMPLETED
 	•	Notes: Fixed TypeScript compilation error in `src/app/api/execute/route.ts`. Migrated standard Node-Postgres `await tx` execution to Neon Serverless batched array syntax `sql.transaction([sql...])` which natively supports Vercel's stateless HTTP/Edge execution.
+
+## Pending (Phase 23)
+- [ ] Task 23.1: Update RLS policy on `agent_identities` to permit `SELECT` lookups.
+- [ ] Task 23.2: Add SHA-256 debugging telemetry to `/api/execute/route.ts`.
+
+[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 23 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Safe lookup policy created. Telemetry injected.

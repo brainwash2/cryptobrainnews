@@ -4,7 +4,7 @@
 
 -- 1. Create a restricted role for API interactions
 -- Note: Replace 'SECURE_PASSWORD' with a strong generated password in Neon.
-CREATE ROLE agent_logger WITH LOGIN PASSWORD 'SECURE_PASSWORD';
+CREATE ROLE agent_logger WITH LOGIN PASSWORD '2S5N85UH0IEjSPCvgXBpYi+U';
 
 -- 2. Grant least-privilege access
 GRANT USAGE ON SCHEMA public TO agent_logger;
