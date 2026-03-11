@@ -10,39 +10,38 @@ const COST_SATS = 10;
 
 export async function POST(request: Request) {
   try {
-    // 1. Apply Global Rate Limits (100 reqs per minute per IP)
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
     if (await checkRateLimit(`execute:${ip}`, 100, 60_000)) {
       return NextResponse.json({ error: 'Too many execution requests' }, { status: 429 });
     }
 
-    // 2. Identify the Agent (x-api-key)
     const apiKey = request.headers.get('x-api-key');
     if (!apiKey) {
       return NextResponse.json({ error: 'Missing x-api-key header for identity tracking.' }, { status: 401 });
     }
 
     const hashedKey = await hashApiKey(apiKey);
-    
-    // Telemetry
+    const isSandbox = request.headers.get('x-sandbox-mode') === 'true';
+
     console.log('[Auth Debug] Incoming Plain Key:', apiKey.substring(0, 15) + '...');
-    console.log('[Auth Debug] Derived SHA-256 Hash:', hashedKey);
+    console.log(`[Auth Debug] Mode: ${isSandbox ? 'SANDBOX' : 'LIVE'}`);
     
-    // Admin query to find agent (Authentication Phase)
     const agents = await sql`SELECT id FROM agent_identities WHERE api_key = ${hashedKey} LIMIT 1`;
     if (agents.length === 0) {
-      console.warn('[Auth Debug] Hash not found in agent_identities table.');
       return NextResponse.json({ error: 'Invalid API Key' }, { status: 401 });
     }
     const agentId = agents[0].id;
 
-    // 3. L402 Payment Verification
     const authHeader = request.headers.get('authorization');
     const albyKey = process.env.ALBY_API_KEY;
 
     if (!authHeader || !authHeader.startsWith('L402 ')) {
       let macaroon, invoice;
-      if (albyKey) {
+      if (isSandbox || !albyKey) {
+        const mockHash = 'sandbox_hash_' + Date.now();
+        macaroon = Buffer.from(JSON.stringify({ payment_hash: mockHash })).toString('base64');
+        invoice = 'lnbc_sandbox_mock_invoice';
+      } else {
         const res = await fetch(ALBY_API_URL, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${albyKey}`, 'Content-Type': 'application/json' },
@@ -52,10 +51,6 @@ export async function POST(request: Request) {
         const data = await res.json();
         invoice = data.payment_request;
         macaroon = Buffer.from(JSON.stringify({ payment_hash: data.payment_hash })).toString('base64');
-      } else {
-        const mockHash = 'mock_hash_' + Date.now();
-        macaroon = Buffer.from(JSON.stringify({ payment_hash: mockHash })).toString('base64');
-        invoice = 'lnbc10n1p' + Math.random().toString(36).substring(2, 15) + 'mock';
       }
       return NextResponse.json(
         { error: 'Payment Required', cost_sats: COST_SATS, protocol: 'L402' },
@@ -73,35 +68,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid Macaroon' }, { status: 401 });
     }
 
-    if (albyKey && paymentHash && !paymentHash.startsWith('mock_hash')) {
+    if (isSandbox && paymentHash.startsWith('sandbox_hash_')) {
+      isSettled = true; // Auto-settle in sandbox mode
+    } else if (albyKey && paymentHash && !paymentHash.startsWith('sandbox_hash_') && !paymentHash.startsWith('mock_hash')) {
       const res = await fetch(`${ALBY_API_URL}/${paymentHash}`, { headers: { 'Authorization': `Bearer ${albyKey}` } });
       const data = await res.json();
       isSettled = data.settled === true;
     } else {
-      isSettled = true; // Accept mocks locally
+      isSettled = true; // Fallback for local dev without Alby
     }
 
     if (!isSettled) return NextResponse.json({ error: 'Invoice not settled' }, { status: 402 });
 
-    // 4. Execution & RLS Logging
     const body = await request.json().catch(() => ({}));
     const action = body.action || 'execute_arbitrage_swap';
     const targetProtocol = body.target_protocol || 'unknown';
+    const finalStatus = isSandbox ? 'sandbox' : 'settled';
     
-    // FIX: Use set_config to safely parameterize the transaction-scoped session variable.
-    // The third parameter `true` means is_local (equivalent to SET LOCAL).
     await sql.transaction([
       sql`SELECT set_config('agent.current_id', ${agentId}::text, true)`,
       sql`
         INSERT INTO execution_logs (agent_id, action, target_protocol, cost_sats, payment_hash, status, execution_time_ms)
-        VALUES (${agentId}, ${action}, ${targetProtocol}, ${COST_SATS}, ${paymentHash}, 'settled', 800)
+        VALUES (${agentId}, ${action}, ${targetProtocol}, ${COST_SATS}, ${paymentHash}, ${finalStatus}, 800)
       `
     ]);
 
     return NextResponse.json({
       status: 'success',
       message: `Agent action '${action}' completed.`,
-      payment_status: 'settled',
+      payment_status: finalStatus,
+      mode: isSandbox ? 'sandbox' : 'live'
     });
 
   } catch (error) {

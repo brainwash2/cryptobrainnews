@@ -337,3 +337,12 @@
 	•	Reference: Phase 24 Tasks (Live Analytics)
 	•	New Status: COMPLETED
 	•	Notes: Replaced mock data in `/agent-registry/analytics` with live queries against `agent_identities` and `execution_logs`. Implemented 60-second ISR caching to protect the database from DoS while providing real-time ecosystem observability.
+
+## Pending (Phase 25)
+- [ ] Task 25.1: Update `/api/execute/route.ts` to support `x-sandbox-mode` and log as `status = 'sandbox'`.
+- [ ] Task 25.2: Build interactive Client Component UI for the Developer Sandbox.
+
+[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 25 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Added sandbox header logic to execution endpoint. Built dual-pane interactive developer console that automates L402 challenge-response testing without polluting the live analytics dashboard.

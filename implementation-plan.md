@@ -166,3 +166,7 @@
 - Replace mocked agent data with live Neon PostgreSQL aggregations.
 - Implement Next.js Incremental Static Regeneration (ISR) to cache heavy queries.
 - Build UI for global KPIs (Total Agents, Executions, Sats Earned) and a live execution feed.
+
+## Phase 25: Agent Sandbox & Developer Console (Priority 5)
+- Implement `x-sandbox-mode` header in the `/api/execute` endpoint to bypass real L402 payments and isolate logs.
+- Build an interactive Developer Console (`/agent-registry/sandbox`) to test Oracle APIs and L402 execution flows.
