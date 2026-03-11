@@ -24,12 +24,9 @@ export async function POST(request: Request) {
 
     const hashedKey = await hashApiKey(apiKey);
     
-    // --- TELEMETRY ADDED ---
-    // Monitor this in Vercel Logs to ensure it matches the database hash
     console.log('[Auth Debug] Incoming Plain Key:', apiKey.substring(0, 15) + '...');
     console.log('[Auth Debug] Derived SHA-256 Hash:', hashedKey);
     
-    // Admin query to find agent (Authentication Phase)
     const agents = await sql`SELECT id FROM agent_identities WHERE api_key = ${hashedKey} LIMIT 1`;
     if (agents.length === 0) {
       console.warn('[Auth Debug] Hash not found in agent_identities table.');
@@ -90,8 +87,9 @@ export async function POST(request: Request) {
     const targetProtocol = body.target_protocol || 'unknown';
     
     // Neon Serverless HTTP Batch Transaction
+    // Fix: Use sql.unsafe for SET LOCAL because parameters are not allowed in that context.
     await sql.transaction([
-      sql`SET LOCAL "agent.current_id" = ${agentId}`,
+      sql.unsafe(`SET LOCAL "agent.current_id" = '${agentId}'`),
       sql`
         INSERT INTO execution_logs (agent_id, action, target_protocol, cost_sats, payment_hash, status, execution_time_ms)
         VALUES (${agentId}, ${action}, ${targetProtocol}, ${COST_SATS}, ${paymentHash}, 'settled', 800)
