@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Roboto_Mono } from 'next/font/google';
-import './globals.css';
+import '@/styles/globals.css';
 import Header from '@/components/layout/Header';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
