@@ -372,3 +372,11 @@
 	•	Reference: Phase 28 Tasks
 	•	New Status: COMPLETED
 	•	Notes: Built Sybil-resistant referral program. Operators can share links; new KYA registrations trigger a Gitcoin Passport check. Verified humans (score >= 20) generate 5000 sat rewards for the referrer.
+
+## Pending (Phase 28 Hotfix)
+- [ ] Task 28.4: Apply SQL patch to simplify `referrals` RLS policies.
+- [ ] Task 28.5: Update `POST /api/referrals` to use batched `set_config` transaction.
+[2026-03-12] STATUS UPDATE
+	•	Reference: Phase 28 Hotfix
+	•	New Status: COMPLETED
+	•	Notes: Fixed RLS violation by replacing restrictive policies with safe, role-based policies and updating the insertion route to set the local session config.

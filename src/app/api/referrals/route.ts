@@ -13,7 +13,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Missing pubkey' }, { status: 400 });
     }
 
-    // Secure the query context for RLS
+    // Secure the query context
     const results = await sql.transaction([
       sql`SELECT set_config('operator.current_pubkey', ${pubkey}::text, true)`,
       sql`
@@ -56,7 +56,6 @@ export async function POST(request: Request) {
         score = Math.floor(data.score || 0);
       }
     } else {
-      // Sandbox fallback if keys are not set
       console.warn('[Referrals] Gitcoin keys missing. Simulating human verification for Sandbox.');
       score = 25; 
     }
@@ -66,17 +65,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Sybil Risk: Gitcoin score too low for reward.', score }, { status: 403 });
     }
 
-    // 3. Log the successful referral
-    await sql`
-      INSERT INTO referrals (referrer_pubkey, referred_pubkey, gitcoin_score, reward_sats)
-      VALUES (${referrer}, ${referred}, ${score}, 5000)
-      ON CONFLICT (referred_pubkey) DO NOTHING
-    `;
+    // 3. Log the successful referral securely via batched transaction
+    await sql.transaction([
+      sql`SELECT set_config('operator.current_pubkey', ${referrer}::text, true)`,
+      sql`
+        INSERT INTO referrals (referrer_pubkey, referred_pubkey, gitcoin_score, reward_sats)
+        VALUES (${referrer}, ${referred}, ${score}, 5000)
+        ON CONFLICT (referred_pubkey) DO NOTHING
+      `
+    ]);
 
     return NextResponse.json({ success: true, score, reward: 5000 });
   } catch (error) {
     console.error('[Referrals API] POST Error:', error);
-    // Ignore unique constraint violations (already claimed)
     return NextResponse.json({ error: 'Failed to process referral' }, { status: 500 });
   }
 }

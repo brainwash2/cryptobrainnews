@@ -186,3 +186,8 @@
 - Build `/api/referrals` endpoint integrating Gitcoin Passport Scorer API.
 - Update KYA Form to silently capture `?ref=` and process conversions.
 - Add Referral Hub to Operator Dashboard for link generation and metrics.
+
+## Phase 28: Hotfix (Referral RLS)
+- Resolve Row-Level Security violation on `referrals` table during `INSERT ON CONFLICT`.
+- Simplify RLS policies for the trusted `agent_logger` backend role.
+- Add batched `set_config` transaction to the POST endpoint.
