@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { SiweMessage } from 'siwe';
+import { SiweMessage, generateNonce } from 'siwe';
+import { getAddress } from 'ethers';
 
 type Web3ContextType = {
   address: string | null;
@@ -31,7 +32,6 @@ export function Web3Provider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
-      // If the user changes accounts in MetaMask, force them to re-sign
       setAddress(null);
       setSignature(null);
       setSiweMessage(null);
@@ -52,41 +52,51 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       alert('Please install MetaMask, Rabby, or a Web3 wallet extension to continue.');
       return;
     }
+    
     setIsConnecting(true);
+    
     try {
+      // 1. Get lowercase address from MetaMask
       const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
-      const walletAddress = accounts[0];
+      const rawAddress = accounts[0];
+      
+      // 2. Force strict EIP-55 Checksum formatting for SIWE
+      const checksummedAddress = getAddress(rawAddress);
+      
+      console.log('[Web3] Raw MetaMask Address:', rawAddress);
+      console.log('[Web3] EIP-55 Checksummed Address:', checksummedAddress);
 
-      // 1. Create SIWE Message
+      // 3. Create SIWE Message
       const domain = window.location.host;
       const origin = window.location.origin;
       const statement = 'Sign in to the CryptoBrain Operator Dashboard.';
-      const nonce = Math.random().toString(36).substring(2, 15); // Stateless nonce
+      const nonce = generateNonce(); // Secure SIWE nonce
 
       const message = new SiweMessage({
         domain,
-        address: walletAddress,
+        address: checksummedAddress, // Must be mixed-case checksum
         statement,
         uri: origin,
         version: '1',
         chainId: 1,
         nonce
       });
+      
       const preparedMessage = message.prepareMessage();
 
-      // 2. Request Cryptographic Signature
+      // 4. Request Signature (Using raw address for RPC compatibility)
       const sig = await (window as any).ethereum.request({
         method: 'personal_sign',
-        params: [preparedMessage, walletAddress]
+        params: [preparedMessage, rawAddress]
       });
 
-      // 3. Store in State
-      setAddress(walletAddress);
+      // 5. Store in State
+      setAddress(checksummedAddress);
       setSiweMessage(preparedMessage);
       setSignature(sig);
 
     } catch (error) {
-      console.error('[Web3] Connection or Signature rejected', error);
+      console.error('[Web3] Connection or Signature rejected:', error);
       disconnect();
     } finally {
       setIsConnecting(false);
