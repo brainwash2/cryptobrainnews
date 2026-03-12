@@ -201,3 +201,8 @@
 - Implement interactive Agent Playbook Builder at `/dashboard/playbooks`.
 - Create `playbooks` PostgreSQL schema to store JSON orchestrations.
 - Secure playbook CRUD endpoints with SIWE cryptographic signatures.
+
+## Phase 31: Launch Prep & SEO (Day 2 Operations)
+- Generate dynamic `sitemap.xml` and `robots.txt` for search engine indexing.
+- Inject global OpenGraph and Twitter Card metadata into the root layout.
+- Update global navigation (`Header.tsx`) to surface `/docs`, `/agent-registry/sandbox`, and `/dashboard`.

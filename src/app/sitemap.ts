@@ -1,28 +1,28 @@
-export const dynamic = 'force-dynamic';
-
 import { MetadataRoute } from 'next';
-import { getLivePrices } from '@/lib/api';
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.vercel.app';
 
-  const staticRoutes =['', '/news', '/data/markets/spot', '/price-indexes', '/events', '/airdrops'].map((route) => ({
+  // Core public routes to index
+  const routes =[
+    '',
+    '/news',
+    '/data/markets/spot',
+    '/prices',
+    '/events',
+    '/airdrops',
+    '/learning',
+    '/pricing',
+    '/docs',
+    '/agent-registry',
+    '/agent-registry/sandbox',
+    '/agent-registry/analytics'
+  ];
+
+  return routes.map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: route === '' ? 1 : 0.8,
+    changeFrequency: route === '' || route === '/news' ? 'hourly' : 'daily',
+    priority: route === '' ? 1.0 : route.startsWith('/docs') ? 0.9 : 0.8,
   }));
-
-  try {
-    const coins = await getLivePrices();
-    const coinRoutes = coins.map((coin) => ({
-      url: `${baseUrl}/coins/${coin.id.toLowerCase()}`,
-      lastModified: new Date(),
-      changeFrequency: 'hourly' as const,
-      priority: 0.7,
-    }));
-    return [...staticRoutes, ...coinRoutes];
-  } catch (error) {
-    return staticRoutes;
-  }
 }

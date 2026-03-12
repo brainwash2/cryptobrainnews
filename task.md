@@ -409,3 +409,13 @@
 	•	Reference: Hotfix (Missing ethers dependency & address checksum)
 	•	New Status: COMPLETED
 	•	Notes: Installed `ethers` to resolve SIWE build error. Updated Web3Provider to enforce EIP-55 checksum formatting for addresses.
+
+## Pending (Phase 31)
+- [ ] Task 31.1: Create `src/app/sitemap.ts` and `src/app/robots.ts`.
+- [ ] Task 31.2: Update `src/app/layout.tsx` with global SEO metadata.
+- [ ] Task 31.3: Update `src/components/layout/Header.tsx` to include developer links.
+
+[2026-03-12] STATUS UPDATE
+	•	Reference: Phase 31 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Deployed dynamic sitemap, secure robots.txt, and rich OpenGraph metadata. Updated global navigation to seamlessly integrate human and agent-centric routes, officially completing Launch Prep.
