@@ -396,3 +396,7 @@
 	•	Reference: Phase 30 Tasks
 	•	New Status: COMPLETED
 	•	Notes: Built visual orchestration UI allowing operators to chain Oracle Triggers, Conditions, and L402 Actions. Playbooks are saved to Neon DB using SIWE authentication and can be exported as standard JSON execution schemas.
+[2026-03-12] STATUS UPDATE
+	•	Reference: Hotfix (Missing ethers dependency for SIWE)
+	•	New Status: COMPLETED
+	•	Notes: Installed `ethers` package to resolve `siwe` peer dependency error causing Vercel build failure. Build now passes.
