@@ -419,3 +419,8 @@
 	•	Reference: Phase 31 Tasks
 	•	New Status: COMPLETED
 	•	Notes: Deployed dynamic sitemap, secure robots.txt, and rich OpenGraph metadata. Updated global navigation to seamlessly integrate human and agent-centric routes, officially completing Launch Prep.
+
+[2026-03-12] STATUS UPDATE
+	•	Reference: Hotfix (Vercel Build Failure - Missing globals.css)
+	•	New Status: COMPLETED
+	•	Notes: Resolved Turbopack build failure in `src/app/layout.tsx` by dynamically resolving the exact path and filename of the global stylesheet (`global.css`, `globals.css`, etc.) and updating the import to use the Next.js `@/` alias.

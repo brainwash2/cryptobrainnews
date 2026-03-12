@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     description: 'DeFi intelligence and L402 compute execution built for autonomous AI agents.',
     siteName: 'CryptoBrain',
     images:[{
-      url: '/og-image.png', // Assuming you will add an og-image.png to /public later
+      url: '/og-image.png',
       width: 1200,
       height: 630,
       alt: 'CryptoBrain Terminal'
