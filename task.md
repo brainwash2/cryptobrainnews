@@ -405,3 +405,7 @@
 	•	Reference: Hotfix (SIWE invalid EIP-55 address)
 	•	New Status: COMPLETED
 	•	Notes: MetaMask returns wallet addresses in all lowercase. `siwe` strict mode requires EIP-55 mixed-case checksums. Imported `getAddress` from `ethers` to format the wallet address prior to initializing the `SiweMessage`, resolving the connection crash.
+[2026-03-12] STATUS UPDATE
+	•	Reference: Hotfix (Missing ethers dependency & address checksum)
+	•	New Status: COMPLETED
+	•	Notes: Installed `ethers` to resolve SIWE build error. Updated Web3Provider to enforce EIP-55 checksum formatting for addresses.
