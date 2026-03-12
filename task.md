@@ -400,3 +400,8 @@
 	•	Reference: Hotfix (Missing ethers dependency for SIWE)
 	•	New Status: COMPLETED
 	•	Notes: Installed `ethers` package to resolve `siwe` peer dependency error causing Vercel build failure. Build now passes.
+
+[2026-03-12] STATUS UPDATE
+	•	Reference: Hotfix (SIWE invalid EIP-55 address)
+	•	New Status: COMPLETED
+	•	Notes: MetaMask returns wallet addresses in all lowercase. `siwe` strict mode requires EIP-55 mixed-case checksums. Imported `getAddress` from `ethers` to format the wallet address prior to initializing the `SiweMessage`, resolving the connection crash.
