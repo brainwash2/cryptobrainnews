@@ -58,7 +58,7 @@ export default function OperatorDashboard() {
         <p className="text-[#888] font-mono mb-8 text-center max-w-md">
           Connect your cryptographic identity and sign the authentication message to manage your AI agents securely.
         </p>
-        <ConnectWallet />
+        <div className="flex items-center gap-4"><Link href="/dashboard/playbooks" className="text-[#FABF2C] hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Playbook Builder</Link><ConnectWallet /></div>
       </div>
     );
   }
@@ -77,7 +77,7 @@ export default function OperatorDashboard() {
             </div>
             <p className="text-[#888] font-mono text-sm mt-2">Manage your autonomous ecosystem.</p>
           </div>
-          <ConnectWallet />
+          <div className="flex items-center gap-4"><Link href="/dashboard/playbooks" className="text-[#FABF2C] hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Playbook Builder</Link><ConnectWallet /></div>
         </div>
 
         {isLoading ? (

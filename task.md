@@ -388,3 +388,11 @@
 	•	Reference: Phase 29 Tasks
 	•	New Status: COMPLETED
 	•	Notes: Replaced insecure parameter-based wallet fetching with cryptographic SIWE authentication. The backend now verifies the signature against the requested pubkey before executing database queries.
+
+## Pending (Phase 30)
+- [ ] Task 30.1: Create `playbooks` Neon schema migration script.
+- [ ] Task 30.2: Build SIWE-secured `GET /api/operator/playbooks` and `POST`.
+- [ ] Task 30.3: Build visual Playbook Builder UI and JSON exporter.[2026-03-12] STATUS UPDATE
+	•	Reference: Phase 30 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Built visual orchestration UI allowing operators to chain Oracle Triggers, Conditions, and L402 Actions. Playbooks are saved to Neon DB using SIWE authentication and can be exported as standard JSON execution schemas.

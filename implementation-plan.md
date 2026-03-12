@@ -196,3 +196,8 @@
 - Implement Sign-In with Ethereum (SIWE / EIP-4361) to secure private dashboard endpoints.
 - Require cryptographic signatures (`personal_sign`) to access `/api/operator/agents` and `/api/referrals`.
 - Ensure operators can only view execution logs and referral earnings for wallets they cryptographically control.
+
+## Phase 30: Multi-Agent Orchestration UI (Priority 5)
+- Implement interactive Agent Playbook Builder at `/dashboard/playbooks`.
+- Create `playbooks` PostgreSQL schema to store JSON orchestrations.
+- Secure playbook CRUD endpoints with SIWE cryptographic signatures.
