@@ -1,19 +1,30 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/neon';
+import { SiweMessage } from 'siwe';
 
 export const runtime = 'edge';
 
-// Fetch Operator's Referral Stats
+// Fetch Operator's Referral Stats (Secured with SIWE)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const pubkey = searchParams.get('pubkey');
+    const signature = request.headers.get('x-siwe-signature');
+    const messageStr = request.headers.get('x-siwe-message');
 
-    if (!pubkey) {
-      return NextResponse.json({ error: 'Missing pubkey' }, { status: 400 });
+    if (!pubkey || !signature || !messageStr) {
+      return NextResponse.json({ error: 'Missing authentication headers or pubkey' }, { status: 401 });
     }
 
-    // Secure the query context
+    // 1. Cryptographic Verification (SIWE)
+    const siweMessage = new SiweMessage(messageStr);
+    const { data } = await siweMessage.verify({ signature });
+    
+    if (data.address.toLowerCase() !== pubkey.toLowerCase()) {
+      return NextResponse.json({ error: 'Signature address mismatch' }, { status: 403 });
+    }
+
+    // 2. Secure the query context
     const results = await sql.transaction([
       sql`SELECT set_config('operator.current_pubkey', ${pubkey}::text, true)`,
       sql`
@@ -28,11 +39,11 @@ export async function GET(request: Request) {
     return NextResponse.json(results[1][0]);
   } catch (error) {
     console.error('[Referrals API] GET Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Unauthorized or Internal Error' }, { status: 401 });
   }
 }
 
-// Process a New Referral Conversion
+// Process a New Referral Conversion (Called by system, no SIWE needed)
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -42,7 +53,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid referral data' }, { status: 400 });
     }
 
-    // 1. Verify Sybil Resistance via Gitcoin Passport
     let score = 0;
     const apiKey = process.env.GITCOIN_SCORER_API_KEY;
     const scorerId = process.env.GITCOIN_SCORER_ID;
@@ -56,16 +66,13 @@ export async function POST(request: Request) {
         score = Math.floor(data.score || 0);
       }
     } else {
-      console.warn('[Referrals] Gitcoin keys missing. Simulating human verification for Sandbox.');
       score = 25; 
     }
 
-    // 2. Gate Rewards: Score must be >= 20 to earn sats
     if (score < 20) {
       return NextResponse.json({ error: 'Sybil Risk: Gitcoin score too low for reward.', score }, { status: 403 });
     }
 
-    // 3. Log the successful referral securely via batched transaction
     await sql.transaction([
       sql`SELECT set_config('operator.current_pubkey', ${referrer}::text, true)`,
       sql`

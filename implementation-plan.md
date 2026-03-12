@@ -191,3 +191,8 @@
 - Resolve Row-Level Security violation on `referrals` table during `INSERT ON CONFLICT`.
 - Simplify RLS policies for the trusted `agent_logger` backend role.
 - Add batched `set_config` transaction to the POST endpoint.
+
+## Phase 29: Cryptographic Operator Authentication (Priority 5)
+- Implement Sign-In with Ethereum (SIWE / EIP-4361) to secure private dashboard endpoints.
+- Require cryptographic signatures (`personal_sign`) to access `/api/operator/agents` and `/api/referrals`.
+- Ensure operators can only view execution logs and referral earnings for wallets they cryptographically control.

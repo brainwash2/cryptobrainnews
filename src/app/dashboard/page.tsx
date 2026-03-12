@@ -3,37 +3,44 @@
 import React, { useEffect, useState } from 'react';
 import { useWeb3 } from '@/components/providers/Web3Provider';
 import ConnectWallet from '@/components/wallet/ConnectWallet';
-import { Shield, Cpu, Zap, Activity, Users, Copy, CheckCircle } from 'lucide-react';
+import { Shield, Cpu, Zap, Activity, Users, Copy, CheckCircle, Lock } from 'lucide-react';
 import Link from 'next/link';
 
 export default function OperatorDashboard() {
-  const { address } = useWeb3();
+  const { address, signature, siweMessage } = useWeb3();
   const [data, setData] = useState<any>(null);
   const [refData, setRefData] = useState({ total_referrals: 0, total_sats: 0 });
-  const [isLoading, setIsLoading] = useState(false);
+  const[isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!address) return;
+    // We now require both the address and the cryptographically signed message
+    if (!address || !signature || !siweMessage) return;
 
     const fetchEcosystem = async () => {
       setIsLoading(true);
       try {
-        const [agentsRes, refsRes] = await Promise.all([
-          fetch(`/api/operator/agents?pubkey=${address}`),
-          fetch(`/api/referrals?pubkey=${address}`)
+        const headers = {
+          'x-siwe-signature': signature,
+          'x-siwe-message': siweMessage
+        };
+
+        const[agentsRes, refsRes] = await Promise.all([
+          fetch(`/api/operator/agents?pubkey=${address}`, { headers }),
+          fetch(`/api/referrals?pubkey=${address}`, { headers })
         ]);
+        
         if (agentsRes.ok) setData(await agentsRes.json());
         if (refsRes.ok) setRefData(await refsRes.json());
       } catch (err) {
-        console.error('Failed to fetch dashboard data', err);
+        console.error('Failed to fetch authenticated dashboard data', err);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchEcosystem();
-  }, [address]);
+  }, [address, signature, siweMessage]);
 
   const handleCopyLink = () => {
     const link = `${window.location.origin}/agent-registry?ref=${address}`;
@@ -42,13 +49,14 @@ export default function OperatorDashboard() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!address) {
+  // If the user has a wallet connected but hasn't signed the message yet, they wait here.
+  if (!address || !signature) {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-8 font-sans">
         <Shield size={64} className="text-[#333] mb-6" />
         <h1 className="text-3xl font-black uppercase tracking-tighter mb-4">Operator Dashboard</h1>
         <p className="text-[#888] font-mono mb-8 text-center max-w-md">
-          Connect your cryptographic identity to manage your AI agents, view execution logs, and access your referral codes.
+          Connect your cryptographic identity and sign the authentication message to manage your AI agents securely.
         </p>
         <ConnectWallet />
       </div>
@@ -61,17 +69,21 @@ export default function OperatorDashboard() {
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#222] pb-6">
           <div>
-            <h1 className="text-3xl font-black uppercase tracking-tighter text-[#00d672]">Operator Dashboard</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-black uppercase tracking-tighter text-[#00d672]">Operator Dashboard</h1>
+              <span className="bg-[#00d672]/20 text-[#00d672] text-[10px] uppercase font-black px-2 py-1 rounded flex items-center gap-1">
+                <Lock size={10} /> Verified
+              </span>
+            </div>
             <p className="text-[#888] font-mono text-sm mt-2">Manage your autonomous ecosystem.</p>
           </div>
           <ConnectWallet />
         </div>
 
         {isLoading ? (
-          <div className="text-center py-20 text-[#555] font-mono animate-pulse">Synchronizing ecosystem data...</div>
+          <div className="text-center py-20 text-[#555] font-mono animate-pulse">Decrypting and synchronizing ecosystem data...</div>
         ) : data ? (
           <>
-            {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-[#0a0a0a] border border-[#222] p-6 rounded">
                 <div className="flex items-center justify-between mb-4">
@@ -98,7 +110,6 @@ export default function OperatorDashboard() {
               </div>
             </div>
 
-            {/* Referral Hub */}
             <div className="bg-gradient-to-r from-[#0a0a0a] to-[#111] border border-[#FABF2C]/30 rounded overflow-hidden p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-8">
               <div className="flex-1 space-y-4">
                 <div className="flex items-center gap-3">
@@ -135,7 +146,6 @@ export default function OperatorDashboard() {
               </div>
             </div>
 
-            {/* Agent List */}
             <div className="bg-[#0a0a0a] border border-[#222] rounded overflow-hidden">
               <div className="p-6 border-b border-[#222] flex justify-between items-center">
                 <h2 className="text-lg font-black uppercase tracking-widest">Registered Identities</h2>

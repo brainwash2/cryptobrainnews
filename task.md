@@ -380,3 +380,11 @@
 	•	Reference: Phase 28 Hotfix
 	•	New Status: COMPLETED
 	•	Notes: Fixed RLS violation by replacing restrictive policies with safe, role-based policies and updating the insertion route to set the local session config.
+
+## Pending (Phase 29)
+- [ ] Task 29.1: Install `siwe` and update `Web3Provider` to request `personal_sign`.
+- [ ] Task 29.2: Secure `GET /api/operator/agents` and `GET /api/referrals` with SIWE verification.
+- [ ] Task 29.3: Update Operator Dashboard UI to pass signature headers on API fetch.[2026-03-12] STATUS UPDATE
+	•	Reference: Phase 29 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Replaced insecure parameter-based wallet fetching with cryptographic SIWE authentication. The backend now verifies the signature against the requested pubkey before executing database queries.

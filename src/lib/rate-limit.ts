@@ -11,6 +11,10 @@ const redis =
 
 const memoryStore = new Map<string, { count: number; resetAt: number }>();
 
+/**
+ * Distributed rate limiter using Upstash Redis.
+ * Falls back to memory if Redis is unavailable.
+ */
 export async function checkRateLimit(
   identifier: string,
   maxRequests: number = 5,
@@ -28,6 +32,7 @@ export async function checkRateLimit(
     }
   }
 
+  // Memory fallback (per-instance only)
   const now = Date.now();
   const entry = memoryStore.get(identifier);
   if (!entry || now > entry.resetAt) {
