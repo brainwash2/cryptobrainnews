@@ -1,67 +1,62 @@
 import React from 'react';
+import { getStablecoins } from '@/lib/api';
+import { DataHeader } from '../../_components/DataHeader';
+import { DataTable } from '../../_components/DataTable';
+import GaugeCard from '../../_components/charts/GaugeCard';
 
-export const metadata = {
-  title: 'Stablecoin Intelligence | CryptoBrainNews',
-  description: 'Aggregate stablecoin market cap and liquidity flows.',
-};
-
-export const revalidate = 300;
-
-interface StablecoinData {
-  date: Date;
-  mcap: number;
-}
-
-// NOTE: Add your stablecoin data API integration here
-async function getStablecoinData(): Promise<StablecoinData[]> {
-  try {
-    // TODO: Replace with your actual API call
-    // Example: const res = await fetch('https://api.defillama.com/stablecoins');
-    // const data = await res.json();
-    // return data.map((d: any) => ({ date: new Date(d.date * 1000), mcap: d.total }));
-    return [];
-  } catch (error) {
-    console.error('Failed to fetch stablecoin data:', error);
-    return [];
-  }
-}
+export const metadata = { title: 'Stablecoin Intelligence | CryptoBrainNews' };
+export const revalidate = 3600;
 
 export default async function StablecoinsPage() {
-  const data = await getStablecoinData();
-  const currentMcap = data.length > 0 ? data[data.length - 1]?.mcap || 0 : 0;
+  const data = await getStablecoins();
+  
+  const currentMcap = data.reduce((sum, d) => sum + d.circulating, 0);
+  const usdtMcap = data.find(d => d.symbol === 'USDT')?.circulating || 0;
+  const dominance = currentMcap > 0 ? (usdtMcap / currentMcap) * 100 : 0;
+
+  const formatUsd = (v: unknown): string => {
+    const n = Number(v);
+    if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+    if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+    return `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-white font-heading uppercase tracking-tighter mb-1">
-          Stablecoin <span className="text-[#FABF2C]">Intelligence</span>
-        </h1>
-        <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em] mt-1">Aggregate Market Cap & Liquidity Flows</p>
+    <div className="space-y-8 pb-20">
+      <DataHeader 
+        title="Stablecoin Intelligence" 
+        description="Aggregate stablecoin market cap, peg health, and liquidity distribution." 
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-8 flex flex-col justify-center">
+          <p className="text-[10px] text-[#555] font-black uppercase tracking-widest mb-4">Total Circulating Supply</p>
+          <p className="text-5xl font-black text-[#00d672] tabular-nums">${(currentMcap / 1e9).toFixed(2)}B</p>
+        </div>
+        <GaugeCard 
+          title="USDT Dominance" 
+          value={dominance} 
+          color="#00d672" 
+          description="Tether share of total stablecoin market cap"
+        />
+        <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-8 flex flex-col justify-center">
+          <p className="text-[10px] text-[#555] font-black uppercase tracking-widest mb-4">Assets Tracked</p>
+          <p className="text-5xl font-black text-white tabular-nums">{data.length}</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-6">
-          <p className="text-[9px] text-[#555] uppercase font-mono mb-2">Total Circulating</p>
-          <p className="text-3xl font-black text-[#FABF2C]">${(currentMcap / 1e9).toFixed(2)}B</p>
-        </div>
-        <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-6">
-          <p className="text-[9px] text-[#555] uppercase font-mono mb-2">Dominance</p>
-          <p className="text-3xl font-black text-[#FABF2C]">72.4%</p>
-        </div>
-        <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-6">
-          <p className="text-[9px] text-[#555] uppercase font-mono mb-2">Data Source</p>
-          <p className="text-3xl font-black text-[#FABF2C]">DefiLlama</p>
-        </div>
-      </div>
-
-      <div className="bg-card border border-border p-8 text-center">
-        {data.length === 0 ? (
-          <p className="text-[#555] font-mono text-xs uppercase">
-            💾 Chart Visualization Module Loading... Add your API to src/lib/api.ts
-          </p>
-        ) : (
-          <p className="text-[#333] font-mono text-xs uppercase italic">Chart data available</p>
-        )}
+      <div className="border border-[#1a1a1a] bg-[#0a0a0a]">
+        <DataTable
+          columns={[
+            { key: 'name', label: 'Asset' },
+            { key: 'symbol', label: 'Ticker' },
+            { key: 'pegType', label: 'Peg Type' },
+            { key: 'price', label: 'Price (USD)', format: (v) => `$${Number(v).toFixed(4)}`, align: 'right' },
+            { key: 'circulating', label: 'Circulating Supply', format: formatUsd, align: 'right' }
+          ]}
+          data={data}
+          emptyMessage="Syncing stablecoin data..."
+        />
       </div>
     </div>
   );

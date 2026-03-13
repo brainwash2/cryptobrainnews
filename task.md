@@ -464,3 +464,12 @@
 	•	Reference: Vercel Build Hotfix
 	•	New Status: COMPLETED
 	•	Notes: Applied definitive Node.js script to inject `StablecoinData` into types and imports, resolving the Vercel deployment crash.
+[2026-03-13] STATUS UPDATE
+	•	Reference: Phase 34 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Advanced UI components (`GaugeCard`, `ComposedChart` via `BlockChartCard`) created. Bound real DefiLlama endpoints to `/data/defi/revenue` and `/data/defi/stablecoins`. Injected `getL2ScalingData()` into the `/data/scaling` overview.
+
+## Pending (Phase 35)
+- [ ] Task 35.1: Build Futures/Perpetuals dashboard using `getDerivativesExchanges()` and `getFundingRates()`.
+- [ ] Task 35.2: Implement `HeatmapTable` component for rendering funding rate zones (green/red shading).
+- [ ] Task 35.3: Ensure derivative API routes (`/api/data/derivatives`) degrade gracefully if Binance rate limits hit.

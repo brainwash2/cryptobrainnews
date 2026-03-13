@@ -223,3 +223,8 @@
 - Build advanced visualization components (`GaugeCard`, `HeatmapTable`, upgraded `BlockChartCard`).
 - Bind real live data endpoints (`/api/data/*`) to the previously scaffolded Data Terminal pages.
 - Ensure strict TypeScript adherence across all new charts and tables to prevent hydration/build errors.
+
+## Phase 35: Derivatives & Advanced Institutional Views
+- Connect `src/lib/derivatives.ts` to `/data/markets/futures` and `/data/defi/derivatives`.
+- Build `HeatmapTable` component to visualize positive/negative funding rates intuitively.
+- Establish alpha paywall bindings for deep historical data (CME COTs fallback UI).
