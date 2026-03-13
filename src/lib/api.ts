@@ -1,3 +1,4 @@
+import type { StablecoinData, ProtocolRevenueData } from "./types";
 import { fetchWithTimeout } from './fetch-with-timeout';
 import { cached } from './cache';
 import type { CoinMarketData, DeFiProtocol } from './types';
