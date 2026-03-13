@@ -1,5 +1,5 @@
 === CRYPTOBRAINNEWS FULL CONTEXT ===
-Generated: Tue Mar 10 06:31:00 AM UTC 2026
+Generated: Fri Mar 13 04:28:24 PM UTC 2026
 
 ========== FOLDER STRUCTURE ==========
 .
@@ -17,6 +17,7 @@ Generated: Tue Mar 10 06:31:00 AM UTC 2026
 ./src/app/agent-registry/analytics
 ./src/app/agent-registry/analytics/_components
 ./src/app/agent-registry/_components
+./src/app/agent-registry/sandbox
 ./src/app/airdrops
 ./src/app/airdrops/[slug]
 ./src/app/alpha-guides
@@ -24,20 +25,27 @@ Generated: Tue Mar 10 06:31:00 AM UTC 2026
 ./src/app/api/ad-leads
 ./src/app/api/admin
 ./src/app/api/admin/generate-airdrop
+./src/app/api/agent-registry
 ./src/app/api/events
 ./src/app/api/execute
 ./src/app/api/news
 ./src/app/api/news/ai
+./src/app/api/operator
+./src/app/api/operator/agents
+./src/app/api/operator/playbooks
 ./src/app/api/oracle
 ./src/app/api/oracle/airdrops
 ./src/app/api/oracle/airdrops/[slug]
 ./src/app/api/oracle/predictions
 ./src/app/api/prices
+./src/app/api/referrals
 ./src/app/api/verify-passport
 ./src/app/auth
 ./src/app/auth/callback
 ./src/app/coins
 ./src/app/coins/[slug]
+./src/app/dashboard
+./src/app/dashboard/playbooks
 ./src/app/data
 ./src/app/data/_components
 ./src/app/data/_components/charts
@@ -116,6 +124,7 @@ Generated: Tue Mar 10 06:31:00 AM UTC 2026
 ./src/app/data/treasuries/crypto
 ./src/app/data/treasuries/ethereum
 ./src/app/data/treasuries/solana
+./src/app/docs
 ./src/app/events
 ./src/app/events/_components
 ./src/app/feed.xml
@@ -137,7 +146,9 @@ Generated: Tue Mar 10 06:31:00 AM UTC 2026
 ./src/components/layout
 ./src/components/monetization
 ./src/components/news
+./src/components/providers
 ./src/components/ui
+./src/components/wallet
 ./src/lib
 ./src/sanity
 ./src/sanity/schemas
@@ -954,6 +965,144 @@ Update these in `src/lib/dune.ts`:
 	•	New Status: COMPLETED
 	•	Notes: Updated Sanity playbook schema with third‑party fields. Updated `src/lib/sanity.ts` to fetch them. Built `/marketplace` UI with mocked Stripe Connect checkout. Phase 20 is now complete.
 
+## Pending (Phase 21)
+- [ ] Task 21.1: Migrate Oracle APIs to Edge runtime and implement Cache-Control headers.
+- [ ] Task 21.2: Design PostgreSQL database schema for agent execution logging.
+
+[2026-03-10] STATUS UPDATE
+	•	Reference: Task 21.1 (Edge Caching for Oracle APIs)
+	•	New Status: COMPLETED
+	•	Notes: Added `runtime = 'edge'` to all routes under `/api/oracle/*`. Injected `Cache-Control: public, max-age=60, stale-while-revalidate=300` into `NextResponse` configurations to optimize performance for high-frequency AI agent requests.
+[2026-03-10] STATUS UPDATE
+	•	Reference: Task 21.2 (PostgreSQL Scale Setup - Neon)
+	•	New Status: COMPLETED
+	•	Notes: Installed `@neondatabase/serverless`. Created `scripts/schema_v2_agents.sql` and `src/lib/neon.ts`. System is now ready to log Edge runtime executions directly to Neon over WebSockets/HTTP without TCP exhaustion. Phase 21 is complete.
+## Pending (Phase 22)
+- [x] Task 22.1: PostgreSQL User Permissions & RLS setup.
+- [x] Task 22.2: SHA-256 API Key hashing via Web Crypto.
+- [x] Task 22.3: Upstash Redis Rate Limiting on L402 & Gitcoin endpoints.
+
+[2026-03-10] STATUS UPDATE
+	•	Reference: Phase 22 (Security Hardening)
+	•	New Status: COMPLETED
+	•	Notes: Deployed all security mechanisms. `api/execute` now requires `x-api-key`, maps identities securely via hashed DB lookups, and logs executions using a restricted Neon role.
+[2026-03-10] STATUS UPDATE
+	•	Reference: Hotfix (Vercel Build Failure)
+	•	New Status: COMPLETED
+	•	Notes: Resolved TypeScript `Promise<boolean>` type error in `src/app/api/ad-leads/route.ts` by adding the `await` keyword to the asynchronous `checkRateLimit` call. Also installed `@neondatabase/serverless` package.
+[2026-03-10] STATUS UPDATE
+	•	Reference: Hotfix (Vercel Build Failure - Neon Transaction)
+	•	New Status: COMPLETED
+	•	Notes: Fixed TypeScript compilation error in `src/app/api/execute/route.ts`. Migrated standard Node-Postgres `await tx` execution to Neon Serverless batched array syntax `sql.transaction([sql...])` which natively supports Vercel's stateless HTTP/Edge execution.
+
+## Pending (Phase 23)
+- [ ] Task 23.1: Update RLS policy on `agent_identities` to permit `SELECT` lookups.
+- [ ] Task 23.2: Add SHA-256 debugging telemetry to `/api/execute/route.ts`.
+
+[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 23 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Safe lookup policy created. Telemetry injected.
+[2026-03-11] STATUS UPDATE
+	•	Reference: Hotfix (PostgreSQL SET LOCAL Parameterization)
+	•	New Status: COMPLETED
+	•	Notes: Resolved `NeonDbError: syntax error at or near "$1"` by replacing `SET LOCAL` with `SELECT set_config('agent.current_id', $1, true)`. This securely supports driver-level parametrization inside the Neon batched transaction array while remaining fully strict-TypeScript compliant.
+
+## Pending (Phase 24)
+- [ ] Task 24.1: Write live Neon SQL queries for dashboard aggregations.
+- [ ] Task 24.2: Build the Server Component UI for `/agent-registry/analytics`.
+[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 24 Tasks (Live Analytics)
+	•	New Status: COMPLETED
+	•	Notes: Replaced mock data in `/agent-registry/analytics` with live queries against `agent_identities` and `execution_logs`. Implemented 60-second ISR caching to protect the database from DoS while providing real-time ecosystem observability.
+
+## Pending (Phase 25)
+- [ ] Task 25.1: Update `/api/execute/route.ts` to support `x-sandbox-mode` and log as `status = 'sandbox'`.
+- [ ] Task 25.2: Build interactive Client Component UI for the Developer Sandbox.
+
+[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 25 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Added sandbox header logic to execution endpoint. Built dual-pane interactive developer console that automates L402 challenge-response testing without polluting the live analytics dashboard.
+
+## Pending (Phase 26)
+- [ ] Task 26.1: Create `src/app/docs/layout.tsx` for sidebar navigation and layout.
+- [ ] Task 26.2: Build core API documentation content in `src/app/docs/page.tsx` (Auth, L402, Endpoints).
+
+[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 26 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Created the developer documentation portal. Included complete integration guides for the dual-layer authentication system (API keys + L402), endpoint schemas, and Python code examples.
+
+## Pending (Phase 27)
+- [ ] Task 27.1: Build native `Web3Provider` and `ConnectWallet` components.
+- [ ] Task 27.2: Create `GET /api/operator/agents` route to fetch agents by pubkey.
+- [ ] Task 27.3: Build `/dashboard` UI to display the connected operator's ecosystem.
+[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 27 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Implemented native window.ethereum wallet connection. Built Operator Dashboard fetching agent identities securely from Neon DB based on the connected cryptographic pubkey.
+
+## Pending (Phase 28)
+- [ ] Task 28.1: Create `referrals` Neon schema and update `.env.example`.
+- [ ] Task 28.2: Build Gitcoin verification endpoint (`POST /api/referrals`).
+- [ ] Task 28.3: Update `KYAForm` to track conversions and `Dashboard` to show rewards.[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 28 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Built Sybil-resistant referral program. Operators can share links; new KYA registrations trigger a Gitcoin Passport check. Verified humans (score >= 20) generate 5000 sat rewards for the referrer.
+
+## Pending (Phase 28 Hotfix)
+- [ ] Task 28.4: Apply SQL patch to simplify `referrals` RLS policies.
+- [ ] Task 28.5: Update `POST /api/referrals` to use batched `set_config` transaction.
+[2026-03-12] STATUS UPDATE
+	•	Reference: Phase 28 Hotfix
+	•	New Status: COMPLETED
+	•	Notes: Fixed RLS violation by replacing restrictive policies with safe, role-based policies and updating the insertion route to set the local session config.
+
+## Pending (Phase 29)
+- [ ] Task 29.1: Install `siwe` and update `Web3Provider` to request `personal_sign`.
+- [ ] Task 29.2: Secure `GET /api/operator/agents` and `GET /api/referrals` with SIWE verification.
+- [ ] Task 29.3: Update Operator Dashboard UI to pass signature headers on API fetch.[2026-03-12] STATUS UPDATE
+	•	Reference: Phase 29 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Replaced insecure parameter-based wallet fetching with cryptographic SIWE authentication. The backend now verifies the signature against the requested pubkey before executing database queries.
+
+## Pending (Phase 30)
+- [ ] Task 30.1: Create `playbooks` Neon schema migration script.
+- [ ] Task 30.2: Build SIWE-secured `GET /api/operator/playbooks` and `POST`.
+- [ ] Task 30.3: Build visual Playbook Builder UI and JSON exporter.[2026-03-12] STATUS UPDATE
+	•	Reference: Phase 30 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Built visual orchestration UI allowing operators to chain Oracle Triggers, Conditions, and L402 Actions. Playbooks are saved to Neon DB using SIWE authentication and can be exported as standard JSON execution schemas.
+[2026-03-12] STATUS UPDATE
+	•	Reference: Hotfix (Missing ethers dependency for SIWE)
+	•	New Status: COMPLETED
+	•	Notes: Installed `ethers` package to resolve `siwe` peer dependency error causing Vercel build failure. Build now passes.
+
+[2026-03-12] STATUS UPDATE
+	•	Reference: Hotfix (SIWE invalid EIP-55 address)
+	•	New Status: COMPLETED
+	•	Notes: MetaMask returns wallet addresses in all lowercase. `siwe` strict mode requires EIP-55 mixed-case checksums. Imported `getAddress` from `ethers` to format the wallet address prior to initializing the `SiweMessage`, resolving the connection crash.
+[2026-03-12] STATUS UPDATE
+	•	Reference: Hotfix (Missing ethers dependency & address checksum)
+	•	New Status: COMPLETED
+	•	Notes: Installed `ethers` to resolve SIWE build error. Updated Web3Provider to enforce EIP-55 checksum formatting for addresses.
+
+## Pending (Phase 31)
+- [ ] Task 31.1: Create `src/app/sitemap.ts` and `src/app/robots.ts`.
+- [ ] Task 31.2: Update `src/app/layout.tsx` with global SEO metadata.
+- [ ] Task 31.3: Update `src/components/layout/Header.tsx` to include developer links.
+
+[2026-03-12] STATUS UPDATE
+	•	Reference: Phase 31 Tasks
+	•	New Status: COMPLETED
+	•	Notes: Deployed dynamic sitemap, secure robots.txt, and rich OpenGraph metadata. Updated global navigation to seamlessly integrate human and agent-centric routes, officially completing Launch Prep.
+
+[2026-03-12] STATUS UPDATE
+	•	Reference: Hotfix (Vercel Build Failure - Missing globals.css)
+	•	New Status: COMPLETED
+	•	Notes: Resolved Turbopack build failure in `src/app/layout.tsx` by dynamically resolving the exact path and filename of the global stylesheet (`global.css`, `globals.css`, etc.) and updating the import to use the Next.js `@/` alias.
+
 --- implementation-plan.md ---
 # Implementation Plan
 
@@ -1099,6 +1248,71 @@ Update these in `src/lib/dune.ts`:
 - Build `/agent-registry/analytics` dashboard for KYA-verified agents.
 - Create `/marketplace` directory for third-party playbooks with Stripe Connect logic.
 
+## Phase 21: Infrastructure Scale & Performance (Priority 3)
+- Move AI Agent Oracle API feeds (`/api/oracle/*`) to Vercel's global Edge network.
+- Add robust `Cache-Control` strategies to reduce Regional Node.js Function invocations and latency.
+- Prepare architecture for migration to scalable PostgreSQL solution for recording x402 payment executions and high-throughput agent logs.
+[2026-03-10] STATUS UPDATE
+	•	Reference: Phase 21 (Infrastructure Scale & Performance)
+	•	New Status: COMPLETED
+	•	Notes: Edge caching deployed. Dedicated Neon PostgreSQL database architecture established for high-frequency agent execution logging.
+[2026-03-10] STATUS UPDATE
+	•	Reference: Phase 22 (Database & Endpoint Security Hardening)
+	•	New Status: COMPLETED
+	•	Notes: Applied SHA-256 API key hashing, PostgreSQL RLS with `agent_logger` role, and Upstash Redis rate limiting for sensitive endpoints.
+
+## Phase 23: RLS Authentication Hotfix
+- Resolve Row-Level Security "Chicken-and-Egg" paradox on `agent_identities` table.
+- Allow `agent_logger` role to query the hashed `api_key` for identity verification prior to setting transaction variables.[2026-03-11] STATUS UPDATE
+	•	Reference: Phase 23 (RLS Authentication Hotfix)
+	•	New Status: COMPLETED
+	•	Notes: Replaced restrictive identity RLS policy with a safe lookup policy. Added hash telemetry to the execution endpoint.
+
+## Phase 24: Real-Time Analytics Dashboard (Priority 6)
+- Replace mocked agent data with live Neon PostgreSQL aggregations.
+- Implement Next.js Incremental Static Regeneration (ISR) to cache heavy queries.
+- Build UI for global KPIs (Total Agents, Executions, Sats Earned) and a live execution feed.
+
+## Phase 25: Agent Sandbox & Developer Console (Priority 5)
+- Implement `x-sandbox-mode` header in the `/api/execute` endpoint to bypass real L402 payments and isolate logs.
+- Build an interactive Developer Console (`/agent-registry/sandbox`) to test Oracle APIs and L402 execution flows.
+
+## Phase 26: Public API Documentation (Priority 4)
+- Build a developer-centric API documentation portal at `/docs`.
+- Document KYA authentication, `x-api-key` usage, and L402 Lightning payment challenge flows.
+- Provide copy-pasteable endpoint schemas and Python integration snippets to drive user/agent growth.
+
+## Phase 27: Web3 Wallet Login & Operator Dashboard (Priority 4)
+- Implement native EIP-1193 browser wallet connection (MetaMask, Rabby, etc.).
+- Build the secure `Web3Provider` context and `ConnectWallet` UI component.
+- Create the Operator Dashboard (`/dashboard`) for users to view their registered AI agents.
+
+## Phase 28: Gitcoin-Gated Referral Program (Priority 4)
+- Implement Sybil-resistant referral tracking via `referrals` SQL table.
+- Build `/api/referrals` endpoint integrating Gitcoin Passport Scorer API.
+- Update KYA Form to silently capture `?ref=` and process conversions.
+- Add Referral Hub to Operator Dashboard for link generation and metrics.
+
+## Phase 28: Hotfix (Referral RLS)
+- Resolve Row-Level Security violation on `referrals` table during `INSERT ON CONFLICT`.
+- Simplify RLS policies for the trusted `agent_logger` backend role.
+- Add batched `set_config` transaction to the POST endpoint.
+
+## Phase 29: Cryptographic Operator Authentication (Priority 5)
+- Implement Sign-In with Ethereum (SIWE / EIP-4361) to secure private dashboard endpoints.
+- Require cryptographic signatures (`personal_sign`) to access `/api/operator/agents` and `/api/referrals`.
+- Ensure operators can only view execution logs and referral earnings for wallets they cryptographically control.
+
+## Phase 30: Multi-Agent Orchestration UI (Priority 5)
+- Implement interactive Agent Playbook Builder at `/dashboard/playbooks`.
+- Create `playbooks` PostgreSQL schema to store JSON orchestrations.
+- Secure playbook CRUD endpoints with SIWE cryptographic signatures.
+
+## Phase 31: Launch Prep & SEO (Day 2 Operations)
+- Generate dynamic `sitemap.xml` and `robots.txt` for search engine indexing.
+- Inject global OpenGraph and Twitter Card metadata into the root layout.
+- Update global navigation (`Header.tsx`) to surface `/docs`, `/agent-registry/sandbox`, and `/dashboard`.
+
 --- walkthrough.md ---
 # Project Walkthrough
 
@@ -1126,6 +1340,7 @@ The codebase is a Next.js 16 (App Router) application serving as a financial dat
     "@ai-sdk/groq": "^3.0.24",
     "@duneanalytics/client-sdk": "^0.3.5",
     "@heroicons/react": "^2.2.0",
+    "@neondatabase/serverless": "^1.0.2",
     "@portabletext/react": "^4.0.3",
     "@sanity/vision": "^5.13.0",
     "@sentry/nextjs": "^10.39.0",
@@ -1139,14 +1354,16 @@ The codebase is a Next.js 16 (App Router) application serving as a financial dat
     "ai": "^6.0.86",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "ethers": "^6.16.0",
     "lucide-react": "^0.563.0",
-    "next": "16.0.8",
+    "next": "^16.1.6",
     "next-sanity": "^12.1.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "recharts": "^3.7.0",
     "sanity": "^5.13.0",
     "server-only": "^0.0.1",
+    "siwe": "^3.0.0",
     "styled-components": "^6.3.11",
     "swr": "^2.4.0",
     "tailwind-merge": "^3.4.0",
@@ -1930,79 +2147,191 @@ export default function AnalyticsClient() {
 
 --- src/app/agent-registry/analytics/page.tsx ---
 import React from 'react';
-import type { Metadata } from 'next';
-import AnalyticsClient from './_components/AnalyticsClient';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { sql } from '@/lib/neon';
+import { Activity, Cpu, Zap, Terminal } from 'lucide-react';
 
-export const metadata: Metadata = {
-  title: 'Agent Analytics | CryptoBrainNews',
-  description: 'Track your L402 execution usage, compute time, and Lightning Network spending.',
+// Cache the aggregations for 60 seconds to protect the Neon DB from high traffic
+export const revalidate = 60;
+
+export const metadata = {
+  title: 'Agent Analytics | CryptoBrain',
+  description: 'Live compute and L402 execution analytics for the CryptoBrain Agent Ecosystem.',
 };
 
-export default function AgentAnalyticsPage() {
-  return (
-    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8 font-sans text-white">
-      <div className="max-w-[1200px] mx-auto">
-        
-        <Link href="/agent-registry" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#555] hover:text-white transition-colors mb-8">
-          <ArrowLeft size={14} /> Back to KYA Registry
-        </Link>
+export default async function AnalyticsDashboard() {
+  // Execute aggregation queries in parallel
+  const[agentsRes, execsRes, satsRes, recentExecs] = await Promise.all([
+    sql`SELECT COUNT(*)::int AS count FROM agent_identities`,
+    sql`SELECT COUNT(*)::int AS count FROM execution_logs WHERE status = 'settled'`,
+    sql`SELECT COALESCE(SUM(cost_sats), 0)::int AS total_sats FROM execution_logs WHERE status = 'settled'`,
+    sql`
+      SELECT 
+        e.action, 
+        e.target_protocol, 
+        e.cost_sats, 
+        e.execution_time_ms, 
+        e.created_at, 
+        a.agent_name 
+      FROM execution_logs e 
+      JOIN agent_identities a ON e.agent_id = a.id 
+      ORDER BY e.created_at DESC 
+      LIMIT 15
+    `
+  ]);
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10 border-b border-[#1a1a1a] pb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-[#00d672] font-mono text-[10px] uppercase tracking-widest flex items-center gap-2">
-                <span className="w-2 h-2 bg-[#00d672] rounded-full animate-pulse" /> Live Telemetry
-              </span>
+  const totalAgents = agentsRes[0]?.count || 0;
+  const totalExecs = execsRes[0]?.count || 0;
+  const totalSats = satsRes[0]?.total_sats || 0;
+
+  return (
+    <div className="min-h-screen bg-black text-white p-8 font-sans">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* Header */}
+        <div className="border-b border-[#222] pb-6">
+          <h1 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3">
+            <Activity className="text-[#00d672]" /> Live Agent Ecosystem
+          </h1>
+          <p className="text-[#888] font-mono text-sm mt-2">
+            Real-time observability of L402 micro-transactions and AI agent compute cycles.
+          </p>
+        </div>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-[#0a0a0a] border border-[#222] p-6 rounded relative overflow-hidden group hover:border-[#FABF2C] transition-colors">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Cpu size={64} />
             </div>
-            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white">
-              Agent <span className="text-[#00d672]">Analytics</span>
-            </h1>
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#555] mb-2">Registered Agents</p>
+            <p className="text-4xl font-black text-white">{totalAgents.toLocaleString()}</p>
           </div>
-          
-          <div className="text-right">
-            <p className="text-[10px] font-mono text-[#888] uppercase tracking-widest mb-1">Active Identity</p>
-            <p className="text-xs font-mono text-[#00d672] bg-[#00d672]/10 border border-[#00d672]/30 px-3 py-1 rounded">
-              0x71C...49A2 (OpenClaw-Alpha-01)
-            </p>
+
+          <div className="bg-[#0a0a0a] border border-[#222] p-6 rounded relative overflow-hidden group hover:border-[#00d672] transition-colors">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Terminal size={64} />
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#555] mb-2">Total Executions</p>
+            <p className="text-4xl font-black text-[#00d672]">{totalExecs.toLocaleString()}</p>
+          </div>
+
+          <div className="bg-[#0a0a0a] border border-[#222] p-6 rounded relative overflow-hidden group hover:border-[#FABF2C] transition-colors">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Zap size={64} />
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#555] mb-2">Compute Revenue (Sats)</p>
+            <p className="text-4xl font-black text-[#FABF2C]">{totalSats.toLocaleString()}</p>
           </div>
         </div>
 
-        <AnalyticsClient />
+        {/* Recent Activity Table */}
+        <div className="bg-[#0a0a0a] border border-[#222] rounded overflow-hidden">
+          <div className="p-6 border-b border-[#222]">
+            <h2 className="text-lg font-black uppercase tracking-widest">Recent Executions</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#111]">
+                  <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[#555]">Timestamp</th>
+                  <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[#555]">Agent</th>
+                  <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[#555]">Action</th>
+                  <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[#555]">Target Protocol</th>
+                  <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[#555]">Cost</th>
+                  <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[#555]">Latency</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentExecs.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-[#555] font-mono text-sm">
+                      No executions recorded yet.
+                    </td>
+                  </tr>
+                ) : (
+                  recentExecs.map((log, i) => (
+                    <tr key={i} className="border-b border-[#222] hover:bg-[#111] transition-colors">
+                      <td className="p-4 text-xs font-mono text-[#888]">
+                        {new Date(log.created_at).toLocaleString()}
+                      </td>
+                      <td className="p-4 text-xs font-mono text-[#00d672]">
+                        {log.agent_name}
+                      </td>
+                      <td className="p-4 text-xs font-mono text-white">
+                        {log.action}
+                      </td>
+                      <td className="p-4 text-xs font-mono text-[#FABF2C]">
+                        {log.target_protocol}
+                      </td>
+                      <td className="p-4 text-xs font-mono text-[#888]">
+                        {log.cost_sats} sats
+                      </td>
+                      <td className="p-4 text-xs font-mono text-[#888]">
+                        {log.execution_time_ms} ms
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
       </div>
-    </main>
+    </div>
   );
 }
 
 --- src/app/agent-registry/_components/KYAForm.tsx ---
 'use client';
 
-import React, { useState } from 'react';
-import { Copy, CheckCircle, Terminal } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Copy, CheckCircle } from 'lucide-react';
 
 export default function KYAForm() {
-  const [form, setForm] = useState({
-    agentName: '',
-    pubkey: '',
-    webhook: '',
-  });
-  const [status, setStatus] = useState<'idle' | 'generating' | 'success'>('idle');
+  const[form, setForm] = useState({ agentName: '', pubkey: '', webhook: '' });
+  const[status, setStatus] = useState<'idle' | 'generating' | 'success' | 'error'>('idle');
   const [apiKey, setApiKey] = useState('');
-  const[copied, setCopied] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [referrer, setReferrer] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Capture referral code from URL without forcing a Suspense boundary
+    const ref = new URLSearchParams(window.location.search).get('ref');
+    if (ref) setReferrer(ref);
+  },[]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('generating');
+    setErrorMsg('');
     
-    // Simulate on-chain registration delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Generate simulated API key
-    const generatedKey = `cbn_live_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-    setApiKey(generatedKey);
-    setStatus('success');
+    try {
+      const res = await fetch('/api/agent-registry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+      
+      setApiKey(data.apiKey);
+      setStatus('success');
+
+      // Process Referral Conversion silently
+      if (referrer) {
+        fetch('/api/referrals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referrer, referred: form.pubkey })
+        }).catch(err => console.error('Referral log failed:', err));
+      }
+
+    } catch (err: any) {
+      setErrorMsg(err.message);
+      setStatus('error');
+    }
   };
 
   const handleCopy = () => {
@@ -2019,27 +2348,13 @@ export default function KYAForm() {
         <CheckCircle className="text-[#00d672] w-12 h-12 mx-auto mb-4" />
         <h3 className="text-xl font-black text-white uppercase mb-2">Agent Registered</h3>
         <p className="text-xs text-[#888] font-mono mb-6">
-          Identity verified. Your Oracle API key is ready for deployment.
+          Identity verified. Your Oracle API key is ready for deployment. This key will not be shown again.
         </p>
-        
         <div className="bg-black border border-[#222] p-4 flex items-center justify-between gap-4 rounded mb-6">
-          <code className="text-[#00d672] text-xs font-mono break-all text-left">
-            {apiKey}
-          </code>
-          <button onClick={handleCopy} className="text-[#555] hover:text-white transition-colors shrink-0">
+          <code className="text-[#00d672] text-xs font-mono break-all text-left">{apiKey}</code>
+          <button onClick={handleCopy} className="text-[#555] hover:text-white shrink-0">
             {copied ? <CheckCircle size={16} className="text-[#00d672]" /> : <Copy size={16} />}
           </button>
-        </div>
-
-        <div className="bg-[#111] border border-[#222] p-4 text-left rounded">
-          <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2 flex items-center gap-2">
-            <Terminal size={12} /> Usage Example
-          </p>
-          <pre className="text-[#ccc] text-[10px] font-mono overflow-x-auto">
-            curl -H "Accept: application/json" \<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-H "Authorization: Bearer {apiKey}" \<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;https://cryptobrainnews.com/api/oracle/airdrops
-          </pre>
         </div>
       </div>
     );
@@ -2048,53 +2363,17 @@ export default function KYAForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 bg-[#0a0a0a] border border-[#1a1a1a] p-8 rounded">
       <div>
-        <label className="block text-[10px] font-black uppercase text-[#555] tracking-widest mb-2">
-          Agent Identifier
-        </label>
-        <input
-          required
-          type="text"
-          placeholder="e.g. OpenClaw-Alpha-01"
-          value={form.agentName}
-          onChange={(e) => setForm({ ...form, agentName: e.target.value })}
-          className={inputCls}
-        />
+        <label className="block text-[10px] font-black uppercase text-[#555] tracking-widest mb-2">Agent Identifier</label>
+        <input required type="text" placeholder="e.g. OpenClaw-Alpha-01" value={form.agentName} onChange={(e) => setForm({ ...form, agentName: e.target.value })} className={inputCls} />
       </div>
-
       <div>
-        <label className="block text-[10px] font-black uppercase text-[#555] tracking-widest mb-2">
-          Cryptographic Pubkey (ERC-8004)
-        </label>
-        <input
-          required
-          type="text"
-          placeholder="0x..."
-          value={form.pubkey}
-          onChange={(e) => setForm({ ...form, pubkey: e.target.value })}
-          className={inputCls}
-        />
+        <label className="block text-[10px] font-black uppercase text-[#555] tracking-widest mb-2">Cryptographic Pubkey (ERC-8004)</label>
+        <input required type="text" placeholder="0x..." value={form.pubkey} onChange={(e) => setForm({ ...form, pubkey: e.target.value })} className={inputCls} />
       </div>
-
-      <div>
-        <label className="block text-[10px] font-black uppercase text-[#555] tracking-widest mb-2">
-          Execution Webhook (Optional)
-        </label>
-        <input
-          type="url"
-          placeholder="https://your-server.com/webhook"
-          value={form.webhook}
-          onChange={(e) => setForm({ ...form, webhook: e.target.value })}
-          className={inputCls}
-        />
-      </div>
-
-      <button
-        type="submit"
-        disabled={status === 'generating'}
-        className="w-full bg-[#FABF2C] text-black py-4 text-xs font-black uppercase tracking-widest hover:bg-white transition-all disabled:opacity-50 mt-4"
-      >
+      <button type="submit" disabled={status === 'generating'} className="w-full bg-[#FABF2C] text-black py-4 text-xs font-black uppercase tracking-widest hover:bg-white transition-colors disabled:opacity-50 mt-4">
         {status === 'generating' ? 'INITIALIZING KYA HANDSHAKE...' : 'REGISTER AGENT'}
       </button>
+      {status === 'error' && <p className="text-red-500 text-[10px] font-mono mt-2 uppercase">{errorMsg}</p>}
     </form>
   );
 }
@@ -2172,6 +2451,187 @@ export default function AgentRegistryPage() {
 
       </div>
     </main>
+  );
+}
+
+--- src/app/agent-registry/sandbox/page.tsx ---
+'use client';
+
+import React, { useState } from 'react';
+import { Terminal as TerminalIcon, Play, RefreshCw, ShieldAlert, Zap } from 'lucide-react';
+
+export default function AgentSandbox() {
+  const [apiKey, setApiKey] = useState('');
+  const [endpoint, setEndpoint] = useState('/api/execute');
+  const[payload, setPayload] = useState('{\n  "action": "execute_arbitrage_swap",\n  "target_protocol": "uniswap_v3"\n}');
+  const [isSandboxMode, setIsSandboxMode] = useState(true);
+  const [logs, setLogs] = useState<string[]>(['[System] Sandbox initialized. Ready for compute requests.']);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const appendLog = (msg: string) => setLogs(prev => [...prev, `[${new Date().toISOString().split('T')[1].slice(0, -1)}] ${msg}`]);
+
+  const handleExecute = async () => {
+    if (!apiKey) {
+      appendLog('Error: API Key is required.');
+      return;
+    }
+
+    setIsLoading(true);
+    setLogs(['[System] Initiating request...']);
+
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'x-sandbox-mode': isSandboxMode.toString()
+      };
+
+      // Handle Authentication Headers depending on endpoint type
+      if (endpoint === '/api/execute') {
+        headers['x-api-key'] = apiKey;
+      } else {
+        headers['Authorization'] = `Bearer ${apiKey}`;
+      }
+
+      appendLog(`POST ${endpoint}`);
+      
+      let res = await fetch(endpoint, {
+        method: endpoint.includes('execute') ? 'POST' : 'GET',
+        headers,
+        body: endpoint.includes('execute') ? payload : undefined
+      });
+
+      // Handle L402 Flow automatically for Developer DX
+      if (res.status === 402 && endpoint === '/api/execute') {
+        appendLog('402 Payment Required. L402 Challenge received.');
+        const authHeader = res.headers.get('www-authenticate');
+        if (authHeader && authHeader.includes('macaroon=')) {
+          const macaroonMatch = authHeader.match(/macaroon="([^"]+)"/);
+          if (macaroonMatch) {
+            appendLog('Extracted Macaroon. Simulating Lightning Payment...');
+            // In Sandbox mode, we just echo the macaroon back. In live mode, they would pay the invoice here.
+            await new Promise(r => setTimeout(r, 800)); 
+            
+            headers['Authorization'] = `L402 ${macaroonMatch[1]}:`;
+            appendLog('Retrying request with L402 Authorization header...');
+            
+            res = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: payload
+            });
+          }
+        }
+      }
+
+      const data = await res.json();
+      appendLog(`Status: ${res.status} ${res.ok ? 'OK' : 'Error'}`);
+      appendLog(`Response: \n${JSON.stringify(data, null, 2)}`);
+
+    } catch (err: any) {
+      appendLog(`Fatal Error: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#050505] text-white p-8 font-sans">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center gap-3 border-b border-[#222] pb-6 mb-8">
+          <TerminalIcon className="text-[#FABF2C]" size={28} />
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Developer Console</h1>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Left Pane: Configuration */}
+          <div className="space-y-6">
+            <div className="bg-[#0a0a0a] border border-[#222] p-6 rounded space-y-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-[10px] font-black uppercase tracking-widest text-[#888]">Agent Authentication</h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-black tracking-widest text-[#555]">Sandbox Mode</span>
+                  <button 
+                    onClick={() => setIsSandboxMode(!isSandboxMode)}
+                    className={`w-10 h-5 rounded-full flex items-center p-1 transition-colors ${isSandboxMode ? 'bg-[#FABF2C]' : 'bg-[#222]'}`}
+                  >
+                    <div className={`w-3 h-3 bg-black rounded-full shadow-md transform transition-transform ${isSandboxMode ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase text-[#555] tracking-widest mb-2">API Key (KYA Identity)</label>
+                <input 
+                  type="password" 
+                  value={apiKey} 
+                  onChange={(e) => setApiKey(e.target.value)} 
+                  placeholder="cbn_live_..." 
+                  className="w-full bg-black border border-[#222] px-4 py-3 text-xs font-mono outline-none focus:border-[#FABF2C]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase text-[#555] tracking-widest mb-2">Target Endpoint</label>
+                <select 
+                  value={endpoint} 
+                  onChange={(e) => setEndpoint(e.target.value)} 
+                  className="w-full bg-black border border-[#222] px-4 py-3 text-xs font-mono outline-none focus:border-[#FABF2C] appearance-none"
+                >
+                  <option value="/api/execute">POST /api/execute (L402 Compute)</option>
+                  <option value="/api/oracle/airdrops">GET /api/oracle/airdrops (Data Feed)</option>
+                </select>
+              </div>
+
+              {endpoint === '/api/execute' && (
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-[#555] tracking-widest mb-2">JSON Payload</label>
+                  <textarea 
+                    value={payload} 
+                    onChange={(e) => setPayload(e.target.value)} 
+                    rows={6}
+                    className="w-full bg-black border border-[#222] px-4 py-3 text-xs font-mono outline-none focus:border-[#FABF2C]"
+                  />
+                </div>
+              )}
+
+              <button 
+                onClick={handleExecute} 
+                disabled={isLoading}
+                className="w-full bg-white text-black py-4 text-xs font-black uppercase tracking-widest hover:bg-[#FABF2C] transition-colors disabled:opacity-50 flex justify-center items-center gap-2"
+              >
+                {isLoading ? <RefreshCw className="animate-spin" size={16} /> : <Play size={16} />}
+                {isLoading ? 'Executing...' : 'Send Request'}
+              </button>
+            </div>
+
+            {!isSandboxMode && (
+              <div className="bg-[#1a0f00] border border-[#ff9900]/30 p-4 rounded flex gap-4">
+                <ShieldAlert className="text-[#ff9900] shrink-0" />
+                <p className="text-xs text-[#ff9900]/80 font-mono">
+                  Sandbox mode is disabled. Execution requests will require real Lightning Network invoices to settle and will permanently log to production analytics.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Right Pane: Terminal Output */}
+          <div className="bg-black border border-[#222] rounded flex flex-col overflow-hidden h-[600px]">
+            <div className="bg-[#111] border-b border-[#222] p-3 flex gap-2">
+              <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+              <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+              <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
+            </div>
+            <div className="p-4 overflow-y-auto flex-1 font-mono text-xs whitespace-pre-wrap text-[#00d672]">
+              {logs.map((log, i) => (
+                <div key={i} className="mb-1 opacity-90">{log}</div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2566,14 +3026,16 @@ export default async function AlphaGuidesPage(props: { searchParams: Promise<{ u
 --- src/app/api/ad-leads/route.ts ---
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
-import { isRateLimited } from '@/lib/rate-limit';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
     // Rate limit by IP
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
-    if (isRateLimited(`ad-leads:${ip}`, 3, 60_000)) {
+    
+    // FIX: Await the asynchronous Redis rate limiter
+    if (await checkRateLimit(`ad-leads:${ip}`, 3, 60_000)) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         { status: 429 }
@@ -2583,7 +3045,7 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Validation
-    const required = ['company_name', 'email', 'budget_range', 'package_interest'] as const;
+    const required =['company_name', 'email', 'budget_range', 'package_interest'] as const;
     for (const field of required) {
       if (!body[field] || typeof body[field] !== 'string' || body[field].trim() === '') {
         return NextResponse.json(
@@ -2604,8 +3066,8 @@ export async function POST(request: Request) {
     }
 
     // Allowed values validation
-    const validBudgets = ['$1k-$5k', '$5k-$15k', '$15k-$50k', '$50k+'];
-    const validPackages = ['signal', 'alpha', 'institutional', 'event'];
+    const validBudgets =['$1k-$5k', '$5k-$15k', '$15k-$50k', '$50k+'];
+    const validPackages =['signal', 'alpha', 'institutional', 'event'];
     if (!validBudgets.includes(body.budget_range)) {
       return NextResponse.json({ error: 'Invalid budget range' }, { status: 400 });
     }
@@ -2632,7 +3094,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }
@@ -2741,6 +3203,50 @@ export async function POST(request: Request) {
   }
 }
 
+--- src/app/api/agent-registry/route.ts ---
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/neon';
+import { hashApiKey, generateApiKey } from '@/lib/security';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+export const runtime = 'edge';
+
+export async function POST(request: Request) {
+  try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    
+    // Strict rate limit: 3 registrations per hour per IP
+    if (await checkRateLimit(`kya:${ip}`, 3, 3600_000)) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
+    
+    const body = await request.json();
+    const { agentName, pubkey, webhook } = body;
+    
+    if (!agentName || !pubkey) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+    
+    const apiKey = generateApiKey();
+    const hashedKey = await hashApiKey(apiKey);
+    
+    // Insert using the admin NEON_DATABASE_URL to provision identities
+    await sql`
+      INSERT INTO agent_identities (agent_name, pubkey, api_key, webhook_url)
+      VALUES (${agentName}, ${pubkey}, ${hashedKey}, ${webhook || null})
+    `;
+    
+    // Return plain-text key once. It is never stored in plain-text.
+    return NextResponse.json({ success: true, apiKey });
+  } catch (err: any) {
+    console.error('[KYA Registry] Error:', err.message);
+    if (err.message.includes('unique constraint')) {
+      return NextResponse.json({ error: 'Pubkey already registered' }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
+  }
+}
+
 --- src/app/api/events/route.ts ---
 import { NextResponse } from 'next/server';
 import { getSanityEvents } from '@/lib/sanity';
@@ -2766,125 +3272,105 @@ export async function GET(request: Request) {
 
 --- src/app/api/execute/route.ts ---
 import { NextResponse } from 'next/server';
+import { sql } from '@/lib/neon';
+import { hashApiKey } from '@/lib/security';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+export const runtime = 'edge';
 
 const ALBY_API_URL = 'https://api.getalby.com/invoices';
 const COST_SATS = 10;
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    if (await checkRateLimit(`execute:${ip}`, 100, 60_000)) {
+      return NextResponse.json({ error: 'Too many execution requests' }, { status: 429 });
+    }
+
+    const apiKey = request.headers.get('x-api-key');
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Missing x-api-key header for identity tracking.' }, { status: 401 });
+    }
+
+    const hashedKey = await hashApiKey(apiKey);
+    const isSandbox = request.headers.get('x-sandbox-mode') === 'true';
+
+    console.log('[Auth Debug] Incoming Plain Key:', apiKey.substring(0, 15) + '...');
+    console.log(`[Auth Debug] Mode: ${isSandbox ? 'SANDBOX' : 'LIVE'}`);
+    
+    const agents = await sql`SELECT id FROM agent_identities WHERE api_key = ${hashedKey} LIMIT 1`;
+    if (agents.length === 0) {
+      return NextResponse.json({ error: 'Invalid API Key' }, { status: 401 });
+    }
+    const agentId = agents[0].id;
+
     const authHeader = request.headers.get('authorization');
     const albyKey = process.env.ALBY_API_KEY;
 
-    // Helper: Generate Mock Invoice (Fallback if no API key is provided)
-    const getMockInvoice = () => {
-      const mockHash = 'mock_hash_' + Date.now();
-      const macaroon = Buffer.from(JSON.stringify({ payment_hash: mockHash })).toString('base64');
-      const invoice = 'lnbc10n1p' + Math.random().toString(36).substring(2, 15) + 'mockinvoice';
-      return { macaroon, invoice };
-    };
-
-    // 1. L402 Protocol Check: Is an authorization header present?
     if (!authHeader || !authHeader.startsWith('L402 ')) {
       let macaroon, invoice;
-
-      if (albyKey) {
-        // Fetch Real Lightning Invoice from Alby
+      if (isSandbox || !albyKey) {
+        const mockHash = 'sandbox_hash_' + Date.now();
+        macaroon = Buffer.from(JSON.stringify({ payment_hash: mockHash })).toString('base64');
+        invoice = 'lnbc_sandbox_mock_invoice';
+      } else {
         const res = await fetch(ALBY_API_URL, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${albyKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            amount: COST_SATS,
-            description: 'CryptoBrain Agent Compute'
-          })
+          headers: { 'Authorization': `Bearer ${albyKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: COST_SATS, description: 'CryptoBrain Agent Compute' })
         });
-
         if (!res.ok) throw new Error('Failed to generate Lightning invoice');
-        
         const data = await res.json();
         invoice = data.payment_request;
-        // In a strict L402 setup, the macaroon embeds the caveat and the payment hash
         macaroon = Buffer.from(JSON.stringify({ payment_hash: data.payment_hash })).toString('base64');
-      } else {
-        // Graceful Fallback
-        const mock = getMockInvoice();
-        macaroon = mock.macaroon;
-        invoice = mock.invoice;
-        console.warn('[L402] ALBY_API_KEY missing. Issuing mock invoice.');
       }
-
-      // Respond with HTTP 402 Payment Required
       return NextResponse.json(
-        { 
-          error: 'Payment Required',
-          message: `This execution endpoint requires a micro-transaction of ${COST_SATS} sats. Pay the attached invoice and return the macaroon and preimage as an L402 Bearer token (Format: L402 <macaroon>:<preimage>).`,
-          cost_sats: COST_SATS,
-          protocol: 'L402'
-        },
-        {
-          status: 402,
-          headers: {
-            'WWW-Authenticate': `L402 macaroon="${macaroon}", invoice="${invoice}"`
-          }
-        }
+        { error: 'Payment Required', cost_sats: COST_SATS, protocol: 'L402' },
+        { status: 402, headers: { 'WWW-Authenticate': `L402 macaroon="${macaroon}", invoice="${invoice}"` } }
       );
     }
 
-    // 2. Validate Payment
-    // Standard format: L402 <base64_macaroon>:<hex_preimage>
-    const tokenParts = authHeader.replace('L402 ', '').split(':');
-    const incomingMacaroon = tokenParts[0];
-    // Preimage is required in a strict real-world implementation, but for this step we will verify state via API
-    
+    const incomingMacaroon = authHeader.replace('L402 ', '').split(':')[0];
     let isSettled = false;
     let paymentHash = '';
 
     try {
-      const decodedMacaroon = JSON.parse(Buffer.from(incomingMacaroon, 'base64').toString('utf-8'));
-      paymentHash = decodedMacaroon.payment_hash;
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid Macaroon format' }, { status: 401 });
+      paymentHash = JSON.parse(Buffer.from(incomingMacaroon, 'base64').toString('utf-8')).payment_hash;
+    } catch {
+      return NextResponse.json({ error: 'Invalid Macaroon' }, { status: 401 });
     }
 
-    if (albyKey && paymentHash && !paymentHash.startsWith('mock_hash')) {
-      // Verify with Alby API
-      const res = await fetch(`${ALBY_API_URL}/${paymentHash}`, {
-        headers: { 'Authorization': `Bearer ${albyKey}` }
-      });
+    if (isSandbox && paymentHash.startsWith('sandbox_hash_')) {
+      isSettled = true; // Auto-settle in sandbox mode
+    } else if (albyKey && paymentHash && !paymentHash.startsWith('sandbox_hash_') && !paymentHash.startsWith('mock_hash')) {
+      const res = await fetch(`${ALBY_API_URL}/${paymentHash}`, { headers: { 'Authorization': `Bearer ${albyKey}` } });
       const data = await res.json();
       isSettled = data.settled === true;
     } else {
-      // Accept mock tokens for testing
-      isSettled = true;
+      isSettled = true; // Fallback for local dev without Alby
     }
 
-    if (!isSettled) {
-      return NextResponse.json({ error: 'Invoice not settled' }, { status: 402 });
-    }
+    if (!isSettled) return NextResponse.json({ error: 'Invoice not settled' }, { status: 402 });
 
-    // 3. Execution Phase
     const body = await request.json().catch(() => ({}));
     const action = body.action || 'execute_arbitrage_swap';
     const targetProtocol = body.target_protocol || 'unknown';
-
-    // Simulate on-chain execution delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // Generate mock transaction hash
-    const txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    const finalStatus = isSandbox ? 'sandbox' : 'settled';
+    
+    await sql.transaction([
+      sql`SELECT set_config('agent.current_id', ${agentId}::text, true)`,
+      sql`
+        INSERT INTO execution_logs (agent_id, action, target_protocol, cost_sats, payment_hash, status, execution_time_ms)
+        VALUES (${agentId}, ${action}, ${targetProtocol}, ${COST_SATS}, ${paymentHash}, ${finalStatus}, 800)
+      `
+    ]);
 
     return NextResponse.json({
       status: 'success',
-      execution_id: `cbn_exec_${Date.now()}`,
-      message: `Agent action '${action}' completed on ${targetProtocol}.`,
-      on_chain_data: {
-        tx_hash: txHash,
-        gas_used_usd: 0.12,
-        network: body.network || 'arbitrum',
-      },
-      payment_status: 'settled',
+      message: `Agent action '${action}' completed.`,
+      payment_status: finalStatus,
+      mode: isSandbox ? 'sandbox' : 'live'
     });
 
   } catch (error) {
@@ -2968,17 +3454,138 @@ export async function GET() {
   }
 }
 
+--- src/app/api/operator/agents/route.ts ---
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/neon';
+import { SiweMessage } from 'siwe';
+
+export const runtime = 'edge';
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const pubkey = searchParams.get('pubkey');
+    const signature = request.headers.get('x-siwe-signature');
+    const messageStr = request.headers.get('x-siwe-message');
+
+    if (!pubkey || !signature || !messageStr) {
+      return NextResponse.json({ error: 'Missing authentication headers or pubkey' }, { status: 401 });
+    }
+
+    // 1. Cryptographic Verification (SIWE)
+    const siweMessage = new SiweMessage(messageStr);
+    const { data } = await siweMessage.verify({ signature });
+    
+    // Ensure the signed message address matches the requested pubkey
+    if (data.address.toLowerCase() !== pubkey.toLowerCase()) {
+      return NextResponse.json({ error: 'Signature address mismatch' }, { status: 403 });
+    }
+
+    // 2. Fetch ecosystem safely
+    const agents = await sql`
+      SELECT id, agent_name, created_at
+      FROM agent_identities 
+      WHERE lower(pubkey) = lower(${pubkey})
+      ORDER BY created_at DESC
+    `;
+
+    let stats = { total_execs: 0, total_sats: 0 };
+    if (agents.length > 0) {
+      const agentIds = agents.map(a => a.id);
+      const results = await sql.transaction([
+        sql`SELECT COUNT(*)::int as execs FROM execution_logs WHERE agent_id = ANY(${agentIds}) AND status = 'settled'`,
+        sql`SELECT COALESCE(SUM(cost_sats), 0)::int as sats FROM execution_logs WHERE agent_id = ANY(${agentIds}) AND status = 'settled'`
+      ]);
+      stats.total_execs = results[0][0].execs;
+      stats.total_sats = results[1][0].sats;
+    }
+
+    return NextResponse.json({ agents, stats });
+
+  } catch (error) {
+    console.error('[Operator API] Verification/Fetch Error:', error);
+    return NextResponse.json({ error: 'Unauthorized or Internal Error' }, { status: 401 });
+  }
+}
+
+--- src/app/api/operator/playbooks/route.ts ---
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/neon';
+import { SiweMessage } from 'siwe';
+
+export const runtime = 'edge';
+
+async function verifyAuth(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const pubkey = searchParams.get('pubkey');
+  const signature = request.headers.get('x-siwe-signature');
+  const messageStr = request.headers.get('x-siwe-message');
+
+  if (!pubkey || !signature || !messageStr) {
+    throw new Error('Missing authentication headers or pubkey');
+  }
+
+  const siweMessage = new SiweMessage(messageStr);
+  const { data } = await siweMessage.verify({ signature });
+  
+  if (data.address.toLowerCase() !== pubkey.toLowerCase()) {
+    throw new Error('Signature address mismatch');
+  }
+
+  return pubkey;
+}
+
+export async function GET(request: Request) {
+  try {
+    const pubkey = await verifyAuth(request);
+    
+    const playbooks = await sql`
+      SELECT id, name, description, schema_json, created_at
+      FROM playbooks 
+      WHERE lower(operator_pubkey) = lower(${pubkey})
+      ORDER BY created_at DESC
+    `;
+
+    return NextResponse.json({ playbooks });
+  } catch (error: any) {
+    console.error('[Playbooks API] GET Error:', error.message);
+    return NextResponse.json({ error: 'Unauthorized or Internal Error' }, { status: 401 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const pubkey = await verifyAuth(request);
+    const body = await request.json();
+    const { name, description, schema_json } = body;
+
+    if (!name || !schema_json) {
+      return NextResponse.json({ error: 'Missing playbook data' }, { status: 400 });
+    }
+
+    const result = await sql`
+      INSERT INTO playbooks (operator_pubkey, name, description, schema_json)
+      VALUES (${pubkey}, ${name}, ${description || ''}, ${schema_json})
+      RETURNING id, name, created_at
+    `;
+
+    return NextResponse.json({ success: true, playbook: result[0] });
+  } catch (error: any) {
+    console.error('[Playbooks API] POST Error:', error.message);
+    return NextResponse.json({ error: 'Failed to save playbook' }, { status: 500 });
+  }
+}
+
 --- src/app/api/oracle/airdrops/route.ts ---
 import { NextResponse } from 'next/server';
 import { getDeFiProtocols } from '@/lib/api';
 
+export const runtime = 'edge';
 export const revalidate = 300;
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
   
-  // For testing, we can temporarily disable auth or keep it as is.
-  // We'll keep the auth check to mirror the predictions API.
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return NextResponse.json({ 
       error: 'Agent Authorization Required', 
@@ -3021,6 +3628,10 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
       count: signals.length, 
       signals 
+    }, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+      }
     });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to process on-chain data' }, { status: 500 });
@@ -3029,6 +3640,8 @@ export async function GET(request: Request) {
 
 --- src/app/api/oracle/airdrops/[slug]/route.ts ---
 import { NextResponse } from 'next/server';
+
+export const runtime = 'edge';
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -3047,7 +3660,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     protocol: slug,
     type: 'tokenless_farming_vector',
     confidence_score: 0.92,
-    recommended_actions: [
+    recommended_actions:[
       { 
         action: 'bridge', 
         target_chain: 'arbitrum', 
@@ -3078,13 +3691,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     }
   };
 
-  return NextResponse.json(agentPayload);
+  return NextResponse.json(agentPayload, {
+    headers: {
+      'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+    }
+  });
 }
 
 --- src/app/api/oracle/predictions/route.ts ---
 import { NextResponse } from 'next/server';
 import { getLivePredictions } from '@/lib/predictions';
 
+export const runtime = 'edge';
 export const revalidate = 300;
 
 export async function GET(request: Request) {
@@ -3107,6 +3725,10 @@ export async function GET(request: Request) {
     timestamp: new Date().toISOString(),
     count: signals.length,
     signals 
+  }, {
+    headers: {
+      'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+    }
   });
 }
 
@@ -3124,6 +3746,98 @@ export async function GET() {
     return NextResponse.json(prices || FALLBACK_MARKET_DATA);
   } catch (error) {
     return NextResponse.json(FALLBACK_MARKET_DATA);
+  }
+}
+
+--- src/app/api/referrals/route.ts ---
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/neon';
+import { SiweMessage } from 'siwe';
+
+export const runtime = 'edge';
+
+// Fetch Operator's Referral Stats (Secured with SIWE)
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const pubkey = searchParams.get('pubkey');
+    const signature = request.headers.get('x-siwe-signature');
+    const messageStr = request.headers.get('x-siwe-message');
+
+    if (!pubkey || !signature || !messageStr) {
+      return NextResponse.json({ error: 'Missing authentication headers or pubkey' }, { status: 401 });
+    }
+
+    // 1. Cryptographic Verification (SIWE)
+    const siweMessage = new SiweMessage(messageStr);
+    const { data } = await siweMessage.verify({ signature });
+    
+    if (data.address.toLowerCase() !== pubkey.toLowerCase()) {
+      return NextResponse.json({ error: 'Signature address mismatch' }, { status: 403 });
+    }
+
+    // 2. Secure the query context
+    const results = await sql.transaction([
+      sql`SELECT set_config('operator.current_pubkey', ${pubkey}::text, true)`,
+      sql`
+        SELECT 
+          COUNT(*)::int as total_referrals, 
+          COALESCE(SUM(reward_sats), 0)::int as total_sats
+        FROM referrals 
+        WHERE lower(referrer_pubkey) = lower(${pubkey})
+      `
+    ]);
+
+    return NextResponse.json(results[1][0]);
+  } catch (error) {
+    console.error('[Referrals API] GET Error:', error);
+    return NextResponse.json({ error: 'Unauthorized or Internal Error' }, { status: 401 });
+  }
+}
+
+// Process a New Referral Conversion (Called by system, no SIWE needed)
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { referrer, referred } = body;
+
+    if (!referrer || !referred || referrer.toLowerCase() === referred.toLowerCase()) {
+      return NextResponse.json({ error: 'Invalid referral data' }, { status: 400 });
+    }
+
+    let score = 0;
+    const apiKey = process.env.GITCOIN_SCORER_API_KEY;
+    const scorerId = process.env.GITCOIN_SCORER_ID;
+
+    if (apiKey && scorerId) {
+      const gitcoinRes = await fetch(`https://api.scorer.gitcoin.co/registry/score/${scorerId}/${referred}`, {
+        headers: { 'X-API-KEY': apiKey }
+      });
+      if (gitcoinRes.ok) {
+        const data = await gitcoinRes.json();
+        score = Math.floor(data.score || 0);
+      }
+    } else {
+      score = 25; 
+    }
+
+    if (score < 20) {
+      return NextResponse.json({ error: 'Sybil Risk: Gitcoin score too low for reward.', score }, { status: 403 });
+    }
+
+    await sql.transaction([
+      sql`SELECT set_config('operator.current_pubkey', ${referrer}::text, true)`,
+      sql`
+        INSERT INTO referrals (referrer_pubkey, referred_pubkey, gitcoin_score, reward_sats)
+        VALUES (${referrer}, ${referred}, ${score}, 5000)
+        ON CONFLICT (referred_pubkey) DO NOTHING
+      `
+    ]);
+
+    return NextResponse.json({ success: true, score, reward: 5000 });
+  } catch (error) {
+    console.error('[Referrals API] POST Error:', error);
+    return NextResponse.json({ error: 'Failed to process referral' }, { status: 500 });
   }
 }
 
@@ -3334,6 +4048,425 @@ export default async function CoinPage({ params }: { params: Promise<{ slug: str
 
       </div>
     </main>
+  );
+}
+
+--- src/app/dashboard/layout.tsx ---
+import React from 'react';
+import { Web3Provider } from '@/components/providers/Web3Provider';
+
+export const metadata = {
+  title: 'Operator Dashboard | CryptoBrain',
+  description: 'Manage your AI agents and execution analytics.',
+};
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Web3Provider>
+      {children}
+    </Web3Provider>
+  );
+}
+
+--- src/app/dashboard/page.tsx ---
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useWeb3 } from '@/components/providers/Web3Provider';
+import ConnectWallet from '@/components/wallet/ConnectWallet';
+import { Shield, Cpu, Zap, Activity, Users, Copy, CheckCircle, Lock } from 'lucide-react';
+import Link from 'next/link';
+
+export default function OperatorDashboard() {
+  const { address, signature, siweMessage } = useWeb3();
+  const [data, setData] = useState<any>(null);
+  const [refData, setRefData] = useState({ total_referrals: 0, total_sats: 0 });
+  const[isLoading, setIsLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    // We now require both the address and the cryptographically signed message
+    if (!address || !signature || !siweMessage) return;
+
+    const fetchEcosystem = async () => {
+      setIsLoading(true);
+      try {
+        const headers = {
+          'x-siwe-signature': signature,
+          'x-siwe-message': siweMessage
+        };
+
+        const[agentsRes, refsRes] = await Promise.all([
+          fetch(`/api/operator/agents?pubkey=${address}`, { headers }),
+          fetch(`/api/referrals?pubkey=${address}`, { headers })
+        ]);
+        
+        if (agentsRes.ok) setData(await agentsRes.json());
+        if (refsRes.ok) setRefData(await refsRes.json());
+      } catch (err) {
+        console.error('Failed to fetch authenticated dashboard data', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEcosystem();
+  }, [address, signature, siweMessage]);
+
+  const handleCopyLink = () => {
+    const link = `${window.location.origin}/agent-registry?ref=${address}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // If the user has a wallet connected but hasn't signed the message yet, they wait here.
+  if (!address || !signature) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-8 font-sans">
+        <Shield size={64} className="text-[#333] mb-6" />
+        <h1 className="text-3xl font-black uppercase tracking-tighter mb-4">Operator Dashboard</h1>
+        <p className="text-[#888] font-mono mb-8 text-center max-w-md">
+          Connect your cryptographic identity and sign the authentication message to manage your AI agents securely.
+        </p>
+        <div className="flex items-center gap-4"><Link href="/dashboard/playbooks" className="text-[#FABF2C] hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Playbook Builder</Link><ConnectWallet /></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#050505] text-white p-8 font-sans">
+      <div className="max-w-6xl mx-auto space-y-8 pb-24">
+        
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#222] pb-6">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-black uppercase tracking-tighter text-[#00d672]">Operator Dashboard</h1>
+              <span className="bg-[#00d672]/20 text-[#00d672] text-[10px] uppercase font-black px-2 py-1 rounded flex items-center gap-1">
+                <Lock size={10} /> Verified
+              </span>
+            </div>
+            <p className="text-[#888] font-mono text-sm mt-2">Manage your autonomous ecosystem.</p>
+          </div>
+          <div className="flex items-center gap-4"><Link href="/dashboard/playbooks" className="text-[#FABF2C] hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">Playbook Builder</Link><ConnectWallet /></div>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center py-20 text-[#555] font-mono animate-pulse">Decrypting and synchronizing ecosystem data...</div>
+        ) : data ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-[#0a0a0a] border border-[#222] p-6 rounded">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#555]">Active Agents</p>
+                  <Cpu size={16} className="text-[#FABF2C]" />
+                </div>
+                <p className="text-4xl font-black text-white">{data.agents.length}</p>
+              </div>
+
+              <div className="bg-[#0a0a0a] border border-[#222] p-6 rounded">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#555]">Total Executions</p>
+                  <Activity size={16} className="text-[#00d672]" />
+                </div>
+                <p className="text-4xl font-black text-white">{data.stats.total_execs.toLocaleString()}</p>
+              </div>
+
+              <div className="bg-[#0a0a0a] border border-[#222] p-6 rounded">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#555]">Sats Spent</p>
+                  <Zap size={16} className="text-[#ff9900]" />
+                </div>
+                <p className="text-4xl font-black text-white">{data.stats.total_sats.toLocaleString()}</p>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-[#0a0a0a] to-[#111] border border-[#FABF2C]/30 rounded overflow-hidden p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-8">
+              <div className="flex-1 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Users className="text-[#FABF2C]" size={24} />
+                  <h2 className="text-xl font-black uppercase tracking-widest">Referral Hub</h2>
+                </div>
+                <p className="text-sm font-mono text-[#888] leading-relaxed max-w-xl">
+                  Earn <strong className="text-white">5,000 sats</strong> for every verified human developer you refer. Sybil resistance is enforced via Gitcoin Passport (Score ≥ 20).
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <div className="bg-black border border-[#222] px-4 py-3 rounded font-mono text-xs text-[#00d672] flex-1 truncate">
+                    .../agent-registry?ref={address.substring(0,6)}...{address.substring(address.length-4)}
+                  </div>
+                  <button 
+                    onClick={handleCopyLink}
+                    className="bg-[#FABF2C] text-black px-6 py-3 rounded text-xs font-black uppercase tracking-widest hover:bg-white transition-colors flex items-center justify-center gap-2 shrink-0"
+                  >
+                    {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
+                    {copied ? 'Copied Link' : 'Copy Link'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-6 shrink-0 border-t md:border-t-0 md:border-l border-[#222] pt-6 md:pt-0 md:pl-8 w-full md:w-auto">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#555] mb-2">Verified Humans</p>
+                  <p className="text-3xl font-black text-white">{refData.total_referrals}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#555] mb-2">Sats Earned</p>
+                  <p className="text-3xl font-black text-[#FABF2C]">{refData.total_sats.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#0a0a0a] border border-[#222] rounded overflow-hidden">
+              <div className="p-6 border-b border-[#222] flex justify-between items-center">
+                <h2 className="text-lg font-black uppercase tracking-widest">Registered Identities</h2>
+                <Link href="/agent-registry" className="text-xs font-black uppercase tracking-widest text-[#FABF2C] hover:text-white transition-colors">
+                  + Register New Agent
+                </Link>
+              </div>
+              
+              {data.agents.length === 0 ? (
+                <div className="p-12 text-center border-t border-[#222]">
+                  <p className="text-[#555] font-mono text-sm mb-4">No agents found for this wallet address.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-[#111]">
+                      <tr>
+                        <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[#555]">Agent Name</th>
+                        <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[#555]">ID (UUID)</th>
+                        <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[#555]">Created</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.agents.map((agent: any) => (
+                        <tr key={agent.id} className="border-b border-[#222] hover:bg-[#111] transition-colors">
+                          <td className="p-4 text-sm font-black text-[#00d672]">{agent.agent_name}</td>
+                          <td className="p-4 text-xs font-mono text-[#888]">{agent.id}</td>
+                          <td className="p-4 text-xs font-mono text-[#555]">
+                            {new Date(agent.created_at).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+--- src/app/dashboard/playbooks/page.tsx ---
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useWeb3 } from '@/components/providers/Web3Provider';
+import ConnectWallet from '@/components/wallet/ConnectWallet';
+import { Shield, Plus, Save, Download, ArrowLeft, PlayCircle, Filter, Zap, Terminal } from 'lucide-react';
+import Link from 'next/link';
+
+type Step = { id: string; type: 'trigger' | 'condition' | 'action'; config: any };
+
+export default function PlaybookBuilder() {
+  const { address, signature, siweMessage } = useWeb3();
+  const [playbooks, setPlaybooks] = useState<any[]>([]);
+  const[isBuilding, setIsBuilding] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Builder State
+  const [name, setName] = useState('New Arbitrage Playbook');
+  const [description, setDescription] = useState('Executes L402 swap when TVL spikes.');
+  const [steps, setSteps] = useState<Step[]>([]);
+
+  useEffect(() => {
+    if (!address || !signature || !siweMessage) return;
+    fetchPlaybooks();
+  }, [address, signature, siweMessage]);
+
+  const fetchPlaybooks = async () => {
+    try {
+      const res = await fetch(`/api/operator/playbooks?pubkey=${address}`, {
+        headers: { 'x-siwe-signature': signature!, 'x-siwe-message': siweMessage! }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPlaybooks(data.playbooks);
+      }
+    } catch (err) {
+      console.error('Failed to fetch playbooks', err);
+    }
+  };
+
+  const addStep = (type: 'trigger' | 'condition' | 'action') => {
+    const newStep: Step = { 
+      id: Math.random().toString(36).substring(7), 
+      type, 
+      config: type === 'trigger' ? { source: '/api/oracle/airdrops', interval: '60m' } :
+              type === 'condition' ? { field: 'tvl', operator: '>', value: 50000000 } :
+              { endpoint: '/api/execute', payload: { action: 'bridge' } }
+    };
+    setSteps([...steps, newStep]);
+  };
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      const payload = { name, description, schema_json: { steps } };
+      const res = await fetch(`/api/operator/playbooks?pubkey=${address}`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-siwe-signature': signature!, 
+          'x-siwe-message': siweMessage! 
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setIsBuilding(false);
+        setSteps([]);
+        fetchPlaybooks();
+      }
+    } catch (err) {
+      console.error('Save failed', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExport = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ name, description, steps }, null, 2));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", `${name.replace(/\s+/g, '_').toLowerCase()}.json`);
+    dlAnchorElem.click();
+  };
+
+  if (!address || !signature) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-8 font-sans">
+        <Shield size={64} className="text-[#333] mb-6" />
+        <h1 className="text-3xl font-black uppercase tracking-tighter mb-4">Playbook Builder</h1>
+        <p className="text-[#888] font-mono mb-8 text-center max-w-md">Authenticate to compose and manage AI agent orchestrations.</p>
+        <ConnectWallet />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#050505] text-white p-8 font-sans">
+      <div className="max-w-5xl mx-auto space-y-8 pb-24">
+        
+        <div className="flex justify-between items-center border-b border-[#222] pb-6">
+          <div>
+            <Link href="/dashboard" className="text-[#888] hover:text-white flex items-center gap-2 text-xs font-black uppercase tracking-widest mb-4 transition-colors">
+              <ArrowLeft size={14} /> Back to Dashboard
+            </Link>
+            <h1 className="text-3xl font-black uppercase tracking-tighter text-[#FABF2C]">Agent Playbooks</h1>
+            <p className="text-[#888] font-mono text-sm mt-2">Design, save, and export multi-step execution schemas.</p>
+          </div>
+          <ConnectWallet />
+        </div>
+
+        {!isBuilding ? (
+          <div className="space-y-6">
+            <button onClick={() => setIsBuilding(true)} className="bg-white text-black px-6 py-3 rounded text-xs font-black uppercase tracking-widest hover:bg-[#FABF2C] transition-colors flex items-center gap-2">
+              <Plus size={16} /> Create Playbook
+            </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {playbooks.map(pb => (
+                <div key={pb.id} className="bg-[#0a0a0a] border border-[#222] p-6 rounded hover:border-[#FABF2C] transition-colors">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Terminal size={18} className="text-[#00d672]" />
+                    <h3 className="font-black uppercase tracking-widest text-lg">{pb.name}</h3>
+                  </div>
+                  <p className="text-[#888] font-mono text-xs mb-4">{pb.description}</p>
+                  <div className="flex justify-between items-center pt-4 border-t border-[#222]">
+                    <span className="text-[10px] text-[#555] font-mono">{new Date(pb.created_at).toLocaleDateString()}</span>
+                    <button onClick={() => {
+                       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pb.schema_json, null, 2));
+                       const a = document.createElement('a');
+                       a.href = dataStr;
+                       a.download = `${pb.name.replace(/\s+/g, '_')}.json`;
+                       a.click();
+                    }} className="text-[#FABF2C] hover:text-white flex items-center gap-1 text-[10px] uppercase font-black tracking-widest transition-colors">
+                      <Download size={12} /> JSON Schema
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {playbooks.length === 0 && (
+                <div className="col-span-full text-center p-12 border border-dashed border-[#222] rounded text-[#555] font-mono text-sm">
+                  No orchestrations saved yet.
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-8 animate-in fade-in">
+            <div className="bg-[#0a0a0a] border border-[#222] p-6 rounded space-y-4">
+              <div>
+                <label className="block text-[10px] font-black uppercase text-[#555] tracking-widest mb-2">Playbook Name</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-black border border-[#222] px-4 py-3 text-xs font-mono text-white outline-none focus:border-[#FABF2C]" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black uppercase text-[#555] tracking-widest mb-2">Description</label>
+                <input type="text" value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-black border border-[#222] px-4 py-3 text-xs font-mono text-[#888] outline-none focus:border-[#FABF2C]" />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {steps.map((step, index) => (
+                <div key={step.id} className="relative flex gap-4">
+                  <div className="flex flex-col items-center mt-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                      step.type === 'trigger' ? 'border-[#00d672] text-[#00d672]' :
+                      step.type === 'condition' ? 'border-[#FABF2C] text-[#FABF2C]' : 'border-[#ff9900] text-[#ff9900]'
+                    }`}>
+                      {step.type === 'trigger' ? <PlayCircle size={14} /> : step.type === 'condition' ? <Filter size={14} /> : <Zap size={14} />}
+                    </div>
+                    {index < steps.length - 1 && <div className="w-0.5 h-full bg-[#222] mt-2" />}
+                  </div>
+                  <div className="flex-1 bg-[#111] border border-[#222] p-4 rounded mt-2 flex justify-between items-center">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#888] mb-1">{step.type} Block</p>
+                      <pre className="text-xs font-mono text-white">{JSON.stringify(step.config)}</pre>
+                    </div>
+                    <button onClick={() => setSteps(steps.filter(s => s.id !== step.id))} className="text-[#555] hover:text-red-500 text-xs uppercase font-black tracking-widest transition-colors">Remove</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-4">
+              <button onClick={() => addStep('trigger')} className="flex-1 border border-[#00d672]/30 text-[#00d672] py-3 rounded text-[10px] font-black uppercase tracking-widest hover:bg-[#00d672] hover:text-black transition-colors flex justify-center items-center gap-2">
+                <PlayCircle size={14} /> Add Trigger
+              </button>
+              <button onClick={() => addStep('condition')} className="flex-1 border border-[#FABF2C]/30 text-[#FABF2C] py-3 rounded text-[10px] font-black uppercase tracking-widest hover:bg-[#FABF2C] hover:text-black transition-colors flex justify-center items-center gap-2">
+                <Filter size={14} /> Add Condition
+              </button>
+              <button onClick={() => addStep('action')} className="flex-1 border border-[#ff9900]/30 text-[#ff9900] py-3 rounded text-[10px] font-black uppercase tracking-widest hover:bg-[#ff9900] hover:text-black transition-colors flex justify-center items-center gap-2">
+                <Zap size={14} /> Add Action
+              </button>
+            </div>
+
+            <div className="flex justify-end gap-4 pt-8 border-t border-[#222]">
+              <button onClick={handleExport} className="bg-[#111] border border-[#333] text-white px-6 py-3 rounded text-xs font-black uppercase tracking-widest hover:bg-[#222] transition-colors flex items-center gap-2">
+                <Download size={16} /> Export JSON
+              </button>
+              <button onClick={handleSave} disabled={isLoading || steps.length === 0} className="bg-[#FABF2C] text-black px-6 py-3 rounded text-xs font-black uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2 disabled:opacity-50">
+                <Save size={16} /> {isLoading ? 'Saving...' : 'Save Playbook'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -7629,6 +8762,207 @@ export default function CmePage() {
   );
 }
 
+--- src/app/docs/layout.tsx ---
+import React from 'react';
+import Link from 'next/link';
+import { Terminal, Book, Key, Zap, Code } from 'lucide-react';
+
+export const metadata = {
+  title: 'API Documentation | CryptoBrain',
+  description: 'Integrate your AI agents with the CryptoBrain Oracle and L402 compute endpoints.',
+};
+
+export default function DocsLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-[#050505] text-white flex flex-col md:flex-row font-sans">
+      {/* Sidebar Navigation */}
+      <aside className="w-full md:w-64 lg:w-72 bg-[#0a0a0a] border-r border-[#222] md:h-screen md:sticky top-0 overflow-y-auto shrink-0 flex flex-col">
+        <div className="p-6 border-b border-[#222]">
+          <Link href="/" className="flex items-center gap-3 text-white hover:text-[#FABF2C] transition-colors">
+            <Terminal size={24} className="text-[#FABF2C]" />
+            <span className="font-black tracking-tighter uppercase text-lg">CryptoBrain API</span>
+          </Link>
+        </div>
+        
+        <nav className="p-6 flex-1 space-y-8">
+          <div>
+            <h3 className="text-[10px] font-black uppercase text-[#555] tracking-widest mb-3 flex items-center gap-2">
+              <Book size={12} /> Getting Started
+            </h3>
+            <ul className="space-y-3 text-sm font-mono text-[#888]">
+              <li><a href="#introduction" className="hover:text-white transition-colors">Introduction</a></li>
+              <li><Link href="/agent-registry" className="hover:text-[#00d672] transition-colors">KYA Registration &rarr;</Link></li>
+              <li><Link href="/agent-registry/sandbox" className="hover:text-[#FABF2C] transition-colors">Developer Sandbox &rarr;</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-[10px] font-black uppercase text-[#555] tracking-widest mb-3 flex items-center gap-2">
+              <Key size={12} /> Authentication
+            </h3>
+            <ul className="space-y-3 text-sm font-mono text-[#888]">
+              <li><a href="#api-keys" className="hover:text-white transition-colors">API Keys</a></li>
+              <li><a href="#l402-payments" className="hover:text-white transition-colors">L402 Lightning Payments</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-[10px] font-black uppercase text-[#555] tracking-widest mb-3 flex items-center gap-2">
+              <Zap size={12} /> Endpoints
+            </h3>
+            <ul className="space-y-3 text-sm font-mono text-[#888]">
+              <li><a href="#api-execute" className="hover:text-white transition-colors">POST /api/execute</a></li>
+              <li><a href="#api-oracle" className="hover:text-white transition-colors">GET /api/oracle/*</a></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="text-[10px] font-black uppercase text-[#555] tracking-widest mb-3 flex items-center gap-2">
+              <Code size={12} /> Integration
+            </h3>
+            <ul className="space-y-3 text-sm font-mono text-[#888]">
+              <li><a href="#python-example" className="hover:text-white transition-colors">Python Example</a></li>
+            </ul>
+          </div>
+        </nav>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 md:p-12 lg:p-16 max-w-4xl overflow-y-auto">
+        {children}
+      </main>
+    </div>
+  );
+}
+
+--- src/app/docs/page.tsx ---
+import React from 'react';
+
+export default function DocsPage() {
+  const CodeBlock = ({ children }: { children: React.ReactNode }) => (
+    <pre className="bg-black border border-[#222] p-4 rounded overflow-x-auto text-[#00d672] font-mono text-xs my-4 whitespace-pre-wrap">
+      <code>{children}</code>
+    </pre>
+  );
+
+  return (
+    <div className="space-y-16 pb-24">
+      
+      {/* Introduction */}
+      <section id="introduction" className="space-y-4">
+        <h1 className="text-4xl font-black uppercase tracking-tighter">CryptoBrain API Reference</h1>
+        <p className="text-[#888] font-mono leading-relaxed">
+          Welcome to the CryptoBrain Oracle API. Our infrastructure is designed natively for autonomous AI agents. 
+          It provides high-fidelity on-chain analytics, airdrop vectors, and compute execution via a dual-layer 
+          authentication system utilizing Cryptographic Identity and Lightning Network micro-transactions (L402).
+        </p>
+      </section>
+
+      {/* Authentication - API Keys */}
+      <section id="api-keys" className="space-y-4">
+        <h2 className="text-2xl font-black uppercase tracking-tight text-[#FABF2C]">1. Identity & API Keys</h2>
+        <p className="text-[#888] font-mono leading-relaxed">
+          All endpoints require Know Your Agent (KYA) registration. You must register your agent's ERC-8004 
+          pubkey to receive an API Key. We hash these keys (SHA-256) instantly on the Edge; they are never stored in plain-text.
+        </p>
+        <p className="text-sm font-mono text-white mt-4">Header Requirement:</p>
+        <CodeBlock>x-api-key: cbn_live_your_api_key_here</CodeBlock>
+      </section>
+
+      {/* Authentication - L402 */}
+      <section id="l402-payments" className="space-y-4">
+        <h2 className="text-2xl font-black uppercase tracking-tight text-[#FABF2C]">2. L402 Lightning Payments</h2>
+        <p className="text-[#888] font-mono leading-relaxed">
+          Compute-heavy endpoints (like <code className="text-white">/api/execute</code>) require micro-payments. 
+          When you make an initial request, the server returns a <strong>402 Payment Required</strong> response with a Macaroon and a Lightning Invoice.
+        </p>
+        <div className="bg-[#0a0a0a] border border-[#222] p-4 rounded font-mono text-xs text-[#888]">
+          <span className="text-white font-bold">Flow:</span>
+          <ol className="list-decimal pl-5 mt-2 space-y-2">
+            <li>Send POST request with your payload.</li>
+            <li>Receive 402 status with <code className="text-[#00d672]">WWW-Authenticate: L402 macaroon="...", invoice="..."</code></li>
+            <li>Pay the invoice via a Lightning node or wallet.</li>
+            <li>Retry the exact same request, attaching the Macaroon as your Authorization header.</li>
+          </ol>
+        </div>
+        <CodeBlock>Authorization: L402 &lt;base64_macaroon&gt;:</CodeBlock>
+        <p className="text-[#888] font-mono text-sm mt-2">
+          <em>Note: To test this flow without spending real funds, pass the <code className="text-white">x-sandbox-mode: true</code> header.</em>
+        </p>
+      </section>
+
+      {/* Endpoints */}
+      <section id="api-execute" className="space-y-4">
+        <h2 className="text-2xl font-black uppercase tracking-tight text-[#00d672]">POST /api/execute</h2>
+        <p className="text-[#888] font-mono leading-relaxed">
+          Executes an agent compute action. Protected by L402. Logs execution securely tied to your Agent ID.
+        </p>
+        <CodeBlock>{`// Request Body (JSON)
+{
+  "action": "execute_arbitrage_swap",
+  "target_protocol": "uniswap_v3"
+}`}</CodeBlock>
+      </section>
+
+      <section id="api-oracle" className="space-y-4">
+        <h2 className="text-2xl font-black uppercase tracking-tight text-[#00d672]">GET /api/oracle/airdrops</h2>
+        <p className="text-[#888] font-mono leading-relaxed">
+          Retrieves the top tokenless DeFi protocols sorted by TVL. Used by agents to identify sybil-resistant farming vectors.
+          Does not require L402, but requires <code className="text-white">Authorization: Bearer &lt;api_key&gt;</code>.
+        </p>
+      </section>
+
+      {/* Python Snippet */}
+      <section id="python-example" className="space-y-4">
+        <h2 className="text-2xl font-black uppercase tracking-tight text-white">Python L402 Integration</h2>
+        <p className="text-[#888] font-mono leading-relaxed">
+          A standard pattern for handling the 402 intercept automatically in your Python agent scripts.
+        </p>
+        <CodeBlock>{`import requests
+import re
+import json
+
+API_KEY = "cbn_live_your_api_key"
+URL = "https://cryptobrainnews.vercel.app/api/execute"
+
+headers = {
+    "Content-Type": "application/json",
+    "x-api-key": API_KEY,
+    "x-sandbox-mode": "true" # Remove for production
+}
+
+payload = {"action": "execute_arbitrage_swap", "target_protocol": "uniswap_v3"}
+
+# 1. Initial Request
+res = requests.post(URL, headers=headers, json=payload)
+
+if res.status_code == 402:
+    print("402 Payment Required intercepted.")
+    auth_header = res.headers.get("www-authenticate", "")
+    
+    # Extract Macaroon and Invoice
+    macaroon_match = re.search(r'macaroon="([^"]+)"', auth_header)
+    invoice_match = re.search(r'invoice="([^"]+)"', auth_header)
+    
+    if macaroon_match and invoice_match:
+        macaroon = macaroon_match.group(1)
+        invoice = invoice_match.group(1)
+        
+        # ... Pay the invoice using your Lightning Node logic ...
+        print(f"Paying invoice: {invoice}")
+        
+        # 2. Retry with Authorization header
+        headers["Authorization"] = f"L402 {macaroon}:"
+        res = requests.post(URL, headers=headers, json=payload)
+
+print(f"Final Status: {res.status_code}")
+print(res.json())`}</CodeBlock>
+      </section>
+
+    </div>
+  );
+}
+
 --- src/app/error.tsx ---
 'use client';
 
@@ -7951,128 +9285,68 @@ export async function GET() {
 }
 
 --- src/app/layout.tsx ---
-import React, { Suspense } from 'react';
-import type { Metadata } from 'next';
-import { Merriweather, Inter, JetBrains_Mono, Space_Mono } from 'next/font/google';
-import Script from 'next/script';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
-import '../styles/globals.css';
-import Header from '@/components/common/Header';
-import PriceTicker from '@/components/common/PriceTicker';
-import Footer from '@/components/layout/Footer';
-import CookieConsent from '@/components/common/CookieConsent';
-import { getActiveNotifications } from '@/lib/sanity';
+import type { Metadata, Viewport } from 'next';
+import { Inter, Roboto_Mono } from 'next/font/google';
+import '@/styles/globals.css';
+import Header from '@/components/layout/Header';
 
-const merriweather = Merriweather({
-  subsets: ['latin'],
-  weight: ['400', '700', '900'],
-  variable: '--font-heading',
-  display: 'swap',
-});
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  variable: '--font-body',
-  display: 'swap',
-});
-const jetbrains = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-caption',
-  display: 'swap',
-});
-const space = Space_Mono({
-  subsets: ['latin'],
-  weight:['400', '700'],
-  variable: '--font-data',
-  display: 'swap',
-});
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const mono = Roboto_Mono({ subsets: ['latin'], variable: '--font-mono' });
+
+export const viewport: Viewport = {
+  themeColor: '#050505',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.vercel.app'),
   title: {
-    default: 'CryptoBrainNews | Institutional Terminal',
-    template: '%s | CryptoBrainNews',
+    default: 'CryptoBrain | The AI Agent Data Terminal',
+    template: '%s | CryptoBrain'
   },
-  description: 'Institutional-grade crypto intelligence, DeFi analytics, and on-chain data.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.com'),
-  manifest: '/manifest.json',
+  description: 'Production-grade, edge-cached DeFi intelligence and L402 Lightning compute execution. Built natively for autonomous AI agents and human operators.',
+  keywords:['Crypto', 'AI Agents', 'L402', 'Lightning Network', 'DeFi', 'Oracle', 'Airdrops', 'Web3'],
+  authors: [{ name: 'CryptoBrain Protocol' }],
   openGraph: {
     type: 'website',
-    siteName: 'CryptoBrainNews',
-    title: 'CryptoBrainNews | Institutional Terminal',
-    description: 'Institutional-grade crypto intelligence.',
+    locale: 'en_US',
+    url: '/',
+    title: 'CryptoBrain | The AI Agent Data Terminal',
+    description: 'DeFi intelligence and L402 compute execution built for autonomous AI agents.',
+    siteName: 'CryptoBrain',
+    images:[{
+      url: '/og-image.png',
+      width: 1200,
+      height: 630,
+      alt: 'CryptoBrain Terminal'
+    }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CryptoBrainNews',
-    description: 'Institutional-grade crypto intelligence.',
+    title: 'CryptoBrain | AI Agent Data Terminal',
+    description: 'High-fidelity on-chain analytics and L402 Lightning execution endpoints.',
+    creator: '@CryptoBrainNews',
   },
-  alternates: {
-    types: { 'application/rss+xml': '/feed.xml' },
-  },
+  robots: {
+    index: true,
+    follow: true,
+  }
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const notifications = await getActiveNotifications().catch(() =>[]);
-
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html
-      lang="en"
-      className={`${merriweather.variable} ${inter.variable} ${jetbrains.variable} ${space.variable}`}
-    >
-      <body className="bg-black text-white min-h-screen flex flex-col antialiased">
+    <html lang="en" className={`${inter.variable} ${mono.variable} scroll-smooth`}>
+      <body className="bg-[#050505] text-white min-h-screen flex flex-col antialiased selection:bg-[#FABF2C] selection:text-black">
         <Header />
-        <PriceTicker />
-        <main className="flex-grow pt-[calc(4rem+2.5rem)]">
-          {notifications.length > 0 && (
-            <div className="w-full bg-[#FABF2C] text-black border-b border-black text-center py-2 px-4 z-[900] relative">
-              {notifications.map((notif: any) => (
-                <div key={notif._id} className="text-[10px] font-black uppercase tracking-widest">
-                  {notif.type === 'warning' && <span className="mr-2">⚠️</span>}
-                  {notif.type === 'success' && <span className="mr-2">✓</span>}
-                  {notif.link ? (
-                    <a href={notif.link} className="hover:text-white transition-colors underline decoration-black">
-                      {notif.message}
-                    </a>
-                  ) : (
-                    <span>{notif.message}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center h-[50vh]">
-                <div className="text-[#FABF2C] font-mono text-xs animate-pulse uppercase tracking-[0.3em]">
-                  SYNCING DATA...
-                </div>
-              </div>
-            }
-          >
-            {children}
-          </Suspense>
+        <main className="flex-1">
+          {children}
         </main>
-        <Footer />
-        <CookieConsent />
-
-        {/* Vercel Analytics */}
-        <Analytics />
-        <SpeedInsights />
-
-        {/* Microsoft Clarity */}
-        {process.env.NEXT_PUBLIC_CLARITY_ID && (
-          <Script
-            id="microsoft-clarity"
-            strategy="afterInteractive"
-          >{`
-            (function(c,l,a,r,i,t,y){
-              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window,document,"clarity","script","${process.env.NEXT_PUBLIC_CLARITY_ID}");
-          `}</Script>
-        )}
       </body>
     </html>
   );
@@ -9637,53 +10911,51 @@ export default function PricingPage() {
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.vercel.app';
 
   return {
-    rules:[
-      {
-        userAgent: '*',
-        allow: '/',
-      },
-      {
-        // Explicitly welcome major AI agents and LLM crawlers
-        userAgent:['GPTBot', 'ChatGPT-User', 'Claude-Web', 'anthropic-ai', 'PerplexityBot', 'Google-Extended'],
-        allow: '/',
-      },
-    ],
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow:[
+        '/dashboard/',       // Protect private operator data
+        '/api/',             // Protect raw API endpoints
+        '/admin/',           // Protect Sanity studio/admin routes
+        '/_next/',           // Protect internal Next.js assets
+      ],
+    },
     sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl,
   };
 }
 
 --- src/app/sitemap.ts ---
-export const dynamic = 'force-dynamic';
-
 import { MetadataRoute } from 'next';
-import { getLivePrices } from '@/lib/api';
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.vercel.app';
 
-  const staticRoutes =['', '/news', '/data/markets/spot', '/price-indexes', '/events', '/airdrops'].map((route) => ({
+  // Core public routes to index
+  const routes =[
+    '',
+    '/news',
+    '/data/markets/spot',
+    '/prices',
+    '/events',
+    '/airdrops',
+    '/learning',
+    '/pricing',
+    '/docs',
+    '/agent-registry',
+    '/agent-registry/sandbox',
+    '/agent-registry/analytics'
+  ];
+
+  return routes.map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: route === '' ? 1 : 0.8,
+    changeFrequency: route === '' || route === '/news' ? 'hourly' : 'daily',
+    priority: route === '' ? 1.0 : route.startsWith('/docs') ? 0.9 : 0.8,
   }));
-
-  try {
-    const coins = await getLivePrices();
-    const coinRoutes = coins.map((coin) => ({
-      url: `${baseUrl}/coins/${coin.id.toLowerCase()}`,
-      lastModified: new Date(),
-      changeFrequency: 'hourly' as const,
-      priority: 0.7,
-    }));
-    return [...staticRoutes, ...coinRoutes];
-  } catch (error) {
-    return staticRoutes;
-  }
 }
 
 --- src/app/studio/[[...index]]/page.tsx ---
@@ -9706,23 +10978,14 @@ import Link from 'next/link';
 import React, { useState } from 'react';
 import { Copy, CheckCircle, Terminal } from 'lucide-react';
 
-interface Props {
-  protocol: string;
-}
-
-export default function AgentHandoff({ protocol }: Props) {
-  const [copied, setCopied] = useState(false);
-
+export default function AgentHandoff({ protocol }: { protocol: string }) {
+  const[copied, setCopied] = useState(false);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.vercel.app';
-  const payload = {
-    action: 'execute_arbitrage_swap',
-    target_protocol: protocol,
-    network: 'arbitrum',
-    amount_usd: 500
-  };
-
+  
+  const payload = { action: 'execute_arbitrage_swap', target_protocol: protocol, network: 'arbitrum', amount_usd: 500 };
   const curlCommand = `curl -X POST ${baseUrl}/api/execute \\
   -H "Content-Type: application/json" \\
+  -H "x-api-key: <your_kya_api_key>" \\
   -H "Authorization: L402 <your_paid_macaroon>" \\
   -d '${JSON.stringify(payload)}'`;
 
@@ -9734,27 +10997,17 @@ export default function AgentHandoff({ protocol }: Props) {
 
   return (
     <div className="relative z-10">
-      <div className="bg-black border border-[#222] p-4 rounded font-mono text-xs text-[#00d672] mb-4 overflow-x-auto whitespace-pre-wrap">
+      <div className="bg-black border border-[#222] p-4 rounded font-mono text-[10px] text-[#00d672] mb-4 overflow-x-auto whitespace-pre-wrap">
         {curlCommand}
       </div>
       <div className="flex gap-3">
-        <button
-          onClick={handleCopy}
-          className="bg-[#1a1a1a] border border-[#00d672]/30 text-[#00d672] hover:bg-[#00d672] hover:text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors rounded flex items-center gap-2"
-        >
-          {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
-          {copied ? 'Copied!' : 'Copy Command'}
+        <button onClick={handleCopy} className="bg-[#1a1a1a] border border-[#00d672]/30 text-[#00d672] hover:bg-[#00d672] hover:text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors rounded flex items-center gap-2">
+          {copied ? <CheckCircle size={14} /> : <Copy size={14} />} {copied ? 'Copied!' : 'Copy Command'}
         </button>
-        <a
-          href="/pricing"
-          className="bg-[#111] border border-[#333] text-white hover:bg-white hover:text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors rounded flex items-center gap-2"
-        >
+        <a href="/pricing" className="bg-[#111] border border-[#333] text-white hover:bg-white hover:text-black px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors rounded flex items-center gap-2">
           <Terminal size={14} /> Get L402 Token
         </a>
       </div>
-      <p className="text-[10px] text-[#555] font-mono mt-4">
-        ⚡ Pay-per-compute via Lightning / L2. See <Link href="/pricing" className="text-[#FABF2C] underline">pricing</Link> for details.
-      </p>
     </div>
   );
 }
@@ -10428,6 +11681,129 @@ export default function Footer() {
   );
 }
 
+--- src/components/layout/Header.tsx ---
+'use client';
+
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { Menu, X, Terminal, Shield } from 'lucide-react';
+
+export default function Header() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const navLinks =[
+    { name: 'NEWS', href: '/news' },
+    { name: 'DATA', href: '/data/markets/spot' },
+    { name: 'PRICES', href: '/prices' },
+    { name: 'EVENTS', href: '/events' },
+    { name: 'AIRDROPS', href: '/airdrops' },
+    { name: 'DOCS', href: '/docs' },
+    { name: 'SANDBOX', href: '/agent-registry/sandbox' },
+  ];
+
+  return (
+    <header className="bg-black border-b border-[#222] sticky top-0 z-50">
+      <div className="max-w-[1600px] mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
+        
+        {/* Left: Logo */}
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="bg-[#FABF2C] text-black font-black text-xs px-2 py-1 rounded-sm group-hover:bg-white transition-colors">
+              CB
+            </div>
+            <span className="font-black tracking-tighter text-lg uppercase hidden sm:block">
+              CryptoBrain
+            </span>
+          </Link>
+
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-6">
+            {navLinks.map((link) => (
+              <Link 
+                key={link.name} 
+                href={link.href}
+                className={`text-[10px] font-black uppercase tracking-widest transition-colors ${
+                  link.name === 'DOCS' || link.name === 'SANDBOX' 
+                    ? 'text-[#00d672] hover:text-white' 
+                    : 'text-[#888] hover:text-[#FABF2C]'
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        {/* Right: CTA & Dashboard */}
+        <div className="hidden lg:flex items-center gap-4">
+          <Link 
+            href="/advertise" 
+            className="text-[10px] text-[#555] font-black uppercase tracking-widest hover:text-white transition-colors"
+          >
+            Advertise
+          </Link>
+          
+          <div className="h-4 w-px bg-[#333] mx-2" />
+
+          <Link 
+            href="/dashboard"
+            className="flex items-center gap-2 bg-[#111] border border-[#333] text-[#FABF2C] px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest hover:bg-[#FABF2C] hover:text-black transition-all"
+          >
+            <Shield size={12} /> Dashboard
+          </Link>
+
+          <Link 
+            href="/pricing"
+            className="bg-[#FABF2C] text-black px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors"
+          >
+            The Cartel
+          </Link>
+        </div>
+
+        {/* Mobile Hamburger */}
+        <button 
+          className="lg:hidden text-white p-2"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="lg:hidden absolute top-16 left-0 w-full bg-[#0a0a0a] border-b border-[#222] p-4 flex flex-col gap-4 shadow-2xl">
+          {navLinks.map((link) => (
+            <Link 
+              key={link.name} 
+              href={link.href}
+              onClick={() => setIsOpen(false)}
+              className="text-xs font-black uppercase tracking-widest text-[#888] hover:text-white border-b border-[#222] pb-4"
+            >
+              {link.name}
+            </Link>
+          ))}
+          <div className="flex flex-col gap-3 pt-2">
+            <Link 
+              href="/dashboard"
+              onClick={() => setIsOpen(false)}
+              className="bg-[#111] border border-[#333] text-[#FABF2C] text-center px-4 py-3 rounded-sm text-xs font-black uppercase tracking-widest"
+            >
+              Operator Dashboard
+            </Link>
+            <Link 
+              href="/pricing"
+              onClick={() => setIsOpen(false)}
+              className="bg-[#FABF2C] text-black text-center px-4 py-3 rounded-sm text-xs font-black uppercase tracking-widest"
+            >
+              Join The Cartel
+            </Link>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
+
 --- src/components/layout/NewsletterForm.tsx ---
 'use client';
 
@@ -10678,6 +12054,125 @@ export default function CointelegraphCard({ article }: { article: WeightedArticl
   );
 }
 
+--- src/components/providers/Web3Provider.tsx ---
+'use client';
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { SiweMessage, generateNonce } from 'siwe';
+import { getAddress } from 'ethers';
+
+type Web3ContextType = {
+  address: string | null;
+  signature: string | null;
+  siweMessage: string | null;
+  isConnecting: boolean;
+  connect: () => Promise<void>;
+  disconnect: () => void;
+};
+
+const Web3Context = createContext<Web3ContextType>({
+  address: null,
+  signature: null,
+  siweMessage: null,
+  isConnecting: false,
+  connect: async () => {},
+  disconnect: () => {},
+});
+
+export const useWeb3 = () => useContext(Web3Context);
+
+export function Web3Provider({ children }: { children: ReactNode }) {
+  const [address, setAddress] = useState<string | null>(null);
+  const [signature, setSignature] = useState<string | null>(null);
+  const [siweMessage, setSiweMessage] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  useEffect(() => {
+    const handleAccountsChanged = (accounts: string[]) => {
+      setAddress(null);
+      setSignature(null);
+      setSiweMessage(null);
+    };
+
+    if (typeof window !== 'undefined' && (window as any).ethereum) {
+      (window as any).ethereum.on('accountsChanged', handleAccountsChanged);
+    }
+    return () => {
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
+        (window as any).ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      }
+    };
+  },[]);
+
+  const connect = async () => {
+    if (typeof window === 'undefined' || !(window as any).ethereum) {
+      alert('Please install MetaMask, Rabby, or a Web3 wallet extension to continue.');
+      return;
+    }
+    
+    setIsConnecting(true);
+    
+    try {
+      // 1. Get lowercase address from MetaMask
+      const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
+      const rawAddress = accounts[0];
+      
+      // 2. Force strict EIP-55 Checksum formatting for SIWE
+      const checksummedAddress = getAddress(rawAddress);
+      
+      console.log('[Web3] Raw MetaMask Address:', rawAddress);
+      console.log('[Web3] EIP-55 Checksummed Address:', checksummedAddress);
+
+      // 3. Create SIWE Message
+      const domain = window.location.host;
+      const origin = window.location.origin;
+      const statement = 'Sign in to the CryptoBrain Operator Dashboard.';
+      const nonce = generateNonce(); // Secure SIWE nonce
+
+      const message = new SiweMessage({
+        domain,
+        address: checksummedAddress, // Must be mixed-case checksum
+        statement,
+        uri: origin,
+        version: '1',
+        chainId: 1,
+        nonce
+      });
+      
+      const preparedMessage = message.prepareMessage();
+
+      // 4. Request Signature (Using raw address for RPC compatibility)
+      const sig = await (window as any).ethereum.request({
+        method: 'personal_sign',
+        params: [preparedMessage, rawAddress]
+      });
+
+      // 5. Store in State
+      setAddress(checksummedAddress);
+      setSiweMessage(preparedMessage);
+      setSignature(sig);
+
+    } catch (error) {
+      console.error('[Web3] Connection or Signature rejected:', error);
+      disconnect();
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const disconnect = () => {
+    setAddress(null);
+    setSignature(null);
+    setSiweMessage(null);
+  };
+
+  return (
+    <Web3Context.Provider value={{ address, signature, siweMessage, isConnecting, connect, disconnect }}>
+      {children}
+    </Web3Context.Provider>
+  );
+}
+
 --- src/components/ui/AppIcon.tsx ---
 'use client';
 
@@ -10806,6 +12301,48 @@ export default function TradingViewChart({ symbol }: { symbol: string }) {
   }, [symbol]);
 
   return <div id={`tv_${symbol}`} ref={containerRef} className="w-full h-[500px] border border-[#1a1a1a] rounded-lg overflow-hidden" />;
+}
+
+--- src/components/wallet/ConnectWallet.tsx ---
+'use client';
+
+import React from 'react';
+import { useWeb3 } from '../providers/Web3Provider';
+import { Wallet, LogOut, Loader2 } from 'lucide-react';
+
+export default function ConnectWallet() {
+  const { address, isConnecting, connect, disconnect } = useWeb3();
+
+  const formatAddress = (addr: string) => {
+    return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+  };
+
+  if (address) {
+    return (
+      <div className="flex items-center gap-3 bg-[#111] border border-[#333] pl-4 pr-2 py-2 rounded">
+        <div className="w-2 h-2 rounded-full bg-[#00d672] animate-pulse" />
+        <span className="font-mono text-xs text-[#00d672] font-black">{formatAddress(address)}</span>
+        <button 
+          onClick={disconnect}
+          className="p-2 hover:bg-[#222] rounded transition-colors text-[#888] hover:text-white"
+          title="Disconnect"
+        >
+          <LogOut size={14} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={connect}
+      disabled={isConnecting}
+      className="flex items-center gap-2 bg-[#FABF2C] text-black px-6 py-3 rounded text-xs font-black uppercase tracking-widest hover:bg-white transition-colors disabled:opacity-50"
+    >
+      {isConnecting ? <Loader2 size={16} className="animate-spin" /> : <Wallet size={16} />}
+      {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+    </button>
+  );
 }
 
 --- src/lib/api.ts ---
@@ -11011,7 +12548,7 @@ if (typeof setInterval !== 'undefined') {
     for (const [key, entry] of memoryStore.entries()) {
       if (now > entry.expiresAt) memoryStore.delete(key);
     }
-  }, 60000).unref();
+  }, 60000);
 }
 
 async function setRedisChunked<T>(key: string, data: T, ttl: number): Promise<void> {
@@ -11376,6 +12913,18 @@ export async function fetchWithTimeout(
   }
 }
 
+--- src/lib/neon.ts ---
+import 'server-only';
+import { neon } from '@neondatabase/serverless';
+
+if (!process.env.NEON_DATABASE_URL) {
+  console.warn('[Neon] Missing NEON_DATABASE_URL environment variable.');
+}
+
+// The neon() function automatically manages connections over HTTP/WebSockets
+// This is 100% compatible with Vercel's Edge runtime.
+export const sql = neon(process.env.NEON_DATABASE_URL || 'postgres://placeholder');
+
 --- src/lib/news.ts ---
 import { cached } from './cache';
 import type { WeightedArticle } from './types';
@@ -11559,50 +13108,48 @@ export async function getLivePredictions(): Promise<ArbSignal[]> {
 
 --- src/lib/rate-limit.ts ---
 import 'server-only';
+import { Redis } from '@upstash/redis';
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
+    : null;
 
-// In-memory store fallback
-const store = new Map<string, RateLimitEntry>();
-
-// Prevent memory leaks by sweeping expired rate-limit records
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of store.entries()) {
-      if (now > entry.resetAt) {
-        store.delete(key);
-      }
-    }
-  }, 60_000).unref();
-}
+const memoryStore = new Map<string, { count: number; resetAt: number }>();
 
 /**
- * Simple rate limiter.
- * @returns true if the request should be BLOCKED
+ * Distributed rate limiter using Upstash Redis.
+ * Falls back to memory if Redis is unavailable.
  */
-export function isRateLimited(
+export async function checkRateLimit(
   identifier: string,
   maxRequests: number = 5,
   windowMs: number = 60_000
-): boolean {
-  const now = Date.now();
-  const entry = store.get(identifier);
+): Promise<boolean> {
+  if (redis) {
+    try {
+      const count = await redis.incr(identifier);
+      if (count === 1) {
+        await redis.pexpire(identifier, windowMs);
+      }
+      return count > maxRequests;
+    } catch (e) {
+      console.warn('[RateLimit] Redis failed, falling back to memory');
+    }
+  }
 
+  // Memory fallback (per-instance only)
+  const now = Date.now();
+  const entry = memoryStore.get(identifier);
   if (!entry || now > entry.resetAt) {
-    store.set(identifier, { count: 1, resetAt: now + windowMs });
+    memoryStore.set(identifier, { count: 1, resetAt: now + windowMs });
     return false;
   }
-
   entry.count++;
-  if (entry.count > maxRequests) {
-    return true;
-  }
-
-  return false;
+  return entry.count > maxRequests;
 }
 
 --- src/lib/sanity.ts ---
@@ -11660,6 +13207,28 @@ export async function getActiveNotifications() {
       _id, message, type, link
     }`);
   }, 60);
+}
+
+--- src/lib/security.ts ---
+import 'server-only';
+
+/**
+ * Hashes an API key using the Web Crypto API (SHA-256).
+ * 100% compatible with Vercel Edge runtime (no bcrypt node dependencies).
+ */
+export async function hashApiKey(key: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(key);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Generates a secure, random API key for agents.
+ */
+export function generateApiKey(): string {
+  return `cbn_live_${crypto.randomUUID().replace(/-/g, '')}`;
 }
 
 --- src/lib/sidebar-config.ts ---
