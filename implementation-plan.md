@@ -206,3 +206,15 @@
 - Generate dynamic `sitemap.xml` and `robots.txt` for search engine indexing.
 - Inject global OpenGraph and Twitter Card metadata into the root layout.
 - Update global navigation (`Header.tsx`) to surface `/docs`, `/agent-registry/sandbox`, and `/dashboard`.
+
+## Phase 32: Data Terminal Overhaul (Research & Planning)
+- Analyze and map institutional metrics to DefiLlama, Dune Analytics, L2Beat, and CoinGecko.
+- Prioritize metrics into Core (DeFi/Spot/L2), Advanced (ETFs/Derivatives), and Future (TradFi/Alternative).
+- Define edge-caching strategies to protect rate limits and Dune execution credits.
+- Design architecture for dual-axis charts, heatmaps, and global timeframe filters.
+
+## Phase 33: Data Terminal Overhaul (Technical Design & API Integration)
+- Expand `src/lib/api.ts` to include DefiLlama Stablecoins, Fees, and Revenue endpoints.
+- Create `src/lib/l2beat.ts` to fetch and format Layer 2 scaling metrics.
+- Create `src/lib/derivatives.ts` to integrate Deribit (Options) and Binance/Coinglass (Futures).
+- Build unified Edge API routes (`/api/data/*`) to aggregate and cache these feeds for both the UI and AI agents.

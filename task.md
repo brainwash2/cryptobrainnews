@@ -424,3 +424,29 @@
 	•	Reference: Hotfix (Vercel Build Failure - Missing globals.css)
 	•	New Status: COMPLETED
 	•	Notes: Resolved Turbopack build failure in `src/app/layout.tsx` by dynamically resolving the exact path and filename of the global stylesheet (`global.css`, `globals.css`, etc.) and updating the import to use the Next.js `@/` alias.
+
+## Pending (Phase 32)
+- [ ] Task 32.1: Map targeted metrics to DefiLlama, Dune, L2Beat, and Deribit API endpoints.
+- [ ] Task 32.2: Establish Core, Advanced, and Future prioritization matrix.
+- [ ] Task 32.3: Design edge-caching architecture and define TTLs per data source.
+- [ ] Task 32.4: Specify new UI components (GaugeCard, HeatmapTable, Dual-Axis BlockChartCard).
+
+[2026-03-13] STATUS UPDATE
+	•	Reference: Phase 32 (Data Terminal Overhaul - Research)
+	•	New Status: PLANNING
+	•	Notes: Commencing full architectural review for institutional metrics expansion.
+[2026-03-13] STATUS UPDATE
+	•	Reference: Phase 32 (Data Terminal Overhaul - Research)
+	•	New Status: COMPLETED
+	•	Notes: Research validated. Prioritization and architecture strategy approved.
+
+## Pending (Phase 33)
+- [ ] Task 33.1: Expand `src/lib/api.ts` with DefiLlama Stablecoins and Protocol Revenue fetchers.
+-[ ] Task 33.2: Create `src/lib/l2beat.ts` for L2 TVL, throughput, and data fees.
+- [ ] Task 33.3: Create `src/lib/derivatives.ts` for Futures OI, Funding Rates, and Options IV.
+- [ ] Task 33.4: Construct unified Edge API routes (`/api/data/defi`, `/api/data/l2`, `/api/data/derivatives`) using `cached()`.
+
+[2026-03-13] STATUS UPDATE
+	•	Reference: Phase 33 (Technical Design & API Integration)
+	•	New Status: PLANNING
+	•	Notes: Ready to implement core data fetching libraries and edge endpoints.
