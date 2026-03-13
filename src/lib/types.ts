@@ -103,3 +103,40 @@ export interface StablecoinPoint {
   dominance_pct: number;
 }
 export type PriceTableRow = CoinMarketData;
+
+export interface StablecoinData {
+  id: string;
+  name: string;
+  symbol: string;
+  pegType: string;
+  price: number;
+  circulating: number;
+}
+
+export interface ProtocolRevenueData {
+  name: string;
+  category: string;
+  dailyFees: number;
+  dailyRevenue: number;
+  total1d: number;
+  total7d: number;
+}
+
+export interface L2ScalingData {
+  name: string;
+  tvl: number;
+  dailyTps?: number;
+  marketShare?: number;
+}
+
+export interface DerivativeMarketData {
+  exchange: string;
+  volume24h: number;
+  openInterest: number;
+}
+
+export interface FundingRateData {
+  symbol: string;
+  fundingRate: number;
+  markPrice: number;
+}

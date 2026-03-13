@@ -218,3 +218,8 @@
 - Create `src/lib/l2beat.ts` to fetch and format Layer 2 scaling metrics.
 - Create `src/lib/derivatives.ts` to integrate Deribit (Options) and Binance/Coinglass (Futures).
 - Build unified Edge API routes (`/api/data/*`) to aggregate and cache these feeds for both the UI and AI agents.
+
+## Phase 34: Data Terminal Overhaul (UI Components & Data Binding)
+- Build advanced visualization components (`GaugeCard`, `HeatmapTable`, upgraded `BlockChartCard`).
+- Bind real live data endpoints (`/api/data/*`) to the previously scaffolded Data Terminal pages.
+- Ensure strict TypeScript adherence across all new charts and tables to prevent hydration/build errors.

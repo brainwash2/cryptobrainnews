@@ -80,3 +80,41 @@ export async function getTopYields(): Promise<YieldPool[]> {
     } catch { return[]; }
   }, 600);
 }
+
+export async function getStablecoins(): Promise<StablecoinData[]> {
+  return cached('defi:stablecoins', async () => {
+    try {
+      const res = await fetchWithTimeout('https://stablecoins.llama.fi/stablecoins?includePrices=true', { cache: 'no-store' });
+      if (!res.ok) return[];
+      const json = await res.json();
+      if (!json.peggedAssets) return[];
+      return json.peggedAssets.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        symbol: p.symbol,
+        pegType: p.pegType,
+        price: p.price || 1,
+        circulating: p.circulating?.peggedUSD || 0
+      })).sort((a: any, b: any) => b.circulating - a.circulating);
+    } catch { return []; }
+  }, 3600);
+}
+
+export async function getProtocolFees(): Promise<ProtocolRevenueData[]> {
+  return cached('defi:fees', async () => {
+    try {
+      const res = await fetchWithTimeout('https://api.llama.fi/overview/fees?excludeTotalDataChart=true', { cache: 'no-store' });
+      if (!res.ok) return[];
+      const json = await res.json();
+      if (!json.protocols) return[];
+      return json.protocols.map((p: any) => ({
+        name: p.name,
+        category: p.category,
+        dailyFees: p.dailyFees || 0,
+        dailyRevenue: p.dailyRevenue || 0,
+        total1d: p.total1d || 0,
+        total7d: p.total7d || 0
+      })).sort((a: any, b: any) => b.dailyFees - a.dailyFees);
+    } catch { return[]; }
+  }, 3600);
+}
