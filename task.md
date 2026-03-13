@@ -460,3 +460,7 @@
 - [ ] Task 34.2: Build new `GaugeCard` component for Dominance and Fear & Greed indices.
 - [ ] Task 34.3: Refactor `/data/defi/revenue` and `/data/defi/stablecoins` to use the new live Edge endpoints instead of mock/empty data.
 - [ ] Task 34.4: Refactor `/data/scaling/optimistic` and `/data/scaling` to integrate L2Beat fallback metrics.
+[2026-03-13] STATUS UPDATE
+	•	Reference: Vercel Build Hotfix
+	•	New Status: COMPLETED
+	•	Notes: Applied definitive Node.js script to inject `StablecoinData` into types and imports, resolving the Vercel deployment crash.
