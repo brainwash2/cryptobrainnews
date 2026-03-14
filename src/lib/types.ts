@@ -78,7 +78,7 @@ export interface CoinMarketData {
 
 export interface DeFiProtocol {
   name: string;
-  tvl: number;
+  tvl: number | null;
   symbol?: string;
   category?: string;
   chain?: string;
@@ -124,7 +124,7 @@ export interface ProtocolRevenueData {
 
 export interface L2ScalingData {
   name: string;
-  tvl: number;
+  tvl: number | null;
   dailyTps?: number;
   marketShare?: number;
 }

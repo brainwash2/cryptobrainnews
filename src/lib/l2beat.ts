@@ -3,7 +3,6 @@ import { cached } from './cache';
 import { fetchWithTimeout } from './fetch-with-timeout';
 import type { L2ScalingData } from './types';
 
-// Uses DefiLlama chains endpoint as a highly reliable baseline for L2 TVL data
 export async function getL2ScalingData(): Promise<L2ScalingData[]> {
   return cached('l2:scaling:summary', async () => {
     try {
@@ -13,13 +12,14 @@ export async function getL2ScalingData(): Promise<L2ScalingData[]> {
       
       const rollups =['Arbitrum', 'Optimism', 'Base', 'ZkSync Era', 'Starknet', 'Linea', 'Scroll', 'Mantle', 'Blast'];
       
-      return data
-        .filter((c: any) => rollups.includes(c.name))
-        .map((c: any) => ({
-          name: c.name,
-          tvl: c.tvl || 0,
-        }))
-        .sort((a: any, b: any) => b.tvl - a.tvl);
+      return rollups.map(name => {
+        // Handle name mismatches gracefully
+        const chain = data.find((c: any) => c.name.toLowerCase() === name.toLowerCase());
+        return {
+          name,
+          tvl: chain && chain.tvl > 0 ? chain.tvl : null, // Set to null if 0 or missing
+        };
+      }).sort((a: any, b: any) => (b.tvl || 0) - (a.tvl || 0));
     } catch {
       return[];
     }

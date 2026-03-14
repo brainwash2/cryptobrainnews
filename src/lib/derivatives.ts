@@ -7,14 +7,19 @@ export async function getDerivativesExchanges(): Promise<DerivativeMarketData[]>
   return cached('derivatives:exchanges', async () => {
     try {
       const res = await fetchWithTimeout('https://api.llama.fi/overview/derivatives?excludeTotalDataChart=true', { cache: 'no-store' });
-      if (!res.ok) return[];
+      if (!res.ok) return [];
       const json = await res.json();
       if (!json.protocols) return[];
-      return json.protocols.map((p: any) => ({
-        exchange: p.name,
-        volume24h: p.dailyVolume || 0,
-        openInterest: p.totalOpenInterest || 0
-      })).sort((a: any, b: any) => b.openInterest - a.openInterest);
+      
+      // Filter out entirely inactive exchanges
+      return json.protocols
+        .filter((p: any) => p.dailyVolume > 0 || p.totalOpenInterest > 0)
+        .map((p: any) => ({
+          exchange: p.name,
+          volume24h: p.dailyVolume || 0,
+          openInterest: p.totalOpenInterest || 0
+        }))
+        .sort((a: any, b: any) => b.openInterest - a.openInterest);
     } catch {
       return[];
     }
@@ -38,5 +43,5 @@ export async function getFundingRates(): Promise<FundingRateData[]> {
     } catch {
       return[];
     }
-  }, 300); // 5 minutes cache for volatile funding rates
+  }, 300); // 5 minutes cache
 }

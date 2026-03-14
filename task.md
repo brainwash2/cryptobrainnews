@@ -473,3 +473,18 @@
 - [ ] Task 35.1: Build Futures/Perpetuals dashboard using `getDerivativesExchanges()` and `getFundingRates()`.
 - [ ] Task 35.2: Implement `HeatmapTable` component for rendering funding rate zones (green/red shading).
 - [ ] Task 35.3: Ensure derivative API routes (`/api/data/derivatives`) degrade gracefully if Binance rate limits hit.
+
+## Pending (Phase 36)
+- [ ] Task 36.1: Fix `/data/defi/stablecoins` table headers and `GaugeCard` layout overlaps.
+- [ ] Task 36.2: Update `src/lib/l2beat.ts` to handle $0 TVL edge cases with L2Beat fallbacks or 'N/A' formatting.
+- [ ] Task 36.3: Overhaul `DataTable` component styling (alternating rows, typography) and empty states.
+- [ ] Task 36.4: Filter inactive exchanges (`volume === 0 && oi === 0`) in `src/lib/derivatives.ts`.
+
+[2026-03-13] STATUS UPDATE
+	•	Reference: Phase 36 (UI Polish & Data Validation)
+	•	New Status: PLANNING
+	•	Notes: Pausing feature development to harden existing UI components and data pipelines based on visual QA.
+[2026-03-13] STATUS UPDATE
+	•	Reference: Phase 36 Tasks (UI Polish & Data Validation)
+	•	New Status: COMPLETED
+	•	Notes: Refactored `DataTable` with row data passing, fixing stablecoin duplication. Filtered dead derivative endpoints. Patched Optimism $0.00B TVL bug with elegant `N/A` fallback logic. Fixed GaugeCard SVG bounding box overlaps.

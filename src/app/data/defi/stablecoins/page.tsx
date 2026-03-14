@@ -30,7 +30,7 @@ export default async function StablecoinsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-8 flex flex-col justify-center">
-          <p className="text-[10px] text-[#555] font-black uppercase tracking-widest mb-4">Total Circulating Supply</p>
+          <p className="text-[10px] text-[#555] font-black uppercase tracking-widest mb-4">Total Circulating</p>
           <p className="text-5xl font-black text-[#00d672] tabular-nums">${(currentMcap / 1e9).toFixed(2)}B</p>
         </div>
         <GaugeCard 
@@ -48,8 +48,16 @@ export default async function StablecoinsPage() {
       <div className="border border-[#1a1a1a] bg-[#0a0a0a]">
         <DataTable
           columns={[
-            { key: 'name', label: 'Asset' },
-            { key: 'symbol', label: 'Ticker' },
+            { 
+              key: 'name', 
+              label: 'Asset', 
+              format: (v: any, row: any) => (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-white">{row.name}</span>
+                  <span className="text-[9px] font-black text-[#FABF2C] uppercase tracking-widest px-2 py-0.5 bg-[#FABF2C]/10 rounded">{row.symbol}</span>
+                </div>
+              )
+            },
             { key: 'pegType', label: 'Peg Type' },
             { key: 'price', label: 'Price (USD)', format: (v) => `$${Number(v).toFixed(4)}`, align: 'right' },
             { key: 'circulating', label: 'Circulating Supply', format: formatUsd, align: 'right' }
