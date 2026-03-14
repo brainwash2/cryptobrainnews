@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     const protocols = await getDeFiProtocols();
     const candidates = protocols.filter(p => 
       (!p.symbol || p.symbol === '-' || p.symbol.toLowerCase() === 'none') && 
-      p.tvl > 5000000 &&
+      p.tvl && p.tvl > 5000000 &&
       p.category !== 'CEX' &&
       p.category !== 'Chain' &&
       p.category !== 'Bridge'
