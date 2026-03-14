@@ -228,3 +228,9 @@
 - Connect `src/lib/derivatives.ts` to `/data/markets/futures` and `/data/defi/derivatives`.
 - Build `HeatmapTable` component to visualize positive/negative funding rates intuitively.
 - Establish alpha paywall bindings for deep historical data (CME COTs fallback UI).
+
+## Phase 36: UI Polish & Data Validation
+- Fix Stablecoins table column duplication and GaugeCard text overlap.
+- Implement data fallbacks for L2 TVL (Optimism $0.00B issue) using L2Beat/N/A logic.
+- Standardize `DataTable` UI with alternating row colors, strict monospace alignment, and elegant empty states.
+- Filter out zero-value derivative exchanges from the `/api/data/derivatives` endpoint.
