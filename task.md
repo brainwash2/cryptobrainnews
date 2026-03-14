@@ -492,3 +492,7 @@
 	•	Reference: Phase 36 Hotfix (Build Failure)
 	•	New Status: COMPLETED
 	•	Notes: Added strict `(p.tvl || 0)` fallback values to `.sort()` and `.filter()` methods in `generate-airdrop` and `oracle/airdrops` API routes. This resolved the "Type error: 'b.tvl' is possibly 'null'" compilation failure caused by Phase 36 type updates.
+[2026-03-14] STATUS UPDATE
+	•	Reference: Task 35.1 (Futures Dashboard)
+	•	New Status: COMPLETED
+	•	Notes: Replaced mock UI with real data from `getDerivativesExchanges` and `getFundingRates`. Implemented dual-axis `BlockChartCard` with simulated 30D historical trend based on live bounds. Deployed strict TS typing and graceful empty state fallbacks.
