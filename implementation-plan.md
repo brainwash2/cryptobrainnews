@@ -234,3 +234,14 @@
 - Implement data fallbacks for L2 TVL (Optimism $0.00B issue) using L2Beat/N/A logic.
 - Standardize `DataTable` UI with alternating row colors, strict monospace alignment, and elegant empty states.
 - Filter out zero-value derivative exchanges from the `/api/data/derivatives` endpoint.
+
+## Phase 37: Foundation & Cleanup
+- Introduced `ComingSoon` shared placeholder component to eliminate all Lock/paywall UI from the `/data` section.
+- Rebuilt `sidebar-config.ts` to match the complete `metrics.txt` product specification (9 top-level sections, 60+ sub-pages).
+- Systematically converted 30+ gated data pages to neutral "Coming Soon" placeholders with source attribution and target phase labels.
+- Created new `/data/alternative/` directory with 5 placeholder pages (funding, politics, web-traffic, app-usage, social).
+- Patched TypeScript `any` violations in the Futures page; all new files are strict-mode compliant with no `any`.
+[2026-03-14] STATUS UPDATE
+	•	Reference: Phase 37 (Foundation & Cleanup)
+	•	New Status: COMPLETED
+	•	Notes: All paywall/lock components removed from data pages. Sidebar config rebuilt to full spec. Placeholder pages created for missing routes. TypeScript `any` patched in futures page. Ready for Phase 38 approval.

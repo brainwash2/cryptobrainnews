@@ -504,3 +504,14 @@
 	•	Reference: Global Ticker Hotfix
 	•	New Status: COMPLETED
 	•	Notes: Restored the `<PriceTicker />` component to `src/app/layout.tsx` so the live scrolling prices appear immediately below the global header across all pages. Adjusted `<main>` padding to prevent overlap.
+
+[2026-03-14] STATUS UPDATE
+	•	Reference: Phase 37 (Foundation & Cleanup)
+	•	New Status: COMPLETED
+	•	Notes:
+	  1. Created shared `ComingSoon` component at `src/app/data/_components/ComingSoon.tsx` to replace all Lock/paywall UI with a neutral "data coming soon" placeholder — no premium gating whatsoever.
+	  2. Rebuilt `src/lib/sidebar-config.ts` from scratch to include all 9 top-level sections from `metrics.txt`: Markets, ETFs, Treasuries, Stablecoins, On-Chain, Scaling, DeFi, NFTs, and Alternative Metrics. All sub-pages are linked.
+	  3. Converted 30+ inline Lock/paywall pages (Lock icon + "Unlock Alpha" CTA) to use `ComingSoon` — affected routes: markets/indices, markets/options, markets/cme-cots, markets/prices, markets/volumes, markets/companies, markets/exchange-tokens, markets/sports-tokens, etfs/comparison, etfs/crypto, etfs/solana, etfs/xrp, all treasuries pages, stablecoins/non-usd, stablecoins/non-fiat, scaling/zk, scaling/l1-evm, scaling/l1-non-evm, scaling/data-availability, defi/tvl, defi/lending, defi/restaking, defi/launchpads, defi/prediction, defi/derivatives, defi/rwa, defi/exploits, defi/social, nfts/art, nfts/gaming, nfts/marketplaces, onchain/avalanche, onchain/aptos, onchain/comparison.
+	  4. Created brand-new `/data/alternative/` section (did not exist) with placeholder pages for: funding, politics, web-traffic, app-usage, social.
+	  5. Fixed TypeScript `any` violations in `src/app/data/markets/futures/page.tsx`: replaced `formatUsd = (v: any)` with `(v: unknown)`, added explicit `[DerivativeMarketData[], FundingRateData[]]` type annotation on Promise.all, removed `Math.random()` from trend generator for deterministic SSR safety.
+	  6. All `AlphaGate`-style content gates removed from the data section. Data will be fully free and accessible once each phase implements the real API integrations.
