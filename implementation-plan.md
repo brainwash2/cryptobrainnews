@@ -245,3 +245,18 @@
 	•	Reference: Phase 37 (Foundation & Cleanup)
 	•	New Status: COMPLETED
 	•	Notes: All paywall/lock components removed from data pages. Sidebar config rebuilt to full spec. Placeholder pages created for missing routes. TypeScript `any` patched in futures page. Ready for Phase 38 approval.
+
+## Phase 38: Core Markets (Spot, Futures, Options, Indices, COTs, Prices)
+- Built TimeframeSelector shared component (1D/7D/30D/YTD/1Y, supports `available` prop for per-page restrictions).
+- Created `src/lib/market-data.ts` with 8 typed fetchers: CoinGecko global, Fear & Greed, extended coins (multi-TF perf), CEX exchange rankings, coin categories, Binance OI history, Binance funding rate history.
+- Created `src/lib/options.ts` with Deribit public API: options aggregate (OI, volume, put/call ratio, IV) and historical volatility (DVol index).
+- Spot page: live global stats, top 50 coins sorted by TF-selected performance, CEX volume rankings with trust scores.
+- Futures page: real Binance OI history chart (no more simulated data), funding rate history chart, TF toggle, exchange volumes + live funding rates tables. FuturesClient is fully typed.
+- Options page: Deribit BTC/ETH OI aggregates, put/call ratios, 30D DVol history chart.
+- Indices page: CoinGecko categories as free-tier sector index proxy (40 sectors). GMCI proprietary integration noted for future.
+- CME COTs page: institutional explainer with trader category table structure, COT report metadata, interpretation guide. Pending CFTC pipeline.
+- Prices page: global KPIs + Fear & Greed gauge + top gainers/losers movers strip + sortable 100-coin performance table with TF toggle.
+[2026-03-14] STATUS UPDATE
+	- Reference: Phase 38 (Core Markets)
+	- New Status: COMPLETED
+	- Notes: All 6 markets sub-pages built with real API data (Binance, CoinGecko, Deribit, alternative.me). Zero mock data, zero premium gates, zero TypeScript `any`. TimeframeSelector deployed across Spot, Futures, and Prices pages. Ready for Phase 39 approval.

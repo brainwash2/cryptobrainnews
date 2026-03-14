@@ -515,3 +515,19 @@
 	  4. Created brand-new `/data/alternative/` section (did not exist) with placeholder pages for: funding, politics, web-traffic, app-usage, social.
 	  5. Fixed TypeScript `any` violations in `src/app/data/markets/futures/page.tsx`: replaced `formatUsd = (v: any)` with `(v: unknown)`, added explicit `[DerivativeMarketData[], FundingRateData[]]` type annotation on Promise.all, removed `Math.random()` from trend generator for deterministic SSR safety.
 	  6. All `AlphaGate`-style content gates removed from the data section. Data will be fully free and accessible once each phase implements the real API integrations.
+
+[2026-03-14] STATUS UPDATE
+	- Reference: Phase 38 (Core Markets)
+	- New Status: COMPLETED
+	- Notes:
+	  1. Created `src/app/data/_components/TimeframeSelector.tsx` – reusable client component for 1D/7D/30D/YTD/1Y toggles. Supports `available` prop to disable inapplicable timeframes per page.
+	  2. Created `src/lib/market-data.ts` – 8 typed async functions: getGlobalMarketData (CoinGecko /global), getFearAndGreedIndex (alternative.me), getTopCoinsExtended (CoinGecko /markets with 1h/24h/7d/30d perf), getTopExchangeVolumes (CoinGecko /exchanges), getCoinCategories (CoinGecko categories), getOIHistory (Binance fapi openInterestHist for BTC+ETH), getFundingRateHistory (Binance fapi fundingRate daily averages). All use `cached()` utility.
+	  3. Created `src/lib/options.ts` – Deribit public API integration: getOptionsAggregate (OI, volume, put/call ratio, avg IV per currency) and getDeribitHistVol (30-day historical implied volatility index).
+	  4. Built `/data/markets/spot` – full real-data page: global stats, Fear & Greed, top 50 coins sortable by 1D/7D/30D performance, CEX rankings by BTC volume with trust scores.
+	  5. Upgraded `/data/markets/futures` – replaced simulated trend chart with real Binance OI history (BTC+ETH ComposedChart), added Binance daily funding rate AreaChart, TF toggle (7D/30D), strict TypeScript throughout. FuturesClient is now a proper client component.
+	  6. Built `/data/markets/options` – Deribit data: BTC/ETH aggregate stats (OI, volume, put/call ratio, avg IV), 30D historical IV AreaChart (DVol index), data source note.
+	  7. Built `/data/markets/indices` – CoinGecko categories as sector proxies: 40 categories with market cap, 24h change, volume, top-3 coin icons. Note explains GMCI proprietary index future integration.
+	  8. Built `/data/markets/cme-cots` – institutional-grade placeholder: full trader category breakdown table (Managed Money, Swap Dealers, etc.), COT explainer, release schedule metadata. No lock/paywall.
+	  9. Built `/data/markets/prices` – global market overview + top 100 coins: all-time high %, sortable columns (rank/performance/mcap/volume), top gainers/losers movers strip, TF toggle (1D/7D/30D), Fear & Greed gauge visualization.
+	  10. Extended `src/lib/types.ts` with 6 new interfaces for Phase 38 data shapes.
+	  11. All pages: no mock data, no premium gates, strict TypeScript (no `any`), graceful empty-state on API failure, cached with appropriate TTLs.

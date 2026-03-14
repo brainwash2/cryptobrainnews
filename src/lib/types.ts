@@ -140,3 +140,51 @@ export interface FundingRateData {
   fundingRate: number;
   markPrice: number;
 }
+
+// ─── Phase 38 additions ──────────────────────────────────────────────────────
+
+export interface GlobalMarketSummary {
+  totalMarketCap: number;
+  totalVolume24h: number;
+  btcDominance: number;
+  ethDominance: number;
+  marketCapChange24h: number;
+  activeCryptocurrencies: number;
+}
+
+export interface OIHistoryPoint {
+  date: string;
+  btc: number;
+  eth: number;
+}
+
+export interface FundingHistoryPoint {
+  date: string;
+  btc: number;
+  eth: number;
+}
+
+export interface OptionsAggregateData {
+  currency: 'BTC' | 'ETH';
+  totalOiContracts: number;
+  totalOiUsd: number;
+  totalVolumeUsd: number;
+  callOiUsd: number;
+  putOiUsd: number;
+  putCallRatio: number;
+  avgIV: number;
+  expiryCount: number;
+}
+
+export interface HistoricalVolPoint {
+  date: string;
+  value: number;
+}
+
+export interface CoinSectorCategory {
+  id: string;
+  name: string;
+  market_cap: number | null;
+  market_cap_change_24h: number | null;
+  volume_24h: number | null;
+}
