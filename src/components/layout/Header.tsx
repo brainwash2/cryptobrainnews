@@ -10,7 +10,7 @@ export default function Header() {
   const navLinks =[
     { name: 'NEWS', href: '/news' },
     { name: 'DATA', href: '/data/markets/spot' },
-    { name: 'PRICES', href: '/prices' },
+    { name: 'PRICES', href: '/price-indexes' },
     { name: 'EVENTS', href: '/events' },
     { name: 'AIRDROPS', href: '/airdrops' },
     { name: 'DOCS', href: '/docs' },

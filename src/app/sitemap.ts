@@ -8,7 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '',
     '/news',
     '/data/markets/spot',
-    '/prices',
+    '/price-indexes',
     '/events',
     '/airdrops',
     '/learning',

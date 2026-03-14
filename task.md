@@ -496,3 +496,7 @@
 	•	Reference: Task 35.1 (Futures Dashboard)
 	•	New Status: COMPLETED
 	•	Notes: Replaced mock UI with real data from `getDerivativesExchanges` and `getFundingRates`. Implemented dual-axis `BlockChartCard` with simulated 30D historical trend based on live bounds. Deployed strict TS typing and graceful empty state fallbacks.
+[2026-03-14] STATUS UPDATE
+	•	Reference: Header Navigation Hotfix
+	•	New Status: COMPLETED
+	•	Notes: Fixed 404 error on `/prices` by updating `Header.tsx` and `sitemap.ts` to point to the correct `/price-indexes` route. Added a permanent 308 redirect in `next.config.mjs` for backward compatibility.

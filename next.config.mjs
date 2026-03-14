@@ -18,7 +18,7 @@ const nextConfig = {
     },
   },
   async headers() {
-    return [{
+    return[{
       source: '/(.*)',
       headers:[
         { key: 'X-Frame-Options', value: 'DENY' },
@@ -30,7 +30,10 @@ const nextConfig = {
     }];
   },
   async redirects() {
-    return[{ source: '/homepage', destination: '/', permanent: true }];
+    return[
+      { source: '/homepage', destination: '/', permanent: true },
+      { source: '/prices', destination: '/price-indexes', permanent: true }
+    ];
   },
 };
 export default nextConfig;
