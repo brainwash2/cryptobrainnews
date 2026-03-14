@@ -488,3 +488,7 @@
 	•	Reference: Phase 36 Tasks (UI Polish & Data Validation)
 	•	New Status: COMPLETED
 	•	Notes: Refactored `DataTable` with row data passing, fixing stablecoin duplication. Filtered dead derivative endpoints. Patched Optimism $0.00B TVL bug with elegant `N/A` fallback logic. Fixed GaugeCard SVG bounding box overlaps.
+[2026-03-14] STATUS UPDATE
+	•	Reference: Phase 36 Hotfix (Build Failure)
+	•	New Status: COMPLETED
+	•	Notes: Added strict `(p.tvl || 0)` fallback values to `.sort()` and `.filter()` methods in `generate-airdrop` and `oracle/airdrops` API routes. This resolved the "Type error: 'b.tvl' is possibly 'null'" compilation failure caused by Phase 36 type updates.

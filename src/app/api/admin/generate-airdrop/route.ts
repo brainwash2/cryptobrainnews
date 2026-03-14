@@ -5,7 +5,6 @@ import { createClient } from 'next-sanity';
 import { generateText } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 
-// Requires SANITY_API_WRITE_TOKEN in your .env for production writes
 const writeClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || '9z1iv2c9',
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
@@ -24,11 +23,11 @@ export async function POST(request: Request) {
     const protocols = await getDeFiProtocols();
     const candidates = protocols.filter(p => 
       (!p.symbol || p.symbol === '-' || p.symbol.toLowerCase() === 'none') && 
-      p.tvl && p.tvl > 5000000 &&
+      (p.tvl || 0) > 5000000 &&
       p.category !== 'CEX' &&
       p.category !== 'Chain' &&
       p.category !== 'Bridge'
-    ).sort((a, b) => b.tvl - a.tvl);
+    ).sort((a, b) => (b.tvl || 0) - (a.tvl || 0));
 
     // 3. Find the first candidate that doesn't have a guide yet
     const target = candidates.find(p => {
@@ -48,7 +47,7 @@ export async function POST(request: Request) {
     
     const groq = createGroq({ apiKey: groqKey });
     const prompt = `You are a quantitative Web3 analyst. Generate a highly actionable airdrop farming playbook for a protocol named "${target.name}". 
-    It is a ${target.category || 'DeFi'} protocol on ${target.chain || 'multiple chains'} with $${(target.tvl / 1e6).toFixed(1)}M Total Value Locked.
+    It is a ${target.category || 'DeFi'} protocol on ${target.chain || 'multiple chains'} with $${((target.tvl || 0) / 1e6).toFixed(1)}M Total Value Locked.
     Return ONLY a raw JSON object matching this exact schema:
     {
       "probability": "High", // Must be exactly "High", "Medium", or "Speculative" based on TVL > $100M (High), > $20M (Medium).

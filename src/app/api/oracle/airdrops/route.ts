@@ -22,11 +22,11 @@ export async function GET(request: Request) {
     const tokenless = protocols
       .filter(p => 
         (!p.symbol || p.symbol === '-' || p.symbol.toLowerCase() === 'none') && 
-        p.tvl > 5000000 &&
+        (p.tvl || 0) > 5000000 &&
         p.category !== 'CEX' &&
         p.category !== 'Chain'
       )
-      .sort((a, b) => b.tvl - a.tvl)
+      .sort((a, b) => (b.tvl || 0) - (a.tvl || 0))
       .slice(0, 50);
 
     const signals = tokenless.map(p => ({
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       tvl_usd: p.tvl,
       network: p.chain || 'Multi',
       sector: p.category || 'DeFi',
-      confidence_score: p.tvl > 100000000 ? 0.95 : 0.85,
+      confidence_score: (p.tvl || 0) > 100000000 ? 0.95 : 0.85,
       recommended_agent_action: 'bridge_and_provide_liquidity',
       sybil_risk_level: 'high',
       parameters: {
