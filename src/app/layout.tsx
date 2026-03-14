@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Roboto_Mono } from 'next/font/google';
 import '@/styles/globals.css';
 import Header from '@/components/layout/Header';
+import PriceTicker from '@/components/common/PriceTicker'; // Import the ticker
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const mono = Roboto_Mono({ subsets: ['latin'], variable: '--font-mono' });
@@ -57,7 +58,9 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${mono.variable} scroll-smooth`}>
       <body className="bg-[#050505] text-white min-h-screen flex flex-col antialiased selection:bg-[#FABF2C] selection:text-black">
         <Header />
-        <main className="flex-1">
+        <PriceTicker /> {/* Inject the Ticker right below the header */}
+        {/* We add pt-10 to the main container to account for the ticker's height */}
+        <main className="flex-1 pt-10">
           {children}
         </main>
       </body>

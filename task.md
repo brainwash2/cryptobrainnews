@@ -500,3 +500,7 @@
 	•	Reference: Header Navigation Hotfix
 	•	New Status: COMPLETED
 	•	Notes: Fixed 404 error on `/prices` by updating `Header.tsx` and `sitemap.ts` to point to the correct `/price-indexes` route. Added a permanent 308 redirect in `next.config.mjs` for backward compatibility.
+[2026-03-14] STATUS UPDATE
+	•	Reference: Global Ticker Hotfix
+	•	New Status: COMPLETED
+	•	Notes: Restored the `<PriceTicker />` component to `src/app/layout.tsx` so the live scrolling prices appear immediately below the global header across all pages. Adjusted `<main>` padding to prevent overlap.
