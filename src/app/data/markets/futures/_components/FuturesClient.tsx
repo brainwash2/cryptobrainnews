@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
+  ComposedChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, AreaChart, Area,
 } from 'recharts';
 import { TimeframeSelector }      from '../../../_components/TimeframeSelector';
@@ -124,13 +124,13 @@ export default function FuturesClient({
                     fontFamily: 'monospace',
                     fontSize: 11,
                   }}
-                  formatter={(value: number | string | undefined, name: string) => {
+                  formatter={(value: any, name: string) => {
                     const n = typeof value === 'number' ? value : Number(value);
                     return [
                       isNaN(n) ? '—' : `$${(n / 1e9).toFixed(2)}B`,
                       name.toUpperCase(),
                     ];
-                  }}
+                  } as any}
                 />
                 <Legend
                   iconType="line"
@@ -211,13 +211,13 @@ export default function FuturesClient({
                     fontFamily: 'monospace',
                     fontSize: 11,
                   }}
-                  formatter={(value: number | string | undefined, name: string) => {
+                  formatter={(value: any, name: string) => {
                     const n = typeof value === 'number' ? value : Number(value);
                     return [
                       isNaN(n) ? '—' : `${n.toFixed(4)}%`,
                       name.toUpperCase(),
                     ];
-                  }}
+                  } as any}
                 />
                 <Legend
                   iconType="line"
