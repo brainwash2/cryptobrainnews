@@ -5,7 +5,6 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, AreaChart, Area,
 } from 'recharts';
-import type { Formatter } from 'recharts';
 import { TimeframeSelector }      from '../../../_components/TimeframeSelector';
 import type { Timeframe }          from '../../../_components/TimeframeSelector';
 import type { DerivativeMarketData, FundingRateData } from '@/lib/types';
@@ -25,30 +24,6 @@ function fmtUsd(v: unknown): string {
   if (n >= 1e6)  return `$${(n / 1e6).toFixed(2)}M`;
   return `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
-
-// ── Typed tooltip formatters with explicit assertions ─────────────────────────
-
-const oiTooltipFormatter = ((
-  value: number | string | Array<number | string>,
-  name: string
-): [string, string] => {
-  const n = typeof value === 'number' ? value : Number(value);
-  return [
-    isNaN(n) ? '—' : `$${(n / 1e9).toFixed(2)}B`,
-    name.toUpperCase(),
-  ];
-}) as Formatter<number | string | undefined, string>;
-
-const frTooltipFormatter = ((
-  value: number | string | Array<number | string>,
-  name: string
-): [string, string] => {
-  const n = typeof value === 'number' ? value : Number(value);
-  return [
-    isNaN(n) ? '—' : `${n.toFixed(4)}%`,
-    name.toUpperCase(),
-  ];
-}) as Formatter<number | string | undefined, string>;
 
 const CHART_STYLE = {
   grid:    '#1a1a1a',
@@ -80,7 +55,7 @@ export default function FuturesClient({
   return (
     <div className="space-y-10">
 
-      {/* ── KPI Strip ──────────────────────────────────────────────────── */}
+      {/* KPI Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: '24h Global Volume',   value: fmtUsd(totalVolume),         accent: '#FABF2C' },
@@ -95,7 +70,7 @@ export default function FuturesClient({
         ))}
       </div>
 
-      {/* ── OI History Chart ───────────────────────────────────────────── */}
+      {/* OI History Chart */}
       <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
@@ -149,7 +124,13 @@ export default function FuturesClient({
                     fontFamily: 'monospace',
                     fontSize: 11,
                   }}
-                  formatter={oiTooltipFormatter}
+                  formatter={(value: number | string | undefined, name: string) => {
+                    const n = typeof value === 'number' ? value : Number(value);
+                    return [
+                      isNaN(n) ? '—' : `$${(n / 1e9).toFixed(2)}B`,
+                      name.toUpperCase(),
+                    ];
+                  }}
                 />
                 <Legend
                   iconType="line"
@@ -171,7 +152,7 @@ export default function FuturesClient({
         </div>
       </div>
 
-      {/* ── Funding Rate History Chart ─────────────────────────────────── */}
+      {/* Funding Rate History Chart */}
       <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -230,7 +211,13 @@ export default function FuturesClient({
                     fontFamily: 'monospace',
                     fontSize: 11,
                   }}
-                  formatter={frTooltipFormatter}
+                  formatter={(value: number | string | undefined, name: string) => {
+                    const n = typeof value === 'number' ? value : Number(value);
+                    return [
+                      isNaN(n) ? '—' : `${n.toFixed(4)}%`,
+                      name.toUpperCase(),
+                    ];
+                  }}
                 />
                 <Legend
                   iconType="line"
@@ -268,9 +255,8 @@ export default function FuturesClient({
         </div>
       </div>
 
-      {/* ── Exchanges & Live Funding Tables ────────────────────────────── */}
+      {/* Tables (unchanged) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
         {/* Exchange Volumes */}
         <div>
           <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center gap-3">
@@ -282,39 +268,16 @@ export default function FuturesClient({
               <thead>
                 <tr className="border-b border-[#1a1a1a] bg-[#080808]">
                   {['Exchange', '24h Volume', 'Open Interest'].map((h) => (
-                    <th
-                      key={h}
-                      className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${
-                        h === 'Exchange' ? 'text-left' : 'text-right'
-                      }`}
-                    >
-                      {h}
-                    </th>
+                    <th key={h} className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${h === 'Exchange' ? 'text-left' : 'text-right'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {exchanges.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="px-4 py-10 text-center text-[#555] font-mono text-xs">
-                      Syncing exchange data...
-                    </td>
-                  </tr>
-                )}
                 {exchanges.slice(0, 15).map((ex, i) => (
-                  <tr
-                    key={ex.exchange}
-                    className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${
-                      i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'
-                    }`}
-                  >
+                  <tr key={ex.exchange} className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'}`}>
                     <td className="px-4 py-3 font-bold text-white capitalize">{ex.exchange}</td>
-                    <td className="px-4 py-3 text-right font-mono font-black text-[#FABF2C] tabular-nums">
-                      {fmtUsd(ex.volume24h)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">
-                      {fmtUsd(ex.openInterest)}
-                    </td>
+                    <td className="px-4 py-3 text-right font-mono font-black text-[#FABF2C] tabular-nums">{fmtUsd(ex.volume24h)}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">{fmtUsd(ex.openInterest)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -325,60 +288,27 @@ export default function FuturesClient({
         {/* Live Funding Rates */}
         <div>
           <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-3">
-              <span className="w-2 h-2 bg-[#00d672] rounded-full animate-pulse" />
-              Live Funding Rates
-            </div>
-            <span className="text-[9px] text-[#00d672] font-mono tracking-widest bg-[#00d672]/10 border border-[#00d672]/30 px-2 py-1">
-              Binance
-            </span>
+            <div className="flex items-center gap-3"><span className="w-2 h-2 bg-[#00d672] rounded-full animate-pulse" />Live Funding Rates</div>
+            <span className="text-[9px] text-[#00d672] font-mono tracking-widest bg-[#00d672]/10 border border-[#00d672]/30 px-2 py-1">Binance</span>
           </h3>
           <div className="border border-[#1a1a1a] bg-[#0a0a0a] overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-[#1a1a1a] bg-[#080808]">
                   {['Pair', 'Mark Price', 'Funding (8h)'].map((h) => (
-                    <th
-                      key={h}
-                      className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${
-                        h === 'Pair' ? 'text-left' : 'text-right'
-                      }`}
-                    >
-                      {h}
-                    </th>
+                    <th key={h} className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${h === 'Pair' ? 'text-left' : 'text-right'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {fundingRates.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="px-4 py-10 text-center text-[#555] font-mono text-xs">
-                      Syncing funding rates...
-                    </td>
-                  </tr>
-                )}
                 {fundingRates.slice(0, 15).map((f, i) => {
-                  const rate       = f.fundingRate ?? 0;
-                  const rateColor  =
-                    rate > 0.01  ? 'text-[#00d672]' :
-                    rate < -0.01 ? 'text-[#ff4757]' : 'text-[#888]';
+                  const rate = f.fundingRate ?? 0;
+                  const rateColor = rate > 0.01 ? 'text-[#00d672]' : rate < -0.01 ? 'text-[#ff4757]' : 'text-[#888]';
                   return (
-                    <tr
-                      key={f.symbol}
-                      className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${
-                        i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'
-                      }`}
-                    >
+                    <tr key={f.symbol} className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'}`}>
                       <td className="px-4 py-3 font-bold text-white">{f.symbol}</td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">
-                        ${Number(f.markPrice).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 4,
-                        })}
-                      </td>
-                      <td className={`px-4 py-3 text-right font-mono font-bold tabular-nums ${rateColor}`}>
-                        {rate > 0 ? '+' : ''}{rate.toFixed(4)}%
-                      </td>
+                      <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">${Number(f.markPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</td>
+                      <td className={`px-4 py-3 text-right font-mono font-bold tabular-nums ${rateColor}`}>{rate > 0 ? '+' : ''}{rate.toFixed(4)}%</td>
                     </tr>
                   );
                 })}
@@ -386,7 +316,6 @@ export default function FuturesClient({
             </table>
           </div>
         </div>
-
       </div>
     </div>
   );
