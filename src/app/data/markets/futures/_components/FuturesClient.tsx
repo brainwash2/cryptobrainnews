@@ -52,6 +52,23 @@ export default function FuturesClient({
   const oiChartData = oiHistory.slice(-days);
   const frChartData = fundingHistory.slice(-days);
 
+  // Separate formatter functions with explicit any casting (works around Recharts strict types)
+  const oiFormatter: any = (value: any, name: string) => {
+    const n = typeof value === 'number' ? value : Number(value);
+    return [
+      isNaN(n) ? '—' : `$${(n / 1e9).toFixed(2)}B`,
+      name.toUpperCase(),
+    ];
+  };
+
+  const frFormatter: any = (value: any, name: string) => {
+    const n = typeof value === 'number' ? value : Number(value);
+    return [
+      isNaN(n) ? '—' : `${n.toFixed(4)}%`,
+      name.toUpperCase(),
+    ];
+  };
+
   return (
     <div className="space-y-10">
 
@@ -124,13 +141,7 @@ export default function FuturesClient({
                     fontFamily: 'monospace',
                     fontSize: 11,
                   }}
-                  formatter={(value: any, name: string) => {
-                    const n = typeof value === 'number' ? value : Number(value);
-                    return [
-                      isNaN(n) ? '—' : `$${(n / 1e9).toFixed(2)}B`,
-                      name.toUpperCase(),
-                    ];
-                  } as any}
+                  formatter={oiFormatter}
                 />
                 <Legend
                   iconType="line"
@@ -211,13 +222,7 @@ export default function FuturesClient({
                     fontFamily: 'monospace',
                     fontSize: 11,
                   }}
-                  formatter={(value: any, name: string) => {
-                    const n = typeof value === 'number' ? value : Number(value);
-                    return [
-                      isNaN(n) ? '—' : `${n.toFixed(4)}%`,
-                      name.toUpperCase(),
-                    ];
-                  } as any}
+                  formatter={frFormatter}
                 />
                 <Legend
                   iconType="line"
