@@ -531,3 +531,22 @@
 	  9. Built `/data/markets/prices` – global market overview + top 100 coins: all-time high %, sortable columns (rank/performance/mcap/volume), top gainers/losers movers strip, TF toggle (1D/7D/30D), Fear & Greed gauge visualization.
 	  10. Extended `src/lib/types.ts` with 6 new interfaces for Phase 38 data shapes.
 	  11. All pages: no mock data, no premium gates, strict TypeScript (no `any`), graceful empty-state on API failure, cached with appropriate TTLs.
+
+[2026-03-15] STATUS UPDATE
+	- Reference: Phase 39 (ETFs & Treasuries)
+	- New Status: COMPLETED
+	- Notes:
+	  1. Created `src/lib/etf-data.ts` – ETF metadata for 10 BTC and 8 ETH US-listed spot products. AUM is always live (on-chain holdings × CoinGecko spot price, 5-min cache) rather than stale hardcoded USD figures. Includes getBtcEtfOverview and getEthEtfOverview with market share calculation.
+	  2. Created `src/lib/treasury-data.ts` – CoinGecko /companies/public_treasury/{bitcoin|ethereum} API integration with 6-hour cache. Returns total holdings, total value, supply dominance, and per-company data with entry vs current value.
+	  3. Created shared `EtfPageLayout` component (BTC/ETH parametric) – KPI strip, horizontal AUM market share bars, full product table with color-coded fees, methodology note.
+	  4. Upgraded Bitcoin ETFs page – replaced static hardcoded AUM with live price-based calculation.
+	  5. Upgraded Ethereum ETFs page – same live AUM architecture.
+	  6. Built ETF Comparison page – combined BTC+ETH view: stacked market share bar, all products ranked by AUM in one table, per-coin totals.
+	  7. Rebuilt Solana ETFs page – SEC filing tracker with 5 known applications (VanEck, 21Shares, Grayscale, Canary, Bitwise) and status badges.
+	  8. Rebuilt XRP ETFs page – 5 pending SEC applications with issuer, date, and status.
+	  9. Rebuilt Crypto ETFs page – altcoin ETF filing tracker (DOGE, LTC, LINK, ADA, AVAX, HBAR).
+	  10. Built Bitcoin Treasuries page – real CoinGecko data: full company table with holdings, entry value, current value, unrealised P&L%, supply %, plus holdings bar chart and aggregate P&L.
+	  11. Built Ethereum Treasuries page – same architecture as BTC.
+	  12. Built Solana Treasuries page – manual seed (CoinGecko has no SOL treasury API): DeFi Development Corp, Sol Strategies, Upexi with known approximate holdings.
+	  13. Built Crypto Treasuries page – aggregated cross-asset view merging BTC+ETH CoinGecko data into one unified company table sorted by total crypto value.
+	  14. All pages: no premium gates, no mock data (or clearly labeled estimates), strict TypeScript, graceful empty states.

@@ -260,3 +260,19 @@
 	- Reference: Phase 38 (Core Markets)
 	- New Status: COMPLETED
 	- Notes: All 6 markets sub-pages built with real API data (Binance, CoinGecko, Deribit, alternative.me). Zero mock data, zero premium gates, zero TypeScript `any`. TimeframeSelector deployed across Spot, Futures, and Prices pages. Ready for Phase 39 approval.
+
+## Phase 39: ETFs & Treasuries
+- Created `src/lib/etf-data.ts`: 10 BTC + 8 ETH US-listed spot ETF products with live AUM (holdings × CoinGecko price, 5-min cache). Market share auto-calculated.
+- Created `src/lib/treasury-data.ts`: CoinGecko public treasury API for BTC and ETH corporate holdings (6h cache). Returns full company breakdown with entry vs current value.
+- Shared `EtfPageLayout` component: KPI strip, market share bars, sortable product table, methodology note. Used by BTC and ETH ETF pages.
+- Shared `TreasuryPageLayout` component: KPI strip, holdings bar chart, full company table with unrealised P&L calculation.
+- Bitcoin and Ethereum ETF pages: upgraded to live AUM architecture.
+- ETF Comparison: cross-asset BTC vs ETH market share + all-products unified table.
+- Solana, XRP, Crypto ETF pages: rebuilt as SEC filing trackers with known applications and status.
+- Bitcoin and Ethereum Treasury pages: live CoinGecko data with P&L calculations.
+- Solana Treasury: manual seed with known publicly disclosed holdings (no API exists yet).
+- Crypto Treasury: aggregate cross-asset view merging BTC+ETH data.
+[2026-03-15] STATUS UPDATE
+	- Reference: Phase 39 (ETFs & Treasuries)
+	- New Status: COMPLETED
+	- Notes: All ETF and Treasury pages built. Live price-based AUM for BTC/ETH ETFs. Real CoinGecko treasury data for BTC/ETH corporate holders. ETF filing trackers for SOL/XRP/altcoins. Zero premium gates, zero TypeScript any. Ready for Phase 40 approval.
