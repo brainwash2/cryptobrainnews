@@ -39,26 +39,38 @@ function AggPanel({ agg }: { agg: OptionsAggregate }) {
   return (
     <div>
       <h3 className="text-base font-black uppercase tracking-widest text-white mb-4 flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full" style={{ background: agg.currency === 'BTC' ? '#FABF2C' : '#3b82f6' }} />
+        <span
+          className="w-2 h-2 rounded-full"
+          style={{ background: agg.currency === 'BTC' ? '#FABF2C' : '#3b82f6' }}
+        />
         {agg.currency} Options
       </h3>
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Total OI (USD)"   value={fmtUsd(agg.totalOiUsd)}   sub={`${agg.totalOiContracts.toFixed(0)} contracts`} />
+        <StatCard label="Total OI (USD)"   value={fmtUsd(agg.totalOiUsd)}    sub={`${agg.totalOiContracts.toFixed(0)} contracts`} />
         <StatCard label="24h Volume (USD)" value={fmtUsd(agg.totalVolumeUsd)} />
-        <StatCard label="Put/Call Ratio"   value={pcr.toFixed(2)} sub={pcrLabel} color={pcrColor} />
+        <StatCard label="Put/Call Ratio"   value={pcr.toFixed(2)}             sub={pcrLabel} color={pcrColor} />
         <StatCard label="Avg Impl. Vol."   value={`${agg.avgIV.toFixed(1)}%`} sub={`${agg.expiryCount} active expiries`} color="#888" />
-        <StatCard label="Call OI"          value={fmtUsd(agg.callOiUsd)} color="#00d672" />
-        <StatCard label="Put OI"           value={fmtUsd(agg.putOiUsd)}  color="#ff4757" />
+        <StatCard label="Call OI"          value={fmtUsd(agg.callOiUsd)}      color="#00d672" />
+        <StatCard label="Put OI"           value={fmtUsd(agg.putOiUsd)}       color="#ff4757" />
       </div>
     </div>
   );
+}
+
+// ── Tooltip formatter typed to satisfy Recharts ──────────────────────────────
+function volTooltipFormatter(
+  value: number | string | Array<number | string>,
+  name: string
+): [string, string] {
+  const num = typeof value === 'number' ? value : Number(value);
+  return [`${isNaN(num) ? '—' : num.toFixed(1)}%`, `${name.toUpperCase()} DVol`];
 }
 
 export default function OptionsClient({ btcAgg, ethAgg, btcVol, ethVol }: Props) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  // Merge BTC + ETH vol into one chart dataset
+  // Merge BTC + ETH vol into one chart dataset keyed by date
   const volMap = new Map<string, { date: string; btc?: number; eth?: number }>();
   btcVol.forEach(({ date, value }) => {
     volMap.set(date, { date, btc: value });
@@ -67,7 +79,9 @@ export default function OptionsClient({ btcAgg, ethAgg, btcVol, ethVol }: Props)
     const existing = volMap.get(date) ?? { date };
     volMap.set(date, { ...existing, eth: value });
   });
-  const volChartData = [...volMap.values()].sort((a, b) => a.date.localeCompare(b.date));
+  const volChartData = [...volMap.values()].sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
 
   return (
     <div className="space-y-10">
@@ -93,7 +107,7 @@ export default function OptionsClient({ btcAgg, ethAgg, btcVol, ethVol }: Props)
             Historical Implied Volatility (30D)
           </h3>
           <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
-            Source: Deribit DVol Index · BTC (gold) & ETH (blue)
+            Source: Deribit DVol Index · BTC (gold) &amp; ETH (blue)
           </p>
         </div>
         <div className="h-72">
@@ -111,22 +125,66 @@ export default function OptionsClient({ btcAgg, ethAgg, btcVol, ethVol }: Props)
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                <XAxis dataKey="date" stroke="#444" fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false} minTickGap={20} />
-                <YAxis stroke="#444" fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false}
+                <XAxis
+                  dataKey="date"
+                  stroke="#444"
+                  fontSize={10}
+                  fontFamily="monospace"
+                  tickLine={false}
+                  axisLine={false}
+                  minTickGap={20}
+                />
+                <YAxis
+                  stroke="#444"
+                  fontSize={10}
+                  fontFamily="monospace"
+                  tickLine={false}
+                  axisLine={false}
                   tickFormatter={(v: number) => `${v.toFixed(0)}%`}
                 />
                 <Tooltip
-                  contentStyle={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: 0, fontFamily: 'monospace', fontSize: 11 }}
-                  formatter={(val: number, name: string) => [`${val.toFixed(1)}%`, `${name.toUpperCase()} DVol`]}
+                  contentStyle={{
+                    background: '#0a0a0a',
+                    border: '1px solid #1a1a1a',
+                    borderRadius: 0,
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                  }}
+                  formatter={volTooltipFormatter}
                 />
-                <Legend iconType="line" wrapperStyle={{ fontSize: 10, fontFamily: 'monospace', textTransform: 'uppercase' }} />
-                <Area type="monotone" dataKey="btc" name="BTC" stroke="#FABF2C" fill="url(#gBtcVol)" strokeWidth={1.5} dot={false} />
-                <Area type="monotone" dataKey="eth" name="ETH" stroke="#3b82f6" fill="url(#gEthVol)" strokeWidth={1.5} dot={false} />
+                <Legend
+                  iconType="line"
+                  wrapperStyle={{
+                    fontSize: 10,
+                    fontFamily: 'monospace',
+                    textTransform: 'uppercase',
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="btc"
+                  name="BTC"
+                  stroke="#FABF2C"
+                  fill="url(#gBtcVol)"
+                  strokeWidth={1.5}
+                  dot={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="eth"
+                  name="ETH"
+                  stroke="#3b82f6"
+                  fill="url(#gEthVol)"
+                  strokeWidth={1.5}
+                  dot={false}
+                />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center text-[#333] font-mono text-xs uppercase">
-              {volChartData.length === 0 ? 'Historical IV data unavailable' : 'Loading chart...'}
+              {volChartData.length === 0
+                ? 'Historical IV data unavailable'
+                : 'Loading chart...'}
             </div>
           )}
         </div>
@@ -138,10 +196,11 @@ export default function OptionsClient({ btcAgg, ethAgg, btcVol, ethVol }: Props)
           <span className="text-[#888] font-black">Data source:</span> Deribit public API (no auth required).
           OI shown in USD notional (contracts × underlying spot price).
           Put/Call Ratio = Put OI / Call OI. Values above 1.0 are bearish-skewed; below 1.0 are bullish-skewed.
-          DVol = Deribit's proprietary 30-day constant-maturity implied volatility index, calculated from order book data.
-          CME options data will be added in a future phase.
+          DVol = Deribit&apos;s proprietary 30-day constant-maturity implied volatility index,
+          calculated from order book data. CME options data will be added in a future phase.
         </p>
       </div>
+
     </div>
   );
 }
