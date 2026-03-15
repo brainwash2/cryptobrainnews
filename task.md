@@ -550,3 +550,18 @@
 	  12. Built Solana Treasuries page – manual seed (CoinGecko has no SOL treasury API): DeFi Development Corp, Sol Strategies, Upexi with known approximate holdings.
 	  13. Built Crypto Treasuries page – aggregated cross-asset view merging BTC+ETH CoinGecko data into one unified company table sorted by total crypto value.
 	  14. All pages: no premium gates, no mock data (or clearly labeled estimates), strict TypeScript, graceful empty states.
+
+[2026-03-15] STATUS UPDATE
+	•	Reference: Phase 40 (On-Chain Metrics)
+	•	New Status: COMPLETED
+	•	Notes:
+	  1. Created `src/lib/onchain-data.ts` — 6 typed async fetchers using free public APIs: Bitcoin (blockchain.info + mempool.space), Ethereum (beaconcha.in + DefiLlama), Solana (Solana RPC + DefiLlama), chain TVL history, all‑chains summary, DEX flows proxy. All wrapped in `cached()`.
+	  2. Shared `OnchainAreaChart` component with `RechartsFormatter` to avoid TS errors.
+	  3. Built Bitcoin page: 8 live stats + TVL history + conditional Dune charts.
+	  4. Built Ethereum page: 8 live stats (staking, gas, TVL) + TVL history + EIP‑1559 explainer + conditional Dune.
+	  5. Built Solana page: 8 live stats (validators, TVL, APR) + TVL history + conditional Dune.
+	  6. Built Avalanche + Aptos pages: price + TVL history + Dune pending note.
+	  7. Built Cross‑Chain Comparison: DefiLlama all‑chains (40 chains) with market share bars and full sortable table.
+	  8. Built Flows page: DEX protocol volume as free‑tier on‑chain flow proxy (25 protocols).
+	  9. Built Gas Tracker: Ethereum 3‑tier estimates + multi‑chain fee reference table.
+	  10. Created `src/app/data/_lib/recharts-utils.ts` – permanent type alias for Recharts formatters.

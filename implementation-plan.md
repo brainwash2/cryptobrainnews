@@ -276,3 +276,12 @@
 	- Reference: Phase 39 (ETFs & Treasuries)
 	- New Status: COMPLETED
 	- Notes: All ETF and Treasury pages built. Live price-based AUM for BTC/ETH ETFs. Real CoinGecko treasury data for BTC/ETH corporate holders. ETF filing trackers for SOL/XRP/altcoins. Zero premium gates, zero TypeScript any. Ready for Phase 40 approval.
+
+## Phase 40: On-Chain Metrics
+- Created `src/lib/onchain-data.ts`: 6 fetchers using free public APIs – blockchain.info, mempool.space, beaconcha.in, Solana RPC, DefiLlama chains/TVL/dexs. All cached.
+- Shared `OnchainAreaChart` component with `RechartsFormatter` type alias.
+- Built Bitcoin, Ethereum, Solana, Avalanche, Aptos, Comparison, Flows, Gas Tracker pages – all with live data or graceful placeholders.
+[2026-03-15] STATUS UPDATE
+	•	Reference: Phase 40 (On-Chain Metrics)
+	•	New Status: COMPLETED
+	•	Notes: 8 on‑chain pages built. Free API strategy used throughout. Dune charts show placeholders until query IDs are configured. `RechartsFormatter` added to shared utils – use in all future chart components.
