@@ -25,13 +25,35 @@ function fmtUsd(v: unknown): string {
   return `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
+// ── Typed tooltip formatters (satisfy Recharts Formatter<number|undefined, string>) ──
+
+function oiTooltipFormatter(
+  value: number | string | Array<number | string>,
+  name: string
+): [string, string] {
+  const n = typeof value === 'number' ? value : Number(value);
+  return [
+    isNaN(n) ? '—' : `$${(n / 1e9).toFixed(2)}B`,
+    name.toUpperCase(),
+  ];
+}
+
+function frTooltipFormatter(
+  value: number | string | Array<number | string>,
+  name: string
+): [string, string] {
+  const n = typeof value === 'number' ? value : Number(value);
+  return [
+    isNaN(n) ? '—' : `${n.toFixed(4)}%`,
+    name.toUpperCase(),
+  ];
+}
+
 const CHART_STYLE = {
   grid:    '#1a1a1a',
   axis:    '#444',
   btc:     '#FABF2C',
   eth:     '#3b82f6',
-  funding: '#00d672',
-  fundNeg: '#ff4757',
 };
 
 export default function FuturesClient({
@@ -40,7 +62,7 @@ export default function FuturesClient({
   oiHistory,
   fundingHistory,
 }: Props) {
-  const [tf, setTf]       = useState<Timeframe>('30D');
+  const [tf, setTf]           = useState<Timeframe>('30D');
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -50,7 +72,7 @@ export default function FuturesClient({
     ? fundingRates.reduce((s, f) => s + (f.fundingRate ?? 0), 0) / fundingRates.length
     : 0;
 
-  const days = tf === '7D' ? 7 : 30;
+  const days        = tf === '7D' ? 7 : 30;
   const oiChartData = oiHistory.slice(-days);
   const frChartData = fundingHistory.slice(-days);
 
@@ -60,10 +82,10 @@ export default function FuturesClient({
       {/* ── KPI Strip ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: '24h Global Volume',   value: fmtUsd(totalVolume),       accent: '#FABF2C' },
-          { label: 'Total Open Interest', value: fmtUsd(totalOi),           accent: '#FABF2C' },
+          { label: '24h Global Volume',   value: fmtUsd(totalVolume),         accent: '#FABF2C' },
+          { label: 'Total Open Interest', value: fmtUsd(totalOi),             accent: '#FABF2C' },
           { label: 'Avg Funding Rate',    value: `${avgFunding.toFixed(4)}%`, accent: avgFunding >= 0 ? '#00d672' : '#ff4757' },
-          { label: 'Exchanges Tracked',   value: String(exchanges.length),  accent: '#888' },
+          { label: 'Exchanges Tracked',   value: String(exchanges.length),    accent: '#888' },
         ].map((s) => (
           <div key={s.label} className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
             <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{s.label}</p>
@@ -77,7 +99,7 @@ export default function FuturesClient({
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
             <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3">
-              BTC & ETH Open Interest History
+              BTC &amp; ETH Open Interest History
             </h3>
             <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
               Source: Binance Futures · Real historical data
@@ -92,17 +114,50 @@ export default function FuturesClient({
         <div className="h-72">
           {mounted && oiChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={oiChartData} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={CHART_STYLE.grid} vertical={false} />
-                <XAxis dataKey="date" stroke={CHART_STYLE.axis} fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false} minTickGap={20} />
-                <YAxis stroke={CHART_STYLE.axis} fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false}
+              <ComposedChart
+                data={oiChartData}
+                margin={{ top: 10, right: 0, left: -10, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={CHART_STYLE.grid}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="date"
+                  stroke={CHART_STYLE.axis}
+                  fontSize={10}
+                  fontFamily="monospace"
+                  tickLine={false}
+                  axisLine={false}
+                  minTickGap={20}
+                />
+                <YAxis
+                  stroke={CHART_STYLE.axis}
+                  fontSize={10}
+                  fontFamily="monospace"
+                  tickLine={false}
+                  axisLine={false}
                   tickFormatter={(v: number) => `$${(v / 1e9).toFixed(0)}B`}
                 />
                 <Tooltip
-                  contentStyle={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: 0, fontFamily: 'monospace', fontSize: 11 }}
-                  formatter={(val: number, name: string) => [`$${(val / 1e9).toFixed(2)}B`, name.toUpperCase()]}
+                  contentStyle={{
+                    background: '#0a0a0a',
+                    border: '1px solid #1a1a1a',
+                    borderRadius: 0,
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                  }}
+                  formatter={oiTooltipFormatter}
                 />
-                <Legend iconType="line" wrapperStyle={{ fontSize: 10, fontFamily: 'monospace', textTransform: 'uppercase' }} />
+                <Legend
+                  iconType="line"
+                  wrapperStyle={{
+                    fontSize: 10,
+                    fontFamily: 'monospace',
+                    textTransform: 'uppercase',
+                  }}
+                />
                 <Bar dataKey="btc" name="BTC OI" fill={CHART_STYLE.btc} opacity={0.7} />
                 <Bar dataKey="eth" name="ETH OI" fill={CHART_STYLE.eth} opacity={0.7} />
               </ComposedChart>
@@ -120,7 +175,7 @@ export default function FuturesClient({
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#00d672] pl-3">
-              Avg Daily Funding Rate (BTC & ETH)
+              Avg Daily Funding Rate (BTC &amp; ETH)
             </h3>
             <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
               Source: Binance Futures · Averaged across 3 daily settlements
@@ -130,29 +185,78 @@ export default function FuturesClient({
         <div className="h-52">
           {mounted && frChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={frChartData} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
+              <AreaChart
+                data={frChartData}
+                margin={{ top: 10, right: 0, left: -10, bottom: 0 }}
+              >
                 <defs>
                   <linearGradient id="frBtc" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={CHART_STYLE.btc}     stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={CHART_STYLE.btc}    stopOpacity={0} />
+                    <stop offset="5%"  stopColor={CHART_STYLE.btc} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={CHART_STYLE.btc} stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="frEth" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={CHART_STYLE.eth}     stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={CHART_STYLE.eth}    stopOpacity={0} />
+                    <stop offset="5%"  stopColor={CHART_STYLE.eth} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={CHART_STYLE.eth} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={CHART_STYLE.grid} vertical={false} />
-                <XAxis dataKey="date" stroke={CHART_STYLE.axis} fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false} minTickGap={20} />
-                <YAxis stroke={CHART_STYLE.axis} fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false}
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={CHART_STYLE.grid}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="date"
+                  stroke={CHART_STYLE.axis}
+                  fontSize={10}
+                  fontFamily="monospace"
+                  tickLine={false}
+                  axisLine={false}
+                  minTickGap={20}
+                />
+                <YAxis
+                  stroke={CHART_STYLE.axis}
+                  fontSize={10}
+                  fontFamily="monospace"
+                  tickLine={false}
+                  axisLine={false}
                   tickFormatter={(v: number) => `${v.toFixed(3)}%`}
                 />
                 <Tooltip
-                  contentStyle={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: 0, fontFamily: 'monospace', fontSize: 11 }}
-                  formatter={(val: number, name: string) => [`${val.toFixed(4)}%`, name.toUpperCase()]}
+                  contentStyle={{
+                    background: '#0a0a0a',
+                    border: '1px solid #1a1a1a',
+                    borderRadius: 0,
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                  }}
+                  formatter={frTooltipFormatter}
                 />
-                <Legend iconType="line" wrapperStyle={{ fontSize: 10, fontFamily: 'monospace', textTransform: 'uppercase' }} />
-                <Area type="monotone" dataKey="btc" name="BTC" stroke={CHART_STYLE.btc} fill="url(#frBtc)" strokeWidth={1.5} dot={false} />
-                <Area type="monotone" dataKey="eth" name="ETH" stroke={CHART_STYLE.eth} fill="url(#frEth)" strokeWidth={1.5} dot={false} />
+                <Legend
+                  iconType="line"
+                  wrapperStyle={{
+                    fontSize: 10,
+                    fontFamily: 'monospace',
+                    textTransform: 'uppercase',
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="btc"
+                  name="BTC"
+                  stroke={CHART_STYLE.btc}
+                  fill="url(#frBtc)"
+                  strokeWidth={1.5}
+                  dot={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="eth"
+                  name="ETH"
+                  stroke={CHART_STYLE.eth}
+                  fill="url(#frEth)"
+                  strokeWidth={1.5}
+                  dot={false}
+                />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
@@ -165,6 +269,7 @@ export default function FuturesClient({
 
       {/* ── Exchanges & Live Funding Tables ────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
         {/* Exchange Volumes */}
         <div>
           <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center gap-3">
@@ -176,19 +281,39 @@ export default function FuturesClient({
               <thead>
                 <tr className="border-b border-[#1a1a1a] bg-[#080808]">
                   {['Exchange', '24h Volume', 'Open Interest'].map((h) => (
-                    <th key={h} className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${h === 'Exchange' ? 'text-left' : 'text-right'}`}>{h}</th>
+                    <th
+                      key={h}
+                      className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${
+                        h === 'Exchange' ? 'text-left' : 'text-right'
+                      }`}
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {exchanges.length === 0 && (
-                  <tr><td colSpan={3} className="px-4 py-10 text-center text-[#555] font-mono text-xs">Syncing exchange data...</td></tr>
+                  <tr>
+                    <td colSpan={3} className="px-4 py-10 text-center text-[#555] font-mono text-xs">
+                      Syncing exchange data...
+                    </td>
+                  </tr>
                 )}
                 {exchanges.slice(0, 15).map((ex, i) => (
-                  <tr key={ex.exchange} className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'}`}>
+                  <tr
+                    key={ex.exchange}
+                    className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${
+                      i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'
+                    }`}
+                  >
                     <td className="px-4 py-3 font-bold text-white capitalize">{ex.exchange}</td>
-                    <td className="px-4 py-3 text-right font-mono font-black text-[#FABF2C] tabular-nums">{fmtUsd(ex.volume24h)}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">{fmtUsd(ex.openInterest)}</td>
+                    <td className="px-4 py-3 text-right font-mono font-black text-[#FABF2C] tabular-nums">
+                      {fmtUsd(ex.volume24h)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">
+                      {fmtUsd(ex.openInterest)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -212,22 +337,43 @@ export default function FuturesClient({
               <thead>
                 <tr className="border-b border-[#1a1a1a] bg-[#080808]">
                   {['Pair', 'Mark Price', 'Funding (8h)'].map((h) => (
-                    <th key={h} className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${h === 'Pair' ? 'text-left' : 'text-right'}`}>{h}</th>
+                    <th
+                      key={h}
+                      className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${
+                        h === 'Pair' ? 'text-left' : 'text-right'
+                      }`}
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {fundingRates.length === 0 && (
-                  <tr><td colSpan={3} className="px-4 py-10 text-center text-[#555] font-mono text-xs">Syncing funding rates...</td></tr>
+                  <tr>
+                    <td colSpan={3} className="px-4 py-10 text-center text-[#555] font-mono text-xs">
+                      Syncing funding rates...
+                    </td>
+                  </tr>
                 )}
                 {fundingRates.slice(0, 15).map((f, i) => {
-                  const rate = f.fundingRate ?? 0;
-                  const rateColor = rate > 0.01 ? 'text-[#00d672]' : rate < -0.01 ? 'text-[#ff4757]' : 'text-[#888]';
+                  const rate       = f.fundingRate ?? 0;
+                  const rateColor  =
+                    rate > 0.01  ? 'text-[#00d672]' :
+                    rate < -0.01 ? 'text-[#ff4757]' : 'text-[#888]';
                   return (
-                    <tr key={f.symbol} className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'}`}>
+                    <tr
+                      key={f.symbol}
+                      className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${
+                        i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'
+                      }`}
+                    >
                       <td className="px-4 py-3 font-bold text-white">{f.symbol}</td>
                       <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">
-                        ${Number(f.markPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                        ${Number(f.markPrice).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 4,
+                        })}
                       </td>
                       <td className={`px-4 py-3 text-right font-mono font-bold tabular-nums ${rateColor}`}>
                         {rate > 0 ? '+' : ''}{rate.toFixed(4)}%
@@ -239,8 +385,8 @@ export default function FuturesClient({
             </table>
           </div>
         </div>
-      </div>
 
+      </div>
     </div>
   );
 }
