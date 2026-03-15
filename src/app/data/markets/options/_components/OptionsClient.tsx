@@ -33,9 +33,9 @@ function StatCard({
 }
 
 function AggPanel({ agg }: { agg: OptionsAggregate }) {
-  const pcr = agg.putCallRatio;
+  const pcr      = agg.putCallRatio;
   const pcrColor = pcr > 1.2 ? '#ff4757' : pcr < 0.8 ? '#00d672' : '#FABF2C';
-  const pcrLabel = pcr > 1.2 ? 'Bearish' : pcr < 0.8 ? 'Bullish' : 'Neutral';
+  const pcrLabel = pcr > 1.2 ? 'Bearish'  : pcr < 0.8 ? 'Bullish'  : 'Neutral';
   return (
     <div>
       <h3 className="text-base font-black uppercase tracking-widest text-white mb-4 flex items-center gap-2">
@@ -57,36 +57,29 @@ function AggPanel({ agg }: { agg: OptionsAggregate }) {
   );
 }
 
-// ── Tooltip formatter typed to satisfy Recharts ──────────────────────────────
-function volTooltipFormatter(
-  value: number | string | Array<number | string>,
-  name: string
-): [string, string] {
-  const num = typeof value === 'number' ? value : Number(value);
-  return [`${isNaN(num) ? '—' : num.toFixed(1)}%`, `${name.toUpperCase()} DVol`];
-}
+// ── Only `any` satisfies Recharts' Formatter regardless of version ────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFormatter = (value: any, name: any) => [string, string];
+
+const volTooltipFormatter: AnyFormatter = (value, name) => {
+  const n = Number(value ?? 0);
+  return [isNaN(n) ? '—' : `${n.toFixed(1)}%`, `${String(name).toUpperCase()} DVol`];
+};
 
 export default function OptionsClient({ btcAgg, ethAgg, btcVol, ethVol }: Props) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  // Merge BTC + ETH vol into one chart dataset keyed by date
   const volMap = new Map<string, { date: string; btc?: number; eth?: number }>();
-  btcVol.forEach(({ date, value }) => {
-    volMap.set(date, { date, btc: value });
-  });
+  btcVol.forEach(({ date, value }) => { volMap.set(date, { date, btc: value }); });
   ethVol.forEach(({ date, value }) => {
-    const existing = volMap.get(date) ?? { date };
-    volMap.set(date, { ...existing, eth: value });
+    volMap.set(date, { ...(volMap.get(date) ?? { date }), eth: value });
   });
-  const volChartData = [...volMap.values()].sort((a, b) =>
-    a.date.localeCompare(b.date)
-  );
+  const volChartData = [...volMap.values()].sort((a, b) => a.date.localeCompare(b.date));
 
   return (
     <div className="space-y-10">
 
-      {/* ── Aggregate Panels ───────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {btcAgg ? <AggPanel agg={btcAgg} /> : (
           <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-8 flex items-center justify-center text-[#555] font-mono text-xs">
@@ -100,7 +93,6 @@ export default function OptionsClient({ btcAgg, ethAgg, btcVol, ethVol }: Props)
         )}
       </div>
 
-      {/* ── Historical Implied Volatility Chart ────────────────────────── */}
       <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
         <div className="mb-6">
           <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3">
@@ -125,72 +117,27 @@ export default function OptionsClient({ btcAgg, ethAgg, btcVol, ethVol }: Props)
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  stroke="#444"
-                  fontSize={10}
-                  fontFamily="monospace"
-                  tickLine={false}
-                  axisLine={false}
-                  minTickGap={20}
-                />
-                <YAxis
-                  stroke="#444"
-                  fontSize={10}
-                  fontFamily="monospace"
-                  tickLine={false}
-                  axisLine={false}
+                <XAxis dataKey="date" stroke="#444" fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false} minTickGap={20} />
+                <YAxis stroke="#444" fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false}
                   tickFormatter={(v: number) => `${v.toFixed(0)}%`}
                 />
                 <Tooltip
-                  contentStyle={{
-                    background: '#0a0a0a',
-                    border: '1px solid #1a1a1a',
-                    borderRadius: 0,
-                    fontFamily: 'monospace',
-                    fontSize: 11,
-                  }}
+                  contentStyle={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: 0, fontFamily: 'monospace', fontSize: 11 }}
                   formatter={volTooltipFormatter}
                 />
-                <Legend
-                  iconType="line"
-                  wrapperStyle={{
-                    fontSize: 10,
-                    fontFamily: 'monospace',
-                    textTransform: 'uppercase',
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="btc"
-                  name="BTC"
-                  stroke="#FABF2C"
-                  fill="url(#gBtcVol)"
-                  strokeWidth={1.5}
-                  dot={false}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="eth"
-                  name="ETH"
-                  stroke="#3b82f6"
-                  fill="url(#gEthVol)"
-                  strokeWidth={1.5}
-                  dot={false}
-                />
+                <Legend iconType="line" wrapperStyle={{ fontSize: 10, fontFamily: 'monospace', textTransform: 'uppercase' }} />
+                <Area type="monotone" dataKey="btc" name="BTC" stroke="#FABF2C" fill="url(#gBtcVol)" strokeWidth={1.5} dot={false} />
+                <Area type="monotone" dataKey="eth" name="ETH" stroke="#3b82f6" fill="url(#gEthVol)" strokeWidth={1.5} dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center text-[#333] font-mono text-xs uppercase">
-              {volChartData.length === 0
-                ? 'Historical IV data unavailable'
-                : 'Loading chart...'}
+              {volChartData.length === 0 ? 'Historical IV data unavailable' : 'Loading chart...'}
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Data Source Note ───────────────────────────────────────────── */}
       <div className="border border-[#1a1a1a] bg-[#080808] p-5">
         <p className="text-[10px] text-[#555] font-mono leading-relaxed">
           <span className="text-[#888] font-black">Data source:</span> Deribit public API (no auth required).
