@@ -285,3 +285,19 @@
 	•	Reference: Phase 40 (On-Chain Metrics)
 	•	New Status: COMPLETED
 	•	Notes: 8 on‑chain pages built. Free API strategy used throughout. Dune charts show placeholders until query IDs are configured. `RechartsFormatter` added to shared utils – use in all future chart components.
+
+## Phase 41: Scaling Solutions
+- Created `src/lib/scaling-data.ts`: 7 DefiLlama fetchers for Optimistic (6), ZK (6), L1 EVM (10), L1 Non-EVM (8) chains. Single getAllChainsMap() call for efficiency. getL2FeeData() from DefiLlama fees overview.
+- Shared `ScalingTable` component: chain rows with type badges, TVL, 24h/7d %, protocols, market share.
+- Shared `TvlBars` component: horizontal market share visualisation per chain with color coding.
+- Scaling Overview: OPT vs ZK split bar, fee leaderboard, full L2 table with type badges.
+- L2 Comparison: side-by-side TvlBars for OPT vs ZK, full cross-rollup comparison table with fee data.
+- Optimistic Rollups: TVL stats, TvlBars, conditional Dune charts, tech explainer.
+- ZK Rollups: proof system reference table (PLONK/STARK/KZG, VM, developer), TVL table, explainer.
+- L1 EVM: 10 chains ranked by TVL, ETH dominance, TvlBars.
+- L1 Non-EVM: 8 chains with VM/consensus reference, TvlBars.
+- Data Availability: Celestia/EigenDA/Avail/ETH Blobs cards, feature comparison matrix, EIP-4844 explainer.
+[2026-03-15] STATUS UPDATE
+	- Reference: Phase 41 (Scaling Solutions)
+	- New Status: COMPLETED
+	- Notes: 7 scaling pages built using DefiLlama free API. Shared ScalingTable and TvlBars components. ZK proof tech reference, DA layer comparison, non-EVM VM/consensus table. Zero premium gates, zero TypeScript any. Ready for Phase 42 approval.

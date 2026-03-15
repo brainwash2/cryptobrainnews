@@ -565,3 +565,19 @@
 	  8. Built Flows page: DEX protocol volume as free‑tier on‑chain flow proxy (25 protocols).
 	  9. Built Gas Tracker: Ethereum 3‑tier estimates + multi‑chain fee reference table.
 	  10. Created `src/app/data/_lib/recharts-utils.ts` – permanent type alias for Recharts formatters.
+
+[2026-03-15] STATUS UPDATE
+	- Reference: Phase 41 (Scaling Solutions)
+	- New Status: COMPLETED
+	- Notes:
+	  1. Created `src/lib/scaling-data.ts` — 7 typed async fetchers using DefiLlama free API: getOptimisticRollups, getZkRollups, getL1EvmChains, getL1NonEvmChains, getChainTvlSeries, getL2FeeData, getAllL2s. Chain catalogue covers 6 Optimistic, 6 ZK, 10 L1 EVM, 8 L1 Non-EVM chains. All wrapped in cached() at 1-hour TTL. Uses single getAllChainsMap() call for efficiency.
+	  2. Created shared `ScalingTable` server component — chain table with color-coded type badges, formatted TVL, 24h/7d % change, protocol count, market share. Accepts showType prop.
+	  3. Created shared `TvlBars` server component — horizontal TVL market share bars with color per chain, absolute value and % labels.
+	  4. Enhanced `scaling/page.tsx` (Overview) — quick nav links, OPT vs ZK split bar, TVL KPIs, L2 fee leaderboard, full L2 table. Uses getAllL2s() + getL2FeeData().
+	  5. Rebuilt `scaling/l2-comparison/page.tsx` — side-by-side OPT vs ZK bars, combined comparison table with fee column from DefiLlama, TVL share.
+	  6. Enhanced `scaling/optimistic/page.tsx` — TVL KPIs, TvlBars, conditional Dune address/gas charts, ScalingTable, tech explainer. Keeps existing Dune charts functional.
+	  7. Rebuilt `scaling/zk/page.tsx` — ZK rollup TVL, proof system tech table (PLONK/STARK/KZG, VM type, developer), ScalingTable, ZK vs OPT explainer.
+	  8. Built `scaling/l1-evm/page.tsx` — 10 EVM L1 chains ranked by TVL, ETH dominance %, TvlBars, ScalingTable.
+	  9. Built `scaling/l1-non-evm/page.tsx` — 8 non-EVM L1 chains with VM/consensus reference table (SVM, MoveVM, TVM, WASM etc.), TvlBars, ScalingTable.
+	  10. Built `scaling/data-availability/page.tsx` — Celestia, EigenDA, Avail, ETH Blobs protocol cards with throughput/users/status, side-by-side feature comparison table, EIP-4844 explainer.
+	  11. All pages: no premium gates, no mock data, no TypeScript any, graceful empty states, source attribution.
