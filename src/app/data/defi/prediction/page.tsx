@@ -64,7 +64,7 @@ async function PredictionData() {
                 <tr key={m.id} className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'}`}>
                   <td className="px-4 py-3 text-[#555]">{i + 1}</td>
                   <td className="px-4 py-3 font-bold text-white max-w-xs">
-                    
+                    <a
                       href={`https://polymarket.com/event/${m.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
