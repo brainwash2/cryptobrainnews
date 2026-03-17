@@ -599,3 +599,21 @@
 	  11. Exploits page — static reference table of 10 major DeFi exploits (Ronin, Poly Network, BNB Bridge, etc.) with totals + live Dune tracking note.
 	  12. Launchpads + Social pages — ComingSoon (require Dune query IDs).
 	  13. All pages: no premium gates, no TypeScript any, graceful empty states, source attribution.
+
+[2026-03-15] STATUS UPDATE
+	- Reference: Phase 43 (NFTs & Alternative Metrics)
+	- New Status: COMPLETED
+	- Notes:
+	  1. Created `src/lib/nft-data.ts` — 4 typed fetchers: getTopCollections (Reservoir demo API with KNOWN_COLLECTIONS seed fallback), getNftMarketplaces (curated Q1 2026 seed), getNftChainVolumes (curated seed), getKnownCollections (direct seed access). 8 known blue-chip collections, 8 marketplaces, 5-chain volume breakdown.
+	  2. Created `src/lib/alternative-data.ts` — Wikipedia pageviews API wrapper (getWikiPageviews, free, no key), VC funding reference data (VC_DEALS_2026: 12 notable Q1 2026 deals, VC_CATEGORIES_2026: 8 categories with deal counts), app store rankings seed (APP_RANKINGS: 12 entries), crypto PAC data (PAC_DATA: 5 committees from FEC 2024 cycle).
+	  3. NFT Volume page — chain breakdown with horizontal bars (Ethereum/Solana/Bitcoin/Polygon/BNB), conditional Dune live table when query IDs are set.
+	  4. NFT Collections page — Reservoir API integration (demo key) with seed fallback, floor prices in ETH and USD, 24h/7d volume, owners, supply.
+	  5. NFT Art page — category overview cards (Generative Art, PFP, Photography/1/1s, Bitcoin Ordinals) + blue-chip collection reference table.
+	  6. NFT Gaming page — 10-game directory (Axie, Gods Unchained, Parallel, Illuvium, Sandbox, Decentraland, Star Atlas, Off The Grid, Shrapnel, Nyan Heroes) with chain/token/genre/notes.
+	  7. NFT Marketplaces page — 8 marketplaces with volume bars, market share, external links (OpenSea, Blur, Magic Eden, Tensor, OKX, X2Y2, LooksRare, Sudoswap).
+	  8. Alternative/Funding page — category bars visualization + 12 notable deal table with investors and dates.
+	  9. Alternative/Web-traffic page — live Wikipedia pageviews API (4 articles: Bitcoin, Ethereum, Crypto, NFT), interactive client-side chart switcher with RechartsFormatter pattern.
+	  10. Alternative/App-usage page — 12 crypto app rankings with WoW change indicators.
+	  11. Alternative/Politics page — 5 crypto PAC committees from 2024 FEC cycle with raised/spent totals.
+	  12. Alternative/Social page — platform cards (Wikipedia live, Twitter/Reddit/YouTube planned) with status badges.
+	  13. All pages: no premium gates, no TypeScript any, graceful empty states. RechartsFormatter alias used in WikiPageviewsClient.

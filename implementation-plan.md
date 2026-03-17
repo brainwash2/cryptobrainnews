@@ -319,3 +319,21 @@
 	- Reference: Phase 42 (DeFi Subsections)
 	- New Status: COMPLETED
 	- Notes: 10 DeFi pages built with real live data. Free DefiLlama APIs for TVL/fees/revenue/DEX/lending/restaking/RWA/derivatives. Polymarket Gamma API for prediction markets. Exploit reference table with Dune integration note. Zero premium gates, zero TypeScript any. Ready for Phase 43 approval.
+
+## Phase 43: NFTs & Alternative Metrics
+- Created `src/lib/nft-data.ts`: Reservoir API (demo key) for top collections with KNOWN_COLLECTIONS seed fallback; curated marketplace/chain-volume seeds for Q1 2026.
+- Created `src/lib/alternative-data.ts`: Wikipedia pageviews API wrapper (free); VC deals (12 notable Q1 2026), VC categories (8), app rankings (12), PAC data (5 committees). No API keys required.
+- NFT Volume: chain bars + volume table + conditional Dune live section.
+- NFT Collections: Reservoir API with seed fallback; ETH/USD floor, 24h/7d vol, owners, supply.
+- NFT Art: category cards (Generative/PFP/Photography/Ordinals) + blue-chip table.
+- NFT Gaming: 10-game directory with chain/token/genre/notes.
+- NFT Marketplaces: 8 platforms with volume bars, share, external links.
+- Alt/Funding: category bars + 12 notable deal table.
+- Alt/Web-traffic: live Wikipedia API (4 articles), interactive chart switcher with RechartsFormatter.
+- Alt/App-usage: 12 app rankings with WoW change.
+- Alt/Politics: 5 PAC committees, FEC 2024 data.
+- Alt/Social: platform status cards (Wikipedia live, others planned).
+[2026-03-15] STATUS UPDATE
+	- Reference: Phase 43 (NFTs & Alternative Metrics)
+	- New Status: COMPLETED
+	- Notes: 12 pages built. Live data: Reservoir NFT collections (demo key + seed fallback) and Wikipedia pageviews API (no key). Curated reference data for gaming, marketplaces, VC funding, app rankings, PAC data. RechartsFormatter pattern applied to WikiPageviewsClient. Zero premium gates, zero TypeScript any. All phases 37-43 now COMPLETE. Proceeding to Phase 44: Final Polish & Testing.
