@@ -581,3 +581,21 @@
 	  9. Built `scaling/l1-non-evm/page.tsx` — 8 non-EVM L1 chains with VM/consensus reference table (SVM, MoveVM, TVM, WASM etc.), TvlBars, ScalingTable.
 	  10. Built `scaling/data-availability/page.tsx` — Celestia, EigenDA, Avail, ETH Blobs protocol cards with throughput/users/status, side-by-side feature comparison table, EIP-4844 explainer.
 	  11. All pages: no premium gates, no mock data, no TypeScript any, graceful empty states, source attribution.
+
+[2026-03-15] STATUS UPDATE
+	- Reference: Phase 42 (DeFi Subsections)
+	- New Status: COMPLETED
+	- Notes:
+	  1. Created `src/lib/defi-data.ts` — 10 typed async fetchers all via DefiLlama free APIs: getTopProtocolsByTvl, getTvlByCategory, getProtocolFees, getProtocolRevenue, getStablecoinsOverview, getLendingProtocols, getRwaProtocols, getDexVolumes, getRestakingProtocols, getDerivativesProtocols, getTopYieldPools, getPolymarketTop. All wrapped in cached() with appropriate TTLs.
+	  2. Created shared `DefiTable` server component and `fmtUsd` / `PctBadge` helpers. Reused by all DeFi pages.
+	  3. TVL page — enhanced with category bars visualization (15 categories) + top 60 protocols table.
+	  4. Revenue page — dual leaderboard: protocol revenue (fees kept by protocol) vs total fees (all fees paid by users). Explains the difference. Uses DefiLlama /overview/revenue and /overview/fees.
+	  5. DEX Volume page — market share bars (top 10) + full protocol table with chains. Replaces old static Dune-only page.
+	  6. Lending page — Aave/Compound/MakerDAO ecosystem with LTV/utilisation explainer. Pulls Lending+CDP+YieldAggregator categories.
+	  7. Restaking page — EigenLayer/Symbiotic/Karak with restaking explainer. Auto-detects restaking category from DefiLlama.
+	  8. RWA page — tokenized real world assets (treasury bills, bonds, credit) with TVL breakdown.
+	  9. DeFi Derivatives page — Hyperliquid, dYdX, GMX with 24h volume + OI. Uses DefiLlama /overview/derivatives.
+	  10. Prediction Markets page — Polymarket top markets with YES price (implied probability), volume, OI. Live Polymarket Gamma API (10-min cache).
+	  11. Exploits page — static reference table of 10 major DeFi exploits (Ronin, Poly Network, BNB Bridge, etc.) with totals + live Dune tracking note.
+	  12. Launchpads + Social pages — ComingSoon (require Dune query IDs).
+	  13. All pages: no premium gates, no TypeScript any, graceful empty states, source attribution.

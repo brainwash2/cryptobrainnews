@@ -6,7 +6,7 @@ export default function LaunchpadsPage() {
       title="Launchpads"
       description="Pump.fun revenue, graduated tokens, Solana launchpad market share"
       dataSource="Dune Analytics"
-      targetPhase="Phase 42"
+      targetPhase="Dune query IDs required"
     />
   );
 }
