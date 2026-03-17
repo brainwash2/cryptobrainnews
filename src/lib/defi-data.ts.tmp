@@ -1,0 +1,31 @@
+# Replace the existing getProtocolRevenue function with this version:
+export async function getProtocolRevenue(limit = 40): Promise<FeeProtocol[]> {
+  return cached(`defi:revenue:top:${limit}`, async () => {
+    const data = await safeFetch<{
+      protocols?: Array<{
+        name: string; category: string;
+        total24h: number | null;          // fees
+        total7d: number | null;
+        totalAllTime: number | null;
+        change_1d: number | null;
+        // Revenue fields may be inside each protocol object
+        totalRevenue24h?: number | null;
+        totalRevenue7d?: number | null;
+        totalRevenueAllTime?: number | null;
+      }>;
+    }>('https://api.llama.fi/overview/fees?excludeTotalDataChartBreakdown=true&excludeTotalDataChart=true', {});
+
+    return (data.protocols ?? [])
+      .filter((p) => (p.totalRevenue24h ?? 0) > 0)
+      .sort((a, b) => (b.totalRevenue24h ?? 0) - (a.totalRevenue24h ?? 0))
+      .slice(0, limit)
+      .map((p) => ({
+        name:         p.name,
+        category:     p.category ?? '—',
+        total24h:     p.totalRevenue24h ?? null,
+        total7d:      p.totalRevenue7d ?? null,
+        totalAllTime: p.totalRevenueAllTime ?? null,
+        change_1d:    p.change_1d ?? null,
+      }));
+  }, 3600);
+}
