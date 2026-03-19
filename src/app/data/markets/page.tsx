@@ -1,2 +1,2 @@
 import { redirect } from 'next/navigation';
-export default function MarketsOverview() { redirect('/data/markets/spot'); }
+export default function MarketsRoot() { redirect('/data/markets/spot'); }

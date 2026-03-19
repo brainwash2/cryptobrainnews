@@ -1,2 +1,2 @@
 import { redirect } from 'next/navigation';
-export default function DefiOverview() { redirect('/data/defi/tvl'); }
+export default function DefiRoot() { redirect('/data/defi/tvl'); }

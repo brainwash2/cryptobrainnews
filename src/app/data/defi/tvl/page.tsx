@@ -1,11 +1,12 @@
-import React, { Suspense } from 'react';
-import { DataHeader } from '../../_components/DataHeader';
-import { ChartSkeleton } from '../../_components/ChartSkeleton';
+import React, { Suspense }              from 'react';
+import { DataHeader }                   from '../../_components/DataHeader';
+import { ChartSkeleton }                from '../../_components/ChartSkeleton';
 import { DefiTable, fmtUsd, PctBadge } from '../_components/DefiTable';
 import {
   getTopProtocolsByTvl,
   getTvlByCategory,
 } from '@/lib/defi-data';
+import type { ProtocolRow } from '@/lib/defi-data';
 
 export const metadata = {
   title: 'DeFi TVL Rankings | CryptoBrainNews',
@@ -13,7 +14,11 @@ export const metadata = {
 };
 export const revalidate = 3600;
 
-function CategoryBars({ cats }: { cats: Array<{ category: string; tvl: number; share: number }> }) {
+function CategoryBars({
+  cats,
+}: {
+  cats: Array<{ category: string; tvl: number; share: number }>;
+}) {
   const max = cats[0]?.tvl ?? 1;
   return (
     <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
@@ -25,10 +30,17 @@ function CategoryBars({ cats }: { cats: Array<{ category: string; tvl: number; s
           <div key={c.category} className="flex items-center gap-3">
             <span className="w-32 text-right text-[10px] font-bold text-white shrink-0 truncate">{c.category}</span>
             <div className="flex-1 h-4 bg-[#111]">
-              <div className="h-full bg-[#FABF2C] opacity-75" style={{ width: `${(c.tvl / max) * 100}%` }} />
+              <div
+                className="h-full bg-[#FABF2C] opacity-75"
+                style={{ width: `${(c.tvl / max) * 100}%` }}
+              />
             </div>
-            <span className="w-20 text-right font-mono text-[10px] text-[#FABF2C] tabular-nums shrink-0">{fmtUsd(c.tvl)}</span>
-            <span className="w-10 text-right font-mono text-[10px] text-[#555] shrink-0">{c.share.toFixed(1)}%</span>
+            <span className="w-20 text-right font-mono text-[10px] text-[#FABF2C] tabular-nums shrink-0">
+              {fmtUsd(c.tvl)}
+            </span>
+            <span className="w-10 text-right font-mono text-[10px] text-[#555] shrink-0">
+              {c.share.toFixed(1)}%
+            </span>
           </div>
         ))}
       </div>
@@ -44,11 +56,12 @@ async function TvlData() {
 
   const totalTvl       = protocols.reduce((s, p) => s + p.tvl, 0);
   const totalProtocols = protocols.length;
-  const top1           = protocols[0];
+  const top1           = protocols[0] as ProtocolRow | undefined;
 
   const rows = protocols.map((p) => ({
-    ...p,
-    tvl_fmt:    fmtUsd(p.tvl),
+    name:       p.name,
+    category:   p.category,
+    tvl:        p.tvl,
     change_1d:  p.change_1d,
     change_7d:  p.change_7d,
     chains_fmt: p.chains.slice(0, 3).join(', '),
@@ -65,13 +78,15 @@ async function TvlData() {
         {[
           { label: 'Total DeFi TVL',   value: fmtUsd(totalTvl),      color: '#FABF2C' },
           { label: 'Protocols Ranked', value: String(totalProtocols), color: '#FABF2C' },
-          { label: 'Largest Protocol', value: top1?.name ?? '—',      color: '#fff', sub: fmtUsd(top1?.tvl ?? 0) },
-          { label: 'Source',           value: 'DefiLlama',            color: '#888', sub: 'Cached 1 hour' },
+          { label: 'Largest Protocol', value: top1?.name ?? '—',      color: '#fff',  sub: fmtUsd(top1?.tvl ?? 0) },
+          { label: 'Source',           value: 'DefiLlama',            color: '#888',  sub: 'Cached 1 hour' },
         ].map((s) => (
           <div key={s.label} className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
             <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{s.label}</p>
             <p className="text-2xl font-black tabular-nums" style={{ color: s.color }}>{s.value}</p>
-            {'sub' in s && s.sub && <p className="text-[10px] font-mono text-[#555] mt-1">{s.sub}</p>}
+            {'sub' in s && s.sub && (
+              <p className="text-[10px] font-mono text-[#555] mt-1">{s.sub}</p>
+            )}
           </div>
         ))}
       </div>
@@ -85,12 +100,30 @@ async function TvlData() {
         </h3>
         <DefiTable
           columns={[
-            { key: 'name',       label: 'Protocol', render: (v: unknown) => <span className="font-bold text-white">{String(v)}</span> },
-            { key: 'category',   label: 'Category', render: (v: unknown) => <span className="text-[#888] font-mono">{String(v)}</span> },
-            { key: 'tvl',        label: 'TVL',       align: 'right', render: (v: unknown) => <span className="font-mono font-black text-[#FABF2C] tabular-nums">{fmtUsd(v)}</span> },
-            { key: 'change_1d',  label: '24h %',     align: 'right', render: (v: unknown) => <PctBadge v={v as number | null} /> },
-            { key: 'change_7d',  label: '7d %',      align: 'right', render: (v: unknown) => <PctBadge v={v as number | null} /> },
-            { key: 'chains_fmt', label: 'Chains',    render: (v: unknown) => <span className="text-[#555] font-mono">{String(v)}</span> },
+            {
+              key: 'name', label: 'Protocol',
+              render: (v) => <span className="font-bold text-white">{String(v)}</span>,
+            },
+            {
+              key: 'category', label: 'Category',
+              render: (v) => <span className="text-[#888] font-mono">{String(v)}</span>,
+            },
+            {
+              key: 'tvl', label: 'TVL', align: 'right',
+              render: (v) => <span className="font-mono font-black text-[#FABF2C] tabular-nums">{fmtUsd(v)}</span>,
+            },
+            {
+              key: 'change_1d', label: '24h %', align: 'right',
+              render: (v) => <PctBadge v={v as number | null} />,
+            },
+            {
+              key: 'change_7d', label: '7d %', align: 'right',
+              render: (v) => <PctBadge v={v as number | null} />,
+            },
+            {
+              key: 'chains_fmt', label: 'Chains',
+              render: (v) => <span className="text-[#555] font-mono">{String(v)}</span>,
+            },
           ]}
           data={rows}
           source="Source: DefiLlama · Cached 1 hour"

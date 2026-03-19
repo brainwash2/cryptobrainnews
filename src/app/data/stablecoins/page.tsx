@@ -1,2 +1,2 @@
 import { redirect } from 'next/navigation';
-export default function StablecoinsOverview() { redirect('/data/stablecoins/usd'); }
+export default function StablecoinsRoot() { redirect('/data/stablecoins/usd'); }

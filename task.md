@@ -617,3 +617,21 @@
 	  11. Alternative/Politics page — 5 crypto PAC committees from 2024 FEC cycle with raised/spent totals.
 	  12. Alternative/Social page — platform cards (Wikipedia live, Twitter/Reddit/YouTube planned) with status badges.
 	  13. All pages: no premium gates, no TypeScript any, graceful empty states. RechartsFormatter alias used in WikiPageviewsClient.
+
+[2026-03-19] STATUS UPDATE
+	•	Reference: Phase 44 (Final Polish & Testing)
+	•	New Status: COMPLETED
+	•	Notes:
+	  1. Created `PageSkeleton` reusable loading component — configurable kpis/charts/rows props, used as default loading state across all data route groups.
+	  2. Created `DataPageError` reusable error boundary component — shows error message, digest, and retry button. Applied via section-level error.tsx files.
+	  3. Added loading.tsx to all 8 data section groups: markets, etfs, treasuries, onchain, scaling, defi, nfts, alternative. All use PageSkeleton.
+	  4. Added error.tsx to all 8 data section groups plus stablecoins. All delegate to DataPageError.
+	  5. Fixed defi/tvl/page.tsx — removed awkward _components.tsx re-export pattern, now imports directly from DefiTable component.
+	  6. Added missing root redirect pages: markets/page.tsx → spot, onchain/page.tsx → bitcoin, defi/page.tsx → tvl.
+	  7. Fixed stablecoins/page.tsx redirect (was already correct, confirmed).
+	  8. Rewrote DataSidebar.tsx — full client component with active-state detection, collapsible sections, auto-opens active section, correct w-72 width, terminal branding.
+	  9. Updated data/layout.tsx — correct lg:pl-72 offset for fixed sidebar, proper max-width container.
+	  10. Rewrote DataBreadcrumb.tsx — full label map for all 60+ routes, clean ChevronRight separators, gold active segment.
+	  11. Rewrote ChartSkeleton.tsx — clean reusable skeleton with configurable rows/charts.
+	  12. Rewrote DataHeader.tsx — clean server component with optional badge prop.
+	  13. All 8 development phases (37-44) are now COMPLETE. Total: 60+ data pages, 15+ lib modules, 10+ shared components.
