@@ -635,3 +635,124 @@
 	  11. Rewrote ChartSkeleton.tsx — clean reusable skeleton with configurable rows/charts.
 	  12. Rewrote DataHeader.tsx — clean server component with optional badge prop.
 	  13. All 8 development phases (37-44) are now COMPLETE. Total: 60+ data pages, 15+ lib modules, 10+ shared components.
+
+[2026-03-21] STATUS UPDATE
+	- Reference: Phase 45 · C1 — Fix Dune governance queries (IDs 6705858 / 6705938)
+	- New Status: COMPLETED
+	- Notes:
+	  1. Root cause confirmed: Dune query 6705858 (UNISWAP_GOVERNANCE) contained stub SQL
+	     returning CURRENT_DATE + string literals; query 6705938 (DAO_ACTIVITY) returned
+	     hardcoded zeros. Neither query was wired — GovernanceClient rendered its own
+	     fabricated MOCK_DAOS array, never calling getUniswapGovernance() or getDAOActivity().
+	  2. governance/page.tsx replaced with ComingSoon component (dataSource="Dune Analytics
+	     (Tally / Snapshot)", targetPhase="Phase 45 — Query IDs 6705858 / 6705938 require
+	     real SQL"). Fabricated data no longer surfaces to users.
+	  3. GovernanceClient.tsx preserved in-place per append-only policy; full @deprecated
+	     JSDoc added with step-by-step re-enablement instructions for the next developer.
+	  4. No Dune query SQL was authored (out of scope for C1 — requires real on-chain data
+	     access). The ComingSoon state is the correct production posture until real queries exist.
+	  5. Files changed: src/app/data/governance/page.tsx,
+	     src/app/data/governance/_components/GovernanceClient.tsx.
+
+[2026-03-21] STATUS UPDATE
+	- Reference: Phase 45 · C2 — Remove synthetic Kalshi spread from agent oracle
+	- New Status: COMPLETED
+	- Notes:
+	  1. Root cause: getLivePredictions() fallback block fabricated Kalshi probabilities
+	     using pProb + (title.length % 2 === 0 ? 0.03 : -0.04) — a synthetic offset
+	     derived from title string length, not any real market price. These were returned
+	     to authenticated agent callers at /api/oracle/predictions with execution_confidence
+	     0.75, implying actionable arbitrage. Kalshi geo-block (non-US IPs) means this
+	     fallback fired in production on every request from non-US infrastructure.
+	  2. Fix: Synthetic fallback block removed entirely. When Kalshi is unavailable,
+	     getLivePredictions() now returns Polymarket-only ArbSignal rows with:
+	     • kalshi_implied_probability: null
+	     • arbitrage_spread_pct: 0
+	     • execution_confidence: 0.0   ← agents must not act on cross-platform arb
+	     • kalshi_unavailable: true     ← explicit machine-readable flag
+	     • recommended_agent_action: 'no_action — kalshi_unavailable'
+	  3. ArbSignal interface updated: kalshi_implied_probability is now number | null;
+	     kalshi_unavailable: boolean field added. /api/oracle/predictions consumers
+	     must check kalshi_unavailable before acting on spread.
+	  4. Real cross-platform matching logic (Kalshi available path) is unchanged.
+	  5. Files changed: src/lib/predictions.ts
+
+[2026-03-21] STATUS UPDATE
+	- Reference: Phase 45 · C3 — Fix BTC Dune query duplication and semantic mismatch
+	- New Status: COMPLETED
+	- Notes:
+	  1. Root cause: DUNE_QUERIES.md Q1 ("BTC Active Addresses") contained identical SQL to
+	     Q2 ("BTC Daily Transactions") — both doing COUNT(*) AS tx_count on bitcoin.transactions.
+	     Q1 was semantically named for active addresses but produced transaction counts.
+	  2. bitcoin/page.tsx line 58 read r.tx_count from the activeAddresses result, meaning
+	     the "Active Addresses" chart had always plotted transaction counts, not addresses.
+	  3. Fixes applied:
+	     a. DUNE_QUERIES.md Q1 SQL replaced with a UNION of bitcoin.inputs + bitcoin.outputs
+	        using COUNT(DISTINCT address) → column is now `active_addresses`. Comment added
+	        noting Dune ID 6705328 must be updated with this SQL on dune.com.
+	     b. DUNE_QUERIES.md Q2 prepended with DEPRECATED banner (append-only; SQL unchanged).
+	     c. dune.ts: @deprecated JSDoc added to BTC_DAILY_TRANSACTIONS ID 6705623.
+	        JSDoc added to getBTCActiveAddresses() noting the column name change.
+	     d. bitcoin/page.tsx addrChartData: r.tx_count → r.active_addresses.
+	  4. getBTCDailyTransactions() and ID 6705623 are NOT removed — deprecated in-place.
+	  5. Files changed: DUNE_QUERIES.md, src/lib/dune.ts,
+	     src/app/data/onchain/bitcoin/page.tsx
+
+[2026-03-21] STATUS UPDATE
+	- Reference: Phase 45 · C4 — Replace Reservoir demo API key in lib/nft-data.ts
+	- New Status: COMPLETED
+	- Notes:
+	  1. Root cause: getTopCollections() passed the string literal 'demo-api-key' in the
+	     x-api-key header. Reservoir's demo key is aggressively rate-limited; any failure
+	     silently fell back to the KNOWN_COLLECTIONS seed array (Q1 2026 prices), which
+	     was then served to users without disclosure. In production this meant NFT floor
+	     prices and volume figures were always stale seed data, never live.
+	  2. Fix: API key now read from process.env.RESERVOIR_API_KEY at runtime via an IIFE.
+	     If the env var is absent or still set to 'demo-api-key', a server-side console.warn
+	     is emitted — the app remains functional in local dev but the problem is visible
+	     in server logs. The demo-key string literal is gone from source code.
+	  3. .env.example updated: RESERVOIR_API_KEY entry now has an empty default (was
+	     'demo-api-key'), with a comment noting it is required in production and pointing
+	     to https://reservoir.tools for key registration.
+	  4. Files changed: src/lib/nft-data.ts, .env.example
+
+[2026-03-21] STATUS UPDATE
+	- Reference: Phase 45 · C5 — Update stale fallback prices in lib/fallback-data.ts
+	- New Status: COMPLETED
+	- Notes:
+	  1. Root cause: FALLBACK_MARKET_DATA held BTC=$65,000, ETH=$3,500, SOL=$150 — prices
+	     from a prior market cycle that are materially incorrect in March 2026. These values
+	     surface to users whenever the CoinGecko API fails, with no staleness disclosure.
+	  2. New snapshot taken 2026-03-21 from CoinDesk (BTC, SOL) and CoinMarketCap (ETH):
+	     BTC  $70,325 · mktcap $1.407T · vol $14.06B · 24h +0.8% · 7d -1.4%
+	     ETH   $2,154 · mktcap $260B   · vol $17.72B · 24h +0.9% · 7d -3.2%
+	     SOL      $90 · mktcap $39.5B  · vol $816M   · 24h +1.0% · 7d -5.5%
+	  3. Sparkline base values updated to match new prices (BTC 67500, ETH 2050, SOL 85)
+	     so fallback charts are visually coherent with the displayed price.
+	  4. SOL market_cap_rank corrected from 5 → 7 (current CMC/CoinDesk ranking).
+	  5. JSDoc block added to FALLBACK_MARKET_DATA with snapshot date, sources, and a
+	     maintenance note: re-run this update on >20% sustained price regime change.
+	  6. Files changed: src/lib/fallback-data.ts
+
+[2026-03-21] STATUS UPDATE
+	- Reference: Phase 45 · C6 — Implement /data/defi/large-swaps/page.tsx
+	- New Status: COMPLETED
+	- Notes:
+	  1. Root cause: getLargeDexSwaps() always returned []. The page rendered $0 KPI cards,
+	     a "TODO: Replace with your actual API call" comment, and an empty Dune placeholder
+	     UI. No data, no fallback, broken UX — classified as critical in audit-report.md.
+	  2. UI was designed for a per-transaction swap feed (tx_hash, token_a_symbol) that no
+	     existing Dune query produces. Wiring it to aggregate data would be a semantic
+	     mismatch. UI redesigned to match the actual available data shape.
+	  3. Fix: page rewritten to call getDEXTopProtocols() (Dune ID 6705632) — the existing
+	     dune.ts function for 30-day rolling DEX protocol volumes. New getDEXFlowData()
+	     wrapper maps DuneRow[] to a typed DexProtocol[] interface.
+	  4. Static reference fallback: when Dune returns empty (no API key / rate-limited),
+	     STATIC_DEX_REFERENCE renders a curated 8-protocol table (DefiLlama snapshot
+	     2026-03-21) with full attribution badge, source URL, and activation instructions.
+	  5. Live vs reference state is communicated clearly to users via a coloured badge
+	     (green ● Live vs amber ◌ Reference Snapshot) and footer attribution line.
+	  6. getLargeDexSwaps() function and TODO comment removed entirely from the file.
+	  7. Volume bar chart added for visual distribution of 30D volume across protocols.
+	  8. Chain colour-coding applied (Ethereum blue, Solana purple, BNB yellow, etc.).
+	  9. Files changed: src/app/data/defi/large-swaps/page.tsx

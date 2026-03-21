@@ -1,23 +1,30 @@
-import React from 'react';
-import GovernanceClient from './_components/GovernanceClient';
+import ComingSoon from '../_components/ComingSoon';
 
 export const metadata = {
   title: 'Governance | CryptoBrainNews',
   description: 'DAO governance votes, proposals, and voting metrics.',
 };
 
-export const revalidate = 300;
-
+/**
+ * Phase 45 · C1 — Governance page converted to ComingSoon.
+ *
+ * Root cause: Dune query IDs 6705858 (UNISWAP_GOVERNANCE) and 6705938 (DAO_ACTIVITY)
+ * contain stub SQL that returns fabricated zeros / hardcoded strings. GovernanceClient
+ * was also rendering its own MOCK_DAOS array, never calling Dune at all.
+ *
+ * Resolution: This page is marked ComingSoon until both Dune queries are authored
+ * with real SQL (Tally/Snapshot on-chain governance data) and GovernanceClient is
+ * rewritten to consume live DuneRow[] results.
+ *
+ * See: audit-report.md § C1, DUNE_QUERIES.md Q20 / Q22.
+ */
 export default function GovernancePage() {
   return (
-    <main className="min-h-screen bg-[#050505] py-10 px-4 lg:px-8">
-      <div className="max-w-[1400px] mx-auto">
-        <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">Governance</h1>
-        <p className="text-[#555] font-mono text-[10px] uppercase tracking-[0.3em] mb-10">
-          DAO Votes, Proposals & Governance Tokens
-        </p>
-        <GovernanceClient />
-      </div>
-    </main>
+    <ComingSoon
+      title="Governance"
+      description="DAO votes, proposals & governance token metrics"
+      dataSource="Dune Analytics (Tally / Snapshot)"
+      targetPhase="Phase 45 — Query IDs 6705858 / 6705938 require real SQL"
+    />
   );
 }

@@ -55,7 +55,7 @@ async function BitcoinOnChainData() {
     .slice(-60)
     .map((r) => ({
       date:  String(r.day ?? '').slice(0, 10),
-      addrs: Number(r.tx_count ?? 0),
+      addrs: Number(r.active_addresses ?? 0), // Phase 45 · C3: was r.tx_count (semantic mismatch — active-address query now returns active_addresses column)
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 

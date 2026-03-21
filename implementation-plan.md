@@ -352,3 +352,109 @@
 	•	Reference: Phase 44 (Final Polish & Testing)
 	•	New Status: COMPLETED
 	•	Notes: All polish tasks complete. 8 phases (37-44) delivered. 60+ data pages, zero premium gates, zero mock data (or clearly labeled reference), zero TypeScript any, graceful empty states across all pages. Shared component library: PageSkeleton, DataPageError, DataHeader, ChartSkeleton, DataBreadcrumb, DataSidebar, TimeframeSelector, OnchainAreaChart, ScalingTable, TvlBars, DefiTable, EtfPageLayout, TreasuryPageLayout, ComingSoon, RechartsFormatter. Data sources: DefiLlama, CoinGecko, Binance Futures, Deribit, Polymarket, Wikipedia, beaconcha.in, mempool.space, blockchain.info, Solana RPC, Reservoir. Build is ready for deployment.
+
+## Phase 45: Critical Audit Remediation (C1–C6)
+
+### C1 — Fix Dune Governance Queries [COMPLETED 2026-03-21]
+- **Problem:** Dune IDs 6705858 / 6705938 contained stub SQL (zeros / string literals).
+  GovernanceClient rendered a hardcoded MOCK_DAOS array — never called Dune at all.
+  Fabricated proposal counts and turnout rates were shown to users as live data.
+- **Decision:** Mark governance page as ComingSoon (consistent with launchpads/social).
+  Fabricated data removed from production. GovernanceClient deprecated in-place.
+- **Re-enable path:** Author real SQL on dune.com for IDs 6705858 (Tally proposals)
+  and 6705938 (Snapshot + on-chain DAO activity). Rewrite GovernanceClient to accept
+  DuneRow[] props. Remove ComingSoon from page.tsx.
+- **Files:** src/app/data/governance/page.tsx · _components/GovernanceClient.tsx
+
+### C2 — Remove Synthetic Kalshi Spread from Agent Oracle [COMPLETED 2026-03-21]
+- **Problem:** predictions.ts fallback path (triggered when Kalshi is geo-blocked)
+  fabricated Kalshi implied probabilities from title string length parity and returned
+  execution_confidence: 0.75 to the /api/oracle/predictions agent endpoint. Downstream
+  agents consuming this feed could attempt real trades against a fabricated signal.
+- **Decision:** Remove synthetic fallback entirely. When Kalshi is unavailable, return
+  Polymarket-only rows with execution_confidence: 0.0 and kalshi_unavailable: true.
+  No synthetic data. No actionable cross-platform signal without both real legs.
+- **Interface change:** ArbSignal.kalshi_implied_probability is now number | null.
+  New field: kalshi_unavailable: boolean. All callers of getLivePredictions() should
+  gate cross-platform arb logic on kalshi_unavailable === false.
+- **Real Kalshi path:** Unchanged — matched markets with genuine yes_bid prices
+  continue to produce real ArbSignal entries with calibrated confidence (0.6 / 0.9).
+- **Files:** src/lib/predictions.ts
+
+### C3 — Fix BTC Dune Query Duplication & Semantic Mismatch [COMPLETED 2026-03-21]
+- **Problem (3 layers):**
+  1. DUNE_QUERIES.md Q1 SQL was COUNT(*) AS tx_count — identical to Q2, zero active-address logic.
+  2. Q2 was a verbatim duplicate of Q1 with no differentiation.
+  3. bitcoin/page.tsx addrChartData read r.tx_count from the activeAddresses result,
+     so the Active Addresses chart had always displayed transaction counts.
+- **Fixes:**
+  - Q1 SQL rewritten: UNION of bitcoin.inputs + bitcoin.outputs, COUNT(DISTINCT address)
+    AS active_addresses. Column name corrected from tx_count → active_addresses.
+  - Q2 marked DEPRECATED in DUNE_QUERIES.md (SQL retained, append-only policy).
+  - dune.ts: @deprecated on ID 6705623; JSDoc on getBTCActiveAddresses() noting column change.
+  - bitcoin/page.tsx: addrChartData reads r.active_addresses (was r.tx_count).
+- **Action required:** Update Dune query ID 6705328 on dune.com with the corrected Q1 SQL.
+  Once confirmed live, archive ID 6705623 on dune.com.
+- **Files:** DUNE_QUERIES.md · src/lib/dune.ts · src/app/data/onchain/bitcoin/page.tsx
+
+### C4 — Replace Reservoir Demo API Key [COMPLETED 2026-03-21]
+- **Problem:** 'demo-api-key' hardcoded as string literal in getTopCollections() fetch header.
+  Reservoir rate-limits demo keys aggressively; failure silently returned KNOWN_COLLECTIONS
+  seed (Q1 2026 figures). NFT pages never served live data in production.
+- **Fix:**
+  - Key now read from process.env.RESERVOIR_API_KEY via runtime IIFE.
+  - Fallback to 'demo-api-key' retained for local dev, but emits console.warn so
+    the gap is visible in server logs — not silently swallowed.
+  - .env.example: RESERVOIR_API_KEY default changed from 'demo-api-key' to empty string;
+    comment updated to mark it required for production with link to reservoir.tools.
+- **Action required:** Set RESERVOIR_API_KEY to a real production key in Vercel environment
+  variables and in local .env. Register at https://reservoir.tools (free tier available).
+- **Files:** src/lib/nft-data.ts · .env.example
+
+### C5 — Update Stale Fallback Prices in fallback-data.ts [COMPLETED 2026-03-21]
+- **Problem:** FALLBACK_MARKET_DATA contained BTC=$65,000 / ETH=$3,500 / SOL=$150 —
+  a prior market cycle snapshot that is materially incorrect as of March 2026.
+  These values surface to users on CoinGecko API failure with no staleness disclosure.
+- **Fix:** Full snapshot refresh from live exchange data as of 2026-03-21:
+    BTC $70,325 (CoinDesk) · mktcap $1.407T · vol $14.06B
+    ETH $2,154 (CoinMarketCap) · mktcap $260B · vol $17.72B
+    SOL $90 (CoinDesk) · mktcap ~$39.5B · vol $816M
+  Sparkline bases updated to match. SOL rank corrected 5→7. JSDoc added with
+  snapshot date and maintenance trigger (>20% sustained move = re-snapshot).
+- **Maintenance note:** This file requires periodic manual updates. A future phase
+  should consider a build-time script that fetches and writes the snapshot
+  automatically during CI, so fallback data never drifts more than one build cycle.
+- **Files:** src/lib/fallback-data.ts
+
+### C6 — Implement /data/defi/large-swaps/page.tsx [COMPLETED 2026-03-21]
+- **Problem:** getLargeDexSwaps() always returned []. Page showed $0 KPIs and a
+  TODO comment. UI expected per-tx swap rows (tx_hash, token symbols) — data that
+  no Dune query in dune.ts produces. Completely broken, no fallback.
+- **Decision:** Redesign page to match available data. Wire to getDEXTopProtocols()
+  (Dune ID 6705632) which returns 30-day rolling protocol volumes — the closest real
+  data to the intent of the page (large DEX flow = high-volume DEX protocols).
+- **Fix:**
+  - getLargeDexSwaps() + TODO removed. New getDEXFlowData() wraps getDEXTopProtocols()
+    and maps DuneRow[] → typed DexProtocol[].
+  - Live path: Dune ID 6705632 results rendered in ranked table + volume bar chart.
+  - Fallback path: STATIC_DEX_REFERENCE (8 protocols, DefiLlama snapshot 2026-03-21)
+    rendered with amber ◌ badge and full attribution. No broken empty states.
+  - Data source state (live vs reference) communicated visibly to users.
+  - revalidate = 1800 (30 min) aligned with getDEXTopProtocols() TTL_1_HOUR.
+- **Action required:** Set DUNE_API_KEY in production to activate live Dune path.
+  Once ID 6705632 is confirmed returning real rows, the static reference table
+  can be left in place as the graceful degradation fallback — no further changes needed.
+- **Files:** src/app/data/defi/large-swaps/page.tsx
+
+---
+
+## Phase 45 Summary — All Critical Tasks (C1–C6) COMPLETED 2026-03-21
+
+| Task | Issue | Resolution |
+|------|-------|------------|
+| C1 | Governance page rendered fabricated MOCK_DAOS | Replaced with ComingSoon; GovernanceClient deprecated in-place |
+| C2 | Agent oracle returned synthetic Kalshi spreads at confidence 0.75 | Fabricated fallback removed; unavailable state returns confidence 0.0 + kalshi_unavailable: true |
+| C3 | BTC active-address query returned tx_count; duplicate query IDs | Q1 SQL corrected (COUNT DISTINCT address); Q2 deprecated; page column read fixed |
+| C4 | Reservoir demo API key hardcoded in source | Replaced with process.env.RESERVOIR_API_KEY + runtime warning; .env.example updated |
+| C5 | Fallback prices $65K BTC / $3.5K ETH / $150 SOL (stale cycle) | Refreshed to 2026-03-21 snapshot: $70,325 / $2,154 / $90 |
+| C6 | large-swaps page had TODO comment, always returned [], broken UX | Rewritten; wired to getDEXTopProtocols() with static DefiLlama fallback |

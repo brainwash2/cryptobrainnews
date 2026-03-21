@@ -7,21 +7,42 @@ All corrected queries used in production. Copy query IDs from your Dune dashboar
 ## ON-CHAIN METRICS
 
 ### Query 1: BTC Active Addresses
+<!-- Phase 45 · C3: SQL corrected. Original stub used COUNT(*) AS tx_count — identical
+     to Q2 and semantically wrong. Replaced with a UNION of sending + receiving addresses
+     using bitcoin.inputs / bitcoin.outputs to produce a genuine active_addresses count.
+     Column name changed from tx_count → active_addresses to match dune.ts expectations.
+     Dune query ID 6705328 must be updated with this corrected SQL on dune.com. -->
 ```sql
 SELECT
-  date_trunc('day', block_time) AS day,
-  COUNT(*) AS tx_count,
-  'bitcoin' AS chain
-FROM bitcoin.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+  day,
+  COUNT(DISTINCT address) AS active_addresses,
+  'bitcoin'               AS chain
+FROM (
+  SELECT date_trunc('day', block_time) AS day, address
+  FROM bitcoin.inputs
+  WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+
+  UNION
+
+  SELECT date_trunc('day', block_time) AS day, address
+  FROM bitcoin.outputs
+  WHERE block_time >= NOW() - INTERVAL '{{days}}' day
+) combined
 GROUP BY 1
 ORDER BY 1 DESC
 ```
-**Columns**: `day`, `tx_count`, `chain`
+**Columns**: `day`, `active_addresses`, `chain`
 
 ---
 
 ### Query 2: BTC Daily Transactions
+<!-- Phase 45 · C3: DEPRECATED — DUPLICATE OF Q1 (pre-fix).
+     This query is identical SQL to the original stub in Q1 and maps to Dune ID 6705623
+     (BTC_DAILY_TRANSACTIONS). It is retained in this document for audit trail purposes
+     (append-only policy). getBTCDailyTransactions() in dune.ts continues to reference
+     ID 6705623 and remains callable — the function is not removed.
+     DO NOT author new SQL for this ID until Q1 (6705328) is confirmed live and correct.
+     Once Q1 is verified, Q2 / ID 6705623 should be archived on dune.com. -->
 ```sql
 SELECT
   date_trunc('day', block_time) AS day,

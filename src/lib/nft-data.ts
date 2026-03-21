@@ -128,7 +128,12 @@ const CHAIN_VOLUMES: NftChainVolume[] = [
   { chain: 'BNB Chain',volume24h:    280_000, volume7d:  1_900_000, tradeCount:  3_100, color: '#f3ba2f' },
 ];
 
-// ─── Reservoir: top collections (demo key, rate-limited) ─────────────────────
+// ─── Reservoir: top collections ───────────────────────────────────────────────
+// Phase 45 · C4: API key now read from process.env.RESERVOIR_API_KEY.
+// Falls back to 'demo-api-key' with a server-side warning so the app
+// remains functional in local dev without a key, but the fallback is
+// never silently promoted to production. Set RESERVOIR_API_KEY in .env
+// (see .env.example). Obtain a production key at https://reservoir.tools.
 
 interface ReservoirCollection {
   id:            string;
@@ -147,7 +152,19 @@ export async function getTopCollections(): Promise<NftCollection[]> {
       const res = await fetch(
         'https://api.reservoir.tools/collections/v7?sortBy=1DayVolume&limit=20',
         {
-          headers: { 'x-api-key': 'demo-api-key' },
+          headers: {
+            'x-api-key': (() => {
+              const key = process.env.RESERVOIR_API_KEY;
+              if (!key || key === 'demo-api-key') {
+                console.warn(
+                  '[NFT] RESERVOIR_API_KEY is not set or is the demo key. ' +
+                  'Requests will be heavily rate-limited. ' +
+                  'Set a production key in .env (see .env.example).'
+                );
+              }
+              return key ?? 'demo-api-key';
+            })(),
+          },
           next: { revalidate: 3600 },
         }
       );
