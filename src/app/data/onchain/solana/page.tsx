@@ -3,7 +3,7 @@ import { DataHeader }                              from '../../_components/DataH
 import { ChartSkeleton }                           from '../../_components/ChartSkeleton';
 import { getSolanaStats, getChainTvlHistory }      from '@/lib/onchain-data';
 import OnchainAreaChart                            from '../_components/OnchainAreaChart';
-import { getSOLDailyTransactions, getSOLDailyFees } from '@/lib/dune';
+import { getSOLDailyTransactions, getSOLDailyFees } from '@/lib/onchain-extended';
 import { getCoinPrice }                            from '@/lib/api';
 
 export const metadata = {

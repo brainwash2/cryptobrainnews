@@ -756,3 +756,25 @@
 	  7. Volume bar chart added for visual distribution of 30D volume across protocols.
 	  8. Chain colour-coding applied (Ethereum blue, Solana purple, BNB yellow, etc.).
 	  9. Files changed: src/app/data/defi/large-swaps/page.tsx
+
+[2026-03-22] STATUS UPDATE
+	- Reference: Phase 45 · Exchange Tokens page — /data/markets/exchange-tokens
+	- New Status: COMPLETED
+	- Notes:
+	  1. Replaced ComingSoon stub (Phase 38 placeholder) with a fully live page.
+	  2. Data source: CoinGecko /coins/markets?category=exchange-based-tokens (free,
+	     no API key required). Covers BNB, OKB, CRO, GT, KCS, BGB, MX, WBT, LEO and
+	     others ranked by market cap. 5-minute revalidation + in-memory cache.
+	  3. Seed fallback (March 2026 snapshot) renders if CoinGecko is unavailable — 8 tokens
+	     with approximate prices/market caps. Page never shows an empty state.
+	  4. Layout: DataHeader → source badge → 4 KPI cards (total mktcap, 24h vol,
+	     best/worst 7d performer) → 7d performance bar chart (top 10) → full DataTable
+	     (rank, logo, name, price, 24h%, 7d%, mktcap, volume, ATH%) → attribution footer.
+	  5. Chart: client component ExchangeTokensChart.tsx using Recharts BarChart with
+	     per-Cell colour encoding (green = positive 7d, red = negative). ReferenceLine
+	     at y=0. No animation (SSR-safe). Matches existing BarChartCard style conventions.
+	  6. DataTable uses existing DataTable component with 8 typed columns. Logo images
+	     rendered inline via CoinGecko CDN URLs. Colour-coded 24h% and 7d% columns.
+	  7. Files created:
+	     src/app/data/markets/exchange-tokens/page.tsx
+	     src/app/data/markets/exchange-tokens/_components/ExchangeTokensChart.tsx

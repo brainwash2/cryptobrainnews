@@ -1,5 +1,5 @@
 import React from 'react';
-import { getWhaleTransfers } from '@/lib/dune';
+import { getWhaleTransfers } from '@/lib/onchain-extended';
 
 export const metadata = { title: '🐋 Whale Watch' };
 export const revalidate = 300;

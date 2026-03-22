@@ -6,7 +6,7 @@ import OnchainAreaChart                       from '../_components/OnchainAreaCh
 import {
   getBTCActiveAddresses,
   getBTCDailyTransactions,
-} from '@/lib/dune';
+} from '@/lib/onchain-extended';
 
 export const metadata = {
   title: 'Bitcoin On-Chain | CryptoBrainNews',

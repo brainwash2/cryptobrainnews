@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { getDEXTopProtocols, type DuneRow } from '@/lib/dune';
+import { getDEXTopProtocols, type DuneRow } from '@/lib/onchain-extended';
 
 export const metadata = {
   title: 'DEX Flow — Protocol Volumes | CryptoBrainNews',

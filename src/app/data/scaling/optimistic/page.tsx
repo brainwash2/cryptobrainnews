@@ -4,7 +4,7 @@ import { ChartSkeleton }             from '../../_components/ChartSkeleton';
 import ScalingTable                  from '../_components/ScalingTable';
 import TvlBars                       from '../_components/TvlBars';
 import { getOptimisticRollups }      from '@/lib/scaling-data';
-import { getL2ActiveAddresses, getL2GasFees } from '@/lib/dune';
+import { getL2ActiveAddresses, getL2GasFees } from '@/lib/onchain-extended';
 import BlockChartCard                from '../../_components/charts/BlockChartCard';
 
 export const metadata = {

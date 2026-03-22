@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { getDEXTopProtocols } from '@/lib/dune';
+import { getDEXTopProtocols } from '@/lib/onchain-extended';
 import ExchangesClient from './_components/ExchangesClient';
 import { DataHeader } from '../_components/DataHeader';
 

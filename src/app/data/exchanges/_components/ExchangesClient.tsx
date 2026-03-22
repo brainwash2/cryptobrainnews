@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import type { DuneRow } from '@/lib/dune';
+import type { OnchainRow as DuneRow } from '@/lib/onchain-extended';
 
 interface ExchangesClientProps { topDexes: DuneRow[]; }
 

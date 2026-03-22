@@ -3,7 +3,7 @@ import { DataHeader }                               from '../../_components/Data
 import { ChartSkeleton }                            from '../../_components/ChartSkeleton';
 import { getEthereumStats, getChainTvlHistory }     from '@/lib/onchain-data';
 import OnchainAreaChart                             from '../_components/OnchainAreaChart';
-import { getETHActiveAddresses, getETHDailyTransactions } from '@/lib/dune';
+import { getETHActiveAddresses, getETHDailyTransactions } from '@/lib/onchain-extended';
 import { getCoinPrice }                             from '@/lib/api';
 
 export const metadata = {

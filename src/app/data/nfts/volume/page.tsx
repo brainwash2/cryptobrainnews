@@ -2,7 +2,6 @@ import React, { Suspense }        from 'react';
 import { DataHeader }              from '../../_components/DataHeader';
 import { ChartSkeleton }           from '../../_components/ChartSkeleton';
 import { getNftChainVolumes }      from '@/lib/nft-data';
-import { getNFTTopCollections, getNFTByBlockchain } from '@/lib/dune';
 
 export const metadata = {
   title: 'NFT Trade Volume | CryptoBrainNews',
@@ -18,11 +17,7 @@ function fmtUsd(n: number): string {
 }
 
 async function NftVolumeData() {
-  const [chainVolumes, duneCollections, duneByChain] = await Promise.all([
-    getNftChainVolumes(),
-    getNFTTopCollections().catch(() => []),
-    getNFTByBlockchain(30).catch(() => []),
-  ]);
+  const chainVolumes = await getNftChainVolumes();
 
   const total24h = chainVolumes.reduce((s, c) => s + c.volume24h, 0);
   const total7d  = chainVolumes.reduce((s, c) => s + c.volume7d, 0);
@@ -35,7 +30,6 @@ async function NftVolumeData() {
         description="NFT trading activity by blockchain – 24h and 7d volume, trade counts, and chain market share."
       />
 
-      {/* ── KPI Strip ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total NFT Volume (24h)', value: fmtUsd(total24h), color: '#FABF2C' },
@@ -51,7 +45,6 @@ async function NftVolumeData() {
         ))}
       </div>
 
-      {/* ── Chain Volume Bars ──────────────────────────────────────── */}
       <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
         <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3 mb-6">
           24h Volume by Chain
@@ -80,7 +73,6 @@ async function NftVolumeData() {
         </div>
       </div>
 
-      {/* ── Chain Detail Table ─────────────────────────────────────── */}
       <div>
         <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center gap-3">
           <span className="w-2 h-2 bg-[#FABF2C] rounded-full" />
@@ -93,7 +85,7 @@ async function NftVolumeData() {
                 {['Chain', '24h Volume', '7d Volume', '24h Trades', '24h Share'].map((h) => (
                   <th key={h} className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${h === 'Chain' ? 'text-left' : 'text-right'}`}>{h}</th>
                 ))}
-              </tr>
+               </tr>
             </thead>
             <tbody>
               {chainVolumes.map((c, i) => {
@@ -117,42 +109,9 @@ async function NftVolumeData() {
           </table>
         </div>
         <p className="text-[10px] text-[#333] font-mono mt-2 text-right">
-          Reference data · Dune Analytics integration activates when query IDs are configured
+          Reference data · Dune Analytics integration pending
         </p>
       </div>
-
-      {/* ── Dune live data (when configured) ─────────────────────── */}
-      {duneCollections.length > 0 && (
-        <div>
-          <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center gap-3">
-            <span className="w-2 h-2 bg-[#00d672] rounded-full animate-pulse" />
-            Live: Top Collections (Dune)
-          </h3>
-          <div className="border border-[#1a1a1a] bg-[#0a0a0a] overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-[#1a1a1a] bg-[#080808]">
-                  {['#', 'Collection', 'Chain', '7d Volume', 'Trades', 'Unique Sellers'].map((h) => (
-                    <th key={h} className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${['7d Volume','Trades','Unique Sellers'].includes(h) ? 'text-right' : 'text-left'}`}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {duneCollections.slice(0, 20).map((row, i) => (
-                  <tr key={i} className={`border-b border-[#111] hover:bg-[#0f0f0f] ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'}`}>
-                    <td className="px-4 py-3 text-[#555]">{i + 1}</td>
-                    <td className="px-4 py-3 font-bold text-white">{String(row.collection ?? '—')}</td>
-                    <td className="px-4 py-3 text-[#888] capitalize">{String(row.blockchain ?? '—')}</td>
-                    <td className="px-4 py-3 text-right font-mono font-black text-[#FABF2C] tabular-nums">{fmtUsd(Number(row.volume_7d_usd ?? 0))}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">{Number(row.trade_count ?? 0).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">{Number(row.unique_sellers ?? 0).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

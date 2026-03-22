@@ -458,3 +458,15 @@
 | C4 | Reservoir demo API key hardcoded in source | Replaced with process.env.RESERVOIR_API_KEY + runtime warning; .env.example updated |
 | C5 | Fallback prices $65K BTC / $3.5K ETH / $150 SOL (stale cycle) | Refreshed to 2026-03-21 snapshot: $70,325 / $2,154 / $90 |
 | C6 | large-swaps page had TODO comment, always returned [], broken UX | Rewritten; wired to getDEXTopProtocols() with static DefiLlama fallback |
+
+### Exchange Tokens page — /data/markets/exchange-tokens [COMPLETED 2026-03-22]
+- **Previous state:** ComingSoon stub, dataSource="CoinGecko", targetPhase="Phase 38".
+- **Data source:** CoinGecko /coins/markets?category=exchange-based-tokens (free, no key).
+  Tokens: BNB, OKB, CRO, GT, KCS, BGB, MX, WBT, LEO + others. Sorted by market cap.
+- **Components used:** DataHeader, DataTable (typed columns), Recharts BarChart (new
+  ExchangeTokensChart client component), standard KPI card pattern.
+- **Resilience:** Seed fallback (8 tokens, March 2026 snapshot) renders on API failure.
+  5-min revalidation. Green/red colour encoding on all % change columns and chart bars.
+- **Files:** page.tsx + _components/ExchangeTokensChart.tsx
+- **Next:** Chart density improvements — add 2–3 extra Recharts panels to Bitcoin on-chain,
+  Spot markets, and DeFi TVL pages using already-fetched data.
