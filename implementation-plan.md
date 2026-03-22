@@ -470,3 +470,18 @@
 - **Files:** page.tsx + _components/ExchangeTokensChart.tsx
 - **Next:** Chart density improvements — add 2–3 extra Recharts panels to Bitcoin on-chain,
   Spot markets, and DeFi TVL pages using already-fetched data.
+
+### Chart Density — Spot Markets [COMPLETED 2026-03-22]
+- **Goal:** Add 2-3 Recharts panels without new API calls.
+- **Added:**
+  1. Top Movers BarChart — top 12 coins by absolute tf% change. Green/red per-Cell.
+     Timeframe-controlled (1D/7D/30D) — same state as the coins table.
+  2. Market Cap Dominance BarChart — BTC/ETH/USDT/BNB/SOL/USDC/XRP/Others split
+     from globalData.market_cap_percentage. Token brand colours per Cell.
+  3. CEX Volume BarChart — top 10 exchanges by trade_volume_24h_btc. Gold bars.
+- **No new fetches:** All chart data derived from existing props (globalData, coins,
+  exchanges). Zero cost in API credits or latency.
+- **SSR safety:** All charts guard with mounted state + isAnimationActive=false.
+- **Files:** SpotClient.tsx (rewritten in-place, all existing sections preserved)
+- **Next:** Bitcoin on-chain chart density (area chart active addresses + tx bar chart
+  with 7D/30D/90D timeframe selector).

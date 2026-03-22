@@ -778,3 +778,25 @@
 	  7. Files created:
 	     src/app/data/markets/exchange-tokens/page.tsx
 	     src/app/data/markets/exchange-tokens/_components/ExchangeTokensChart.tsx
+
+[2026-03-22] STATUS UPDATE
+	- Reference: Phase 45 · Chart density — Spot Markets (/data/markets/spot)
+	- New Status: COMPLETED
+	- Notes:
+	  1. Added three Recharts chart panels to SpotClient.tsx — zero new API calls,
+	     all data derived from props already fetched by the server component.
+	  2. Chart 1 — Top Movers: BarChart of top 12 coins by absolute % change for
+	     the selected timeframe. Green/red Cell encoding. Controlled by the existing
+	     TimeframeSelector (1D / 7D / 30D) which also drives the coins table below.
+	  3. Chart 2 — Market Cap Dominance: BarChart of BTC / ETH / USDT / BNB / SOL /
+	     USDC / XRP / Others from globalData.market_cap_percentage. Token-colour
+	     encoding (BTC orange, ETH purple, etc). Single snapshot — no time axis.
+	  4. Chart 3 — Top 10 CEX 24h Volume: BarChart of exchanges[0..9] sorted by
+	     trade_volume_24h_btc. Gold bars. Volume formatted as K BTC on Y-axis.
+	  5. All three charts use mounted-state guard (useEffect) for SSR safety —
+	     same pattern as ExchangeTokensChart. isAnimationActive={false} prevents
+	     Recharts hydration flicker.
+	  6. TimeframeSelector now appears in two places: above Chart 1 (controls
+	     the mover chart) and above the coins table (existing position). Both
+	     share the same tf state so toggling either updates both views.
+	  7. Files changed: src/app/data/markets/spot/_components/SpotClient.tsx
