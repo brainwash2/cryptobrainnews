@@ -179,7 +179,27 @@ export async function getEthereumStats(): Promise<EthereumStats | null> {
         stakingApr,
         avgGasGwei,
         tvlUsd,
-        burnedTotal:   0,        // cumulative ETH burn — update via Dune when IDs are set
+        burnedTotal:   await (async () => {
+          // Phase 45 · H5: replaced hardcoded 0 with Etherscan stats/ethburned.
+          // Requires ETHERSCAN_API_KEY (free at etherscan.io/myapikey).
+          // Fallback: 4_400_000 ETH — conservative Mar 2026 snapshot (better than 0).
+          const key = process.env.ETHERSCAN_API_KEY;
+          if (!key) return 4_400_000;
+          try {
+            const r = await fetch(
+              `https://api.etherscan.io/api?module=stats&action=ethburned&apikey=${key}`,
+              { next: { revalidate: 3600 } }
+            );
+            if (!r.ok) return 4_400_000;
+            const j = await r.json() as { status: string; result?: string };
+            // parseFloat avoids BigInt (project targets < ES2020).
+            // Precision loss at 1e18 scale is <1 ETH — acceptable for display.
+            const eth = j.status === '1' && j.result
+              ? parseFloat(j.result) / 1e18
+              : 0;
+            return eth > 0 ? Math.round(eth) : 4_400_000;
+          } catch { return 4_400_000; }
+        })(),
       };
     } catch {
       return null;
@@ -223,11 +243,39 @@ export async function getSolanaStats(): Promise<SolanaStats | null> {
         }
       } catch { /* use fallback */ }
 
+      // Live TPS from getRecentPerformanceSamples (public Solana RPC, no key)
+      // 60 samples × ~60s each = ~1 hour window; average gives sustained TPS.
+      // Fallback: 2500 (conservative sustainable throughput estimate).
+      let tps = 2_500;
+      try {
+        const perfRes = await fetch('https://api.mainnet-beta.solana.com', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0', id: 2,
+            method: 'getRecentPerformanceSamples',
+            params: [60],
+          }),
+        });
+        if (perfRes.ok) {
+          const perfJson = await perfRes.json() as {
+            result?: Array<{ numTransactions: number; samplePeriodSecs: number }>;
+          };
+          const samples = perfJson.result ?? [];
+          if (samples.length > 0) {
+            const avgTps = samples.reduce(
+              (s, r) => s + r.numTransactions / Math.max(1, r.samplePeriodSecs), 0
+            ) / samples.length;
+            tps = Math.round(avgTps);
+          }
+        }
+      } catch { /* use fallback */ }
+
       return {
         tvlUsd,
-        tps:            2_500,   // public TPS is ~2500 sustainable; real-time requires websocket
+        tps,
         validatorCount,
-        stakingApr:     6.5,     // approximate network APY
+        stakingApr: 6.5,     // approximate network APY
       };
     } catch {
       return null;
