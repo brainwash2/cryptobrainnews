@@ -841,3 +841,12 @@
 	  2. Page now shows real USDT whale transfers (>$100K) on Ethereum. Refreshes every 5 min.
 	  3. Source badge updated to "Live - Etherscan". Empty state now shows actionable message to set ETHERSCAN_API_KEY.
 	  4. Files changed: src/app/data/defi/whale-watch/page.tsx (rewritten)
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · Priority 2 — Ethereum on‑chain
+	• New Status: COMPLETED
+	• Notes:
+	  1. Replaced Dune imports with onchain-extended.ts (Etherscan Stats API) for daily tx and active address charts.
+	  2. Updated source badges to show "Charts - Etherscan Stats API" when data available.
+	  3. Dashed placeholder now shows actionable message to set ETHERSCAN_API_KEY.
+	  4. Files changed: src/app/data/onchain/ethereum/page.tsx

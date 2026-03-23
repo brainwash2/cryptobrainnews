@@ -511,3 +511,8 @@
 - **Problem:** Dune getWhaleTransfers() returned []; page empty.
 - **Solution:** Switched to getWhaleTransfers() from onchain-extended.ts (Etherscan free API). Now displays real USDT transfers >$100K on Ethereum.
 - **Files:** page.tsx (rewritten)
+
+### Priority 2 — Ethereum on‑chain [COMPLETED 2026-03-23]
+- **Problem:** ETH charts used Dune queries (disabled).
+- **Solution:** Switched to Etherscan Stats API via onchain-extended.ts. Displays daily tx count as a proxy for activity. Shows helpful empty state when API key missing.
+- **Files:** page.tsx
