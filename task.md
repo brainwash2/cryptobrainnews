@@ -935,3 +935,14 @@
 	  4. All other functions (getLiveMarketPrices, getCoinPrice, getDeFiProtocols) remain unique to api.ts.
 	  5. Single source of truth for DefiLlama data; no duplicate caching or diverging field names.
 	  6. Files changed: src/lib/api.ts
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · NFT data rewrite — Alchemy + Magic Eden (final)
+	• New Status: COMPLETED
+	• Notes:
+	  1. Replaced Reservoir (relay.link) with Alchemy NFT API for Ethereum collections (getFloorPrice) and Magic Eden public API for Solana collections.
+	  2. No API key required for Magic Eden; Alchemy requires a free key (ALCHEMY_API_KEY) from alchemy.com.
+	  3. Falls back to accurate Q1 2026 seed data when APIs unavailable or key missing.
+	  4. Collections page now shows green "Live" badges for live-fetched collections, amber "Reference" for seed.
+	  5. Files changed: src/lib/nft-data.ts (complete rewrite), src/app/data/nfts/collections/page.tsx (updated earlier)
+	  6. Environment variable added: ALCHEMY_API_KEY (optional, improves freshness for Ethereum collections)

@@ -567,3 +567,12 @@
 - **Solution:** api.ts functions now shim over defi-data.ts with field mapping. One cache, one source of truth.
 - **Preserved:** getDexVolume() (time‑series) is distinct from getDexVolumes() (ranking) – kept both with clear JSDoc.
 - **Files:** src/lib/api.ts
+
+### NFT data rewrite — Alchemy + Magic Eden [COMPLETED 2026-03-23]
+- **Problem:** Reservoir API (demo key) no longer available; site now redirects to relay.link with different auth.
+- **Solution:** 
+  - Ethereum collections → Alchemy NFT API `getFloorPrice` (free tier, 300M CU/month). Requires ALCHEMY_API_KEY (free signup at alchemy.com).
+  - Solana collections → Magic Eden public API (free, no key, 120 QPM).
+  - Fallback → accurate Q1 2026 seed.
+- **Result:** Live floor prices for both chains with graceful degradation.
+- **Files:** src/lib/nft-data.ts (rewritten), collections page (source badge added earlier)
