@@ -555,3 +555,9 @@
 - **Solution:** Fetch IBIT directly from BlackRock iShares public JSON endpoint, GBTC from Grayscale public API. Use accurate March 2026 seed for other funds as fallback.
 - **Result:** IBIT and GBTC holdings update daily; total AUM error <2%. No API key, no third‑party aggregator.
 - **Files:** etf-scraper.ts (new), etf-data.ts (rewritten)
+
+### H6 — Live ETF holdings via direct source scraping [COMPLETED 2026-03-23]
+- **Problem:** ETF holdings were stale seeds; no free API.
+- **Solution:** Fetch IBIT directly from BlackRock iShares public JSON endpoint, GBTC from Grayscale public API. Use accurate March 2026 seed for other funds as fallback.
+- **Result:** IBIT and GBTC holdings update daily; total AUM error <2%. No API key, no third‑party aggregator.
+- **Files:** etf-scraper.ts (new), etf-data.ts (rewritten)
