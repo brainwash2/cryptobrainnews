@@ -543,3 +543,9 @@
 - Solana treasuries: replaced static clock UI with live SOL price, known holders table, and AUM = holdings × live price (same pattern as BTC/ETH treasuries).
 - All static data clearly labeled; live price via CoinGecko.
 - Files: etfs/xrp/page.tsx, etfs/solana/page.tsx, etfs/crypto/page.tsx, treasuries/solana/page.tsx
+
+### H6 — Seed data for pending ETFs & Solana treasuries [COMPLETED 2026-03-23]
+- XRP/SOL/Crypto ETF pages: added live underlying asset price cards and filing tables (SEC EDGAR reference). AUM placeholder explains that live data will appear when products launch.
+- Solana treasuries: replaced static clock UI with live SOL price, known holders table, and AUM = holdings × live price (same pattern as BTC/ETH treasuries).
+- All static data clearly labeled; live price via CoinGecko.
+- Files: etfs/xrp/page.tsx, etfs/solana/page.tsx, etfs/crypto/page.tsx, treasuries/solana/page.tsx
