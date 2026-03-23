@@ -822,3 +822,13 @@
 	  2. Data pre‑fetched server‑side; client component slices history on selector change.
 	  3. No new API calls – totalHistory fetched once (365 days), categories already available.
 	  4. Files changed: src/app/data/defi/tvl/page.tsx (rewritten), added _components/DeFiTvlClient.tsx.
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · Priority 1 fix 2/3 — /data/stablecoins/usd
+	• New Status: COMPLETED
+	• Notes:
+	  1. Replaced broken Dune getStablecoinSupply() with live DefiLlama getStablecoinsOverview().
+	  2. Removed two empty BlockChartCard panels (time‑series volume, transfer count) — those had no free equivalent.
+	  3. Added new layout: KPI cards (total supply, USDT/USDC dominance), horizontal supply bar chart, and full table with 24h/7d change.
+	  4. Data source: stablecoins.llama.fi — filtered to USD‑pegged only. 1h cache.
+	  5. Files changed: src/app/data/stablecoins/usd/page.tsx (rewritten), added _components/StablecoinUsdClient.tsx.

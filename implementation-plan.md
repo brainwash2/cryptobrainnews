@@ -501,3 +501,8 @@
   - TVL by Category horizontal bar chart (15‑colour ramp, tooltips).
 - **Data:** Server‑side fetch of total TVL history (365 days) using existing `getTvlByCategory()`.
 - **Files:** page.tsx (rewritten), DeFiTvlClient.tsx (new)
+
+### Priority 1 fix — /data/stablecoins/usd [COMPLETED 2026-03-23]
+- **Problem:** Dune getStablecoinSupply() returned daily transfer volume, not supply. Page was empty.
+- **Solution:** Switched to DefiLlama getStablecoinsOverview() (live circulating supply, peg type, 24h/7d change). Replaced the two empty time‑series charts with a ranked view more aligned with user expectations.
+- **Files:** page.tsx, StablecoinUsdClient.tsx
