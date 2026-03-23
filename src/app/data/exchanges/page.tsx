@@ -1,25 +1,25 @@
-import React, { Suspense } from 'react';
-import { getDEXTopProtocols } from '@/lib/onchain-extended';
-import ExchangesClient from './_components/ExchangesClient';
-import { DataHeader } from '../_components/DataHeader';
+import React, { Suspense } from "react";
+import { getDexVolumes } from "@/lib/defi-data";
+import ExchangesClient   from "./_components/ExchangesClient";
+import { DataHeader }    from "../_components/DataHeader";
 
 export const metadata = {
-  title: 'DEX Volumes | CryptoBrainNews',
-  description: 'Decentralized exchange trading volumes by protocol.',
+  title: "DEX Volumes | CryptoBrainNews",
+  description: "Decentralized exchange trading volumes by protocol - live from DefiLlama.",
 };
 
-export const revalidate = 3600;
+export const revalidate = 1800;
 
 async function ExchangesData() {
-  const topDexes = await getDEXTopProtocols().catch(() =>[]);
+  const dexes = await getDexVolumes(50).catch(() => []);
 
   return (
     <div className="space-y-8">
-      <DataHeader 
-        title="DEX Volumes" 
-        description="Decentralized exchange trading activity and volume analysis." 
+      <DataHeader
+        title="DEX Volumes"
+        description="Decentralized exchange trading activity and volume - Source: DefiLlama."
       />
-      <ExchangesClient topDexes={topDexes} />
+      <ExchangesClient dexes={dexes} />
     </div>
   );
 }
