@@ -494,3 +494,10 @@
   - Daily transactions bar chart (#FABF2C)
 - **SSR safe:** Data fetched server‑side, client component uses mounted guard and `isAnimationActive={false}`.
 - **Files:** page.tsx (rewritten), _components/BitcoinChartsClient.tsx (new)
+
+### Chart Density — DeFi TVL [COMPLETED 2026-03-23]
+- **Added:**
+  - Total DeFi TVL area chart (Ethereum TVL proxy) with 30D/90D/1Y selector.
+  - TVL by Category horizontal bar chart (15‑colour ramp, tooltips).
+- **Data:** Server‑side fetch of total TVL history (365 days) using existing `getTvlByCategory()`.
+- **Files:** page.tsx (rewritten), DeFiTvlClient.tsx (new)

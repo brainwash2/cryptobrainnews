@@ -811,3 +811,14 @@
 	  4. Data pre‑fetched server‑side (90 days) and sliced client‑side – only 2 API calls total.
 	  5. All existing sections (KPI cards, TVL chart, metrics reference) preserved.
 	  6. Files changed: src/app/data/onchain/bitcoin/page.tsx, added _components/BitcoinChartsClient.tsx.
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · Chart density — DeFi TVL
+	• New Status: COMPLETED
+	• Notes:
+	  1. Added two Recharts panels:
+	     - Total DeFi TVL area chart (30D / 90D / 1Y selector, using Ethereum TVL as proxy).
+	     - TVL by Category horizontal bar chart (coloured ramp, replaces previous CSS bars).
+	  2. Data pre‑fetched server‑side; client component slices history on selector change.
+	  3. No new API calls – totalHistory fetched once (365 days), categories already available.
+	  4. Files changed: src/app/data/defi/tvl/page.tsx (rewritten), added _components/DeFiTvlClient.tsx.
