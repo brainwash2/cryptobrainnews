@@ -850,3 +850,12 @@
 	  2. Updated source badges to show "Charts - Etherscan Stats API" when data available.
 	  3. Dashed placeholder now shows actionable message to set ETHERSCAN_API_KEY.
 	  4. Files changed: src/app/data/onchain/ethereum/page.tsx
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · Priority 2 — Optimistic Rollups
+	• New Status: COMPLETED
+	• Notes:
+	  1. Removed Dune‑dependent getL2ActiveAddresses and getL2GasFees imports.
+	  2. Replaced two empty BlockChartCard panels with a live gas price comparison card using public RPC data.
+	  3. Added source badges, gas price labels (Ultra‑low / Low / Elevated), and fallback empty state.
+	  4. Files changed: src/app/data/scaling/optimistic/page.tsx

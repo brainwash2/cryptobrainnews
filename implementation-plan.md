@@ -516,3 +516,8 @@
 - **Problem:** ETH charts used Dune queries (disabled).
 - **Solution:** Switched to Etherscan Stats API via onchain-extended.ts. Displays daily tx count as a proxy for activity. Shows helpful empty state when API key missing.
 - **Files:** page.tsx
+
+### Priority 2 — Optimistic Rollups [COMPLETED 2026-03-23]
+- **Problem:** Optimistic page used Dune queries (disabled) for active addresses and gas fees; charts never loaded.
+- **Solution:** Switched to onchain-extended.ts for current gas fees (public RPCs). Replaced empty charts with a 3‑column live gas price card. All TVL, tables, and explainer preserved.
+- **Files:** page.tsx
