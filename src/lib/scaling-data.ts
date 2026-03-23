@@ -84,6 +84,23 @@ const L1_NON_EVM_CHAINS = [
 
 // ─── Helper: fetch all chains once and filter ────────────────────────────────
 
+/**
+ * Phase 45 · H4 — Slug alias map.
+ *
+ * DefiLlama sometimes renames chains (e.g. Optimism → OP Mainnet) while our
+ * catalogue slugs stay stable. After building the primary name→chain map we
+ * inject aliases so that lookups by our catalogue slug always resolve.
+ *
+ * Key   = our catalogue slug (lowercased)
+ * Value = DefiLlama chain name (lowercased) as it appears in /v2/chains
+ */
+const SLUG_ALIASES: Record<string, string> = {
+  'optimism':    'op mainnet',    // DefiLlama renamed Optimism → OP Mainnet
+  'cosmoshub':   'cosmos hub',    // Catalogue uses CosmosHub, DefiLlama uses "Cosmos Hub"
+  'polygon zkevm': 'polygon zkevm', // Explicit no-op; here for documentation
+  'bsc':         'bsc',           // Stable — no rename needed
+};
+
 async function getAllChainsMap(): Promise<Map<string, DefiLlamaChain>> {
   return cached('scaling:allchains:map', async () => {
     try {
@@ -91,7 +108,18 @@ async function getAllChainsMap(): Promise<Map<string, DefiLlamaChain>> {
       if (!res.ok) return new Map();
       const data = await res.json() as DefiLlamaChain[];
       const map  = new Map<string, DefiLlamaChain>();
+
+      // Primary index: DefiLlama name → chain data
       data.forEach((c) => map.set(c.name.toLowerCase(), c));
+
+      // Inject aliases: catalogue slug → same chain data as the aliased name
+      // This lets map.get('optimism') resolve even when DefiLlama calls it 'op mainnet'
+      for (const [catalogueSlug, llamaName] of Object.entries(SLUG_ALIASES)) {
+        if (!map.has(catalogueSlug) && map.has(llamaName)) {
+          map.set(catalogueSlug, map.get(llamaName)!);
+        }
+      }
+
       return map;
     } catch {
       return new Map();

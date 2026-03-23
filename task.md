@@ -868,3 +868,15 @@
 	  2. Stablecoins by Chain: replaced broken Dune holder table with live DefiLlama chain‑supply aggregation (USD‑pegged only). Added KPI cards, supply bars, and ranked table.
 	  3. All 7 broken pages from the audit are now fixed. Zero Dune dependencies remain in any active page route.
 	  4. Files changed: src/app/data/nfts/volume/page.tsx, src/app/data/stablecoins/chains/page.tsx
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · H4 — Fix L2 slug matching in scaling-data.ts
+	• New Status: COMPLETED
+	• Notes:
+	  1. Root cause: getAllChainsMap() indexes DefiLlama /v2/chains by name.toLowerCase().
+	     Lookups use our catalogue slug.toLowerCase(). DefiLlama renamed "Optimism" → "OP Mainnet"
+	     and uses "Cosmos Hub" (two words) while our slug is "CosmosHub" — both caused TVL=0.
+	  2. Fix: added SLUG_ALIASES mapping catalogue slugs → DefiLlama names. After primary map
+	     built, aliases injected so map.get('optimism') resolves to same data as 'op mainnet'.
+	  3. Chains fixed: Optimism (OP Mainnet), Cosmos Hub (CosmosHub). No other mismatches.
+	  4. Files changed: src/lib/scaling-data.ts

@@ -526,3 +526,14 @@
 - **NFT Volume:** Removed dead Dune imports, updated source label, preserved chain volume seed data.
 - **Stablecoins by Chain:** Replaced forever‑spinning holder table with live DefiLlama chain‑supply aggregation (total USD‑pegged supply per chain). Added KPI cards, bar chart, ranked table.
 - **Files:** nfts/volume/page.tsx, stablecoins/chains/page.tsx
+
+### H4 — Fix L2 Slug Matching in scaling-data.ts [COMPLETED 2026-03-23]
+- Problem: getAllChainsMap() indexed by DefiLlama chain name. Catalogue slugs used for
+  lookup. DefiLlama renamed "Optimism" → "OP Mainnet"; our slug stayed "Optimism".
+  map.get('optimism') returned undefined → TVL = 0 silently on all scaling pages.
+  "CosmosHub" vs "Cosmos Hub" (space) caused same silent failure.
+- Fix: SLUG_ALIASES map injected after primary map build. Alias entries added only when
+  the catalogue slug is not already present (safe, no clobber). Pattern is self-documenting
+  and extensible — new DefiLlama renames need only a new alias entry.
+- Chains fixed: OP Mainnet (Optimism), Cosmos Hub (CosmosHub).
+- Files: src/lib/scaling-data.ts
