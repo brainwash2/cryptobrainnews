@@ -832,3 +832,12 @@
 	  3. Added new layout: KPI cards (total supply, USDT/USDC dominance), horizontal supply bar chart, and full table with 24h/7d change.
 	  4. Data source: stablecoins.llama.fi — filtered to USD‑pegged only. 1h cache.
 	  5. Files changed: src/app/data/stablecoins/usd/page.tsx (rewritten), added _components/StablecoinUsdClient.tsx.
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · Priority 1 fix 3/3 — /data/defi/whale-watch
+	• New Status: COMPLETED
+	• Notes:
+	  1. Replaced broken Dune getWhaleTransfers() with live Etherscan token transfer API via onchain-extended.ts.
+	  2. Page now shows real USDT whale transfers (>$100K) on Ethereum. Refreshes every 5 min.
+	  3. Source badge updated to "Live - Etherscan". Empty state now shows actionable message to set ETHERSCAN_API_KEY.
+	  4. Files changed: src/app/data/defi/whale-watch/page.tsx (rewritten)
