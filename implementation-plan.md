@@ -561,3 +561,9 @@
 - **Solution:** Fetch IBIT directly from BlackRock iShares public JSON endpoint, GBTC from Grayscale public API. Use accurate March 2026 seed for other funds as fallback.
 - **Result:** IBIT and GBTC holdings update daily; total AUM error <2%. No API key, no third‑party aggregator.
 - **Files:** etf-scraper.ts (new), etf-data.ts (rewritten)
+
+### H1 — Consolidate duplicate fetchers [COMPLETED 2026-03-23]
+- **Problem:** api.ts and defi-data.ts both fetched stablecoins, protocol fees, yields from DefiLlama, with different field names and separate caches → inconsistent data.
+- **Solution:** api.ts functions now shim over defi-data.ts with field mapping. One cache, one source of truth.
+- **Preserved:** getDexVolume() (time‑series) is distinct from getDexVolumes() (ranking) – kept both with clear JSDoc.
+- **Files:** src/lib/api.ts

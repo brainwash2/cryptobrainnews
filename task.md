@@ -924,3 +924,14 @@
 	  3. IBIT and GBTC holdings now update daily from the same sources that power btcetffundflow.com and farside.co.uk.
 	  4. All ETF pages (Bitcoin, Ethereum, Comparison) now reflect real-time holdings for the largest funds.
 	  5. Files changed: src/lib/etf-scraper.ts (new), src/lib/etf-data.ts (rewritten)
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · H1 — Consolidate duplicate fetchers (api.ts vs defi-data.ts)
+	• New Status: COMPLETED
+	• Notes:
+	  1. Converted getStablecoins(), getProtocolFees(), getTopYields() in api.ts to thin shims that delegate to defi-data.ts canonical implementations.
+	  2. Maps field names (circulatingUsd → circulating, total24h → dailyFees/total1d) so existing consumers work unchanged.
+	  3. getDexVolume() kept as time-series (different shape from getDexVolumes()) – JSDoc clarifies distinction.
+	  4. All other functions (getLiveMarketPrices, getCoinPrice, getDeFiProtocols) remain unique to api.ts.
+	  5. Single source of truth for DefiLlama data; no duplicate caching or diverging field names.
+	  6. Files changed: src/lib/api.ts
