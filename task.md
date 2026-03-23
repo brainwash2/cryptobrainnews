@@ -880,3 +880,15 @@
 	     built, aliases injected so map.get('optimism') resolves to same data as 'op mainnet'.
 	  3. Chains fixed: Optimism (OP Mainnet), Cosmos Hub (CosmosHub). No other mismatches.
 	  4. Files changed: src/lib/scaling-data.ts
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · H6 — Seed data for pending ETF pages (XRP, SOL, Crypto basket) + Solana treasuries
+	• New Status: COMPLETED
+	• Notes:
+	  1. XRP ETFs page: added live XRP price card, filings table, and AUM placeholder (pattern: live price x future seed holdings).
+	  2. Solana ETFs page: added live SOL price card, filings table, and AUM placeholder.
+	  3. Crypto ETFs page: added live price cards for DOGE, LTC, ADA; filings table for DOGE/LTC/LINK/ADA/AVAX/HBAR.
+	  4. Solana Treasuries page: replaced clock icon with live SOL price card, static known holders table, AUM = holdings × live SOL price (matches BTC/ETH treasury pattern).
+	  5. All static data clearly labeled as "Seed Q1 2026" or "SEC EDGAR public filings - Updated manually".
+	  6. No hidden mock data; live price integration via CoinGecko.
+	  7. Files changed: src/app/data/etfs/xrp/page.tsx, src/app/data/etfs/solana/page.tsx, src/app/data/etfs/crypto/page.tsx, src/app/data/treasuries/solana/page.tsx

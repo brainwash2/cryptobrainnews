@@ -44,17 +44,23 @@ export interface EtfOverview {
 // Holdings sourced from public on-chain attestations / SEC filings.
 // Updated to approximate Q1 2026 figures.
 
+// Phase 45 · H6 seed refresh — real holdings as of 2026-03-19
+// Source: btcetffundflow.com (aggregates from each fund's official daily disclosure)
+// IBIT alone grew from ~570K BTC at launch to 785K+ — these figures matter.
+// Re-snapshot whenever holdings drift >5% (typically monthly).
 const BTC_ETF_SEED: EtfProduct[] = [
-  { ticker: 'IBIT',  issuer: 'BlackRock',   type: 'spot',    region: 'US', fee: '0.12%', feeNum: 0.0012, holdings: 570_000, inception: 'Jan 2024', url: 'https://www.ishares.com/us/products/333011/' },
-  { ticker: 'GBTC',  issuer: 'Grayscale',   type: 'spot',    region: 'US', fee: '1.50%', feeNum: 0.0150, holdings: 195_000, inception: 'Sep 2013', url: 'https://grayscale.com/products/grayscale-bitcoin-trust/' },
-  { ticker: 'FBTC',  issuer: 'Fidelity',    type: 'spot',    region: 'US', fee: '0.25%', feeNum: 0.0025, holdings: 195_000, inception: 'Jan 2024', url: 'https://www.fidelity.com/etfs/fbtc' },
-  { ticker: 'ARKB',  issuer: 'ARK Invest',  type: 'spot',    region: 'US', fee: '0.21%', feeNum: 0.0021, holdings:  48_000, inception: 'Jan 2024', url: 'https://ark-funds.com/funds/arkb/' },
-  { ticker: 'BITB',  issuer: 'Bitwise',     type: 'spot',    region: 'US', fee: '0.20%', feeNum: 0.0020, holdings:  37_000, inception: 'Jan 2024', url: 'https://bitwiseinvestments.com/etfs/bitb/' },
-  { ticker: 'HODL',  issuer: 'VanEck',      type: 'spot',    region: 'US', fee: '0.20%', feeNum: 0.0020, holdings:  13_000, inception: 'Jan 2024', url: 'https://www.vaneck.com/us/en/investments/bitcoin-etf-hodl/' },
-  { ticker: 'BTCO',  issuer: 'Invesco',     type: 'spot',    region: 'US', fee: '0.25%', feeNum: 0.0025, holdings:  14_000, inception: 'Jan 2024', url: 'https://www.invesco.com/us/financial-products/etfs/product-detail?audienceType=Investor&ticker=BTCO' },
-  { ticker: 'EZBC',  issuer: 'Franklin',    type: 'spot',    region: 'US', fee: '0.19%', feeNum: 0.0019, holdings:  16_000, inception: 'Jan 2024', url: 'https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/38848/' },
-  { ticker: 'BRRR',  issuer: 'Valkyrie',    type: 'spot',    region: 'US', fee: '0.25%', feeNum: 0.0025, holdings:   8_500, inception: 'Jan 2024', url: 'https://www.valkyrie-funds.com/bitcoin-fund/' },
-  { ticker: 'BTCW',  issuer: 'WisdomTree',  type: 'spot',    region: 'US', fee: '0.30%', feeNum: 0.0030, holdings:   5_500, inception: 'Jan 2024', url: 'https://www.wisdomtree.com/investments/etfs/cryptocurrency/btcw' },
+  { ticker: 'IBIT',  issuer: 'BlackRock',        type: 'spot', region: 'US', fee: '0.12%', feeNum: 0.0012, holdings: 785_309, inception: 'Jan 2024', url: 'https://www.ishares.com/us/products/333011/' },
+  { ticker: 'FBTC',  issuer: 'Fidelity',         type: 'spot', region: 'US', fee: '0.25%', feeNum: 0.0025, holdings: 186_969, inception: 'Jan 2024', url: 'https://www.fidelity.com/etfs/fbtc' },
+  { ticker: 'GBTC',  issuer: 'Grayscale',        type: 'spot', region: 'US', fee: '1.50%', feeNum: 0.0150, holdings: 155_590, inception: 'Sep 2013', url: 'https://grayscale.com/products/grayscale-bitcoin-trust/' },
+  { ticker: 'BTC',   issuer: 'Grayscale Mini',   type: 'spot', region: 'US', fee: '0.15%', feeNum: 0.0015, holdings:  51_689, inception: 'Mar 2024', url: 'https://grayscale.com/products/grayscale-bitcoin-mini-trust/' },
+  { ticker: 'ARKB',  issuer: 'ARK Invest',       type: 'spot', region: 'US', fee: '0.21%', feeNum: 0.0021, holdings:  35_462, inception: 'Jan 2024', url: 'https://ark-funds.com/funds/arkb/' },
+  { ticker: 'BITB',  issuer: 'Bitwise',          type: 'spot', region: 'US', fee: '0.20%', feeNum: 0.0020, holdings:  38_578, inception: 'Jan 2024', url: 'https://bitwiseinvestments.com/etfs/bitb/' },
+  { ticker: 'HODL',  issuer: 'VanEck',           type: 'spot', region: 'US', fee: '0.20%', feeNum: 0.0020, holdings:  17_111, inception: 'Jan 2024', url: 'https://www.vaneck.com/us/en/investments/bitcoin-etf-hodl/' },
+  { ticker: 'BTCO',  issuer: 'Invesco Galaxy',   type: 'spot', region: 'US', fee: '0.25%', feeNum: 0.0025, holdings:   6_712, inception: 'Jan 2024', url: 'https://www.invesco.com/us/financial-products/etfs/product-detail?audienceType=Investor&ticker=BTCO' },
+  { ticker: 'BRRR',  issuer: 'Valkyrie',         type: 'spot', region: 'US', fee: '0.25%', feeNum: 0.0025, holdings:   6_302, inception: 'Jan 2024', url: 'https://www.valkyrie-funds.com/bitcoin-fund/' },
+  { ticker: 'EZBC',  issuer: 'Franklin',         type: 'spot', region: 'US', fee: '0.19%', feeNum: 0.0019, holdings:   6_303, inception: 'Jan 2024', url: 'https://www.franklintempleton.com/investments/options/exchange-traded-funds/products/38848/' },
+  { ticker: 'BTCW',  issuer: 'WisdomTree',       type: 'spot', region: 'US', fee: '0.30%', feeNum: 0.0030, holdings:   2_165, inception: 'Jan 2024', url: 'https://www.wisdomtree.com/investments/etfs/cryptocurrency/btcw' },
+  { ticker: 'DEFI',  issuer: 'Hashdex',          type: 'spot', region: 'US', fee: '0.90%', feeNum: 0.0090, holdings:     135, inception: 'Jan 2024', url: 'https://hashdex.com/' },
 ];
 
 const ETH_ETF_SEED: EtfProduct[] = [
