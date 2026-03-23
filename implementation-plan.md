@@ -485,3 +485,12 @@
 - **Files:** SpotClient.tsx (rewritten in-place, all existing sections preserved)
 - **Next:** Bitcoin on-chain chart density (area chart active addresses + tx bar chart
   with 7D/30D/90D timeframe selector).
+
+### Chart Density — Bitcoin on‑chain [COMPLETED 2026-03-23]
+- **Problem:** Bitcoin page relied on Dune queries that were blocked/removed.
+- **Fix:** Switched to blockchain.info free chart APIs (`n-unique-addresses`, `n-transactions`). No API key, no account.
+- **Added:** Two charts with timeframe selector (7D/30D/90D):
+  - Active addresses area chart (#f97316)
+  - Daily transactions bar chart (#FABF2C)
+- **SSR safe:** Data fetched server‑side, client component uses mounted guard and `isAnimationActive={false}`.
+- **Files:** page.tsx (rewritten), _components/BitcoinChartsClient.tsx (new)

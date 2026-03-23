@@ -800,3 +800,14 @@
 	     the mover chart) and above the coins table (existing position). Both
 	     share the same tf state so toggling either updates both views.
 	  7. Files changed: src/app/data/markets/spot/_components/SpotClient.tsx
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · Chart density — Bitcoin on‑chain
+	• New Status: COMPLETED
+	• Notes:
+	  1. Replaced broken Dune imports with direct blockchain.info chart APIs (free, no key).
+	  2. Added BitcoinChartsClient client component with 7D/30D/90D timeframe selector.
+	  3. Two charts: active addresses (area) and daily transactions (bar).
+	  4. Data pre‑fetched server‑side (90 days) and sliced client‑side – only 2 API calls total.
+	  5. All existing sections (KPI cards, TVL chart, metrics reference) preserved.
+	  6. Files changed: src/app/data/onchain/bitcoin/page.tsx, added _components/BitcoinChartsClient.tsx.
