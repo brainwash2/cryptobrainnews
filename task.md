@@ -859,3 +859,12 @@
 	  2. Replaced two empty BlockChartCard panels with a live gas price comparison card using public RPC data.
 	  3. Added source badges, gas price labels (Ultra‑low / Low / Elevated), and fallback empty state.
 	  4. Files changed: src/app/data/scaling/optimistic/page.tsx
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · Priority 3 — NFT Volume & Stablecoins by Chain
+	• New Status: COMPLETED
+	• Notes:
+	  1. NFT Volume: removed dead Dune imports and conditional block, updated source badge to "Reference - Mar 2026 Snapshot" with hint about RESERVOIR_API_KEY.
+	  2. Stablecoins by Chain: replaced broken Dune holder table with live DefiLlama chain‑supply aggregation (USD‑pegged only). Added KPI cards, supply bars, and ranked table.
+	  3. All 7 broken pages from the audit are now fixed. Zero Dune dependencies remain in any active page route.
+	  4. Files changed: src/app/data/nfts/volume/page.tsx, src/app/data/stablecoins/chains/page.tsx

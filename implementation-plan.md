@@ -521,3 +521,8 @@
 - **Problem:** Optimistic page used Dune queries (disabled) for active addresses and gas fees; charts never loaded.
 - **Solution:** Switched to onchain-extended.ts for current gas fees (public RPCs). Replaced empty charts with a 3‑column live gas price card. All TVL, tables, and explainer preserved.
 - **Files:** page.tsx
+
+### Priority 3 — NFT Volume & Stablecoins by Chain [COMPLETED 2026-03-23]
+- **NFT Volume:** Removed dead Dune imports, updated source label, preserved chain volume seed data.
+- **Stablecoins by Chain:** Replaced forever‑spinning holder table with live DefiLlama chain‑supply aggregation (total USD‑pegged supply per chain). Added KPI cards, bar chart, ranked table.
+- **Files:** nfts/volume/page.tsx, stablecoins/chains/page.tsx
