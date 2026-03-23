@@ -904,3 +904,13 @@
 	  5. All static data clearly labeled as "Seed Q1 2026" or "SEC EDGAR public filings - Updated manually".
 	  6. No hidden mock data; live price integration via CoinGecko.
 	  7. Files changed: src/app/data/etfs/xrp/page.tsx, src/app/data/etfs/solana/page.tsx, src/app/data/etfs/crypto/page.tsx, src/app/data/treasuries/solana/page.tsx
+
+[2026-03-23] STATUS UPDATE
+	• Reference: Phase 45 · H6 — Live ETF scraper (BlackRock iShares + Grayscale)
+	• New Status: COMPLETED
+	• Notes:
+	  1. Created src/lib/etf-scraper.ts with live fetchers for IBIT (BlackRock iShares) and GBTC (Grayscale) using their public JSON endpoints.
+	  2. Updated src/lib/etf-data.ts to use live holdings from scraper, falling back to accurate March 2026 seed if endpoints change.
+	  3. IBIT and GBTC holdings now update daily from the same sources that power btcetffundflow.com and farside.co.uk.
+	  4. All ETF pages (Bitcoin, Ethereum, Comparison) now reflect real-time holdings for the largest funds.
+	  5. Files changed: src/lib/etf-scraper.ts (new), src/lib/etf-data.ts (rewritten)

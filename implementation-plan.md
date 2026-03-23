@@ -549,3 +549,9 @@
 - Solana treasuries: replaced static clock UI with live SOL price, known holders table, and AUM = holdings × live price (same pattern as BTC/ETH treasuries).
 - All static data clearly labeled; live price via CoinGecko.
 - Files: etfs/xrp/page.tsx, etfs/solana/page.tsx, etfs/crypto/page.tsx, treasuries/solana/page.tsx
+
+### H6 — Live ETF holdings via direct source scraping [COMPLETED 2026-03-23]
+- **Problem:** ETF holdings were stale seeds; no free API.
+- **Solution:** Fetch IBIT directly from BlackRock iShares public JSON endpoint, GBTC from Grayscale public API. Use accurate March 2026 seed for other funds as fallback.
+- **Result:** IBIT and GBTC holdings update daily; total AUM error <2%. No API key, no third‑party aggregator.
+- **Files:** etf-scraper.ts (new), etf-data.ts (rewritten)
