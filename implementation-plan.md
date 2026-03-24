@@ -596,3 +596,37 @@
 - **CME COTs:** Switched from stub to live CFTC Socrata JSON API. Shows latest weekly report for Bitcoin, Ether, Micro Bitcoin futures with Managed Money, Swap Dealers, etc. Sentiment badge and Long/Short ratio.
 - **Crypto Indices:** Renamed page to "Crypto Sector Overview". Added disclaimer explaining overlapping categories and double‑counting. KPI cards adjusted to show "Sum of Category MCaps" with note.
 - **Files:** cme-cots/page.tsx, indices/page.tsx
+
+---
+## Phase: News Section — Category + Search Enhancement (March 2026)
+
+### Files Changed
+| File | Action |
+|---|---|
+| `src/lib/news.ts` | Rewrote: direct XML parser, 10 feeds, category buckets, `fetchNewsByCategory`, `NEWS_CATEGORIES` |
+| `src/lib/sanity.ts` | Added `getSanityPostsByCategory`, bumped post limit to 50 |
+| `src/components/layout/Header.tsx` | NEWS dropdown, expandable desktop search, mobile search bar |
+| `src/components/common/GlossaryTooltip.tsx` | Touch, overflow-safe positioning, ARIA |
+| `src/app/api/news/ai/route.ts` | Multi-feed, category param, direct XML parse |
+| `src/app/api/news/search/route.ts` | NEW — keyword search over all articles |
+| `src/app/news/category/[slug]/page.tsx` | NEW — per-category listing page |
+| `src/app/news/search/page.tsx` | NEW — search results page |
+| `src/app/news/search/_components/SearchResultsClient.tsx` | NEW — client search component |
+
+### Architecture Notes
+- RSS proxy (rss2json) removed. Direct fetch with `AbortSignal.timeout(8000)` guards against slow feeds.
+- Category cache keys are independent (`news:category:defi`, etc.) — no full-cache busting when one feed is slow.
+- Search is server-side filter over the in-memory/Redis article cache — no DB, no vector store needed at this scale.
+- `NEWS_CATEGORIES` is the single source of truth imported by Header, category page, and news lib.
+
+### Part 2 Continuation Files
+| File | Action |
+|---|---|
+| `src/lib/articles.ts` | `getArticlesByCategory`, `getSearchIndex`, `articleHref`, related-article category preference, cache v6 |
+| `src/app/api/news/search/route.ts` | Uses `getSearchIndex()` instead of `getAllArticles()` |
+| `next.config.mjs` | Added 9 new RSS CDN hostnames |
+| `src/sanity/schemas/post.ts` | `excerpt` field, expanded category options, image blocks in body, Studio preview |
+| `src/components/news/AINewsFeed.tsx` | `category` prop, dynamic endpoint |
+| `src/components/news/NewsTickerBar.tsx` | NEW — scrolling live headlines ticker |
+| `src/app/news/page.tsx` | ISR `revalidate=60`, category pills, ticker integration |
+| `src/components/news/CointelegraphCard.tsx` | `articleHref()` helper, external badge, new-tab for wire |

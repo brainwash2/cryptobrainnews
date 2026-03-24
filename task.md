@@ -975,3 +975,35 @@
 	  2. Crypto Indices: renamed to "Crypto Sector Overview". Added disclaimer about category overlap and double‑counting. KPI strip now shows "Sum of Category MCaps" with explanatory note.
 	  3. All 9 Markets pages now have live data.
 	  4. Files changed: cme-cots/page.tsx, indices/page.tsx
+
+---
+## Phase: News Section Audit & Enhancement (March 2026)
+
+### Completed
+- [x] Full audit of news section (RSS, Sanity, AI, UI/UX, caching)
+- [x] Replaced rss2json proxy with direct XML fetch + lightweight parser
+- [x] Added 8 RSS feeds across 8 category buckets (market/bitcoin/ethereum/defi/nft/regulation/research/layer2)
+- [x] Added `fetchNewsByCategory()` in `lib/news.ts`
+- [x] Added `NEWS_CATEGORIES` constant (single source of truth)
+- [x] Added `/news/category/[slug]` dynamic page
+- [x] Added `/api/news/search` endpoint
+- [x] Added `/news/search` page with client-side query + results
+- [x] Updated Header: NEWS dropdown with all categories + expandable search bar (desktop + mobile)
+- [x] Fixed GlossaryTooltip: touch support, overflow-safe positioning, ARIA attributes
+- [x] Updated AI endpoint: multi-feed, category-aware
+- [x] Updated `getSanityPosts` to 50-item limit + added `getSanityPostsByCategory`
+
+### Pending / Editorial Team Actions
+- [ ] Add `excerpt` field to Sanity `post` schema (180-char string)
+- [ ] Standardise `category` field values to match category slugs (market / bitcoin / ethereum / defi / nft / regulation / research / layer2)
+- [ ] Obtain free-tier rss2json API key OR confirm direct XML parsing is sufficient (Step 1 removes the proxy dependency)
+
+### Phase Continuation (Part 2) — March 2026
+- [x] `lib/articles.ts` — added `getArticlesByCategory`, `getSearchIndex`, `articleHref`, improved `getRelatedArticles` (same-category preference), bumped cache v6
+- [x] `/api/news/search` — updated to use `getSearchIndex()` (lighter payload)
+- [x] `next.config.mjs` — added all new RSS feed CDN hostnames
+- [x] Sanity `post` schema — added `excerpt` field, expanded category list to match route slugs, added image body blocks, improved Studio preview
+- [x] `AINewsFeed` — added `category` prop, dynamic endpoint
+- [x] `NewsTickerBar` — new scrolling live headlines component
+- [x] `/news/page.tsx` — added category pill nav, ticker, switched to `revalidate = 60` (ISR)
+- [x] `CointelegraphCard` — wire articles now open in new tab with source badge; uses `articleHref()` helper

@@ -1,69 +1,164 @@
+import 'server-only';
 import { cached } from './cache';
 import type { WeightedArticle } from './types';
 
-const DEFAULT_RSS_FEEDS =[
-  { url: 'https://cointelegraph.com/rss', source: 'Cointelegraph' },
-  { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk' }
+// Re-export from the client-safe constants file so server code can use them too
+export { NEWS_CATEGORIES } from './news-categories';
+export type { CategorySlug } from './news-categories';
+
+// ---------------------------------------------------------------------------
+// Feed registry
+// ---------------------------------------------------------------------------
+export interface FeedConfig {
+  url: string;
+  source: string;
+  categories: string[];
+  weight?: number;
+}
+
+export const CATEGORY_FEEDS: Record<string, FeedConfig[]> = {
+  market: [
+    { url: 'https://cointelegraph.com/rss', source: 'Cointelegraph', categories: ['market'] },
+    { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk', categories: ['market'] },
+    { url: 'https://cryptoslate.com/feed/', source: 'CryptoSlate', categories: ['market'] },
+  ],
+  bitcoin: [
+    { url: 'https://bitcoinmagazine.com/.rss/full/', source: 'Bitcoin Magazine', categories: ['bitcoin'] },
+    { url: 'https://cointelegraph.com/rss/tag/bitcoin', source: 'Cointelegraph', categories: ['bitcoin'] },
+  ],
+  ethereum: [
+    { url: 'https://decrypt.co/category/ethereum/feed', source: 'Decrypt', categories: ['ethereum'] },
+    { url: 'https://cointelegraph.com/rss/tag/ethereum', source: 'Cointelegraph', categories: ['ethereum'] },
+  ],
+  defi: [
+    { url: 'https://thedefiant.io/feed', source: 'The Defiant', categories: ['defi'] },
+    { url: 'https://blockworks.co/feed', source: 'Blockworks', categories: ['defi'] },
+  ],
+  nft: [
+    { url: 'https://decrypt.co/category/nft/feed', source: 'Decrypt', categories: ['nft'] },
+    { url: 'https://cointelegraph.com/rss/tag/nfts', source: 'Cointelegraph', categories: ['nft'] },
+  ],
+  regulation: [
+    { url: 'https://cointelegraph.com/rss/tag/regulation', source: 'Cointelegraph', categories: ['regulation'] },
+    { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/category/policy-regulation/', source: 'CoinDesk', categories: ['regulation'] },
+  ],
+  research: [
+    { url: 'https://www.theblock.co/rss.xml', source: 'The Block', categories: ['research'] },
+    { url: 'https://blockworks.co/feed', source: 'Blockworks', categories: ['research'] },
+  ],
+  layer2: [
+    { url: 'https://blockworks.co/feed', source: 'Blockworks', categories: ['layer2'] },
+    { url: 'https://decrypt.co/feed', source: 'Decrypt', categories: ['layer2'] },
+  ],
+};
+
+const ALL_DEFAULT_FEEDS: FeedConfig[] = [
+  { url: 'https://cointelegraph.com/rss', source: 'Cointelegraph', categories: ['market'] },
+  { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk', categories: ['market'] },
+  { url: 'https://www.theblock.co/rss.xml', source: 'The Block', categories: ['research'] },
+  { url: 'https://decrypt.co/feed', source: 'Decrypt', categories: ['market'] },
+  { url: 'https://blockworks.co/feed', source: 'Blockworks', categories: ['defi'] },
 ];
 
+// ---------------------------------------------------------------------------
+// XML parser
+// ---------------------------------------------------------------------------
+function parseRssXml(xml: string, source: string, categories: string[]): WeightedArticle[] {
+  const items: WeightedArticle[] = [];
+  const itemMatches = [...xml.matchAll(/<item[^>]*>([\s\S]*?)<\/item>/gi)];
+
+  for (const [, itemXml] of itemMatches) {
+    const get = (tag: string) => {
+      const m = itemXml.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`, 'i'))
+        || itemXml.match(new RegExp(`<${tag}[^>]*>([^<]*)<\\/${tag}>`, 'i'));
+      return m ? m[1].trim() : '';
+    };
+
+    const title = get('title');
+    const link = get('link') || get('guid');
+    const pubDate = get('pubDate');
+    const description = get('description').replace(/<[^>]+>/g, '').slice(0, 220);
+    const guid = get('guid') || link;
+
+    const imgMatch = itemXml.match(/url="([^"]+\.(jpg|jpeg|png|webp)[^"]*)"/i);
+    const image = imgMatch
+      ? imgMatch[1]
+      : 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=800';
+
+    if (!title || !link) continue;
+
+    items.push({
+      id: guid,
+      title,
+      body: description + '…',
+      image,
+      source,
+      published_on: pubDate ? Math.floor(new Date(pubDate).getTime() / 1000) : Math.floor(Date.now() / 1000),
+      url: link,
+      categories,
+      tags: [],
+      weight: 50,
+      sourceType: 'wire',
+    });
+  }
+  return items;
+}
+
+async function fetchFeed(feed: FeedConfig, limit: number): Promise<WeightedArticle[]> {
+  try {
+    const res = await fetch(feed.url, {
+      next: { revalidate: 300 },
+      headers: { 'User-Agent': 'CryptoBrainNews/1.0 RSS Reader' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const xml = await res.text();
+    return parseRssXml(xml, feed.source, feed.categories).slice(0, limit);
+  } catch (err) {
+    console.error(`[News] Failed to fetch ${feed.source}:`, err);
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Public API (server-only)
+// ---------------------------------------------------------------------------
+
 export async function fetchCryptoNews(limit = 20, topic?: string): Promise<WeightedArticle[]> {
-  // Use a unique cache key if a topic is provided
   const cacheKey = topic ? `news:topic:${topic.toLowerCase()}` : 'news:multi-rss';
-  
+
   return cached(cacheKey, async () => {
-    try {
-      const allArticles: WeightedArticle[] =[];
-      
-      let feedsToFetch = DEFAULT_RSS_FEEDS;
-
-      if (topic) {
-        // When a topic is provided (e.g., from /coins/pepe), we query Google News RSS
-        // We use rss2json.com to bypass Google's strict server blocks
-        const query = encodeURIComponent(`"${topic}" crypto`);
-        feedsToFetch =[
-          { 
-            url: `https://news.google.com/rss/search?q=${query}+when:7d&hl=en-US&gl=US&ceid=US:en`, 
-            source: 'Google News' 
-          }
-        ];
+    if (topic) {
+      const query = encodeURIComponent(`"${topic}" crypto`);
+      const url = `https://news.google.com/rss/search?q=${query}+when:7d&hl=en-US&gl=US&ceid=US:en`;
+      try {
+        const res = await fetch(url, { next: { revalidate: 300 }, signal: AbortSignal.timeout(8000) });
+        const xml = await res.text();
+        return parseRssXml(xml, 'Google News', [topic.toUpperCase()])
+          .slice(0, limit)
+          .map(a => ({ ...a, weight: 80 }));
+      } catch {
+        return [];
       }
-
-      for (const feed of feedsToFetch) {
-        try {
-          // The rss2json API converts the raw XML into clean JSON for us
-          const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&api_key=`;
-          
-          const res = await fetch(proxyUrl, { next: { revalidate: 300 } });
-          const data = await res.json();
-          
-          if (data.status === 'ok' && Array.isArray(data.items)) {
-            const parsed = data.items.slice(0, limit).map((item: any, idx: number) => ({
-              id: item.guid || `${feed.source}-${idx}`,
-              title: item.title,
-              // Clean out HTML tags from the description
-              body: (item.description || '').replace(/<[^>]+>/g, '').slice(0, 200) + '...',
-              image: item.thumbnail || item.enclosure?.link || 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1200',
-              // Try to extract the original publisher name if it came from Google News
-              source: feed.source === 'Google News' && item.source?.title ? item.source.title : feed.source,
-              published_on: Math.floor(new Date(item.pubDate).getTime() / 1000),
-              url: item.link,
-              categories: [topic ? topic.toUpperCase() : 'Market'],
-              tags:[],
-              weight: topic ? 80 : 50,
-              sourceType: 'wire',
-            }));
-            allArticles.push(...parsed);
-          }
-        } catch (e) {
-          console.error(`[News] Failed to fetch RSS for ${feed.source}`, e);
-        }
-      }
-
-      // Sort by newest first
-      return allArticles.sort((a, b) => b.published_on - a.published_on).slice(0, limit);
-    } catch (error) {
-      console.error('[News API] Aggregation Error:', error);
-      return[];
     }
-  }, 300); // Cache results for 5 minutes
+
+    const results = await Promise.allSettled(
+      ALL_DEFAULT_FEEDS.map(feed => fetchFeed(feed, limit))
+    );
+    const all = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+    return all.sort((a, b) => b.published_on - a.published_on).slice(0, limit);
+  }, 300);
+}
+
+export async function fetchNewsByCategory(category: string, limit = 30): Promise<WeightedArticle[]> {
+  const slug = category.toLowerCase();
+  return cached(`news:category:${slug}`, async () => {
+    const feeds = CATEGORY_FEEDS[slug] || CATEGORY_FEEDS.market;
+    const results = await Promise.allSettled(feeds.map(f => fetchFeed(f, limit)));
+    const all = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+    return all
+      .map(a => ({ ...a, categories: [slug] }))
+      .sort((a, b) => b.published_on - a.published_on)
+      .slice(0, limit);
+  }, 300);
 }

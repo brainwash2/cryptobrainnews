@@ -8,11 +8,26 @@ export const client = createClient({
   useCdn: true,
 })
 
+/** All posts (used by articles aggregator) */
 export async function getSanityPosts() {
   return cached('sanity:posts', async () => {
-    return client.fetch(`*[_type == "post"] | order(publishedAt desc)[0...10] {
-      _id, title, "slug": slug.current, "imageUrl": mainImage.asset->url, publishedAt, category, body
+    return client.fetch(`*[_type == "post"] | order(publishedAt desc)[0...50] {
+      _id, title, "slug": slug.current, "imageUrl": mainImage.asset->url,
+      publishedAt, category, excerpt, body
     }`);
+  }, 60);
+}
+
+/** Posts filtered by category (for /news/category/[slug]) */
+export async function getSanityPostsByCategory(category: string) {
+  const capitalized = category.charAt(0).toUpperCase() + category.slice(1);
+  return cached(`sanity:posts:${category}`, async () => {
+    return client.fetch(
+      `*[_type == "post" && (category == $cat || category match $catPattern)] | order(publishedAt desc)[0...30] {
+        _id, title, "slug": slug.current, "imageUrl": mainImage.asset->url, publishedAt, category, excerpt, body
+      }`,
+      { cat: capitalized, catPattern: `${capitalized}*` }
+    );
   }, 60);
 }
 
