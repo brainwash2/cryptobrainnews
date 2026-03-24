@@ -946,3 +946,13 @@
 	  4. Collections page now shows green "Live" badges for live-fetched collections, amber "Reference" for seed.
 	  5. Files changed: src/lib/nft-data.ts (complete rewrite), src/app/data/nfts/collections/page.tsx (updated earlier)
 	  6. Environment variable added: ALCHEMY_API_KEY (optional, improves freshness for Ethereum collections)
+
+[2026-03-24] STATUS UPDATE
+	• Reference: Markets section — Futures page (Binance → Bybit + CoinGecko migration)
+	• New Status: COMPLETED
+	• Notes:
+	  1. Replaced Binance futures API (blocked on Vercel) with Bybit public API for OI history, funding rates, and funding rate history.
+	  2. Replaced DefiLlama derivatives exchange rankings with CoinGecko /derivatives/exchanges (BTC‑denominated volume and OI).
+	  3. Updated FuturesClient.tsx to display BTC‑denominated KPIs and table values.
+	  4. All endpoints work from Vercel serverless functions (no IP blocks).
+	  5. Files changed: src/lib/derivatives.ts, src/lib/market-data.ts, src/app/data/markets/futures/_components/FuturesClient.tsx

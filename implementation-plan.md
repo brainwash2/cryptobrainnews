@@ -576,3 +576,11 @@
   - Fallback → accurate Q1 2026 seed.
 - **Result:** Live floor prices for both chains with graceful degradation.
 - **Files:** src/lib/nft-data.ts (rewritten), collections page (source badge added earlier)
+
+### Markets — Futures page (Binance → Bybit + CoinGecko) [COMPLETED 2026-03-24]
+- Problem: Binance blocks Vercel's IP range; all futures data was failing silently → page showed $0 KPIs and empty charts.
+- Solution: 
+  - OI history and funding rates → Bybit v5 API (public, no key).
+  - Exchange rankings → CoinGecko /derivatives/exchanges (BTC‑denominated, free).
+- Result: Live data restored; charts and tables now display BTC‑based metrics.
+- Files: derivatives.ts, market-data.ts, FuturesClient.tsx

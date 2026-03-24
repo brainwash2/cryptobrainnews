@@ -152,108 +152,118 @@ export async function getCoinCategories(limit = 40): Promise<CoinGeckoCategory[]
   }, 3600);
 }
 
-// ─── Binance Open Interest History ─────────────────────────────────────────
+// ─── Bybit Open Interest History ─────────────────────────────────────────────
+// Replaces Binance fapi (blocked on Vercel). Bybit v5 /market/open-interest
+// returns daily BTC/ETH OI in USD. No key, no IP restrictions.
 
 export interface OIHistoryPoint {
   date: string;
-  btc: number;
-  eth: number;
+  btc:  number;
+  eth:  number;
 }
 
-interface BinanceOIRow {
-  symbol: string;
-  sumOpenInterest: string;
-  sumOpenInterestValue: string;
-  timestamp: number;
+interface BybitOIRow {
+  openInterest:   string;  // USD value
+  timestamp:      string;  // ms epoch string
 }
 
-async function fetchBinanceOIHist(
-  symbol: string,
-  limit: number
-): Promise<BinanceOIRow[]> {
+interface BybitOIResponse {
+  retCode: number;
+  result: { list?: BybitOIRow[] };
+}
+
+async function fetchBybitOIHist(symbol: string, limit: number): Promise<BybitOIRow[]> {
   try {
     const res = await fetch(
-      `https://fapi.binance.com/futures/data/openInterestHist?symbol=${symbol}&period=1d&limit=${limit}`
+      `https://api.bybit.com/v5/market/open-interest?category=linear&symbol=${symbol}&intervalTime=1d&limit=${limit}`,
+      { next: { revalidate: 3600 } }
     );
     if (!res.ok) return [];
-    const data = await res.json() as BinanceOIRow[];
-    return Array.isArray(data) ? data : [];
+    const data = await res.json() as BybitOIResponse;
+    return data.result?.list ?? [];
   } catch {
     return [];
   }
 }
 
 export async function getOIHistory(days = 30): Promise<OIHistoryPoint[]> {
-  return cached(`binance:oi:history:${days}`, async () => {
+  return cached(`bybit:oi:history:${days}`, async () => {
     const [btcRows, ethRows] = await Promise.all([
-      fetchBinanceOIHist('BTCUSDT', days),
-      fetchBinanceOIHist('ETHUSDT', days),
+      fetchBybitOIHist("BTCUSDT", days),
+      fetchBybitOIHist("ETHUSDT", days),
     ]);
 
-    const btcMap = new Map<number, number>(
-      btcRows.map((r) => [r.timestamp, Number(r.sumOpenInterestValue)])
-    );
-    const ethMap = new Map<number, number>(
-      ethRows.map((r) => [r.timestamp, Number(r.sumOpenInterestValue)])
-    );
+    // Bybit returns newest-first — reverse for chronological order
+    const toMap = (rows: BybitOIRow[]) =>
+      new Map(
+        [...rows].reverse().map((r) => [
+          new Date(parseInt(r.timestamp)).toLocaleDateString("en-US", {
+            month: "short", day: "numeric",
+          }),
+          Number(r.openInterest),
+        ])
+      );
 
-    const timestamps = [
-      ...new Set([...btcMap.keys(), ...ethMap.keys()]),
-    ].sort((a, b) => a - b);
+    const btcMap = toMap(btcRows);
+    const ethMap = toMap(ethRows);
+    const allDates = [...new Set([...btcMap.keys(), ...ethMap.keys()])];
 
-    return timestamps.map((ts) => ({
-      date: new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      btc: btcMap.get(ts) ?? 0,
-      eth: ethMap.get(ts) ?? 0,
+    return allDates.map((date) => ({
+      date,
+      btc: btcMap.get(date) ?? 0,
+      eth: ethMap.get(date) ?? 0,
     }));
   }, 3600);
 }
 
-// ─── Binance Funding Rate History ────────────────────────────────────────────
+// ─── Bybit Funding Rate History ───────────────────────────────────────────────
+// Bybit v5 /market/funding/history returns historical 8h funding rates.
+// Averaged per calendar day to match the existing FundingHistoryPoint shape.
 
 export interface FundingHistoryPoint {
   date: string;
-  btc: number;
-  eth: number;
+  btc:  number;
+  eth:  number;
 }
 
-interface BinanceFundingRow {
-  symbol: string;
-  fundingTime: number;
-  fundingRate: string;
-  markPrice: string;
+interface BybitFundingRow {
+  symbol:       string;
+  fundingRate:  string;
+  fundingRateTimestamp: string;  // ms epoch string
 }
 
-async function fetchBinanceFundingHist(
-  symbol: string,
-  limit: number
-): Promise<BinanceFundingRow[]> {
+interface BybitFundingResponse {
+  retCode: number;
+  result: { list?: BybitFundingRow[] };
+}
+
+async function fetchBybitFundingHist(symbol: string, limit: number): Promise<BybitFundingRow[]> {
   try {
     const res = await fetch(
-      `https://fapi.binance.com/fapi/v1/fundingRate?symbol=${symbol}&limit=${limit}`
+      `https://api.bybit.com/v5/market/funding/history?category=linear&symbol=${symbol}&limit=${limit}`,
+      { next: { revalidate: 1800 } }
     );
     if (!res.ok) return [];
-    const data = await res.json() as BinanceFundingRow[];
-    return Array.isArray(data) ? data : [];
+    const data = await res.json() as BybitFundingResponse;
+    return data.result?.list ?? [];
   } catch {
     return [];
   }
 }
 
 export async function getFundingRateHistory(days = 30): Promise<FundingHistoryPoint[]> {
-  return cached(`binance:funding:hist:${days}`, async () => {
-    const limit = days * 3; // 3 settlements per day (every 8h)
+  return cached(`bybit:funding:hist:${days}`, async () => {
+    const limit = days * 3;  // 3 settlements per day (every 8h)
     const [btcRows, ethRows] = await Promise.all([
-      fetchBinanceFundingHist('BTCUSDT', limit),
-      fetchBinanceFundingHist('ETHUSDT', limit),
+      fetchBybitFundingHist("BTCUSDT", limit),
+      fetchBybitFundingHist("ETHUSDT", limit),
     ]);
 
-    // Average per calendar day
-    const avg = (rows: BinanceFundingRow[]): Map<string, number> => {
+    const avg = (rows: BybitFundingRow[]): Map<string, number> => {
       const grouped = new Map<string, number[]>();
       rows.forEach((r) => {
-        const d = new Date(r.fundingTime).toLocaleDateString('en-US', {
-          month: 'short', day: 'numeric',
+        const d = new Date(parseInt(r.fundingRateTimestamp)).toLocaleDateString("en-US", {
+          month: "short", day: "numeric",
         });
         if (!grouped.has(d)) grouped.set(d, []);
         grouped.get(d)!.push(Number(r.fundingRate) * 100);

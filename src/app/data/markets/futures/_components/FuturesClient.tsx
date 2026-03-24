@@ -75,7 +75,7 @@ export default function FuturesClient({
       {/* KPI Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: '24h Global Volume',   value: fmtUsd(totalVolume),         accent: '#FABF2C' },
+          { label: '24h Global Volume',   value: `${totalVolume.toLocaleString(undefined,{maximumFractionDigits:0})} BTC`, accent: '#FABF2C' },
           { label: 'Total Open Interest', value: fmtUsd(totalOi),             accent: '#FABF2C' },
           { label: 'Avg Funding Rate',    value: `${avgFunding.toFixed(4)}%`, accent: avgFunding >= 0 ? '#00d672' : '#ff4757' },
           { label: 'Exchanges Tracked',   value: String(exchanges.length),    accent: '#888' },
@@ -95,7 +95,7 @@ export default function FuturesClient({
               BTC &amp; ETH Open Interest History
             </h3>
             <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
-              Source: Binance Futures · Real historical data
+              Source: Bybit Futures · Real historical data
             </p>
           </div>
           <TimeframeSelector
@@ -171,7 +171,7 @@ export default function FuturesClient({
               Avg Daily Funding Rate (BTC &amp; ETH)
             </h3>
             <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
-              Source: Binance Futures · Averaged across 3 daily settlements
+              Source: Bybit Futures · Averaged across 3 daily settlements
             </p>
           </div>
         </div>
@@ -281,8 +281,8 @@ export default function FuturesClient({
                 {exchanges.slice(0, 15).map((ex, i) => (
                   <tr key={ex.exchange} className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'}`}>
                     <td className="px-4 py-3 font-bold text-white capitalize">{ex.exchange}</td>
-                    <td className="px-4 py-3 text-right font-mono font-black text-[#FABF2C] tabular-nums">{fmtUsd(ex.volume24h)}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">{fmtUsd(ex.openInterest)}</td>
+                    <td className="px-4 py-3 text-right font-mono font-black text-[#FABF2C] tabular-nums">{ex.volume24h ? `${ex.volume24h.toLocaleString(undefined,{maximumFractionDigits:0})} BTC` : '-'}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">{ex.openInterest ? `${ex.openInterest.toLocaleString(undefined,{maximumFractionDigits:0})} BTC` : '-'}</td>
                   </tr>
                 ))}
               </tbody>
