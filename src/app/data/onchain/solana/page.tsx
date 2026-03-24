@@ -1,20 +1,19 @@
-import React, { Suspense }                        from 'react';
-import { DataHeader }                              from '../../_components/DataHeader';
-import { ChartSkeleton }                           from '../../_components/ChartSkeleton';
-import { getSolanaStats, getChainTvlHistory }      from '@/lib/onchain-data';
-import OnchainAreaChart                            from '../_components/OnchainAreaChart';
-import { getSOLDailyTransactions, getSOLDailyFees } from '@/lib/onchain-extended';
-import { getCoinPrice }                            from '@/lib/api';
+import React, { Suspense }                   from "react";
+import { DataHeader }                          from "../../_components/DataHeader";
+import { ChartSkeleton }                       from "../../_components/ChartSkeleton";
+import { getSolanaStats, getChainTvlHistory }  from "@/lib/onchain-data";
+import { getCoinPrice }                        from "@/lib/api";
+import OnchainAreaChart                        from "../_components/OnchainAreaChart";
 
 export const metadata = {
-  title: 'Solana On-Chain | CryptoBrainNews',
-  description: 'Solana network metrics – TVL, validators, staking APR, fees, and transaction activity.',
+  title: "Solana On-Chain | CryptoBrainNews",
+  description: "Solana network metrics - TVL, validators, staking APR, and transaction activity.",
 };
 export const revalidate = 300;
 
-function StatCard({
-  label, value, sub, color = '#9945ff',
-}: { label: string; value: string; sub?: string; color?: string }) {
+function StatCard({ label, value, sub, color = "#9945ff" }: {
+  label: string; value: string; sub?: string; color?: string;
+}) {
   return (
     <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
       <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{label}</p>
@@ -25,66 +24,51 @@ function StatCard({
 }
 
 function fmtNum(n: number): string {
-  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
   if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
   if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
-  return n.toString();
+  return n.toFixed(0);
 }
 
-async function SolanaOnChainData() {
-  const [solStats, solPrice, tvlHistory, dailyTxns, dailyFees] = await Promise.all([
-    getSolanaStats(),
-    getCoinPrice('solana').catch(() => 0),
-    getChainTvlHistory('Solana', 90),
-    getSOLDailyTransactions(90).catch(() => []),
-    getSOLDailyFees(90).catch(() => []),
+async function SolData() {
+  const [solStats, solPrice, tvlHistory] = await Promise.all([
+    getSolanaStats().catch(() => null),
+    getCoinPrice("solana").catch(() => 0),
+    getChainTvlHistory("Solana", 90).catch(() => []),
   ]);
-
-  const txChartData = dailyTxns
-    .slice(-60)
-    .map((r) => ({
-      date: String(r.day ?? '').slice(0, 10),
-      txns: Number(r.tx_count ?? 0),
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  const feeChartData = dailyFees
-    .slice(-60)
-    .map((r) => ({
-      date: String(r.day ?? '').slice(0, 10),
-      fees: Number(r.total_fees_sol ?? 0),
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date));
 
   return (
     <div className="space-y-10 pb-20">
       <DataHeader
         title="Solana On-Chain"
-        description="Solana network metrics – TVL, validators, staking APR, and daily transaction activity."
+        description="Solana network health - TVL, validators, live TPS, and staking APR."
       />
 
-      {/* ── Live Stats ─────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3">
+        <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
+          Live - Solana RPC + DefiLlama
+        </span>
+      </div>
+
       {solStats ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="SOL Price"       value={solPrice > 0 ? `$${solPrice.toFixed(2)}` : '—'}        color="#9945ff" sub="CoinGecko" />
-          <StatCard label="DeFi TVL"        value={`$${(solStats.tvlUsd / 1e9).toFixed(2)}B`}             color="#9945ff" sub="DefiLlama" />
-          <StatCard label="Validators"      value={fmtNum(solStats.validatorCount)}                        color="#fff"    sub="Solana RPC" />
-          <StatCard label="Staking APR"     value={`${solStats.stakingApr.toFixed(1)}%`}                   color="#00d672" sub="approx. network APY" />
-          <StatCard label="TPS (approx.)"   value={`~${solStats.tps.toLocaleString()}`}                    color="#FABF2C" sub="sustainable throughput" />
-          <StatCard label="SOL Market Cap"  value={solPrice > 0 ? `$${((solPrice * 580_000_000) / 1e9).toFixed(1)}B` : '—'} color="#888" sub="~580M circulating" />
-          <StatCard label="Data Source"     value="DefiLlama"    color="#888" sub="+ Solana RPC" />
-          <StatCard label="Fee Model"       value="Priority fees" color="#888" sub="base + priority" />
+          <StatCard label="SOL Price"     value={solPrice > 0 ? `$${solPrice.toFixed(2)}` : "-"} sub="CoinGecko" />
+          <StatCard label="DeFi TVL"      value={solStats.tvlUsd > 0 ? `$${(solStats.tvlUsd / 1e9).toFixed(2)}B` : "-"} sub="DefiLlama" />
+          <StatCard label="Live TPS"      value={solStats.tps > 0 ? `${solStats.tps.toLocaleString()}` : "-"} sub="getRecentPerformanceSamples" color="#fff" />
+          <StatCard label="Validators"    value={fmtNum(solStats.validatorCount)} sub="current + delinquent" color="#fff" />
+          <StatCard label="Staking APR"   value={`${solStats.stakingApr.toFixed(1)}%`} sub="approximate network APY" color="#00d672" />
+          <StatCard label="Consensus"     value="PoH + PoS" sub="Proof of History" color="#888" />
+          <StatCard label="Block Time"    value="~400ms" sub="average slot time" color="#888" />
+          <StatCard label="Data Source"   value="Public RPC" sub="mainnet-beta.solana.com" color="#888" />
         </div>
       ) : (
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-8 text-center">
-          <p className="text-[#555] font-mono text-xs uppercase">Network stats unavailable</p>
+          <p className="text-[#555] font-mono text-xs uppercase">Network stats temporarily unavailable</p>
         </div>
       )}
 
-      {/* ── TVL History Chart ──────────────────────────────────────── */}
       <OnchainAreaChart
         title="Solana DeFi TVL (90D)"
-        subtitle="Source: DefiLlama — Solana ecosystem protocols"
+        subtitle="Source: DefiLlama - total value locked in Solana-native protocols"
         data={tvlHistory}
         dataKey="tvl"
         color="#9945ff"
@@ -92,38 +76,12 @@ async function SolanaOnChainData() {
         height={220}
       />
 
-      {/* ── Dune Transaction & Fee Charts ─────────────────────────── */}
-      {txChartData.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <OnchainAreaChart
-            title="Daily Transactions (Dune)"
-            subtitle="Non-vote transactions · Dune Analytics"
-            data={txChartData}
-            dataKey="txns"
-            color="#9945ff"
-            yFormatter={(v) => fmtNum(v)}
-            height={200}
-          />
-          {feeChartData.length > 0 && (
-            <OnchainAreaChart
-              title="Daily Network Fees SOL (Dune)"
-              subtitle="Total fees in SOL · Dune Analytics"
-              data={feeChartData}
-              dataKey="fees"
-              color="#14f195"
-              yFormatter={(v) => `${v.toFixed(0)} SOL`}
-              height={200}
-            />
-          )}
-        </div>
-      ) : (
-        <div className="border border-dashed border-[#1a1a1a] p-6 text-center">
-          <p className="text-[10px] text-[#333] font-mono uppercase tracking-widest">
-            Transaction &amp; fee charts activate once Dune query IDs are set in
-            <code className="text-[#9945ff] ml-1">src/lib/dune.ts</code>
-          </p>
-        </div>
-      )}
+      <div className="border border-dashed border-[#1a1a1a] p-6 text-center">
+        <p className="text-[10px] text-[#333] font-mono uppercase tracking-widest">
+          Daily transaction history charts - Solana RPC getRecentPerformanceSamples
+          returns live TPS but not historical daily totals. No free daily tx history API available.
+        </p>
+      </div>
     </div>
   );
 }
@@ -132,7 +90,7 @@ export default function SolanaOnChainPage() {
   return (
     <main>
       <Suspense fallback={<ChartSkeleton />}>
-        <SolanaOnChainData />
+        <SolData />
       </Suspense>
     </main>
   );

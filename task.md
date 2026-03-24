@@ -1007,3 +1007,14 @@
 - [x] `NewsTickerBar` — new scrolling live headlines component
 - [x] `/news/page.tsx` — added category pill nav, ticker, switched to `revalidate = 60` (ISR)
 - [x] `CointelegraphCard` — wire articles now open in new tab with source badge; uses `articleHref()` helper
+
+[2026-03-24] STATUS UPDATE
+	• Reference: On-chain section + CME COTs (Phase 45 completion)
+	• New Status: COMPLETED
+	• Notes:
+	  1. Bitcoin: replaced Dune with blockchain.info charts (active addresses, daily transactions). Added BitcoinChartsClient with timeframe selector (7D/30D/90D). All stats via mempool.space + blockchain.info.
+	  2. Ethereum: stats from beaconcha.in + DefiLlama. Removed Dune dependencies; chart placeholder with note about ETHERSCAN_API_KEY.
+	  3. Solana: stats from Solana RPC + DefiLlama. Live TPS from getRecentPerformanceSamples. No daily history chart (no free API).
+	  4. Avalanche & Aptos: TVL history via DefiLlama; price from CoinGecko. Clear note about missing metrics due to API limits.
+	  5. CME COTs: switched from manual CSV to CFTC Socrata API (`publicreporting.cftc.gov/resource/72hh-3qpy.json`). Shows Bitcoin, Ether, Micro Bitcoin with full trader category breakdown. Graceful fallback if geo‑blocked.
+	  6. All pages now Dune‑free, use free public APIs, and include proper error boundaries and loading skeletons.

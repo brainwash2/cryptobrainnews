@@ -630,3 +630,11 @@
 | `src/components/news/NewsTickerBar.tsx` | NEW — scrolling live headlines ticker |
 | `src/app/news/page.tsx` | ISR `revalidate=60`, category pills, ticker integration |
 | `src/components/news/CointelegraphCard.tsx` | `articleHref()` helper, external badge, new-tab for wire |
+
+### On-chain & CME COTs – Final polish [COMPLETED 2026-03-24]
+- Bitcoin: blockchain.info charts with interactive timeframe selector.
+- Ethereum: beaconcha.in stats + DefiLlama TVL. Removed Dune charts (optional Etherscan key still available).
+- Solana: live TPS via RPC, TVL via DefiLlama.
+- Avalanche/Aptos: TVL + price; transparent about missing detailed stats.
+- CME COTs: CFTC Socrata API integration; fallback message if API unavailable.
+- Files: `onchain/bitcoin/page.tsx`, `_components/BitcoinChartsClient.tsx`, `onchain/ethereum/page.tsx`, `onchain/solana/page.tsx`, `onchain/avalanche/page.tsx`, `onchain/aptos/page.tsx`, `markets/cme-cots/page.tsx`.

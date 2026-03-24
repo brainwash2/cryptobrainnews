@@ -1,21 +1,22 @@
-import React, { Suspense }              from 'react';
-import { DataHeader }                   from '../../_components/DataHeader';
-import { ChartSkeleton }                from '../../_components/ChartSkeleton';
-import { getChainTvlHistory }           from '@/lib/onchain-data';
-import OnchainAreaChart                 from '../_components/OnchainAreaChart';
-import { getCoinPrice }                 from '@/lib/api';
+import React, { Suspense }              from "react";
+import { DataHeader }                   from "../../_components/DataHeader";
+import { ChartSkeleton }                from "../../_components/ChartSkeleton";
+import { getChainTvlHistory }           from "@/lib/onchain-data";
+import OnchainAreaChart                 from "../_components/OnchainAreaChart";
+import { getCoinPrice }                 from "@/lib/api";
 
 export const metadata = {
-  title: 'Aptos On-Chain | CryptoBrainNews',
-  description: 'Aptos network metrics – TVL, transactions, fees, and active addresses.',
+  title: "Aptos On-Chain | CryptoBrainNews",
+  description: "Aptos network DeFi TVL and on-chain activity metrics.",
 };
 export const revalidate = 3600;
 
 async function AptosData() {
   const [aptPrice, tvlHistory] = await Promise.all([
-    getCoinPrice('aptos').catch(() => 0),
-    getChainTvlHistory('Aptos', 90),
+    getCoinPrice("aptos").catch(() => 0),
+    getChainTvlHistory("Aptos", 90).catch(() => []),
   ]);
+  const latestTvl = tvlHistory[tvlHistory.length - 1]?.tvl ?? 0;
 
   return (
     <div className="space-y-10 pb-20">
@@ -24,17 +25,23 @@ async function AptosData() {
         description="Aptos network DeFi TVL and on-chain activity metrics."
       />
 
+      <div className="flex items-center gap-3">
+        <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
+          Live - CoinGecko + DefiLlama
+        </span>
+      </div>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'APT Price',   value: aptPrice > 0 ? `$${aptPrice.toFixed(2)}` : '—', color: '#00bfad' },
-          { label: 'DeFi TVL',    value: tvlHistory.length > 0 ? `$${((tvlHistory[tvlHistory.length - 1]?.tvl ?? 0) / 1e6).toFixed(0)}M` : '—', color: '#00bfad' },
-          { label: 'Consensus',   value: 'AptosBFT', color: '#888', sub: 'Block-STM parallel exec' },
-          { label: 'Source',      value: 'DefiLlama', color: '#888', sub: 'Dune queries pending' },
+          { label: "APT Price",   value: aptPrice > 0 ? `$${aptPrice.toFixed(2)}` : "-", color: "#00bfad" },
+          { label: "DeFi TVL",    value: latestTvl >= 1e9 ? `$${(latestTvl / 1e9).toFixed(2)}B` : latestTvl > 0 ? `$${(latestTvl / 1e6).toFixed(0)}M` : "-", color: "#00bfad" },
+          { label: "Consensus",   value: "AptosBFT", color: "#888", sub: "Block-STM parallel exec" },
+          { label: "Source",      value: "DefiLlama", color: "#888", sub: "Free API" },
         ].map((s) => (
           <div key={s.label} className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
             <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{s.label}</p>
             <p className="text-2xl font-black tabular-nums" style={{ color: s.color }}>{s.value}</p>
-            {s.sub && <p className="text-[10px] font-mono text-[#555] mt-1">{s.sub}</p>}
+            {"sub" in s && s.sub && <p className="text-[10px] font-mono text-[#555] mt-1">{s.sub}</p>}
           </div>
         ))}
       </div>
@@ -51,7 +58,7 @@ async function AptosData() {
 
       <div className="border border-dashed border-[#1a1a1a] p-6 text-center">
         <p className="text-[10px] text-[#333] font-mono uppercase tracking-widest">
-          User transactions, active addresses, and APT fee metrics via Dune Analytics — configure query IDs to activate
+          User transactions, active addresses, and APT fee metrics - Aptos public API integration planned
         </p>
       </div>
     </div>
