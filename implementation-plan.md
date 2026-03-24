@@ -591,3 +591,8 @@
 - Exchange Tokens: rank column now uses local index (i+1) instead of global market cap rank.
 - Options: added minHeight to chart wrapper to fix Recharts console warning.
 - Files: sports-tokens/page.tsx, companies/page.tsx, exchange-tokens/page.tsx, OptionsClient.tsx
+
+### Markets — CME COTs & Crypto Indices [COMPLETED 2026-03-24]
+- **CME COTs:** Switched from stub to live CFTC Socrata JSON API. Shows latest weekly report for Bitcoin, Ether, Micro Bitcoin futures with Managed Money, Swap Dealers, etc. Sentiment badge and Long/Short ratio.
+- **Crypto Indices:** Renamed page to "Crypto Sector Overview". Added disclaimer explaining overlapping categories and double‑counting. KPI cards adjusted to show "Sum of Category MCaps" with note.
+- **Files:** cme-cots/page.tsx, indices/page.tsx
