@@ -584,3 +584,10 @@
   - Exchange rankings → CoinGecko /derivatives/exchanges (BTC‑denominated, free).
 - Result: Live data restored; charts and tables now display BTC‑based metrics.
 - Files: derivatives.ts, market-data.ts, FuturesClient.tsx
+
+### Markets — Sports Tokens, Companies, Exchange Tokens rank, Options chart [COMPLETED 2026-03-24]
+- Sports Tokens: live from CoinGecko category=fan-token (free, no key). 50 tokens table.
+- Companies: merged BTC/ETH treasury data into a single company list with both holdings.
+- Exchange Tokens: rank column now uses local index (i+1) instead of global market cap rank.
+- Options: added minHeight to chart wrapper to fix Recharts console warning.
+- Files: sports-tokens/page.tsx, companies/page.tsx, exchange-tokens/page.tsx, OptionsClient.tsx

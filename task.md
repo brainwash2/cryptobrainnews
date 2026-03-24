@@ -956,3 +956,13 @@
 	  3. Updated FuturesClient.tsx to display BTC‑denominated KPIs and table values.
 	  4. All endpoints work from Vercel serverless functions (no IP blocks).
 	  5. Files changed: src/lib/derivatives.ts, src/lib/market-data.ts, src/app/data/markets/futures/_components/FuturesClient.tsx
+
+[2026-03-24] STATUS UPDATE
+	• Reference: Markets section — Sports Tokens, Companies, Exchange Tokens rank, Options chart warning
+	• New Status: COMPLETED
+	• Notes:
+	  1. Sports Tokens: replaced ComingSoon with live CoinGecko fan-token category (PSG, BAR, JUV, etc.).
+	  2. Companies: reused treasury-data.ts to merge BTC/ETH public company holdings; now live from CoinGecko.
+	  3. Exchange Tokens: rank column fixed to local 1,2,3 instead of global rank.
+	  4. Options chart: added minHeight to wrapper to prevent Recharts width(-1) height(-1) warning.
+	  5. Files changed: sports-tokens/page.tsx, companies/page.tsx, exchange-tokens/page.tsx, options/_components/OptionsClient.tsx
