@@ -696,3 +696,36 @@ After applying, visit:
 - `/data/onchain/avalanche` – AVAX price + TVL chart
 - `/data/onchain/aptos` – APT price + TVL chart
 - `/data/markets/cme-cots` – CFTC data or graceful fallback message
+
+---
+## Data Section Fix (On-Chain Pages & CME COTs) — March 2026
+
+### Root Causes
+| Page | Cause |
+|---|---|
+| Bitcoin | Missing `_components/BitcoinChartsClient.tsx` import → runtime crash |
+| Ethereum | Still referencing Dune queries that were removed |
+| Solana | Still had Dune imports with long polling loops → Vercel timeout |
+| Avalanche | Caught in shared error boundary; code was fine but restored for consistency |
+| Aptos | Same as Avalanche |
+| CME COTs | CFTC API URL had changed; updated with multiple fallback URLs |
+
+### Files Changed
+| File | Action |
+|---|---|
+| `src/app/data/onchain/bitcoin/page.tsx` | Replaced with self-contained version |
+| `src/app/data/onchain/bitcoin/_components/BitcoinChartsClient.tsx` | NEW – created missing component |
+| `src/app/data/onchain/ethereum/page.tsx` | Replaced with Dune-free version |
+| `src/app/data/onchain/solana/page.tsx` | Replaced with Dune-free version |
+| `src/app/data/onchain/avalanche/page.tsx` | Replaced with clean version |
+| `src/app/data/onchain/aptos/page.tsx` | Replaced with clean version |
+| `src/app/data/markets/cme-cots/page.tsx` | Updated CFTC API URLs with fallbacks |
+
+### Verification
+After applying, visit:
+- `/data/onchain/bitcoin` – should show live stats + active addresses chart
+- `/data/onchain/ethereum` – staking stats, TVL chart
+- `/data/onchain/solana` – TPS, validators, TVL
+- `/data/onchain/avalanche` – AVAX price + TVL chart
+- `/data/onchain/aptos` – APT price + TVL chart
+- `/data/markets/cme-cots` – CFTC data or graceful fallback message

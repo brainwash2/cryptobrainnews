@@ -1,34 +1,35 @@
 export const dynamic = 'force-dynamic';
-
+ 
 import React from 'react';
 import { getAllArticles, getIntelligence } from '@/lib/articles';
 import Link from 'next/link';
 import AINewsFeed from '@/components/news/AINewsFeed';
 import AppImage from '@/components/ui/AppImage';
 import CointelegraphCard from '@/components/news/CointelegraphCard';
-
+ 
 export const metadata = {
   title: 'CryptoBrainNews | Institutional Terminal',
   description: 'Institutional-grade crypto intelligence, DeFi data, and on-chain analytics.',
 };
-
+ 
 export default async function HomePage() {
   const [all, alpha, analysis] = await Promise.all([
     getAllArticles(),
     getIntelligence('Alpha Call'),
     getIntelligence('Daily Analysis'),
   ]);
-
+ 
   const wire = all.filter((a) => a.source !== 'CryptoBrain').slice(0, 20);
   const hero = alpha[0] || all[0];
-
+ 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans pb-20">
+    /* isolation-isolate ensures this page content never paints over the header */
+    <div className="min-h-screen bg-[#050505] text-white font-sans pb-20 isolate">
       <main className="container mx-auto px-4 lg:px-10 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          
+ 
           {/* Main Left Column */}
-          <div className="lg:col-span-8 space-y-16 mt-24 relative z-0 pt-8 bg-black">
+          <div className="lg:col-span-8 space-y-16">
             <section className="space-y-8">
               <div className="flex items-center gap-4">
                 <span className="bg-[#FABF2C] text-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest">
@@ -39,7 +40,7 @@ export default async function HomePage() {
                 </span>
                 <div className="h-px flex-1 bg-[#1a1a1a]" />
               </div>
-
+ 
               {hero && (
                 <Link
                   href={hero.url.startsWith('http') ? hero.url : `/news/${hero.id}`}
@@ -63,7 +64,7 @@ export default async function HomePage() {
                 </Link>
               )}
             </section>
-
+ 
             <section className="pt-16 border-t border-[#1a1a1a]">
               <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#555] mb-10">
                 Proprietary Research
@@ -95,7 +96,7 @@ export default async function HomePage() {
               </div>
             </section>
           </div>
-
+ 
           {/* Right Sidebar */}
           <aside className="lg:col-span-4 space-y-16">
             <div className="p-8 border border-[#1a1a1a] bg-[#080808] relative overflow-hidden">
@@ -108,7 +109,7 @@ export default async function HomePage() {
               </h3>
               <AINewsFeed />
             </div>
-
+ 
             <div className="space-y-10 px-4">
               <h3 className="text-[#555] font-black uppercase text-[10px] tracking-[0.3em] flex items-center gap-4">
                 Market Pulse
@@ -129,9 +130,8 @@ export default async function HomePage() {
             </div>
           </aside>
         </div>
-
-        {/* Global Market Feed Grid */}
-        {/* Airdrops & Events Discovery */}
+ 
+        {/* Airdrops & Events */}
         <section className="mt-20 pt-16 border-t border-[#1a1a1a]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-8">
@@ -143,7 +143,7 @@ export default async function HomePage() {
                 </span>
               </div>
               <p className="text-sm text-[#888] mb-8 leading-relaxed">
-                Our algorithms are currently tracking highly-funded protocols across Ethereum and Solana that have not yet launched a token. Early interaction often leads to high-value protocol distributions.
+                Our algorithms are currently tracking highly-funded protocols across Ethereum and Solana that have not yet launched a token.
               </p>
               <Link href="/airdrops" className="inline-block bg-[#1a1a1a] text-white hover:bg-[#FABF2C] hover:text-black px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-colors">
                 View Potential Airdrops →
@@ -152,7 +152,7 @@ export default async function HomePage() {
             <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-8">
               <h2 className="text-xs font-black text-[#FABF2C] uppercase tracking-[0.3em] mb-6">Global Events</h2>
               <p className="text-sm text-[#888] mb-8 leading-relaxed">
-                Track network upgrades, mainnet launches, and global institutional conferences. We aggregate data directly from CoinMarketCal and protocol announcements to keep your thesis ahead of the market.
+                Track network upgrades, mainnet launches, and global institutional conferences.
               </p>
               <Link href="/events" className="inline-block bg-[#1a1a1a] text-white hover:bg-[#FABF2C] hover:text-black px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-colors">
                 Open Event Calendar →
@@ -160,17 +160,15 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
-
+ 
+        {/* Global Market Feed */}
         <section className="mt-32 pt-20 border-t border-[#1a1a1a]">
           <div className="flex justify-between items-end mb-12">
-            <h2 className="text-[10px] font-black text-[#555] uppercase tracking-[0.4em]">
-              Global Market Feed
-            </h2>
+            <h2 className="text-[10px] font-black text-[#555] uppercase tracking-[0.4em]">Global Market Feed</h2>
             <Link href="/news" className="text-[10px] font-black text-[#FABF2C] uppercase tracking-widest hover:text-white transition-colors">
               View All ↗
             </Link>
           </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {wire.slice(5, 13).map((n) => (
               <CointelegraphCard key={n.id} article={n} />
