@@ -729,3 +729,24 @@ After applying, visit:
 - `/data/onchain/avalanche` – AVAX price + TVL chart
 - `/data/onchain/aptos` – APT price + TVL chart
 - `/data/markets/cme-cots` – CFTC data or graceful fallback message
+
+---
+## Data Section Final Fix (March 2026)
+
+### Root Causes
+| Page | Original Problem | Resolution |
+|------|------------------|------------|
+| Ethereum | Dune API timeouts | Switched to beaconcha.in + DefiLlama |
+| Solana | Dune API timeouts | Switched to Solana RPC + DefiLlama |
+| Avalanche | Shared error boundary from other crashes | Clean version with CoinGecko + DefiLlama |
+| Aptos | Same as Avalanche | Clean version with CoinGecko + DefiLlama |
+| CME COTs | Socrata API blocked by Cloudflare | New fetcher using CFTC direct ZIP (Akamai), Socrata fallback, reference snapshot |
+
+### Files Changed
+- `src/app/data/onchain/ethereum/page.tsx` – replaced
+- `src/app/data/onchain/solana/page.tsx` – replaced
+- `src/app/data/onchain/avalanche/page.tsx` – replaced
+- `src/app/data/onchain/aptos/page.tsx` – replaced
+- `src/app/data/markets/cme-cots/page.tsx` – replaced
+
+All pages now load without Dune dependencies or network‑level timeouts.

@@ -1057,3 +1057,12 @@
 - [x] Aptos page: uses CoinGecko + DefiLlama, no Dune
 - [x] CME COTs page: restored CFTC Socrata API integration with fallback handling
 - [x] Created missing _components/BitcoinChartsClient.tsx to resolve import error
+
+---
+## Data Section Final Fix (March 2026)
+- [x] Ethereum page: removed all Dune dependencies, uses beaconcha.in + DefiLlama
+- [x] Solana page: removed all Dune dependencies, uses Solana RPC + DefiLlama
+- [x] Avalanche page: uses CoinGecko + DefiLlama
+- [x] Aptos page: uses CoinGecko + DefiLlama
+- [x] CME COTs page: rewritten to fetch from CFTC ZIP (www.cftc.gov) with Socrata fallback and Q1 2026 reference snapshot
+- [x] All on-chain pages now self-contained, no Dune, no missing imports
