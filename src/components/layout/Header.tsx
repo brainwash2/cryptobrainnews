@@ -1,11 +1,11 @@
 'use client';
- 
+
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Menu, X, Shield, Search, ChevronDown } from 'lucide-react';
 import { NEWS_CATEGORIES } from '@/lib/news-categories';
- 
+
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [newsDropdownOpen, setNewsDropdownOpen] = useState(false);
@@ -15,9 +15,9 @@ export default function Header() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const pathname = usePathname();
- 
+
   useEffect(() => { setNewsDropdownOpen(false); setIsOpen(false); }, [pathname]);
- 
+
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -32,11 +32,11 @@ export default function Header() {
       window.removeEventListener('scroll', onScroll);
     };
   }, []);
- 
+
   useEffect(() => {
     if (searchOpen) setTimeout(() => searchInputRef.current?.focus(), 50);
   }, [searchOpen]);
- 
+
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const q = searchQuery.trim();
@@ -45,7 +45,7 @@ export default function Header() {
     setSearchQuery('');
     router.push(`/news/search?q=${encodeURIComponent(q)}`);
   }
- 
+
   const navLinks = [
     { name: 'DATA',     href: '/data/markets/spot' },
     { name: 'PRICES',   href: '/price-indexes' },
@@ -54,25 +54,19 @@ export default function Header() {
     { name: 'DOCS',     href: '/docs' },
     { name: 'SANDBOX',  href: '/agent-registry/sandbox' },
   ];
- 
+
   return (
-    // No sticky/z-index here — parent wrapper in layout.tsx handles that
     <header className="bg-black border-b border-[#222]">
       <div className="max-w-[1600px] mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
- 
-        {/* Logo */}
+
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="bg-[#FABF2C] text-black font-black text-xs px-2 py-1 rounded-sm group-hover:bg-white transition-colors">
-              CB
-            </div>
+            <div className="bg-[#FABF2C] text-black font-black text-xs px-2 py-1 rounded-sm group-hover:bg-white transition-colors">CB</div>
             <span className="font-black tracking-tighter text-lg uppercase hidden sm:block">CryptoBrain</span>
           </Link>
- 
-          {/* Desktop Nav */}
+
           <nav className="hidden lg:flex items-center gap-6">
- 
-            {/* NEWS dropdown */}
+            {/* NEWS with full-width dropdown + dim overlay */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setNewsDropdownOpen(v => !v)}
@@ -81,30 +75,38 @@ export default function Header() {
                 NEWS
                 <ChevronDown size={10} className={`transition-transform duration-200 ${newsDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
- 
+
               {newsDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-52 bg-black border border-[#333] shadow-2xl">
-                  <Link href="/news" onClick={() => setNewsDropdownOpen(false)}
-                    className="block px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#FABF2C] hover:bg-[#111] border-b border-[#222] transition-colors">
-                    All News
-                  </Link>
-                  {NEWS_CATEGORIES.map(cat => (
-                    <Link key={cat.slug} href={`/news/category/${cat.slug}`}
-                      onClick={() => setNewsDropdownOpen(false)}
-                      className="block px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#888] hover:text-[#FABF2C] hover:bg-[#111] transition-colors">
-                      {cat.label}
+                <>
+                  {/* Full-viewport dim overlay — covers the hero text completely */}
+                  <div
+                    className="fixed inset-0 top-[130px] bg-black/75"
+                    onClick={() => setNewsDropdownOpen(false)}
+                  />
+                  {/* Dropdown panel — sits above the overlay */}
+                  <div className="absolute top-full left-0 mt-2 w-52 bg-black border border-[#333] shadow-2xl z-10">
+                    <Link href="/news" onClick={() => setNewsDropdownOpen(false)}
+                      className="block px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#FABF2C] hover:bg-[#111] border-b border-[#222] transition-colors">
+                      All News
                     </Link>
-                  ))}
-                  <div className="border-t border-[#222]">
-                    <Link href="/bookmarks" onClick={() => setNewsDropdownOpen(false)}
-                      className="block px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#555] hover:text-[#FABF2C] hover:bg-[#111] transition-colors">
-                      🔖 Saved Articles
-                    </Link>
+                    {NEWS_CATEGORIES.map(cat => (
+                      <Link key={cat.slug} href={`/news/category/${cat.slug}`}
+                        onClick={() => setNewsDropdownOpen(false)}
+                        className="block px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#888] hover:text-[#FABF2C] hover:bg-[#111] transition-colors">
+                        {cat.label}
+                      </Link>
+                    ))}
+                    <div className="border-t border-[#222]">
+                      <Link href="/bookmarks" onClick={() => setNewsDropdownOpen(false)}
+                        className="block px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#555] hover:text-[#FABF2C] hover:bg-[#111] transition-colors">
+                        🔖 Saved Articles
+                      </Link>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
- 
+
             {navLinks.map(link => (
               <Link key={link.name} href={link.href}
                 className={`text-[10px] font-black uppercase tracking-widest transition-colors ${
@@ -117,8 +119,7 @@ export default function Header() {
             ))}
           </nav>
         </div>
- 
-        {/* Right side */}
+
         <div className="hidden lg:flex items-center gap-4">
           <div className="relative flex items-center">
             {searchOpen ? (
@@ -148,14 +149,12 @@ export default function Header() {
             The Cartel
           </Link>
         </div>
- 
-        {/* Mobile hamburger */}
+
         <button className="lg:hidden text-white p-2" onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
- 
-      {/* Mobile menu */}
+
       {isOpen && (
         <div className="lg:hidden w-full bg-black border-b border-[#222] p-4 flex flex-col gap-4 shadow-2xl max-h-[80vh] overflow-y-auto">
           <form onSubmit={(e) => {
@@ -171,7 +170,6 @@ export default function Header() {
               className="flex-1 bg-[#111] border border-[#333] text-white placeholder-[#444] px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#FABF2C]" />
             <button type="submit" className="bg-[#FABF2C] text-black px-4 py-2 text-[10px] font-black uppercase">Go</button>
           </form>
- 
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-[#FABF2C] pb-2 border-b border-[#1a1a1a] mb-2">News</p>
             <Link href="/news" onClick={() => setIsOpen(false)} className="block text-xs font-black uppercase tracking-widest text-[#FABF2C] py-2">All News</Link>
@@ -182,12 +180,10 @@ export default function Header() {
             <Link href="/bookmarks" onClick={() => setIsOpen(false)}
               className="block text-xs font-black uppercase tracking-widest text-[#555] hover:text-white py-2">🔖 Saved Articles</Link>
           </div>
- 
           {navLinks.map(link => (
             <Link key={link.name} href={link.href} onClick={() => setIsOpen(false)}
               className="text-xs font-black uppercase tracking-widest text-[#888] hover:text-white border-b border-[#222] pb-4">{link.name}</Link>
           ))}
- 
           <div className="flex flex-col gap-3 pt-2">
             <Link href="/dashboard" onClick={() => setIsOpen(false)}
               className="bg-[#111] border border-[#333] text-[#FABF2C] text-center px-4 py-3 rounded-sm text-xs font-black uppercase tracking-widest">Operator Dashboard</Link>
