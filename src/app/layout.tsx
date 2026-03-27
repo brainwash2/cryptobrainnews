@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next';
+import CookieConsent from '@/components/common/CookieConsent';
+import NewsletterPopup from '@/components/monetization/NewsletterPopup';
 import { Inter, Roboto_Mono } from 'next/font/google';
 import '@/styles/globals.css';
 import Header from '@/components/layout/Header';
@@ -60,9 +62,11 @@ export default function RootLayout({
         <Header />
         <PriceTicker /> {/* Inject the Ticker right below the header */}
         {/* We add pt-10 to the main container to account for the ticker's height */}
-        <main className="flex-1 pt-10">
+        <main className="flex-1 pt-20 relative z-0">
           {children}
         </main>
+        <NewsletterPopup />
+    <CookieConsent />
       </body>
     </html>
   );

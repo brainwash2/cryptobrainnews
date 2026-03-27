@@ -28,7 +28,7 @@ export default async function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
           {/* Main Left Column */}
-          <div className="lg:col-span-8 space-y-16">
+          <div className="lg:col-span-8 space-y-16 mt-24 relative z-0 pt-8 bg-black">
             <section className="space-y-8">
               <div className="flex items-center gap-4">
                 <span className="bg-[#FABF2C] text-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest">

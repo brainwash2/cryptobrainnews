@@ -638,3 +638,61 @@
 - Avalanche/Aptos: TVL + price; transparent about missing detailed stats.
 - CME COTs: CFTC Socrata API integration; fallback message if API unavailable.
 - Files: `onchain/bitcoin/page.tsx`, `_components/BitcoinChartsClient.tsx`, `onchain/ethereum/page.tsx`, `onchain/solana/page.tsx`, `onchain/avalanche/page.tsx`, `onchain/aptos/page.tsx`, `markets/cme-cots/page.tsx`.
+ 
+---
+## Phase B + C — SEO, Sitemap & Editorial CMS (March 2026)
+ 
+### New / Changed Files
+| File | Action |
+|---|---|
+| `src/lib/news.ts` | Feed URL fixes: layer2, nft, thedefiant trailing slash |
+| `src/app/sitemap.ts` | NEW — dynamic sitemap with static, category, and editorial article routes |
+| `src/app/api/og/route.tsx` | NEW — edge OG image renderer (1200×630, branded) |
+| `src/app/news/[id]/page.tsx` | Full OpenGraph + Twitter meta, JSON-LD NewsArticle, author byline |
+| `src/sanity/schemas/author.ts` | NEW — author document schema |
+| `src/sanity/schemas/post.ts` | Expanded: author ref, SEO object, status, scheduledPublishAt, grouped tabs, Studio preview |
+| `src/sanity/schemas/index.ts` | Added author to schemaTypes |
+| `src/lib/sanity.ts` | Updated queries (authorName, seo, status); added `getAllPostsAdmin()` |
+| `src/app/api/admin/import-rss/route.ts` | NEW — RSS→Sanity importer with URL-hash dedup |
+| `src/app/admin/page.tsx` | Rewritten — post table, status stats, quick Studio links, import docs |
+| `docs/editorial-workflow.md` | NEW — journalist/editor step-by-step guide |
+ 
+### Environment Variables Required
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | Used in sitemap + OG image URLs (e.g. https://cryptobrainnews.com) |
+| `SANITY_API_TOKEN` | Write token for admin dashboard + RSS importer (create in sanity.io/manage) |
+| `ADMIN_SECRET` | Guards /api/admin/import-rss from public access |
+
+---
+## Data Section Fix (On-Chain Pages & CME COTs) — March 2026
+
+### Root Causes
+| Page | Cause |
+|---|---|
+| Bitcoin | Missing `_components/BitcoinChartsClient.tsx` import → runtime crash |
+| Ethereum | Still referencing Dune queries that were removed |
+| Solana | Still had Dune imports with long polling loops → Vercel timeout |
+| Avalanche | Caught in shared error boundary; code was fine but restored for consistency |
+| Aptos | Same as Avalanche |
+| CME COTs | CFTC API URL had changed; updated with multiple fallback URLs |
+
+### Files Changed
+| File | Action |
+|---|---|
+| `src/app/data/onchain/bitcoin/page.tsx` | Replaced with self-contained version |
+| `src/app/data/onchain/bitcoin/_components/BitcoinChartsClient.tsx` | NEW – created missing component |
+| `src/app/data/onchain/ethereum/page.tsx` | Replaced with Dune-free version |
+| `src/app/data/onchain/solana/page.tsx` | Replaced with Dune-free version |
+| `src/app/data/onchain/avalanche/page.tsx` | Replaced with clean version |
+| `src/app/data/onchain/aptos/page.tsx` | Replaced with clean version |
+| `src/app/data/markets/cme-cots/page.tsx` | Updated CFTC API URLs with fallbacks |
+
+### Verification
+After applying, visit:
+- `/data/onchain/bitcoin` – should show live stats + active addresses chart
+- `/data/onchain/ethereum` – staking stats, TVL chart
+- `/data/onchain/solana` – TPS, validators, TVL
+- `/data/onchain/avalanche` – AVAX price + TVL chart
+- `/data/onchain/aptos` – APT price + TVL chart
+- `/data/markets/cme-cots` – CFTC data or graceful fallback message

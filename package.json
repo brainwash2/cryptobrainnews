@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "analyze": "ANALYZE=true next build",
+    "build:stats": "next build 2>&1 | tee build.log",
+    "warm-cache": "curl -s http://localhost:3000/api/admin/warm-cache | jq ."
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.24",

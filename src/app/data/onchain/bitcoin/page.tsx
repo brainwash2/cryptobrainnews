@@ -81,7 +81,8 @@ async function BitcoinData() {
         </div>
       ) : (
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-8 text-center">
-          <p className="text-[#555] font-mono text-xs uppercase">Network stats temporarily unavailable</p>
+          <p className="text-[#555] font-mono text-xs uppercase">Ne
+            twork stats temporarily unavailable</p>
         </div>
       )}
 

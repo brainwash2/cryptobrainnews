@@ -8,24 +8,34 @@ const nextConfig = {
       { protocol: 'https', hostname: 'img.rocket.new' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'i.imgur.com' },
-      // RSS feed image CDNs
       { protocol: 'https', hostname: '**.cointelegraph.com' },
       { protocol: 'https', hostname: '**.coindesk.com' },
       { protocol: 'https', hostname: '**.theblock.co' },
-      { protocol: 'https', hostname: '**.decrypt.co' },
       { protocol: 'https', hostname: '**.blockworks.co' },
       { protocol: 'https', hostname: '**.bitcoinmagazine.com' },
       { protocol: 'https', hostname: '**.thedefiant.io' },
       { protocol: 'https', hostname: '**.cryptoslate.com' },
-      { protocol: 'https', hostname: '**.dlnews.com' },
       { protocol: 'https', hostname: 'cdn.sanity.io' },
     ],
     dangerouslyAllowSVG: true,
   },
-  allowedDevOrigins: ['*.cloudworkstations.dev', 'localhost:3000'],
+  // Allow Firebase Studio cloudworkstations preview + local dev
+  allowedDevOrigins: [
+    '*.cloudworkstations.dev',
+    'localhost:3000',
+    'localhost:3001',
+    'localhost:3002',
+  ],
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'cryptobrainnews.com', '*.vercel.app', '*.cloudworkstations.dev'],
+      allowedOrigins: [
+        'localhost:3000',
+        'localhost:3001',
+        'localhost:3002',
+        'cryptobrainnews.com',
+        '*.vercel.app',
+        '*.cloudworkstations.dev',
+      ],
     },
   },
   async headers() {

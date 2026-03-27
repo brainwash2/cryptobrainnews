@@ -1,24 +1,34 @@
 'use client';
-import { useState, ImgHTMLAttributes } from 'react';
-
-const FALLBACK_SRC = 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1200';
-
-interface AppImageProps extends ImgHTMLAttributes<HTMLImageElement> {
+import { useState } from 'react';
+ 
+const FALLBACK = 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=800';
+ 
+interface Props {
+  src?: string | null;
+  alt?: string;
   fill?: boolean;
   priority?: boolean;
+  className?: string;
+  width?: number;
+  height?: number;
+  [key: string]: any;
 }
-
-export default function AppImage({ src, alt = 'Image', className, priority, fill, ...rest }: AppImageProps) {
-  const [error, setError] = useState(false);
-  const resolvedSrc = error || !src ? FALLBACK_SRC : src;
-
+ 
+export default function AppImage({ src, alt = '', className = '', fill, priority, width, height, ...rest }: Props) {
+  const [errored, setErrored] = useState(false);
+  const resolved = errored || !src ? FALLBACK : src;
+ 
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={resolvedSrc as string}
+      src={resolved}
       alt={alt}
-      className={`object-cover ${className || ''} ${fill ? 'absolute inset-0 w-full h-full' : ''}`}
-      onError={() => setError(true)}
-      loading={priority ? "eager" : "lazy"}
+      className={`object-cover${fill ? ' absolute inset-0 w-full h-full' : ''}${className ? ' ' + className : ''}`}
+      onError={() => setErrored(true)}
+      loading={priority ? 'eager' : 'lazy'}
+      decoding="async"
+      width={fill ? undefined : (width || undefined)}
+      height={fill ? undefined : (height || undefined)}
       {...rest}
     />
   );

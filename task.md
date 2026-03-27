@@ -1018,3 +1018,32 @@
 	  4. Avalanche & Aptos: TVL history via DefiLlama; price from CoinGecko. Clear note about missing metrics due to API limits.
 	  5. CME COTs: switched from manual CSV to CFTC Socrata API (`publicreporting.cftc.gov/resource/72hh-3qpy.json`). Shows Bitcoin, Ether, Micro Bitcoin with full trader category breakdown. Graceful fallback if geo‑blocked.
 	  6. All pages now Dune‑free, use free public APIs, and include proper error boundaries and loading skeletons.
+ 
+---
+## Phase B — SEO & Sitemap [March 2026]
+- [x] Dynamic sitemap (`src/app/sitemap.ts`) — covers /, /news, all /news/category/*, all editorial article pages
+- [x] OG Image API (`/api/og`) — edge-rendered 1200×630 branded image per article via URL params
+- [x] Full OpenGraph + Twitter card meta injected into article page via `generateMetadata`
+- [x] JSON-LD NewsArticle structured data injected via `<Script>` in article page
+- [x] Author byline UI added to article page
+ 
+## Phase C — Editorial CMS Workflow [March 2026]
+- [x] `author` Sanity schema — name, slug, avatar, bio, twitter, role
+- [x] `post` schema expanded — author reference, SEO object (metaTitle, metaDescription, noIndex), status (draft/scheduled/published/archived), scheduledPublishAt, grouped tabs
+- [x] Schema index updated to include author
+- [x] `getSanityPosts` updated — fetches authorName, authorAvatar, authorRole, seo, status
+- [x] `getAllPostsAdmin` added to sanity.ts — uses write token, fetches all statuses including drafts
+- [x] `/api/admin/import-rss` — RSS feed importer with dedup by URL hash, creates Sanity drafts
+- [x] `/admin` dashboard — post list with status badges, stats, Studio quick-links, import docs
+- [x] `docs/editorial-workflow.md` — step-by-step guide for journalists and editors
+- [x] Feed fix: layer2 (`/rss/tag/layer2`) and nft (`/rss/tag/nft`) corrected; thedefiant.io trailing slash added
+
+---
+## Data Section Fix (On-Chain Pages & CME COTs) — March 2026
+- [x] Bitcoin page: restored with working BitcoinChartsClient component, uses blockchain.info charts API
+- [x] Ethereum page: removed Dune dependencies, uses beaconcha.in + DefiLlama
+- [x] Solana page: removed Dune dependencies, uses Solana RPC + DefiLlama
+- [x] Avalanche page: uses CoinGecko + DefiLlama, no Dune
+- [x] Aptos page: uses CoinGecko + DefiLlama, no Dune
+- [x] CME COTs page: restored CFTC Socrata API integration with fallback handling
+- [x] Created missing _components/BitcoinChartsClient.tsx to resolve import error
