@@ -35,6 +35,13 @@ export const metadata: Metadata = {
     creator: '@CryptoBrainNews',
   },
   robots: { index: true, follow: true },
+  alternates: {
+    types: {
+      'application/rss+xml': [
+        { url: '/feed.xml', title: 'CryptoBrainNews RSS Feed' },
+      ],
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
