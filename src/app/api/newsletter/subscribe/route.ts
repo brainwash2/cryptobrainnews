@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
   try {
     await resend.emails.send({
-      from: `CryptoBrainNews <newsletter@${process.env.RESEND_DOMAIN || 'cryptobrainnews.com'}>`,
+      from: `CryptoBrainNews <${process.env.RESEND_DOMAIN ? `newsletter@${process.env.RESEND_DOMAIN}` : 'onboarding@resend.dev'}>`,
       to: [clean],
       subject: '⚡ Welcome to the CryptoBrain Daily Brief',
       html: `
