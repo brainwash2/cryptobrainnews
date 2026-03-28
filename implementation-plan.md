@@ -750,3 +750,25 @@ After applying, visit:
 - `src/app/data/markets/cme-cots/page.tsx` – replaced
 
 All pages now load without Dune dependencies or network‑level timeouts.
+
+---
+## Phase 1 – Author Pages (March 2026)
+
+### Files Added/Modified
+| File | Change |
+|---|---|
+| `src/lib/sanity.ts` | Added `getSanityAuthor`, `getAllSanityAuthors`, `getPostsByAuthor` |
+| `src/app/authors/page.tsx` | NEW – authors listing page |
+| `src/app/authors/[slug]/page.tsx` | NEW – individual author page with JSON‑LD Person schema |
+| `src/app/news/[id]/page.tsx` | Author byline now links to author page (using `Link` from Next.js) |
+
+### Verification
+- Authors added in Sanity Studio appear at `/authors`
+- Clicking an author shows their bio and articles
+- Article author name is a clickable link to the author page
+- Google Search Console can now pick up `Person` schema for E‑E‑A‑T signals
+
+### Next Steps
+- Add more authors in Sanity and assign them to articles
+- Consider adding an `/about` page with editorial mission (Google News requirement)
+- Proceed to tag system or onchain widgets as next feature

@@ -384,3 +384,11 @@ Based on the comprehensive audit (Claude 4.6 Sonnet, 2026-03-21), the following 
 
 This list ensures a systematic approach to hardening the data section based on the audit.
 
+
+---
+## Author Pages (March 2026)
+
+**Status:** Completed  
+**Impact:** Improves Google E‑E‑A‑T signals, gives editorial team a professional identity, adds JSON‑LD Person schema for each author.  
+**Files:** `src/app/authors/page.tsx`, `src/app/authors/[slug]/page.tsx`, updates to `src/lib/sanity.ts` and `src/app/news/[id]/page.tsx`.  
+**Next:** Tag system, about page, custom domain verification.

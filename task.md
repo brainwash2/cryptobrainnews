@@ -1066,3 +1066,11 @@
 - [x] Aptos page: uses CoinGecko + DefiLlama
 - [x] CME COTs page: rewritten to fetch from CFTC ZIP (www.cftc.gov) with Socrata fallback and Q1 2026 reference snapshot
 - [x] All on-chain pages now self-contained, no Dune, no missing imports
+
+---
+## Phase 1 – Author Pages (March 2026)
+- [x] Added Sanity queries for author data (`getSanityAuthor`, `getAllSanityAuthors`, `getPostsByAuthor`)
+- [x] Created `/authors` index page with author list
+- [x] Created dynamic `/authors/[slug]` page with author bio, articles, and JSON‑LD Person schema
+- [x] Updated article page to link author name to author page
+- [x] Verified author pages render correctly with real data after adding authors in Sanity
