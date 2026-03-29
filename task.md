@@ -1091,3 +1091,30 @@
 - [x] Avalanche page: self‑contained with 6s timeout, uses CoinGecko + DefiLlama
 - [x] Aptos page: self‑contained with 6s timeout, uses CoinGecko + DefiLlama
 - [x] All pages now correctly handle promise rejections without leaking unhandled errors
+ 
+---
+## Combined Scaling Phase — Performance + Tags + Bonuses (March 2026)
+ 
+### Performance Hardening
+- [x] Shared Skeleton + CardSkeleton + ArticleGridSkeleton components
+- [x] loading.tsx for: /, /news, /news/category/[slug], /news/[id], /news/search, /tags/[slug]
+- [x] error.tsx for: /news, /news/category/[slug], /news/[id], /news/search
+- [x] /api/health — checks all 4 RSS feeds + Sanity + env var status
+- [x] /api/admin/warm-cache — pre-warms all 8 category + global + search caches (ADMIN_SECRET protected)
+- [x] CointelegraphCard — migrated to next/image with sizes, lazy loading, onError fallback
+ 
+### Tag System
+- [x] Sanity post schema: tags field (array of strings, layout: tags)
+- [x] getSanityPosts: includes tags in query
+- [x] getAllTags(): returns all unique tags across published posts
+- [x] getPostsByTag(tag): returns posts with specific tag
+- [x] /tags page: all tags index
+- [x] /tags/[slug] page: articles with that tag (editorial + wire)
+- [x] /tags/[slug]/loading.tsx
+- [x] Article page: tags displayed below author byline as clickable links
+- [x] CointelegraphCard: shows up to 3 tags in card footer
+- [x] getSearchIndex: includes tags field
+- [x] sitemap.ts: includes /tags, /authors, and all /tags/[slug] pages
+ 
+### Bonus Features
+- [x] /about page: NewsMediaOrganization JSON-LD, editorial team, standards — required for Google News E-E-A-T

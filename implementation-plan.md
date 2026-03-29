@@ -826,3 +826,52 @@ All pages now load without Dune dependencies or network‑level timeouts.
 - `/data/onchain/avalanche` – loads AVAX price and TVL.
 - `/data/onchain/aptos` – loads APT price and TVL.
 - No crashes, no timeout errors.
+ 
+---
+## Scaling Phase — Performance + Tags + About (March 2026)
+ 
+### New Files
+| File | Purpose |
+|---|---|
+| `src/components/ui/Skeleton.tsx` | Shared skeleton primitives |
+| `src/app/loading.tsx` | Homepage loading state |
+| `src/app/news/loading.tsx` | News page skeleton |
+| `src/app/news/error.tsx` | News page error boundary |
+| `src/app/news/category/[slug]/loading.tsx` | Category skeleton |
+| `src/app/news/category/[slug]/error.tsx` | Category error |
+| `src/app/news/[id]/loading.tsx` | Article skeleton |
+| `src/app/news/[id]/error.tsx` | Article error |
+| `src/app/news/search/loading.tsx` | Search skeleton |
+| `src/app/news/search/error.tsx` | Search error |
+| `src/app/api/health/route.ts` | Full health check (RSS + Sanity + env) |
+| `src/app/api/admin/warm-cache/route.ts` | Cache warm-up (protected) |
+| `src/app/tags/page.tsx` | All tags index |
+| `src/app/tags/[slug]/page.tsx` | Tag articles page |
+| `src/app/tags/[slug]/loading.tsx` | Tag page skeleton |
+| `src/app/about/page.tsx` | About page with NewsMediaOrganization schema |
+ 
+### Modified Files
+| File | Changes |
+|---|---|
+| `src/sanity/schemas/post.ts` | Added tags field (array, layout: tags) |
+| `src/lib/sanity.ts` | getSanityPosts includes tags; added getAllTags, getPostsByTag |
+| `src/lib/articles.ts` | getSearchIndex includes tags |
+| `src/app/sitemap.ts` | Added /tags, /authors, /tags/[slug] routes |
+| `src/components/news/CointelegraphCard.tsx` | next/image, tag display, onError fallback |
+| `src/app/news/[id]/page.tsx` | Tags rendered below author byline |
+ 
+### Post-Deploy Verification
+```bash
+# Health check
+curl https://cryptobrainnews.vercel.app/api/health | jq .
+ 
+# Warm cache after deploy
+curl https://cryptobrainnews.vercel.app/api/admin/warm-cache \
+  -H "x-admin-secret: YOUR_SECRET" | jq .results
+ 
+# Sitemap includes tags
+curl -s https://cryptobrainnews.vercel.app/sitemap.xml | grep '/tags/' | head -5
+ 
+# Tags index page
+curl -s https://cryptobrainnews.vercel.app/tags -o /dev/null -w '%{http_code}\n'
+```
