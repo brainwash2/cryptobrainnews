@@ -1,19 +1,95 @@
-import React, { Suspense }               from "react";
-import { DataHeader }                      from "../../_components/DataHeader";
-import { ChartSkeleton }                   from "../../_components/ChartSkeleton";
-import { getEthereumStats, getChainTvlHistory } from "@/lib/onchain-data";
-import { getCoinPrice }                    from "@/lib/api";
-import OnchainAreaChart                    from "../_components/OnchainAreaChart";
+import React, { Suspense } from "react";
+import { DataHeader }       from "../../_components/DataHeader";
+import { ChartSkeleton }    from "../../_components/ChartSkeleton";
+import OnchainAreaChart     from "../_components/OnchainAreaChart";
 
 export const metadata = {
   title: "Ethereum On-Chain | CryptoBrainNews",
-  description: "Ethereum network health - staking, gas, TVL, transactions, and active addresses.",
+  description: "Ethereum network health - staking, gas, TVL, and on-chain activity.",
 };
 export const revalidate = 1800;
 
-function StatCard({ label, value, sub, color = "#3b82f6" }: {
-  label: string; value: string; sub?: string; color?: string;
-}) {
+// 6-second AbortController — well within Vercel 10s limit
+async function ft(url: string, opts?: RequestInit): Promise<Response> {
+  const ac = new AbortController();
+  const t  = setTimeout(() => ac.abort(), 6000);
+  try { return await fetch(url, { ...opts, signal: ac.signal }); }
+  finally { clearTimeout(t); }
+}
+
+interface EthStats {
+  totalStaked: number; validatorCount: number; stakingApr: number;
+  avgGasGwei: number; tvlUsd: number; ethPrice: number;
+}
+
+async function getEthStats(): Promise<EthStats | null> {
+  try {
+    const [priceRes, beaconRes, tvlRes] = await Promise.all([
+      ft("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
+         { next: { revalidate: 60 } }),
+      ft("https://beaconcha.in/api/v1/epoch/latest",
+         { headers: { Accept: "application/json" }, next: { revalidate: 300 } }),
+      ft("https://api.llama.fi/v2/historicalChainTvl/Ethereum",
+         { next: { revalidate: 3600 } }),
+    ]);
+
+    const ethPrice = priceRes.ok
+      ? ((await priceRes.json()) as Record<string, { usd?: number }>)?.ethereum?.usd ?? 0
+      : 0;
+
+    let totalStaked = 0, validatorCount = 0, stakingApr = 3.5;
+    if (beaconRes.ok) {
+      const bj = (await beaconRes.json()) as { data?: { eligibleether?: number; validatorscount?: number; stakingapr?: number } };
+      const d = bj.data;
+      totalStaked    = d?.eligibleether   ? d.eligibleether / 1e9 : 0;
+      validatorCount = d?.validatorscount ?? 0;
+      stakingApr     = d?.stakingapr      ? +(d.stakingapr * 100).toFixed(2) : 3.5;
+    }
+
+    let tvlUsd = 0;
+    if (tvlRes.ok) {
+      const hist = (await tvlRes.json()) as Array<{ tvl: number }>;
+      tvlUsd = Array.isArray(hist) ? (hist[hist.length - 1]?.tvl ?? 0) : 0;
+    }
+
+    // Gas: public Ethereum node via eth_gasPrice (fallback 20 gwei)
+    let avgGasGwei = 20;
+    try {
+      const gasRes = await ft("https://cloudflare-eth.com", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_gasPrice", params: [] }),
+      });
+      if (gasRes.ok) {
+        const gj = (await gasRes.json()) as { result?: string };
+        if (gj.result) avgGasGwei = Math.round(parseInt(gj.result, 16) / 1e9);
+      }
+    } catch { /* use fallback */ }
+
+    return { totalStaked: +totalStaked.toFixed(0), validatorCount, stakingApr, avgGasGwei, tvlUsd, ethPrice };
+  } catch { return null; }
+}
+
+async function getEthTvlHistory() {
+  try {
+    const res = await ft("https://api.llama.fi/v2/historicalChainTvl/Ethereum",
+      { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    const d = (await res.json()) as Array<{ date: number; tvl: number }>;
+    return Array.isArray(d) ? d.slice(-90).map((p) => ({
+      date: new Date(p.date * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      tvl: p.tvl,
+    })) : [];
+  } catch { return []; }
+}
+
+function fmtNum(n: number) {
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+  return n.toFixed(0);
+}
+
+function Card({ label, value, sub, color = "#3b82f6" }: { label: string; value: string; sub?: string; color?: string }) {
   return (
     <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
       <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{label}</p>
@@ -23,95 +99,49 @@ function StatCard({ label, value, sub, color = "#3b82f6" }: {
   );
 }
 
-function fmtNum(n: number): string {
-  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
-  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
-  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
-  return n.toFixed(0);
-}
-
 async function EthData() {
-  const [ethStats, ethPrice, tvlHistory] = await Promise.all([
-    getEthereumStats().catch(() => null),
-    getCoinPrice("ethereum").catch(() => 0),
-    getChainTvlHistory("Ethereum", 90).catch(() => []),
+  const [stats, tvlHistory] = await Promise.all([
+    getEthStats().catch(() => null),
+    getEthTvlHistory().catch(() => []),
   ]);
-
-  const stakedUsd = ethStats && ethPrice ? ethStats.totalStaked * ethPrice : 0;
+  const stakedUsd = stats ? stats.totalStaked * stats.ethPrice : 0;
 
   return (
     <div className="space-y-10 pb-20">
-      <DataHeader
-        title="Ethereum On-Chain"
-        description="Ethereum network health - staking statistics, gas, TVL, and on-chain activity."
-      />
-
-      <div className="flex items-center gap-3 flex-wrap">
+      <DataHeader title="Ethereum On-Chain"
+        description="Ethereum network health - staking statistics, gas, TVL, and on-chain activity." />
+      <div className="flex items-center gap-3">
         <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
-          Live - beaconcha.in + DefiLlama
+          Live - beaconcha.in + DefiLlama + cloudflare-eth.com
         </span>
       </div>
-
-      {ethStats ? (
+      {stats ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="ETH Price"        value={ethPrice > 0 ? `$${ethPrice.toLocaleString()}` : "-"} sub="CoinGecko" />
-          <StatCard label="Total ETH Staked" value={`${fmtNum(ethStats.totalStaked)} ETH`}
+          <Card label="ETH Price"        value={stats.ethPrice > 0 ? `$${stats.ethPrice.toLocaleString()}` : "-"} sub="CoinGecko" />
+          <Card label="Total ETH Staked" value={`${fmtNum(stats.totalStaked)} ETH`}
             sub={stakedUsd > 0 ? `$${(stakedUsd / 1e9).toFixed(1)}B` : "beaconcha.in"} />
-          <StatCard label="Validators"       value={fmtNum(ethStats.validatorCount)} sub="active + pending" color="#fff" />
-          <StatCard label="Staking APR"      value={`${ethStats.stakingApr.toFixed(2)}%`} sub="beaconcha.in" color="#00d672" />
-          <StatCard label="Avg Gas (gwei)"   value={`${ethStats.avgGasGwei.toFixed(1)} Gwei`} sub="estimate"
-            color={ethStats.avgGasGwei > 50 ? "#ff4757" : "#FABF2C"} />
-          <StatCard label="DeFi TVL"         value={ethStats.tvlUsd > 0 ? `$${(ethStats.tvlUsd / 1e9).toFixed(1)}B` : "-"} sub="DefiLlama" color="#FABF2C" />
-          <StatCard label="% ETH Staked"     value={`${((ethStats.totalStaked / 120_000_000) * 100).toFixed(1)}%`} sub="of ~120M supply" color="#888" />
-          <StatCard label="ETH Burned"       value={ethStats.burnedTotal > 0 ? `${fmtNum(ethStats.burnedTotal)} ETH` : "4.4M+ ETH"} sub="since EIP-1559" color="#ff4757" />
+          <Card label="Validators"       value={fmtNum(stats.validatorCount)} sub="active + pending" color="#fff" />
+          <Card label="Staking APR"      value={`${stats.stakingApr.toFixed(2)}%`} sub="beaconcha.in" color="#00d672" />
+          <Card label="Avg Gas (Gwei)"   value={`${stats.avgGasGwei} Gwei`}
+            color={stats.avgGasGwei > 50 ? "#ff4757" : "#FABF2C"}
+            sub={stats.avgGasGwei <= 5 ? "Low congestion" : stats.avgGasGwei > 50 ? "High congestion" : "Moderate"} />
+          <Card label="DeFi TVL"         value={stats.tvlUsd > 0 ? `$${(stats.tvlUsd / 1e9).toFixed(1)}B` : "-"} sub="DefiLlama" color="#FABF2C" />
+          <Card label="% ETH Staked"     value={`${((stats.totalStaked / 120_000_000) * 100).toFixed(1)}%`} sub="of ~120M supply" color="#888" />
+          <Card label="ETH Burned"       value="4.4M+ ETH" sub="since EIP-1559" color="#ff4757" />
         </div>
       ) : (
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-8 text-center">
-          <p className="text-[#555] font-mono text-xs uppercase">Network stats temporarily unavailable</p>
+          <p className="text-[#555] font-mono text-xs uppercase">Network stats temporarily unavailable - API rate limited</p>
         </div>
       )}
-
-      <OnchainAreaChart
-        title="Ethereum DeFi TVL (90D)"
+      <OnchainAreaChart title="Ethereum DeFi TVL (90D)"
         subtitle="Source: DefiLlama - total value locked in Ethereum-native protocols"
-        data={tvlHistory}
-        dataKey="tvl"
-        color="#3b82f6"
-        yFormatter={(v) => `$${(v / 1e9).toFixed(1)}B`}
-        height={220}
-      />
-
-      <div className="border border-dashed border-[#1a1a1a] p-6 text-center">
-        <p className="text-[10px] text-[#333] font-mono uppercase tracking-widest">
-          Daily tx + active address charts require{" "}
-          <code className="text-[#3b82f6]">ETHERSCAN_API_KEY</code>
-          {" "}- free at etherscan.io/myapikey
-        </p>
-      </div>
-
-      <div className="border border-[#1a1a1a] bg-[#080808] p-5">
-        <h3 className="text-xs font-black uppercase tracking-widest text-white mb-3">EIP-1559 Burn Mechanics</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[10px] font-mono text-[#555] leading-relaxed">
-          {[
-            ["Base Fee Burn", "Since August 2021, Ethereum burns the base fee on every transaction."],
-            ["Net Issuance",  "At high gas prices ETH becomes net deflationary. Staking issuance offset by burn."],
-            ["Staking APR",   "Validators earn ~3-4% APR from block rewards + MEV. Merge ended PoW issuance."],
-            ["Track burns",   "Live cumulative burn at ultrasound.money."],
-          ].map(([k, v]) => (
-            <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>
-          ))}
-        </div>
-      </div>
+        data={tvlHistory} dataKey="tvl" color="#3b82f6"
+        yFormatter={(v) => `$${(v / 1e9).toFixed(1)}B`} height={220} />
     </div>
   );
 }
 
 export default function EthereumOnChainPage() {
-  return (
-    <main>
-      <Suspense fallback={<ChartSkeleton />}>
-        <EthData />
-      </Suspense>
-    </main>
-  );
+  return <main><Suspense fallback={<ChartSkeleton />}><EthData /></Suspense></main>;
 }

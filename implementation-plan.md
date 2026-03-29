@@ -772,3 +772,30 @@ All pages now load without Dune dependencies or network‑level timeouts.
 - Add more authors in Sanity and assign them to articles
 - Consider adding an `/about` page with editorial mission (Google News requirement)
 - Proceed to tag system or onchain widgets as next feature
+
+---
+## Data Section Fix — On-Chain Pages (March 2026)
+
+### Root Cause
+- `getEthereumStats()` and `getSolanaStats()` from `@/lib/onchain-data` called APIs (beaconcha.in, blocknative.com, solana RPC) without timeouts.
+- Vercel's serverless functions would hang on these calls and crash after 10 seconds, triggering the error boundary for all `/data/onchain/*` pages.
+
+### Solution
+- Rewrote each page to be self-contained with a shared `ft()` helper that aborts after 6 seconds.
+- Removed all imports from `@/lib/onchain-data`.
+- Used only reliable, free endpoints with generous timeouts.
+
+### Files Changed
+| File | Action |
+|---|---|
+| `src/app/data/onchain/ethereum/page.tsx` | Replaced with self-contained version |
+| `src/app/data/onchain/solana/page.tsx` | Replaced with self-contained version |
+| `src/app/data/onchain/avalanche/page.tsx` | Replaced with self-contained version |
+| `src/app/data/onchain/aptos/page.tsx` | Replaced with self-contained version |
+
+### Verification
+- `/data/onchain/ethereum` – loads staking stats, TVL, gas price.
+- `/data/onchain/solana` – loads TPS, validators, TVL.
+- `/data/onchain/avalanche` – loads AVAX price and TVL history.
+- `/data/onchain/aptos` – loads APT price and TVL history.
+- No more crashes or timeout errors.

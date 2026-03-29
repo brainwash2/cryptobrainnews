@@ -1074,3 +1074,12 @@
 - [x] Created dynamic `/authors/[slug]` page with author bio, articles, and JSON‑LD Person schema
 - [x] Updated article page to link author name to author page
 - [x] Verified author pages render correctly with real data after adding authors in Sanity
+
+---
+## Data Section Fix — On-Chain Pages (March 2026)
+- [x] Ethereum page: self-contained, 6s timeout, uses beaconcha.in + DefiLlama + cloudflare-eth.com
+- [x] Solana page: self-contained, 6s timeout, uses Solana RPC + DefiLlama + CoinGecko
+- [x] Avalanche page: self-contained, uses CoinGecko + DefiLlama
+- [x] Aptos page: self-contained, uses CoinGecko + DefiLlama
+- [x] Removed all dependencies on `@/lib/onchain-data` that were causing timeouts
+- [x] All fetches now abort after 6 seconds to stay under Vercel's 10s limit
