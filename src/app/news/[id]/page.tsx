@@ -158,16 +158,19 @@ export default async function NewsArticlePage(
               {article.title}
             </h1>
  
-            {/* Author byline */}
+            {/* Author byline with link to author page */}
             {article.author_name && (
               <div className="flex items-center gap-3 mb-8 pb-6 border-b border-[#1a1a1a]">
                 <div className="w-8 h-8 rounded-full bg-[#FABF2C] flex items-center justify-center text-black font-black text-xs">
                   {article.author_name.charAt(0)}
                 </div>
                 <div>
-                  <p className="text-white text-xs font-black uppercase tracking-widest">
+                  <Link
+                    href={`/authors/${article.author_name.toLowerCase().replace(/\s+/g, "-")}`}
+                    className="text-white text-xs font-black uppercase tracking-widest hover:text-[#FABF2C] transition-colors"
+                  >
                     {article.author_name}
-                  </p>
+                  </Link>
                   <p className="text-[#555] text-[10px] font-mono">CryptoBrain Editorial</p>
                 </div>
               </div>

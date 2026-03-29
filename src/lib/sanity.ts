@@ -93,3 +93,31 @@ export async function getActiveNotifications() {
     }`);
   }, 60);
 }
+
+export async function getSanityAuthor(slug: string) {
+  return cached(`sanity:author:${slug}`, async () => {
+    return client.fetch(`*[_type == "author" && slug.current == $slug][0] {
+      _id, name, "slug": slug.current, bio, role,
+      "avatarUrl": avatar.asset->url, twitter
+    }`, { slug });
+  }, 3600);
+}
+
+export async function getAllSanityAuthors() {
+  return cached('sanity:authors:all', async () => {
+    return client.fetch(`*[_type == "author"] | order(name asc) {
+      _id, name, "slug": slug.current, bio, role,
+      "avatarUrl": avatar.asset->url, twitter
+    }`);
+  }, 3600);
+}
+
+export async function getPostsByAuthor(authorSlug: string) {
+  return cached(`sanity:posts:author:${authorSlug}`, async () => {
+    return client.fetch(`*[_type == "post" && author->slug.current == $slug
+      && status != "archived"] | order(publishedAt desc)[0...20] {
+      _id, title, "slug": slug.current, "imageUrl": mainImage.asset->url,
+      publishedAt, category, excerpt
+    }`, { slug: authorSlug });
+  }, 300);
+}
