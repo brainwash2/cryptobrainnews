@@ -36,6 +36,7 @@ export default function Header() {
     { name: 'PRICES', href: '/price-indexes' },
     { name: 'EVENTS', href: '/events' },
     { name: 'AIRDROPS', href: '/airdrops' },
+    { name: 'ABOUT', href: '/about' },
     { name: 'DOCS', href: '/docs' },
     { name: 'SANDBOX', href: '/agent-registry/sandbox' },
   ];
