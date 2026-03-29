@@ -799,3 +799,30 @@ All pages now load without Dune dependencies or network‑level timeouts.
 - `/data/onchain/avalanche` – loads AVAX price and TVL history.
 - `/data/onchain/aptos` – loads APT price and TVL history.
 - No more crashes or timeout errors.
+
+---
+## Data Section — On‑Chain Pages Final Fix (March 2026)
+
+### Root Cause of Crashes
+- Previous versions imported `@/lib/onchain-data` which called APIs without timeouts, causing Vercel serverless functions to hang and crash.
+- TypeScript strict mode rejected `{ next: { revalidate } }` inside `RequestInit` – fixed by typing `opts?: any`.
+
+### Solution
+- Each page is now fully self‑contained with a 6‑second abort controller on all `fetch` calls.
+- Fetches are awaited individually, and `Promise.allSettled` is used only on JSON parsing – no dangling promises.
+- All external dependencies removed.
+
+### Files Changed
+| File | Action |
+|---|---|
+| `src/app/data/onchain/ethereum/page.tsx` | Replaced with final version |
+| `src/app/data/onchain/solana/page.tsx` | Replaced with final version |
+| `src/app/data/onchain/avalanche/page.tsx` | Replaced with final version |
+| `src/app/data/onchain/aptos/page.tsx` | Replaced with final version |
+
+### Verification
+- `/data/onchain/ethereum` – loads staking stats, gas, TVL.
+- `/data/onchain/solana` – loads TPS, TVL, price.
+- `/data/onchain/avalanche` – loads AVAX price and TVL.
+- `/data/onchain/aptos` – loads APT price and TVL.
+- No crashes, no timeout errors.

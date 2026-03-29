@@ -1,50 +1,38 @@
 import React, { Suspense } from "react";
-import { DataHeader }       from "../../_components/DataHeader";
-import { ChartSkeleton }    from "../../_components/ChartSkeleton";
-import OnchainAreaChart     from "../_components/OnchainAreaChart";
+import { DataHeader }    from "../../_components/DataHeader";
+import { ChartSkeleton } from "../../_components/ChartSkeleton";
+import OnchainAreaChart  from "../_components/OnchainAreaChart";
 
-export const metadata = {
-  title: "Avalanche On-Chain | CryptoBrainNews",
-  description: "Avalanche C-Chain DeFi TVL and activity metrics.",
-};
+export const metadata = { title: "Avalanche On-Chain | CryptoBrainNews" };
 export const revalidate = 3600;
 
-async function ft(url: string, opts?: RequestInit): Promise<Response> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function ft(url: string, opts?: any): Promise<Response | null> {
   const ac = new AbortController();
-  const t  = setTimeout(() => ac.abort(), 6000);
-  try { return await fetch(url, { ...opts, signal: ac.signal }); }
-  finally { clearTimeout(t); }
+  const id = setTimeout(() => ac.abort(), 6_000);
+  try { return await fetch(url, { signal: ac.signal, cache: "no-store", ...opts }); }
+  catch { return null; }
+  finally { clearTimeout(id); }
 }
 
 async function AvalancheData() {
-  const [priceRes, tvlRes] = await Promise.all([
-    ft("https://api.coingecko.com/api/v3/simple/price?ids=avalanche-2&vs_currencies=usd",
-       { next: { revalidate: 60 } }).catch(() => null),
-    ft("https://api.llama.fi/v2/historicalChainTvl/Avalanche",
-       { next: { revalidate: 3600 } }).catch(() => null),
+  const [priceJ, tvlJ] = await Promise.allSettled([
+    ft("https://api.coingecko.com/api/v3/simple/price?ids=avalanche-2&vs_currencies=usd").then((r) => r?.ok ? r.json() : null),
+    ft("https://api.llama.fi/v2/historicalChainTvl/Avalanche").then((r) => r?.ok ? r.json() : null),
   ]);
 
-  const avaxPrice = priceRes?.ok
-    ? ((await priceRes.json()) as Record<string, { usd?: number }>)?.["avalanche-2"]?.usd ?? 0
-    : 0;
+  const avaxPrice  = priceJ.status === "fulfilled" ? (priceJ.value as any)?.["avalanche-2"]?.usd as number ?? 0 : 0;
+  const tvlHistory = tvlJ.status === "fulfilled"   ? (tvlJ.value as Array<{date:number;tvl:number}>) ?? [] : [];
 
-  let tvlHistory: Array<{ date: string; tvl: number }> = [];
-  let latestTvl = 0;
-  if (tvlRes?.ok) {
-    const d = (await tvlRes.json()) as Array<{ date: number; tvl: number }>;
-    if (Array.isArray(d)) {
-      tvlHistory = d.slice(-90).map((p) => ({
-        date: new Date(p.date * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        tvl: p.tvl,
-      }));
-      latestTvl = d[d.length - 1]?.tvl ?? 0;
-    }
-  }
+  const latestTvl = Array.isArray(tvlHistory) && tvlHistory.length ? tvlHistory[tvlHistory.length - 1]?.tvl ?? 0 : 0;
+  const tvlChart  = Array.isArray(tvlHistory) ? tvlHistory.slice(-90).map((p) => ({
+    date: new Date(p.date * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    tvl:  p.tvl,
+  })) : [];
 
   return (
     <div className="space-y-10 pb-20">
-      <DataHeader title="Avalanche On-Chain"
-        description="Avalanche C-Chain DeFi TVL and activity metrics." />
+      <DataHeader title="Avalanche On-Chain" description="Avalanche C-Chain DeFi TVL and activity metrics." />
       <div className="flex items-center gap-3">
         <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
           Live - CoinGecko + DefiLlama
@@ -52,10 +40,10 @@ async function AvalancheData() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "AVAX Price", value: avaxPrice > 0 ? `$${avaxPrice.toFixed(2)}` : "-", color: "#e84142", sub: "CoinGecko" },
-          { label: "DeFi TVL",   value: latestTvl > 0 ? `$${(latestTvl / 1e9).toFixed(2)}B` : "-", color: "#e84142", sub: "DefiLlama" },
-          { label: "Chain",      value: "Avalanche", color: "#888", sub: "C-Chain (EVM)" },
-          { label: "Source",     value: "DefiLlama",  color: "#888", sub: "Free API" },
+          { label: "AVAX Price", value: avaxPrice > 0 ? `$${avaxPrice.toFixed(2)}` : "-", color: "#e84142" as const, sub: "CoinGecko" },
+          { label: "DeFi TVL",   value: latestTvl > 0 ? `$${(latestTvl/1e9).toFixed(2)}B` : "-", color: "#e84142" as const, sub: "DefiLlama" },
+          { label: "Chain",      value: "Avalanche", color: "#888" as const, sub: "C-Chain (EVM)" },
+          { label: "Source",     value: "DefiLlama",  color: "#888" as const, sub: "Free API" },
         ].map((s) => (
           <div key={s.label} className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
             <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{s.label}</p>
@@ -64,10 +52,15 @@ async function AvalancheData() {
           </div>
         ))}
       </div>
-      <OnchainAreaChart title="Avalanche DeFi TVL (90D)"
-        subtitle="Source: DefiLlama - C-Chain protocols"
-        data={tvlHistory} dataKey="tvl" color="#e84142"
-        yFormatter={(v) => `$${(v / 1e9).toFixed(2)}B`} height={250} />
+      {tvlChart.length > 0 ? (
+        <OnchainAreaChart title="Avalanche DeFi TVL (90D)" subtitle="Source: DefiLlama"
+          data={tvlChart} dataKey="tvl" color="#e84142"
+          yFormatter={(v) => `$${(v/1e9).toFixed(2)}B`} height={250} />
+      ) : (
+        <div className="border border-dashed border-[#1a1a1a] p-6 text-center">
+          <p className="text-[10px] text-[#333] font-mono uppercase tracking-widest">TVL chart loading...</p>
+        </div>
+      )}
     </div>
   );
 }
