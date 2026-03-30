@@ -25,35 +25,39 @@ export const post = defineType({
       name: 'category', title: 'Category', type: 'string', group: 'content',
       options: {
         list: [
-          { title: 'Alpha Call',    value: 'Alpha Call' },
-          { title: 'Daily Analysis', value: 'Daily Analysis' },
-          { title: 'Markets',       value: 'market' },
-          { title: 'Bitcoin',       value: 'bitcoin' },
-          { title: 'Ethereum',      value: 'ethereum' },
-          { title: 'DeFi',          value: 'defi' },
-          { title: 'NFTs',          value: 'nft' },
-          { title: 'Regulation',    value: 'regulation' },
-          { title: 'Research',      value: 'research' },
-          { title: 'Layer 2',       value: 'layer2' },
-          { title: 'General News',  value: 'News' },
+          // Editorial special types
+          { title: '⚡ Alpha Call',        value: 'Alpha Call' },
+          { title: '📊 Daily Analysis',    value: 'Daily Analysis' },
+          // Core news categories
+          { title: '📈 Markets',           value: 'market' },
+          { title: '₿  Bitcoin',           value: 'bitcoin' },
+          { title: '🔷 Ethereum',          value: 'ethereum' },
+          { title: '🌊 DeFi',              value: 'defi' },
+          { title: '🖼️  NFTs',             value: 'nft' },
+          { title: '⚖️  Regulation',        value: 'regulation' },
+          { title: '🔬 Research',          value: 'research' },
+          { title: '🚀 Layer 2',           value: 'layer2' },
+          // March 2026 narrative categories
+          { title: '🏦 RWA',              value: 'rwa' },
+          { title: '🤖 AI × Crypto',      value: 'ai-crypto' },
+          { title: '💵 Stablecoins',      value: 'stablecoins' },
+          { title: '🏛️  Institutional',    value: 'institutional' },
+          { title: '🔄 Restaking',        value: 'restaking' },
+          { title: '📡 DePIN',            value: 'depin' },
+          { title: '🎯 Prediction',       value: 'prediction' },
+          { title: '⚡ Bitcoin L2',       value: 'bitcoin-l2' },
+          { title: '📰 General News',     value: 'News' },
         ],
         layout: 'radio',
       },
       initialValue: 'market',
     }),
-    // ── NEW: Tags field ──────────────────────────────────────────────
     defineField({
-      name: 'tags',
-      title: 'Tags',
-      type: 'array',
-      group: 'content',
-      description: 'Add topic tags e.g. "ethereum", "btc-etf", "layer2", "defi". Lowercase, hyphenated.',
+      name: 'tags', title: 'Tags', type: 'array', group: 'content',
+      description: 'Topic tags e.g. "eigenlayer", "blackrock-buidl", "polymarket". Lowercase, hyphenated.',
       of: [{ type: 'string' }],
-      options: {
-        layout: 'tags',
-      },
+      options: { layout: 'tags' },
     }),
-    // ────────────────────────────────────────────────────────────────
     defineField({
       name: 'excerpt', title: 'Excerpt', type: 'string', group: 'content',
       description: 'Short teaser for cards and search (max 180 chars).',
@@ -97,7 +101,9 @@ export const post = defineType({
   preview: {
     select: { title: 'title', subtitle: 'status', media: 'mainImage' },
     prepare({ title, subtitle, media }: any) {
-      const emoji: Record<string, string> = { draft: '📝', scheduled: '⏰', published: '✅', archived: '🗄️' };
+      const emoji: Record<string, string> = {
+        draft: '📝', scheduled: '⏰', published: '✅', archived: '🗄️'
+      };
       return { title, subtitle: `${emoji[subtitle] || ''} ${subtitle || 'draft'}`, media };
     },
   },

@@ -12,6 +12,7 @@ export interface FeedConfig {
 }
  
 export const CATEGORY_FEEDS: Record<string, FeedConfig[]> = {
+  // ── Existing categories ──────────────────────────────────
   market: [
     { url: 'https://cointelegraph.com/rss', source: 'Cointelegraph', categories: ['market'] },
     { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk', categories: ['market'] },
@@ -32,7 +33,6 @@ export const CATEGORY_FEEDS: Record<string, FeedConfig[]> = {
   nft: [
     { url: 'https://cointelegraph.com/rss/tag/nft', source: 'Cointelegraph', categories: ['nft'] },
     { url: 'https://cryptoslate.com/feed/', source: 'CryptoSlate', categories: ['nft'] },
-    { url: 'https://coincu.com/feed/', source: 'CoinCu', categories: ['nft'] },
   ],
   regulation: [
     { url: 'https://cointelegraph.com/rss/tag/regulation', source: 'Cointelegraph', categories: ['regulation'] },
@@ -47,6 +47,47 @@ export const CATEGORY_FEEDS: Record<string, FeedConfig[]> = {
     { url: 'https://cointelegraph.com/rss/tag/scaling', source: 'Cointelegraph', categories: ['layer2'] },
     { url: 'https://thedefiant.io/feed/', source: 'The Defiant', categories: ['layer2'] },
     { url: 'https://cointelegraph.com/rss/tag/ethereum', source: 'Cointelegraph', categories: ['layer2'] },
+  ],
+  // ── New March 2026 narrative categories ─────────────────
+  rwa: [
+    { url: 'https://cointelegraph.com/rss/tag/real-world-assets', source: 'Cointelegraph', categories: ['rwa'] },
+    { url: 'https://thedefiant.io/feed/', source: 'The Defiant', categories: ['rwa'] },
+    { url: 'https://www.theblock.co/rss.xml', source: 'The Block', categories: ['rwa'] },
+  ],
+  'ai-crypto': [
+    { url: 'https://cointelegraph.com/rss/tag/artificial-intelligence', source: 'Cointelegraph', categories: ['ai-crypto'] },
+    { url: 'https://www.theblock.co/rss.xml', source: 'The Block', categories: ['ai-crypto'] },
+    { url: 'https://cryptoslate.com/feed/', source: 'CryptoSlate', categories: ['ai-crypto'] },
+  ],
+  stablecoins: [
+    { url: 'https://cointelegraph.com/rss/tag/stablecoins', source: 'Cointelegraph', categories: ['stablecoins'] },
+    { url: 'https://thedefiant.io/feed/', source: 'The Defiant', categories: ['stablecoins'] },
+    { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk', categories: ['stablecoins'] },
+  ],
+  institutional: [
+    { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk', categories: ['institutional'] },
+    { url: 'https://www.theblock.co/rss.xml', source: 'The Block', categories: ['institutional'] },
+    { url: 'https://cointelegraph.com/rss/tag/etf', source: 'Cointelegraph', categories: ['institutional'] },
+  ],
+  restaking: [
+    { url: 'https://thedefiant.io/feed/', source: 'The Defiant', categories: ['restaking'] },
+    { url: 'https://cointelegraph.com/rss/tag/ethereum', source: 'Cointelegraph', categories: ['restaking'] },
+    { url: 'https://www.theblock.co/rss.xml', source: 'The Block', categories: ['restaking'] },
+  ],
+  depin: [
+    { url: 'https://cointelegraph.com/rss/tag/depin', source: 'Cointelegraph', categories: ['depin'] },
+    { url: 'https://cryptoslate.com/feed/', source: 'CryptoSlate', categories: ['depin'] },
+    { url: 'https://www.theblock.co/rss.xml', source: 'The Block', categories: ['depin'] },
+  ],
+  prediction: [
+    { url: 'https://cointelegraph.com/rss/tag/prediction-markets', source: 'Cointelegraph', categories: ['prediction'] },
+    { url: 'https://thedefiant.io/feed/', source: 'The Defiant', categories: ['prediction'] },
+    { url: 'https://www.theblock.co/rss.xml', source: 'The Block', categories: ['prediction'] },
+  ],
+  'bitcoin-l2': [
+    { url: 'https://bitcoinmagazine.com/.rss/full/', source: 'Bitcoin Magazine', categories: ['bitcoin-l2'] },
+    { url: 'https://cointelegraph.com/rss/tag/bitcoin', source: 'Cointelegraph', categories: ['bitcoin-l2'] },
+    { url: 'https://thedefiant.io/feed/', source: 'The Defiant', categories: ['bitcoin-l2'] },
   ],
 };
  
