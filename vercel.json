@@ -1,1 +1,8 @@
-{}
+{
+    "crons": [
+      {
+        "path": "/api/telegram/broadcast",
+        "schedule": "0 0 * * *"
+      }
+    ]
+  }
