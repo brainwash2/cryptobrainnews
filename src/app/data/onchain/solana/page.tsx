@@ -1,7 +1,6 @@
 import React, { Suspense } from "react";
 import { DataHeader }    from "../../_components/DataHeader";
 import { ChartSkeleton } from "../../_components/ChartSkeleton";
-import OnchainAreaChart  from "../_components/OnchainAreaChart";
 
 export const metadata = { title: "Solana On-Chain | CryptoBrainNews" };
 export const revalidate = 300;
@@ -29,8 +28,7 @@ async function SolData() {
   const priceR = await ft("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd");
   const tvlR   = await ft("https://api.llama.fi/v2/historicalChainTvl/Solana");
   const tpsR   = await ft("https://api.mainnet-beta.solana.com", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getRecentPerformanceSamples", params: [1] }),
   });
 
@@ -40,17 +38,16 @@ async function SolData() {
     tpsR?.ok   ? tpsR.json()  : Promise.resolve(null),
   ]);
 
-  const solPrice   = priceJ.status === "fulfilled" ? (priceJ.value as any)?.solana?.usd as number ?? 0 : 0;
-  const tvlHistory = tvlJ.status === "fulfilled"   ? (tvlJ.value as Array<{date:number;tvl:number}>) ?? [] : [];
-  const tpsResult  = tpsJ.status === "fulfilled"   ? (tpsJ.value as any)?.result as Array<{numTransactions:number;samplePeriodSecs:number}> : [];
-  
-  const latestTvl = Array.isArray(tvlHistory) && tvlHistory.length ? tvlHistory[tvlHistory.length - 1]?.tvl ?? 0 : 0;
-  const tpsSample = Array.isArray(tpsResult) && tpsResult.length ? tpsResult[0] : null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const solPrice = priceJ.status === "fulfilled" ? (priceJ.value as any)?.solana?.usd as number ?? 0 : 0;
+  const tvlRaw   = tvlJ.status   === "fulfilled" ? (tvlJ.value as Array<{date:number;tvl:number}>) ?? [] : [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tpsSample = tpsJ.status  === "fulfilled" ? (tpsJ.value as any)?.result?.[0] : null;
   const liveTps   = tpsSample?.numTransactions && tpsSample?.samplePeriodSecs
-    ? Math.round(tpsSample.numTransactions / tpsSample.samplePeriodSecs)
-    : 0;
+    ? Math.round(tpsSample.numTransactions / tpsSample.samplePeriodSecs) : 0;
 
-  const tvlChart = Array.isArray(tvlHistory) ? tvlHistory.slice(-90).map((p) => ({
+  const latestTvl = Array.isArray(tvlRaw) && tvlRaw.length ? tvlRaw[tvlRaw.length - 1]?.tvl ?? 0 : 0;
+  const tvlChart  = Array.isArray(tvlRaw) ? tvlRaw.slice(-90).map((p) => ({
     date: new Date(p.date * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     tvl:  p.tvl,
   })) : [];
@@ -58,31 +55,47 @@ async function SolData() {
   return (
     <div className="space-y-10 pb-20">
       <DataHeader title="Solana On-Chain"
-        description="Solana network health - TVL, live TPS, and staking APR." />
+        description="Solana network health — TVL, live TPS, and staking APR." />
       <div className="flex items-center gap-3">
         <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
-          Live - Solana RPC + DefiLlama + CoinGecko
+          Live — Solana RPC + DefiLlama + CoinGecko
         </span>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card label="SOL Price"   value={solPrice > 0 ? `$${solPrice.toFixed(2)}` : "-"} sub="CoinGecko" />
-        <Card label="DeFi TVL"    value={latestTvl > 0 ? `$${(latestTvl/1e9).toFixed(2)}B` : "-"} sub="DefiLlama" />
-        <Card label="Live TPS"    value={liveTps > 0 ? liveTps.toLocaleString() : "~2,500"} sub="getRecentPerformanceSamples" color="#fff" />
-        <Card label="Staking APR" value="~6.5%" sub="approximate network APY" color="#00d672" />
-        <Card label="Block Time"  value="~400ms" sub="average slot time" color="#888" />
-        <Card label="Consensus"   value="PoH + PoS" sub="Proof of History" color="#888" />
-        <Card label="Source"      value="Mainnet RPC" sub="api.mainnet-beta.solana.com" color="#888" />
-        <Card label="Network"     value="Solana" sub="High-performance L1" color="#9945ff" />
+        <Card label="SOL Price"    value={solPrice > 0 ? `$${solPrice.toFixed(2)}` : "—"} sub="CoinGecko" />
+        <Card label="DeFi TVL"     value={latestTvl > 0 ? `$${(latestTvl/1e9).toFixed(2)}B` : "—"} sub="DefiLlama" />
+        <Card label="Live TPS"     value={liveTps > 0 ? liveTps.toLocaleString() : "~2,500"} sub="getRecentPerformanceSamples" color="#fff" />
+        <Card label="Staking APR"  value="~6.5%" sub="approximate network APY" color="#00d672" />
+        <Card label="Block Time"   value="~400ms" sub="average slot time" color="#888" />
+        <Card label="Consensus"    value="PoH + PoS" sub="Proof of History" color="#888" />
+        <Card label="Source"       value="Mainnet RPC" sub="api.mainnet-beta.solana.com" color="#888" />
+        <Card label="Network"      value="Solana" sub="High-performance L1" color="#9945ff" />
       </div>
-      {tvlChart.length > 0 ? (
-        <OnchainAreaChart title="Solana DeFi TVL (90D)" subtitle="Source: DefiLlama"
-          data={tvlChart} dataKey="tvl" color="#9945ff"
-          yFormatter={(v) => `$${(v/1e9).toFixed(2)}B`} height={220} />
-      ) : (
-        <div className="border border-dashed border-[#1a1a1a] p-6 text-center">
-          <p className="text-[10px] text-[#333] font-mono uppercase tracking-widest">TVL chart loading...</p>
-        </div>
-      )}
+      {tvlChart.length > 0 && (() => {
+        const max = Math.max(...tvlChart.map((x) => x.tvl));
+        return (
+          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
+            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#9945ff] pl-3 mb-4">
+              Solana DeFi TVL (90D)
+            </h3>
+            <p className="text-[10px] text-[#555] font-mono pl-3 mb-4">Source: DefiLlama</p>
+            <div className="flex items-end gap-[2px] h-24">
+              {tvlChart.map((p, i) => (
+                <div key={i} className="flex-1 flex flex-col justify-end"
+                  title={`$${(p.tvl/1e9).toFixed(2)}B — ${p.date}`}>
+                  <div className="w-full rounded-sm opacity-80"
+                    style={{ height: `${Math.max(max > 0 ? (p.tvl/max)*100 : 0, 2)}%`, backgroundColor: "#9945ff" }} />
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between text-[9px] font-mono text-[#333] mt-2">
+              <span>{tvlChart[0]?.date}</span>
+              <span className="text-[#9945ff]">${(latestTvl/1e9).toFixed(2)}B</span>
+              <span>{tvlChart[tvlChart.length-1]?.date}</span>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
