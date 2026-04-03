@@ -1,76 +1,96 @@
-
-# CryptoBrainNews — Editorial & Business Blueprint
+# CryptoBrainNews — Editorial & Business Blueprint (Updated April 2026)
 *For founders, editors, and contributing partners*
 
 ---
 
-## Part 1 — Inviting Your Partner to Sanity Studio
+## Part 0 – Current Publishing Pipeline (4 Steps + Promotion)
+
+We use a **4‑step pipeline** that turns a Grok research brief into a published article, followed by automatic and manual promotion.
+
+| Step | Tool | Purpose |
+|------|------|---------|
+| 1 | Grok (X Premium) | Daily hot topic research brief |
+| 2 | DeepSeek | First draft + metadata (category, tags, excerpt, SEO) |
+| 3 | Gemini 3.1 Pro | Polish, add Key Takeaways, generate meta title/description, Twitter thread |
+| 4 | DeepSeek | Sanity formatter – outputs ready‑to‑copy block |
+| 5 | Sanity Studio | Publish article |
+| 6 | Promotion | Telegram (auto), X/Twitter (manual thread), LinkedIn (manual), Newsletter (auto) |
+
+**Detailed steps:**
+
+1. **Grok** – Paste `grok_daily_research.txt` prompt → get structured research brief.
+2. **DeepSeek** – Paste `deepseek_article_writer.txt` prompt + research brief → get draft + metadata.
+3. **Gemini** – With system instruction (executive editor) + master prompt → polish article, add Key Takeaways, generate SEO metadata + Twitter thread.
+4. **DeepSeek** – Paste `deepseek_sanity_formatter.txt` prompt + Gemini output → get Sanity‑ready block.
+5. **Sanity Studio** – Copy fields (Category, Tags, Excerpt, SEO Meta Title, SEO Meta Description, Body), set Status to `published`, click Publish.
+6. **Promotion:**
+   - **Telegram bot** – auto‑posts within 35 minutes (or manually trigger with curl).
+   - **X (Twitter)** – post the generated thread manually (3 posts with emojis).
+   - **LinkedIn** – share the article with a professional note.
+   - **Newsletter** – the daily brief includes the article automatically.
+
+All master prompts are stored in `docs/`:
+- `grok_daily_research.txt`
+- `deepseek_article_writer.txt`
+- `gemini_system_and_prompt.txt`
+- `deepseek_sanity_formatter.txt`
+
+---
+
+## Part 1 – Inviting Your Partner to Sanity Studio
 
 ### Step 1 — Invite via Sanity Manage
-```
 1. Go to https://sanity.io/manage
 2. Select your CryptoBrainNews project
-3. Click "Members" tab → "+ Add members"
-4. Enter your partner's email
-5. Assign role: "Editor" (recommended — can create/edit, cannot delete or change schema)
-6. They receive an email invite → they click accept → they need a free Sanity account
+3. Click “Members” tab → “+ Add members”
+4. Enter your partner’s email
+5. Assign role: “Editor”
+6. They accept the email invite and create a free Sanity account.
 7. After accepting, they visit: https://cryptobrainnews.vercel.app/studio
-```
 
 ### Step 2 — Role Guide
 
 | Role | What they can do | Who gets it |
-|---|---|---|
-| **Administrator** | Everything including schema, API tokens, billing | You only |
-| **Editor** | Create, edit, publish all document types | Your partner, trusted writers |
-| **Contributor** | Create and edit drafts only — cannot publish | Freelancers, guest writers |
-| **Viewer** | Read-only | Advertisers reviewing content before sponsorship |
+|------|------------------|-------------|
+| **Administrator** | Everything (schema, API tokens, billing) | You only |
+| **Editor** | Create, edit, publish all documents | Your partner, trusted writers |
+| **Contributor** | Create and edit drafts only – cannot publish | Freelancers, guest writers |
+| **Viewer** | Read‑only | Advertisers reviewing content |
 
-> **Important:** The free Sanity plan includes 2 non-admin users. For 3+ editors, upgrade to Growth ($15/seat/month).
+> Free Sanity plan includes 2 non‑admin users. For 3+ editors, upgrade to Growth ($15/seat/month).
 
-### Step 3 — Create an Author profile for your partner
+### Step 3 — Create an Author Profile for Your Partner
 In Sanity Studio → Author → New:
-- Name, slug, bio, avatar, Twitter handle, role: "Co-Founder & Editor"
-- This links their byline to their author page automatically
+- Name, slug, bio, avatar, Twitter handle, role: “Co‑Founder & Editor”
 
 ---
 
-## Part 2 — Editorial Workflow (Day-to-Day)
+## Part 2 – Editorial Workflow (Day‑to‑Day)
 
-### Article lifecycle
-
+### Article Lifecycle
 ```
-IDEA → DRAFT → REVIEW → PUBLISHED → PROMOTED
+IDEA → RESEARCH → DRAFT → REVIEW → PUBLISH → PROMOTE
 ```
 
-**Step-by-step:**
+**Step‑by‑step:**
 
-1. **New idea** → Create post in Studio, set status: `draft`, assign to Author
-2. **Write** → Body in Studio rich text editor, fill excerpt (180 chars), add tags
-3. **SEO check** → Fill SEO tab: meta title (≤70 chars), meta description (≤160 chars)
-4. **Image** → Upload 1200×630px hero image with alt text (required for OG sharing)
-5. **Review** → Partner reads the draft in Studio (real-time collaboration — both can edit simultaneously)
-6. **Publish** → Change status to `published`, confirm publishedAt date → click Publish
-7. **Live in 60 seconds** → ISR cache expires, article appears on site
-8. **Promote** → Share link on Twitter/X, Telegram, newsletter
+1. **Idea** – Use Grok to spot a trending topic.  
+2. **Research** – Run the Grok research prompt to get a brief.  
+3. **Draft** – Paste the research into DeepSeek (using `deepseek_article_writer.txt` prompt).  
+4. **Polish** – Paste the draft into Gemini with the polishing prompt.  
+5. **Format** – Paste the Gemini output into DeepSeek (Sanity formatter).  
+6. **Publish** – Copy the Sanity block into Studio, set status to `published`.  
+7. **Live in 60 seconds** – ISR cache expires, article appears on site.  
+8. **Promote** – Telegram bot auto‑posts; post the Twitter thread manually; share on LinkedIn; newsletter includes it automatically.
 
-### Content calendar suggestion (starting out)
-
-| Day | Content type | Category | Who |
-|---|---|---|---|
-| Monday | Market weekly recap | market | You or Partner |
-| Wednesday | Deep-dive analysis | research / rwa / ai-crypto | You |
-| Friday | Alpha Call | Alpha Call | You |
-| Daily | News commentary (short) | Any | Either |
-
-### Writing checklist for every article
+### Writing Checklist (for every article)
 
 ```
 ✅ Title: clear, uppercase, ≤80 chars
-✅ Excerpt: 1-2 sentences, compelling, ≤180 chars
+✅ Excerpt: 1‑2 sentences, compelling, ≤180 chars
 ✅ Author: assigned (not blank)
-✅ Category: selected from dropdown
-✅ Tags: 3-8 relevant tags (hyphenated lowercase: "eigenlayer", "bitcoin-etf")
+✅ Category: selected from dropdown (use high‑priority categories: rwa, ai‑crypto, institutional, etc.)
+✅ Tags: 3‑8 relevant tags (hyphenated lowercase: "eigenlayer", "bitcoin-etf")
 ✅ Hero image: 1200×630px, alt text filled
 ✅ SEO meta description: ≤160 chars, includes primary keyword
 ✅ Body: at least 300 words for editorial; wire commentary can be shorter
@@ -80,96 +100,80 @@ IDEA → DRAFT → REVIEW → PUBLISHED → PROMOTED
 
 ---
 
-## Part 3 — What Category to Focus on Right Now
+## Part 3 – What Category to Focus on Right Now (April 2026)
 
-Based on March 2026 research, here's where the audience is:
+**Priority 1 — RWA (Real‑World Assets)**  
+Tokenized RWA has reached $36B onchain, expected to hit $50B by end‑2026. Every major asset manager is entering this space. Write about: BlackRock BUIDL, Ondo Finance, tokenized T‑bills, Centrifuge.
 
-**Priority 1 — RWA (Real-World Assets)**
-Tokenized real-world assets have reached $36 billion onchain and are expected to reach at least $50 billion by 2026 year-end. This is the #1 institutional narrative. Every major asset manager is entering this space. Write about: BlackRock BUIDL, Ondo Finance, tokenized T-bills, Centrifuge.
+**Priority 2 — AI × Crypto**  
+The x402 protocol is emerging as the payment rail for AI agents, with adoption by Google Cloud, AWS, and Anthropic. Write about: Bittensor, Fetch.ai, DePAI protocols.
 
-**Priority 2 — AI × Crypto**
-The x402 protocol emerged as a decentralized payment standard designed specifically for autonomous AI agents, with rapid adoption by Google Cloud, AWS, and Anthropic. Write about: Bittensor, Fetch.ai, agent-to-agent payments, DePAI protocols.
+**Priority 3 — Institutional**  
+JPMorgan plans to accept Bitcoin/Ether as collateral, SoFi became the first US bank to offer direct digital asset trading. Write about: Solana ETF filings, corporate treasury adoption, bank crypto integration.
 
-**Priority 3 — Institutional**
-JPMorgan plans to accept Bitcoin and Ether as collateral, and SoFi became the first US chartered bank to offer direct digital asset trading from customer accounts. Write about: Solana ETF filings, corporate treasury adoption, bank crypto integration.
+**Priority 4 — Stablecoins**  
+Stablecoins have hit mainstream with tokenized deposits and treasuries. Write about: USDC, USDT, yield‑bearing stablecoins, T‑bill products.
 
-**Priority 4 — Stablecoins**
-Stablecoins found product-market fit and hit the mainstream, with TradFi institutions embracing them at a whole new level — tokenized deposits, tokenized treasuries, and onchain bonds allow banks and fintechs to build new products.
-
-**Skip for now:** NFTs, memecoin speculation — low institutional interest in March 2026.
+**Skip for now:** NFTs, memecoin speculation – low institutional interest.
 
 ---
 
-## Part 4 — Role Split with Your Partner
-
-Given you're the technical founder and they're the editorial partner, here's the recommended split:
+## Part 4 – Role Split with Your Partner
 
 **You (Technical Founder):**
-- Site infrastructure and deployments
+- Site infrastructure, deployments
 - Data pages and onchain integrations
 - Monetisation (newsletter, ads, API access)
-- Schema changes (you're the only Administrator)
-- Business development and partnerships
+- Schema changes (Administrator)
+- Business development
 
 **Your Partner (Editorial Lead):**
 - Daily/weekly article publishing
 - Editorial calendar ownership
 - Category strategy
-- Source relationships (protocol teams, researchers)
+- Source relationships
 - Social media distribution
 
 **Shared:**
-- Alpha Calls (your best content — requires both conviction)
-- Fact-checking each other's technical claims
+- Alpha Calls
+- Fact‑checking technical claims
 - Sponsor outreach
 
 ---
 
-## Part 5 — First 30 Days Content Plan
+## Part 5 – First 30 Days Content Plan
 
-### Week 1 — Foundation
-- [ ] Create Author profiles for both of you in Studio
-- [ ] Publish 2 "About us" style articles: who we are, our methodology
-- [ ] Publish 1 RWA explainer: "What is RWA tokenization and why does it matter in 2026?"
-- [ ] Publish 1 AI×Crypto explainer: "x402: The payment rail for AI agents"
-
-### Week 2 — Market coverage
-- [ ] Weekly market recap (Monday)
-- [ ] Deep-dive on one institutional story (e.g., Solana ETF filing status)
-- [ ] 1 Alpha Call (your conviction play)
-- [ ] Interview format: reach out to 1 protocol team for a comment
-
-### Week 3 — SEO content
-- [ ] "Best RWA protocols 2026" — high search volume, long-form
-- [ ] "EigenLayer vs EtherFi: restaking comparison"
-- [ ] "Bitcoin L2s explained: Stacks, Lightning, Rootstock"
-
-### Week 4 — Distribution
-- [ ] Submit sitemap to Google Search Console
-- [ ] Set up Twitter/X account @CryptoBrainNews
-- [ ] Set up Telegram channel (auto-post new articles via bot)
-- [ ] Reach out to 5 crypto newsletters to get a mention/link
+| Week | Tasks |
+|------|-------|
+| **1** | [ ] Create author profiles in Studio. [ ] Publish an RWA explainer. [ ] Publish an AI×Crypto explainer. |
+| **2** | [ ] Weekly market recap. [ ] Deep‑dive on Solana ETF filing status. [ ] 1 Alpha Call. |
+| **3** | [ ] “Best RWA Protocols 2026” (listicle). [ ] “EigenLayer vs EtherFi: Restaking Comparison”. [ ] “Bitcoin L2s Explained”. |
+| **4** | [ ] Submit sitemap to Google Search Console. [ ] Set up X Pro columns. [ ] Reach out to 5 crypto newsletters for mentions. |
 
 ---
 
-## Part 6 — Revenue Roadmap
+## Part 6 – Revenue Roadmap
 
 | Phase | Revenue stream | When | Target |
 |---|---|---|---|
-| Month 1-2 | Affiliate links (MEXC, Bybit) | Now | $200-500/month |
-| Month 2-3 | Newsletter sponsorships | 500+ subscribers | $200-500/issue |
-| Month 3-6 | Sponsored articles | Domain authority growing | $500-2000/article |
-| Month 6+ | API access tier | After data pages live | $99-499/month |
-| Month 6+ | "The Cartel" subscriptions | After content authority | $29-99/month |
+| Month 1‑2 | Affiliate links | Now | $200‑500/month |
+| Month 2‑3 | Newsletter sponsorships | 500+ subscribers | $200‑500/issue |
+| Month 3‑6 | Sponsored articles | Domain authority growing | $500‑2000/article |
+| Month 6+ | API access tier | After data pages live | $99‑499/month |
+| Month 6+ | “The Cartel” subscriptions | After content authority | $29‑99/month |
 
 ---
 
-## Part 7 — Technical Next Steps (for you)
+## Part 7 – Technical Next Steps (For You)
 
-After the current build is stable, in priority order:
+After the first article is published, in priority order:
 
-1. **Telegram bot** — auto-post published articles to your Telegram channel (Vercel webhook → Telegram Bot API, ~2 hours)
-2. **Google Search Console** — verify domain, submit sitemap.xml, monitor impressions
-3. **Onchain data widgets** — embed live DeFiLlama TVL for RWA on the RWA category page
-4. **Glassnode free tier** — BTC MVRV ratio widget on homepage (institutional signal)
-5. **MCP server** — expose `/api/mcp/news` so AI agents (Claude, GPT) can query your articles as a tool — this is your moat against competitors
+1. **Google Search Console** – verify domain, submit sitemap.xml.
+2. **Telegram bot** – already set up; ensure it posts new articles automatically.
+3. **Onchain data widgets** – embed live DeFiLlama TVL for RWA on the RWA category page.
+4. **Glassnode free tier** – BTC MVRV ratio widget on homepage.
+5. **MCP server** – expose `/api/mcp/news` so AI agents can query your articles.
+
+---
+
+**Your first article is now ready to go.** Use the pipeline above (Grok → DeepSeek → Gemini → DeepSeek formatter → Sanity). After it’s live, come back to this blueprint for the next piece.

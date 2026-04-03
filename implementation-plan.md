@@ -903,3 +903,10 @@ curl -s https://cryptobrainnews.vercel.app/tags -o /dev/null -w '%{http_code}\n'
 - Continue daily article publishing using Grok → DeepSeek → Gemini → Sanity workflow
 - Monitor Telegram bot and newsletter deliverability
 - Prepare for custom domain setup
+
+## Phase X: Title
+- Summary bullet points
+[YYYY-MM-DD] STATUS UPDATE
+	•	Reference: Phase X
+	•	New Status: COMPLETED
+	•	Notes: Summary notes.
