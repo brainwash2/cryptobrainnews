@@ -76,3 +76,34 @@ When I give you Claude's code, your response must look exactly like this – not
 mkdir -p src/lib
 cat << 'EOF' > src/lib/new-file.ts
 [Paste the entire content from Claude's file here]
+EOF
+
+# ... more cat commands ...
+
+cat << 'EOF' >> task.md
+
+[YYYY-MM-DD] STATUS UPDATE
+	•	Reference: Phase X (Task description)
+	•	New Status: COMPLETED
+	•	Notes: Brief notes on what was built.
+EOF
+
+cat << 'EOF' >> implementation-plan.md
+
+## Phase X: Title
+- Summary bullet points
+[YYYY-MM-DD] STATUS UPDATE
+	•	Reference: Phase X
+	•	New Status: COMPLETED
+	•	Notes: Summary notes.
+EOF
+
+git add .
+git commit -m "Phase X: brief description"
+git push origin main
+```
+
+---
+
+**Acknowledge that you understand your role and that you have received the updated project context (including `docs/` and `scripts/` folders). I will now upload the context files. Do not generate any code or commands until I provide you with Claude's output or ask a specific question.**
+EOF
