@@ -875,3 +875,31 @@ curl -s https://cryptobrainnews.vercel.app/sitemap.xml | grep '/tags/' | head -5
 # Tags index page
 curl -s https://cryptobrainnews.vercel.app/tags -o /dev/null -w '%{http_code}\n'
 ```
+
+---
+## Data Section – Postponed Refactor (Planned Q2 2026)
+
+### Known Issues (as of April 3, 2026)
+
+| Page | Issue | Priority |
+|------|-------|----------|
+| `/data/onchain/ethereum` | React #419 crash (client component) | High |
+| `/data/onchain/solana` | Same | High |
+| `/data/onchain/avalanche` | Same | High |
+| `/data/onchain/aptos` | Same | High |
+| `/data/defi/revenue` | Empty data | Medium |
+| `/data/defi/prediction` | NaN values | Medium |
+| `/data/stablecoins/non-usd` | ComingSoon stub | Low |
+| `/data/markets/cme-cots` | Reference only (CFTC blocked) | Low |
+
+### Next Steps
+- **Tool:** Perplexity Computer will be used to:
+  - Automatically fetch and normalise data from multiple APIs
+  - Generate server‑only React components (no client hooks)
+  - Unify data schemas across CoinGecko, DefiLlama, Etherscan, etc.
+- **Timing:** After the news section is fully stable and the daily content pipeline is running autonomously.
+
+### Current Focus
+- Continue daily article publishing using Grok → DeepSeek → Gemini → Sanity workflow
+- Monitor Telegram bot and newsletter deliverability
+- Prepare for custom domain setup

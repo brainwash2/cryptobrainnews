@@ -1118,3 +1118,14 @@
  
 ### Bonus Features
 - [x] /about page: NewsMediaOrganization JSON-LD, editorial team, standards — required for Google News E-E-A-T
+
+---
+## Data Section – Current State (April 2026)
+- [ ] Ethereum, Solana, Avalanche, Aptos on‑chain pages still have React #419 crashes (client component chart imports)
+- [ ] DeFi Revenue page shows "Syncing data…" – needs API endpoint verification
+- [ ] DeFi Prediction page shows NaN¢ / $0 OI – Polymarket API mapping needs adjustment
+- [ ] Non-USD Stablecoins page is a ComingSoon stub
+- [ ] CME COTs shows reference snapshot (CFTC API geo-blocked from Vercel)
+- [ ] Futures page may still have Binance imports (needs verification)
+
+**Decision:** Data section refactor postponed. Will be revisited in a dedicated phase using Perplexity Computer for automated API integration and code generation.

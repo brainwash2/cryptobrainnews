@@ -392,3 +392,16 @@ This list ensures a systematic approach to hardening the data section based on t
 **Impact:** Improves Google E‑E‑A‑T signals, gives editorial team a professional identity, adds JSON‑LD Person schema for each author.  
 **Files:** `src/app/authors/page.tsx`, `src/app/authors/[slug]/page.tsx`, updates to `src/lib/sanity.ts` and `src/app/news/[id]/page.tsx`.  
 **Next:** Tag system, about page, custom domain verification.
+
+---
+## Data Section – Refactor Postponed (April 2026)
+
+After multiple attempts to fix the on‑chain page crashes (React #419), the decision was made to pause data section work. The root cause is the use of `'use client'` components with Recharts inside Server Components. The final fix (pure server‑rendered bar charts) was deployed but confidence remains low.
+
+**Future approach:** Use Perplexity Computer to:
+- Audit all data pages systematically
+- Generate server‑only components (zero client hooks)
+- Automate API integration and data normalisation
+- Create a unified data fetching layer
+
+**Current status:** News section is fully operational. Content pipeline is running daily. Data section will be revisited after news stability is proven.
