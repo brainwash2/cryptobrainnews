@@ -18,6 +18,7 @@ export interface WeightedArticle extends NewsArticle {
   aiSummary?: string;
   aiBullets?: string[];
   aiSentiment?: 'Positive' | 'Negative' | 'Neutral';
+  rawBody?: string;  // NEW: raw HTML body from Sanity
 }
 
 export interface CryptoEvent {
@@ -140,8 +141,6 @@ export interface FundingRateData {
   fundingRate: number;
   markPrice: number;
 }
-
-// ─── Phase 38 additions ──────────────────────────────────────────────────────
 
 export interface GlobalMarketSummary {
   totalMarketCap: number;

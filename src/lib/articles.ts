@@ -38,6 +38,7 @@ function sanityToWeighted(post: any): WeightedArticle {
     weight: isAlpha ? SOURCE_WEIGHTS.alpha : SOURCE_WEIGHTS.editorial,
     sourceType: isAlpha ? 'alpha' : 'editorial',
     author_name: post.authorName || 'CryptoBrain Editorial',
+    rawBody: post.rawBody || '',  // NEW: raw HTML body
   };
 }
  
@@ -56,7 +57,7 @@ async function fetchSanityEditorial(): Promise<WeightedArticle[]> {
 /** All articles sorted by weight then recency. Used by /news and homepage. */
 export async function getAllArticles(): Promise<WeightedArticle[]> {
   return cached(
-    'articles:weighted:v7',
+    'articles:weighted:v8',
     async () => {
       const [editorial, wire] = await Promise.all([
         fetchSanityEditorial(),

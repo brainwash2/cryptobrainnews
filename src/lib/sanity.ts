@@ -29,7 +29,8 @@ export async function getSanityPosts() {
         "authorAvatar": author->avatar.asset->url,
         "authorRole": author->role,
         seo,
-        body
+        body,
+        rawBody
       }
     `);
   }, 60);
@@ -45,7 +46,7 @@ export async function getSanityPostsByCategory(category: string) {
         _id, title, "slug": slug.current,
         "imageUrl": mainImage.asset->url,
         publishedAt, category, tags, excerpt,
-        "authorName": author->name, seo, body
+        "authorName": author->name, seo, body, rawBody
       }`,
       { cat: capitalized, slug: category.toLowerCase() } as QueryParams
     );
@@ -116,7 +117,7 @@ export async function getPostsByTag(tag: string) {
         publishedAt, category, excerpt, tags,
         "authorName": author->name
       }`,
-      { tag } as unknown as QueryParams   // ← explicit cast fixes TS2769
+      { tag } as unknown as QueryParams
     );
   }, 300);
 }

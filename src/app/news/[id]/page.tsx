@@ -19,9 +19,7 @@ import ViewTracker from './_components/ViewTracker';
  
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.com';
  
-export async function generateMetadata(
-  { params }: { params: Promise<{ id: string }> }
-): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const article = await getArticleById(id);
   if (!article) return { title: 'Article Not Found' };
@@ -57,9 +55,7 @@ export async function generateMetadata(
   };
 }
  
-export default async function NewsArticlePage(
-  { params }: { params: Promise<{ id: string }> }
-) {
+export default async function NewsArticlePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [article, related, glossary] = await Promise.all([
     getArticleById(id),
@@ -70,7 +66,6 @@ export default async function NewsArticlePage(
   if (!article) notFound();
  
   const readingTime = calculateReadingTime(article.body);
-  const paragraphs = article.body.split('\n').filter(Boolean);
   const siteUrl = BASE_URL.replace(/\/$/, '');
  
   const jsonLd = {
@@ -93,49 +88,10 @@ export default async function NewsArticlePage(
     keywords: article.categories.join(', '),
   };
  
-  function renderParagraph(text: string, glossaryTerms: any[]) {
-    if (!glossaryTerms || glossaryTerms.length === 0) return <>{text}</>;
-    const sortedTerms = [...glossaryTerms].sort((a, b) => b.term.length - a.term.length);
-    const escapedTerms = sortedTerms.map(t =>
-      t.term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    );
-    const regex = new RegExp(`\\b(${escapedTerms.join('|')})\\b`, 'gi');
-    const parts = text.split(regex);
-    return (
-      <>
-        {parts.map((part, i) => {
-          const termObj = sortedTerms.find(
-            t => t.term.toLowerCase() === part.toLowerCase()
-          );
-          if (termObj) {
-            return (
-              <GlossaryTooltip key={i} term={termObj.term} definition={termObj.definition}>
-                <span className="text-[#FABF2C] hover:text-white transition-colors">{part}</span>
-              </GlossaryTooltip>
-            );
-          }
-          return <span key={i}>{part}</span>;
-        })}
-      </>
-    );
-  }
- 
   return (
     <>
-      {/* JSON-LD structured data */}
-      <Script
-        id="article-jsonld"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
- 
-      {/* Client-side view tracker — fires once, silently */}
-      <ViewTracker
-        articleId={id}
-        title={article.title}
-        category={article.categories[0] || 'news'}
-      />
- 
+      <Script id="article-jsonld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <ViewTracker articleId={id} title={article.title} category={article.categories[0] || 'news'} />
       <ReadingProgress />
  
       <main className="container mx-auto px-4 lg:px-8 py-8 lg:py-12">
@@ -143,7 +99,6 @@ export default async function NewsArticlePage(
           <StickyShareBar title={article.title} articleId={id} />
  
           <article className="flex-1 min-w-0 max-w-[800px]">
-            {/* Category + reading time */}
             <div className="flex items-center gap-3 mb-6">
               <span className="inline-block bg-[#FABF2C] text-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest">
                 {article.categories[0] || 'Market News'}
@@ -153,22 +108,17 @@ export default async function NewsArticlePage(
               </span>
             </div>
  
-            {/* Headline */}
             <h1 className="text-3xl md:text-5xl font-black leading-tight mb-8 text-white uppercase tracking-tighter">
               {article.title}
             </h1>
  
-            {/* Author byline with link to author page */}
             {article.author_name && (
               <div className="flex items-center gap-3 mb-8 pb-6 border-b border-[#1a1a1a]">
                 <div className="w-8 h-8 rounded-full bg-[#FABF2C] flex items-center justify-center text-black font-black text-xs">
                   {article.author_name.charAt(0)}
                 </div>
                 <div>
-                  <Link
-                    href={`/authors/${article.author_name.toLowerCase().replace(/\s+/g, "-")}`}
-                    className="text-white text-xs font-black uppercase tracking-widest hover:text-[#FABF2C] transition-colors"
-                  >
+                  <Link href={`/authors/${article.author_name.toLowerCase().replace(/\s+/g, "-")}`} className="text-white text-xs font-black uppercase tracking-widest hover:text-[#FABF2C] transition-colors">
                     {article.author_name}
                   </Link>
                   <p className="text-[#555] text-[10px] font-mono">CryptoBrain Editorial</p>
@@ -176,83 +126,48 @@ export default async function NewsArticlePage(
               </div>
             )}
  
-            {/* Hero image */}
             <div className="relative w-full aspect-video mb-10 border border-[#1a1a1a] bg-[#0a0a0a]">
-              <AppImage
-                src={article.image}
-                alt={article.title}
-                fill
-                className="object-cover"
-                priority
-              />
+              <AppImage src={article.image} alt={article.title} fill className="object-cover" priority />
             </div>
  
-            {/* Affiliate callout */}
             <div className="mb-10 bg-[#080808] border-l-2 border-[#FABF2C] p-6 flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
                 <h4 className="text-sm font-black text-white uppercase mb-1">Trade this Alpha</h4>
                 <p className="text-xs text-[#888]">Get up to 50% off trading fees with our partners.</p>
               </div>
-              <AffiliateLink
-                exchange="mexc"
-                className="bg-[#FABF2C] text-black px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors text-center shrink-0"
-              >
+              <AffiliateLink exchange="mexc" className="bg-[#FABF2C] text-black px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors text-center shrink-0">
                 Trade on MEXC
               </AffiliateLink>
             </div>
  
-            {/* Article body */}
-            <div className="prose prose-invert max-w-none font-sans">
-              {paragraphs.map((para, idx) => (
-                <React.Fragment key={idx}>
-                  <p className="mb-6 text-lg text-[#ccc] leading-relaxed">
-                    {renderParagraph(para, glossary)}
+            {/* Render raw HTML if present, otherwise fallback to Portable Text body */}
+            {article.rawBody ? (
+              <div className="prose prose-invert max-w-none font-sans" dangerouslySetInnerHTML={{ __html: article.rawBody }} />
+            ) : (
+              <div className="prose prose-invert max-w-none font-sans">
+                {article.body.split('\n').map((para, idx) => (
+                  <p key={idx} className="mb-6 text-lg text-[#ccc] leading-relaxed">
+                    {para}
                   </p>
+                ))}
+              </div>
+            )}
  
-                  {/* Ad after paragraph 2 */}
-                  {idx === 1 && <AdUnit />}
- 
-                  {/* Newsletter CTA after paragraph 5 */}
-                  {idx === 4 && (
-                    <NewsletterCTA category={article.categories[0]} />
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
- 
-            {/* Source link for wire articles */}
             {article.sourceType === 'wire' && (
               <div className="mt-8 pt-8 border-t border-[#1a1a1a]">
-                <a
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#FABF2C] hover:underline text-xs font-black uppercase tracking-widest"
-                >
+                <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-[#FABF2C] hover:underline text-xs font-black uppercase tracking-widest">
                   Read Full Story on {article.source} ↗
                 </a>
               </div>
             )}
  
-            {/* Related articles */}
             <section className="mt-20 border-t border-[#1a1a1a] pt-16">
-              <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-10">
-                Related Intelligence
-              </h3>
+              <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-10">Related Intelligence</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 {related.map((rel) => (
-                  <Link
-                    key={rel.id}
-                    href={rel.url.startsWith('http') ? rel.url : `/news/${rel.id}`}
-                    className="group"
-                  >
+                  <Link key={rel.id} href={rel.url.startsWith('http') ? rel.url : `/news/${rel.id}`} className="group">
                     <div className="relative aspect-video mb-4 overflow-hidden border border-[#1a1a1a] bg-[#0a0a0a]">
-                      <AppImage
-                        src={rel.image}
-                        alt={rel.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-all"
-                      />
+                      <AppImage src={rel.image} alt={rel.title} fill className="object-cover group-hover:scale-105 transition-all" />
                     </div>
                     <h4 className="font-bold text-white group-hover:text-[#FABF2C] transition-colors text-sm uppercase leading-snug">
                       {rel.title}
