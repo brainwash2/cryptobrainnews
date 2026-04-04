@@ -4,6 +4,12 @@ import { getAllArticles } from '@/lib/articles';
 export const maxDuration = 30;
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.com').replace(/\/$/, '');
 
+function escapeMarkdown(text: string): string {
+  // Characters that must be escaped in Telegram MarkdownV2
+  const specialChars = /[_*[\]()~`>#+\-=|{}.!]/g;
+  return text.replace(specialChars, '\\$&');
+}
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -27,7 +33,7 @@ export async function GET(req: NextRequest) {
   const sent: string[] = [];
   const errors: any[] = [];
 
-  for (const article of fresh.slice(0, 1)) { // try just one for debugging
+  for (const article of fresh.slice(0, 1)) {
     const url = `${BASE}/news/${article.id}`;
     const category = article.categories[0]?.toUpperCase() || 'NEWS';
     const emoji: Record<string, string> = {
@@ -37,16 +43,18 @@ export async function GET(req: NextRequest) {
     };
     const icon = emoji[category] || '📰';
 
-    // Truncate body safely
+    // Escape the entire body and title
+    const escapedTitle = escapeMarkdown(article.title);
     const bodyText = (article.body || '').slice(0, 200);
-    const escapedBody = bodyText.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+    const escapedBody = escapeMarkdown(bodyText) + '…';
+    const escapedUrl = escapeMarkdown(url);
 
     const text = [
-      `${icon} *${article.title}*`,
+      `${icon} *${escapedTitle}*`,
       '',
-      escapedBody + '…',
+      escapedBody,
       '',
-      `[Read full article](${url})`,
+      `[Read full article](${escapedUrl})`,
       '',
       `\\#${category.toLowerCase().replace(/\s+/g, '')} \\#cryptobrainnews`,
     ].join('\n');
@@ -67,9 +75,11 @@ export async function GET(req: NextRequest) {
         sent.push(article.title);
       } else {
         errors.push({ article: article.title, error: data });
+        console.error('[Telegram] Send failed:', data);
       }
     } catch (e: any) {
       errors.push({ article: article.title, error: e.message });
+      console.error('[Telegram] Error:', e.message);
     }
   }
 
