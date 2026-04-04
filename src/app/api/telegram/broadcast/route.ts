@@ -1,13 +1,18 @@
+/**
+ * Telegram Auto-Publisher
+ * Runs every 30 min via Vercel Cron.
+ * Checks for articles published in the last 30 min, posts to Telegram channel.
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllArticles } from '@/lib/articles';
 
 export const maxDuration = 30;
+
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.com').replace(/\/$/, '');
 
+// Escape Telegram MarkdownV2 special characters
 function escapeMarkdown(text: string): string {
-  // Characters that must be escaped in Telegram MarkdownV2
-  const specialChars = /[_*[\]()~`>#+\-=|{}.!]/g;
-  return text.replace(specialChars, '\\$&');
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
 }
 
 export async function GET(req: NextRequest) {
@@ -23,70 +28,71 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Telegram not configured' });
   }
 
+  // TEMPORARY: disable time filter for testing – remove later
+  const cutoff = 0;
   const articles = await getAllArticles();
-  const fresh = articles.filter(a => a.sourceType === 'editorial' || a.sourceType === 'alpha');
+  const fresh = articles.filter(
+    a => (a.sourceType === 'editorial' || a.sourceType === 'alpha')
+      && a.published_on > cutoff
+  );
 
   if (fresh.length === 0) {
-    return NextResponse.json({ sent: 0, debug: { total: articles.length, fresh: 0 } });
+    return NextResponse.json({ sent: 0, message: 'No new articles' });
   }
 
   const sent: string[] = [];
-  const errors: any[] = [];
 
-  for (const article of fresh.slice(0, 1)) {
+  for (const article of fresh.slice(0, 3)) {
     const url = `${BASE}/news/${article.id}`;
-    const category = article.categories[0]?.toUpperCase() || 'NEWS';
+    const rawCategory = article.categories[0]?.toUpperCase() || 'NEWS';
+    const category = escapeMarkdown(rawCategory);
+    const title = escapeMarkdown(article.title);
+    const body = article.body.slice(0, 200).replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+
     const emoji: Record<string, string> = {
       'ALPHA CALL': '⚡', 'BITCOIN': '₿', 'ETHEREUM': '🔷',
       'DEFI': '🌊', 'RWA': '🏦', 'AI-CRYPTO': '🤖',
       'REGULATION': '⚖️', 'INSTITUTIONAL': '🏛️', 'MARKET': '📈',
     };
-    const icon = emoji[category] || '📰';
-
-    // Escape the entire body and title
-    const escapedTitle = escapeMarkdown(article.title);
-    const bodyText = (article.body || '').slice(0, 200);
-    const escapedBody = escapeMarkdown(bodyText) + '…';
-    const escapedUrl = escapeMarkdown(url);
+    const icon = emoji[rawCategory] || '📰';
 
     const text = [
-      `${icon} *${escapedTitle}*`,
+      `${icon} *${title}*`,
       '',
-      escapedBody,
+      body + '…',
       '',
-      `[Read full article](${escapedUrl})`,
+      `[Read full article](${url})`,
       '',
       `\\#${category.toLowerCase().replace(/\s+/g, '')} \\#cryptobrainnews`,
     ].join('\n');
 
     try {
-      const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: channelId,
-          text,
-          parse_mode: 'MarkdownV2',
-          disable_web_page_preview: false,
-        }),
-      });
-      const data = await res.json();
+      const res = await fetch(
+        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: channelId,
+            text,
+            parse_mode: 'MarkdownV2',
+            disable_web_page_preview: false,
+          }),
+        }
+      );
+
       if (res.ok) {
         sent.push(article.title);
       } else {
-        errors.push({ article: article.title, error: data });
-        console.error('[Telegram] Send failed:', data);
+        const err = await res.json();
+        console.error('[Telegram] Send failed:', err);
       }
     } catch (e: any) {
-      errors.push({ article: article.title, error: e.message });
       console.error('[Telegram] Error:', e.message);
     }
+
+    await new Promise(r => setTimeout(r, 1200));
   }
 
-  return NextResponse.json({
-    sent: sent.length,
-    articles: sent,
-    debug: { total: articles.length, fresh: fresh.length },
-    errors: errors,
-  });
+  return NextResponse.json({ sent: sent.length, articles: sent });
 }
