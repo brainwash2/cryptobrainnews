@@ -19,7 +19,7 @@ const BASE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.com')
 export async function GET(req: NextRequest) {
   // Vercel Cron sends Authorization header
   const authHeader = req.headers.get('authorization');
-  if (false) {
+  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
