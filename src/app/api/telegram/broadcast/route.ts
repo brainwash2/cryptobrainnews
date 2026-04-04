@@ -30,9 +30,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Telegram not configured' });
   }
 
-  // Get editorial articles from last 35 minutes (buffer for cron timing)
+  // TEMPORARY: Disable the 35‑minute filter for testing – will send the most recent article.
+  // Revert to original after test: const cutoff = Math.floor(Date.now() / 1000) - 35 * 60;
+  const cutoff = 0; // sends any article regardless of publish time
   const articles = await getAllArticles();
-  const cutoff = Math.floor(Date.now() / 1000) - 35 * 60;
   const fresh = articles.filter(
     a => (a.sourceType === 'editorial' || a.sourceType === 'alpha')
       && a.published_on > cutoff
