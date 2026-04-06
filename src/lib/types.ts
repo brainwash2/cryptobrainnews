@@ -18,7 +18,7 @@ export interface WeightedArticle extends NewsArticle {
   aiSummary?: string;
   aiBullets?: string[];
   aiSentiment?: 'Positive' | 'Negative' | 'Neutral';
-  rawBody?: string;  // NEW: raw HTML body from Sanity
+  rawHtml?: string;  // NEW: raw HTML body from AI pipeline
 }
 
 export interface CryptoEvent {

@@ -38,7 +38,7 @@ function sanityToWeighted(post: any): WeightedArticle {
     weight: isAlpha ? SOURCE_WEIGHTS.alpha : SOURCE_WEIGHTS.editorial,
     sourceType: isAlpha ? 'alpha' : 'editorial',
     author_name: post.authorName || 'CryptoBrain Editorial',
-    rawBody: post.rawBody || '',  // NEW: raw HTML body
+    rawHtml: post.rawHtml || undefined,  // NEW: raw HTML from pipeline
   };
 }
  
@@ -54,10 +54,9 @@ async function fetchSanityEditorial(): Promise<WeightedArticle[]> {
  
 // ── Public API ────────────────────────────────────────────────────────────
  
-/** All articles sorted by weight then recency. Used by /news and homepage. */
 export async function getAllArticles(): Promise<WeightedArticle[]> {
   return cached(
-    'articles:weighted:v8',
+    'articles:weighted:v9',
     async () => {
       const [editorial, wire] = await Promise.all([
         fetchSanityEditorial(),
@@ -74,7 +73,6 @@ export async function getAllArticles(): Promise<WeightedArticle[]> {
   );
 }
  
-/** Articles for a specific category — merges Sanity + RSS feeds. */
 export async function getArticlesByCategory(category: string): Promise<WeightedArticle[]> {
   return cached(`articles:category:${category}`, async () => {
     const [sanityPosts, wireArticles] = await Promise.all([
@@ -96,7 +94,6 @@ export async function getArticleById(id: string): Promise<WeightedArticle | null
   return articles.find((a) => a.id === id) || null;
 }
  
-/** Related articles — same-category first, then fill with recents. */
 export async function getRelatedArticles(id: string, limit = 4): Promise<WeightedArticle[]> {
   const all = await getAllArticles();
   const current = all.find((a) => a.id === id);
@@ -116,7 +113,6 @@ export async function getIntelligence(category: string): Promise<WeightedArticle
   return editorial.filter((a) => a.categories.includes(category));
 }
  
-/** Lightweight search index — lean payload for /api/news/search. */
 export async function getSearchIndex() {
   const all = await getAllArticles();
   return all.map((a) => ({

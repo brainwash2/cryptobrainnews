@@ -140,9 +140,9 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ id
               </AffiliateLink>
             </div>
  
-            {/* Render raw HTML if present, otherwise fallback to Portable Text body */}
-            {article.rawBody ? (
-              <div className="prose prose-invert max-w-none font-sans" dangerouslySetInnerHTML={{ __html: article.rawBody }} />
+            {/* Render raw HTML if present (AI-generated), otherwise fallback to portable text */}
+            {article.rawHtml ? (
+              <div className="prose-article" dangerouslySetInnerHTML={{ __html: article.rawHtml }} />
             ) : (
               <div className="prose prose-invert max-w-none font-sans">
                 {article.body.split('\n').map((para, idx) => (

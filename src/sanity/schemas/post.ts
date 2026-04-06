@@ -56,6 +56,16 @@ export const post = defineType({
       of: [{ type: 'string' }],
       options: { layout: 'tags' },
     }),
+    // NEW: raw HTML field for AI-generated articles
+    defineField({
+      name: 'rawHtml',
+      title: 'Raw HTML Body',
+      type: 'text',
+      group: 'content',
+      rows: 25,
+      description: 'Auto-populated by the AI article pipeline. Do not edit manually.',
+      readOnly: true,
+    }),
     defineField({
       name: 'body', title: 'Body (Portable Text)', type: 'array', group: 'content',
       of: [
@@ -69,11 +79,6 @@ export const post = defineType({
         },
       ],
     }),
-    // NEW: raw HTML field – does NOT replace the portable text body
-    defineField({
-      name: 'rawBody', title: 'Body (Raw HTML)', type: 'text', group: 'content',
-      rows: 25, description: 'Paste HTML output from Copilot (Think Deeper mode) here. Use <h2> for headings, <p> for paragraphs, <ul>/<li> for lists.',
-    }),
     defineField({
       name: 'publishedAt', title: 'Published At', type: 'datetime', group: 'publishing',
       initialValue: () => new Date().toISOString(),
@@ -86,6 +91,15 @@ export const post = defineType({
       name: 'status', title: 'Status', type: 'string', group: 'publishing',
       options: { list: ['draft', 'scheduled', 'published', 'archived'], layout: 'radio' },
       initialValue: 'draft',
+    }),
+    // NEW: flag for AI-generated articles
+    defineField({
+      name: 'aiGenerated',
+      title: 'AI Generated',
+      type: 'boolean',
+      group: 'publishing',
+      description: 'Set to true when article was created by the automated pipeline.',
+      initialValue: false,
     }),
     defineField({
       name: 'seo', title: 'SEO', type: 'object', group: 'seo',

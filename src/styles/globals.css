@@ -137,3 +137,64 @@ h1, h2, h3, h4 {
 ::-webkit-scrollbar-thumb:hover {
   background: #FABF2C;
 }
+
+/* ── AI-generated article prose styles ──────────────────── */
+.prose-article {
+  color: #ccc;
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+.prose-article h2 {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin: 2.5rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #1a1a1a;
+}
+.prose-article h3 {
+  color: #FABF2C;
+  font-size: 1.125rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 1.75rem 0 0.75rem;
+}
+.prose-article p {
+  margin-bottom: 1.5rem;
+}
+.prose-article a {
+  color: #FABF2C;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-article a:hover {
+  color: #fff;
+}
+.prose-article ul, .prose-article ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.prose-article li {
+  margin-bottom: 0.5rem;
+}
+.prose-article strong {
+  color: #fff;
+  font-weight: 700;
+}
+.prose-article blockquote {
+  border-left: 3px solid #FABF2C;
+  padding-left: 1rem;
+  color: #888;
+  font-style: italic;
+  margin: 1.5rem 0;
+}
+.prose-article code {
+  background: #111;
+  color: #FABF2C;
+  padding: 0.1em 0.4em;
+  font-family: monospace;
+  font-size: 0.875em;
+}
