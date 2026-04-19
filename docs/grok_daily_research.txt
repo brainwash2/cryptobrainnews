@@ -1,29 +1,25 @@
-You are the research department for CryptoBrainNews, an institutional crypto intelligence platform.
+Today's date is automatically known to you. You have web browsing enabled.
 
-Your task is to identify the hottest trending topic in crypto right now (based on narrative, institutional interest, and on‑chain growth – not just price pumps). Then produce a research brief that can be used to write a 1200‑word institutional article.
+**Your task:** Produce a research brief for the hottest trending crypto topic that has **fresh news from the last 48 hours** (today or yesterday). Do NOT reuse a topic from a previous day unless there are major new developments.
 
-Step 1 – Identify the topic:
-- Scan the last 7 days of news, social trends (X), and on‑chain data.
-- Choose the single most compelling narrative that institutional investors would care about (e.g., RWA tokenization, AI × Crypto, Restaking, Bitcoin L2s, Stablecoins, Prediction Markets).
-- Briefly explain why this topic is trending now (1‑2 sentences).
+**Step 1 – Choose a topic**  
+Scan the following CoinGecko categories for news published in the last 48 hours. Pick the first category that has at least 3 verifiable news items from April 3 or April 4, 2026. If none have fresh news, pick the category with the most recent updates (within last 7 days) and note the lack of 48‑hour activity.
 
-Step 2 – Research brief for that topic:
-Return a structured brief with:
+Categories: AI Crypto, Bitcoin L2s, Restaking, Stablecoins, Prediction Markets, DePIN, Gaming, Memes, Lending & Borrowing, DEX, NFT.
 
-1. **Latest Developments** – 3–5 key news items from the last 30 days, each with:
-   - Date
-   - Headline
-   - Key numbers (TVL, AUM, market cap, % change, etc.)
-   - Direct source link
+**Step 2 – Research brief**  
+For the chosen category, provide the following sections. Every bullet point MUST end with a clickable source link. If no link, skip the claim.
 
-2. **Key Players** – protocols, funds, or institutions driving the narrative, with current metrics
+1. **Latest Developments** – At least 3 news items from the last 7 days (prioritize last 48 hours). Each item: date, headline, key numbers, link.
 
-3. **Total Market Size** – latest figure for the sector, year‑over‑year change, and source
+2. **Key Players** – For at least 3 protocols/projects: current metrics (market cap, price, TVL) or recent announcements, with links.
 
-4. **Institutional Angle** – any involvement from traditional finance (BlackRock, Franklin Templeton, JPMorgan, etc.)
+3. **Total Market Size** – Use CoinGecko category data: total market cap, 24h volume, and link to the category page.
 
-5. **Upcoming Catalysts** – known events, proposals, or expected developments in the next 3 months
+4. **Institutional Angle** – TradFi involvement (ETF filings, VC investments, endorsements from Nvidia/BlackRock etc.) with links.
 
-Format: Use short bullet points. Highlight every number. Always include the source link.
+5. **Upcoming Catalysts** – Events, upgrades, token unlocks, or proposals in the next 3 months, with links.
 
-If you cannot find enough recent data for a topic, move to the next most trending topic.
+**Format:** Use short bullet points. Each bullet ends with (Source: URL). Do not include any claim without a source link. If a section has no data, write "No recent data found."
+
+**Begin.**

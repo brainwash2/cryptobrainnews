@@ -1,5 +1,14 @@
 #!/usr/bin/env node
 import 'dotenv/config';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Force load .env.local (dotenv/config loads .env by default)
+import { config } from 'dotenv';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+config({ path: resolve(__dirname, '../.env.local') });
+
 /**
  * CryptoBrainNews — Daily Article Pipeline (Groq)
  * Uses your existing GROQ_API_KEY from .env.local
@@ -11,9 +20,8 @@ import { generateText } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname2 = path.dirname(fileURLToPath(import.meta.url));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ENV
@@ -32,11 +40,12 @@ const {
 
 const BASE_URL = NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
 const ROTATION_KEY = 'cbn:daily-article:last-index';
-const ROTATION_FILE = path.join(__dirname, 'last-category.json');
+const ROTATION_FILE = path.join(__dirname2, 'last-category.json');
 const MIN_MARKET_CAP = 50_000_000;
 
 if (!GROQ_API_KEY) {
   console.error('❌ GROQ_API_KEY not set in .env.local');
+  console.error('Current env keys:', Object.keys(process.env).filter(k => k.includes('GROQ')).join(', '));
   process.exit(1);
 }
 
