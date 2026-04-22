@@ -1154,3 +1154,8 @@
 	•	Reference: TASK-P3-001 — Part 3 Sanity N+1 + Edge Cache + OG Images
 	•	New Status: COMPLETED
 	•	Notes: Delivered Sanity client split (readClient/writeClient), N+1 elimination in GROQ queries (src/lib/news/sanity-queries.ts), edge page cache with SWR (src/lib/news/page-cache.ts), edge category API route (src/app/api/news/category/[slug]/route.ts), edge search API route with rate limiting (src/app/api/news/search/route.ts), and edge OG image pipeline (src/app/api/og/route.tsx). All paths corrected to src/ directory.
+
+[2026-04-22] STATUS UPDATE
+	•	Reference: TASK-P4-001 — Part 4 SEO/GEO/E-E-A-T
+	•	New Status: COMPLETED
+	•	Notes: Delivered dynamic sitemap (src/app/sitemap.ts), full JSON-LD schema suite (src/lib/news/seo/schema.ts), Next.js metadata helpers (src/lib/news/seo/metadata.ts), GEO post-processor (src/lib/news/seo/geo-enhancer.ts), E-E-A-T author bio component (src/components/news/AuthorBio.tsx), and GEO blocks component (src/components/news/GEOBlocks.tsx). All paths corrected to src/ directory.

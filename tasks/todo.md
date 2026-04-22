@@ -67,3 +67,21 @@
 - Search rate limit: 60 req/min per IP prevents scraping and Sanity quota exhaustion
 - Cache invalidation: category DELETE route + cache.invalidate() wired for Sanity webhook POST → DELETE flow
 - Stale fallback: every PageCache entry has a 10× TTL stale key so a Redis miss or Sanity timeout never returns a 502 to the user if any prior data exists
+
+## Part 4 – Sitemap, Schema Markup, E-E-A-T, GEO Optimisation
+### Run ID: part-4-seo-geo — $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+- [x] src/app/sitemap.ts               — Dynamic Next.js sitemap; priority heuristic by article age; changefreq hourly/<7d, daily/<30d, weekly/>30d; categories + tags + authors included; ISR 1-hr revalidate
+- [x] src/lib/news/seo/schema.ts       — NewsArticle, BreadcrumbList, FAQPage, Dataset, Person/ProfilePage, WebSite+SearchAction JSON-LD builders; citation backlink to source (E-E-A-T); no wildcard selects
+- [x] src/lib/news/seo/metadata.ts     — Next.js 16 Metadata API helpers for article, category, search, author, homepage; og:type=article with article:published_time; search pages set robots noindex; canonical on every page type
+- [x] src/lib/news/seo/geo-enhancer.ts — GEO post-processor: FAQ extraction, key-stats table, TL;DR prepend, chart embed metadata; runs after Gemini polish in daily-article.ts; fully graceful (Promise.allSettled, empty defaults on failure)
+- [x] src/components/news/AuthorBio.tsx — E-E-A-T author block; credentials pills; article count; inline Person+ProfilePage JSON-LD; compact/full variants for article vs author page
+- [x] src/components/news/GEOBlocks.tsx — TLDRBlock, KeyStatsTable, FAQAccordion (inline FAQPage JSON-LD), ChartEmbedWidget with SVG sparkline; all ARIA-labelled
+
+### Review
+- Sitemap priority: age-based heuristic ensures fresh articles get crawled first without manual curation
+- Schema coverage: NewsArticle + BreadcrumbList on every article; FAQPage injected when faqs > 0; Dataset on data-driven articles; Person+ProfilePage on all author pages
+- E-E-A-T: credentials are visible text AND structured data (hasCredential on Person schema); article count corroborates expertise; twitterUrl sameAs corroborates real identity
+- GEO: TL;DR prepended to body (AI crawlers lift first block); FAQ accordion visible + JSON-LD (Google FAQ rich results + AI citation); key stats in table (structured + parseable); Dataset schema for data articles
+- Search pages: robots noindex prevents duplicate content penalty from ?q= variants
+- Metadata helpers: og:type=article with article:published_time on every article (required for Google News eligibility)
