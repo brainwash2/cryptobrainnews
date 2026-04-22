@@ -17,10 +17,10 @@ export async function GET() {
     const url = `${BASE}/news/${article.id}`;
     const pubDate = new Date(article.published_on * 1000).toUTCString();
     const category = article.categories[0] || 'Crypto';
-    const description = article.body.slice(0, 300).replace(/[<>&'"]/g, c =>
+    const description = article.body.slice(0, 300).replace(/[<>&'"]/g, (c: string) =>
       ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c] || c)
     );
-    const title = article.title.replace(/[<>&'"]/g, c =>
+    const title = article.title.replace(/[<>&'"]/g, (c: string) =>
       ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c] || c)
     );
 
