@@ -1134,3 +1134,23 @@
 	•	Reference: Phase X (Task description)
 	•	New Status: COMPLETED
 	•	Notes: Brief notes on what was built.
+
+[2026-04-22] STATUS UPDATE
+	•	Reference: TASK-P1-001 — Part 1 Pipeline Reliability
+	•	New Status: COMPLETED
+	•	Notes: Delivered strict TypeScript types (lib/news/types.ts), Redis deduplication hardening (lib/news/dedup.ts), structured pipeline logger (lib/news/pipeline-logger.ts), and refactored daily-article.ts with graceful failure modes, dead-letter handling, and idempotency checks.
+
+[2026-04-22] STATUS UPDATE
+	•	Reference: TASK-P2-001 — Part 2 RSS Cache + Broadcast Reliability
+	•	New Status: COMPLETED
+	•	Notes: Delivered RSS cache with stampede guard (lib/news/rss-cache.ts), broadcast dead-letter queue (lib/news/broadcast-queue.ts), hardened Telegram broadcaster with rate-limit handling (lib/news/telegram.ts), and Resend newsletter service with idempotency (lib/news/newsletter.ts). Updated daily-article.ts to use new modules and added retry drains.
+
+[2026-04-22] STATUS UPDATE
+	•	Reference: TASK-P3-001 — Part 3 Sanity N+1 + Edge Cache + OG Images
+	•	New Status: COMPLETED
+	•	Notes: Delivered Sanity client split (readClient/writeClient), N+1 elimination in GROQ queries (src/lib/news/sanity-queries.ts), edge page cache with SWR (src/lib/news/page-cache.ts), edge category API route (src/app/api/news/category/[slug]/route.ts), edge search API route with rate limiting (src/app/api/news/search/route.ts), and edge OG image pipeline (src/app/api/og/route.tsx). All paths corrected to src/ directory.
+
+[2026-04-22] STATUS UPDATE
+	•	Reference: TASK-P3-001 — Part 3 Sanity N+1 + Edge Cache + OG Images
+	•	New Status: COMPLETED
+	•	Notes: Delivered Sanity client split (readClient/writeClient), N+1 elimination in GROQ queries (src/lib/news/sanity-queries.ts), edge page cache with SWR (src/lib/news/page-cache.ts), edge category API route (src/app/api/news/category/[slug]/route.ts), edge search API route with rate limiting (src/app/api/news/search/route.ts), and edge OG image pipeline (src/app/api/og/route.tsx). All paths corrected to src/ directory.
