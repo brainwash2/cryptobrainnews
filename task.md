@@ -1159,3 +1159,18 @@
 	•	Reference: TASK-P4-001 — Part 4 SEO/GEO/E-E-A-T
 	•	New Status: COMPLETED
 	•	Notes: Delivered dynamic sitemap (src/app/sitemap.ts), full JSON-LD schema suite (src/lib/news/seo/schema.ts), Next.js metadata helpers (src/lib/news/seo/metadata.ts), GEO post-processor (src/lib/news/seo/geo-enhancer.ts), E-E-A-T author bio component (src/components/news/AuthorBio.tsx), and GEO blocks component (src/components/news/GEOBlocks.tsx). All paths corrected to src/ directory.
+
+## TASK-P5-001 | Part 5 Social Automation + Monetisation | $(date -u +"%Y-%m-%dT%H:%M:%SZ") | STATUS: DELIVERED
+Files delivered:
+  src/lib/social/twitter-thread.ts
+  src/lib/social/scheduler.ts
+  src/lib/monetisation/stripe.ts
+  src/lib/monetisation/affiliate.ts
+  src/lib/monetisation/portal.ts
+  src/app/api/social/twitter/route.ts
+  src/app/api/webhooks/stripe/route.ts
+  src/app/api/monetisation/checkout/route.ts
+  src/app/api/monetisation/portal/route.ts
+  src/app/api/cron/social/route.ts
+Scope: X/Twitter thread automation, social scheduler, Stripe Pro subscription, affiliate link injection
+Next: Part 6 — Pro gating middleware, affiliate analytics dashboard, sponsored content slots, newsletter subscriber segmentation (free vs Pro)

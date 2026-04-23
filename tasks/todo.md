@@ -85,3 +85,24 @@
 - GEO: TL;DR prepended to body (AI crawlers lift first block); FAQ accordion visible + JSON-LD (Google FAQ rich results + AI citation); key stats in table (structured + parseable); Dataset schema for data articles
 - Search pages: robots noindex prevents duplicate content penalty from ?q= variants
 - Metadata helpers: og:type=article with article:published_time on every article (required for Google News eligibility)
+
+## Part 5 – Twitter Thread Automation, Scheduler, Stripe Pro, Affiliate Links
+### Run ID: part-5-social-monetisation — $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+- [x] src/lib/social/twitter-thread.ts     — Thread builder (pure fn, previewable) + publisher; OAuth 1.0a via SubtleCrypto (Edge-compatible); HMAC-SHA256 signature; Redis idempotency key per slug; rate-limit 429 handling with x-rate-limit-reset; 1100ms inter-tweet delay
+- [x] src/lib/social/scheduler.ts          — Redis ZSET sorted by Unix ms; nextOptimalPostTime() targets 13:00 + 20:00 UTC (peak crypto engagement); processDueJobs() with distributed SET NX lock; exponential backoff retries (2m, 4m, 8m); permanent dead-letter after 3 retries; pendingCounts() for dashboard
+- [x] src/lib/monetisation/stripe.ts       — Checkout (monthly + yearly, 7-day trial), Customer Portal, webhook handler; SubscriptionStore in Redis (24hr TTL); tierFromPriceId(); mapStripeStatus(); findByCustomerId() for webhook reverse-lookup; isProOrAbove() guard for gated content
+- [x] src/lib/monetisation/affiliate.ts    — Category-aware + ticker-aware partner selection; max 2 footer cards, max 1 inline CTA; FTC disclosure injected when links present; rel="nofollow noopener sponsored"; data-affiliate + data-partner attrs for analytics; Ledger/Bybit/Binance partners
+- [x] src/app/api/social/twitter/route.ts  — POST schedule (optimal window) or ?now=true (immediate); GET preview (no post); CRON_SECRET auth
+- [x] src/app/api/webhooks/stripe/route.ts — Raw body buffering via arrayBuffer() (required for Stripe sig verification); 400 on bad sig (stops Stripe retry), 500 on processing error (triggers Stripe retry)
+- [x] src/app/api/monetisation/checkout/route.ts — Plan validation; createCheckoutSession(); returns {url}
+- [x] src/app/api/monetisation/portal/route.ts   — createPortalSession(); 404 if no customer found
+- [x] src/app/api/cron/social/route.ts     — Vercel Cron every minute; Bearer auth; Twitter handler wired to scheduler
+
+### Review
+- Thread idempotency: Redis hset per slug prevents double-posting on pipeline re-runs
+- Scheduler lock: SET NX PROCESS_LOCK_TTL_MS=55s prevents double-processing across Vercel regions
+- Stripe webhook: raw body buffered BEFORE any parsing — signature verification is correct
+- Affiliate max 2 footer + 1 inline: above this Google treats affiliate-heavy pages as thin content
+- Optimal post windows: 13:00 + 20:00 UTC match peak X/Twitter engagement for crypto content per social research in master prompt
+- nextOptimalPostTime() always returns a future slot (min 5min buffer) — no immediate accidental publishes
