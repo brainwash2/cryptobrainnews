@@ -126,3 +126,21 @@
 - IP hashing: first 8 bytes of SHA-256(ip + salt) — sufficient for dedup, insufficient for re-identification (GDPR)
 - Sponsored impression cap: checked pre-render; recorded post-render — commercially preferable over-delivery
 - Newsletter churned_pro segment: auto-populated on Stripe cancellation — ready for win-back campaigns
+
+## Part 7 – Vercel Cron, Health Check, Env Audit, Smoke Test
+### Run ID: part-7-ops-hardening — $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+- [x] vercel.json                          — 5 cron jobs + global security headers + Cache-Control
+- [x] src/app/api/cron/daily-article/route.ts  — Cron entrypoint for runPipeline()
+- [x] src/app/api/cron/broadcast-drain/route.ts — Drains Telegram + Newsletter retry queues
+- [x] src/app/api/cron/sitemap-warm/route.ts   — Warms sitemap Redis cache hourly
+- [x] src/lib/ops/env-audit.ts                 — 35-var manifest, auditEnv(), printEnvExample()
+- [x] src/lib/ops/alerts.ts                    — Telegram ops alerter with Redis dedup
+- [x] src/app/api/health/route.ts              — 8 system checks, public + detail modes
+- [x] src/app/api/cron/health/route.ts         — Every-5-min health cron with recovery notices
+- [x] scripts/smoke-test.ts               — 15 integration tests, --skip-paid flag
+
+### Review
+- All Part 7 files created under src/ with correct paths
+- npx tsc --noEmit passes cleanly
+- News pipeline audit and refactor (Parts 1-7) COMPLETE

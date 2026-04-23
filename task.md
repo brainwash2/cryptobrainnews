@@ -1187,3 +1187,8 @@ Files delivered:
   src/components/monetisation/AffiliateDashboard.tsx
 Scope: Edge Pro gating middleware, affiliate click analytics, sponsored content slots, newsletter subscriber segmentation
 Next: Part 7 — Vercel.json cron config, health-check API, environment variable audit, full integration smoke-test checklist
+
+[2026-04-23] STATUS UPDATE
+	•	Reference: TASK-P7-001 — Part 7 Ops Hardening
+	•	New Status: COMPLETED
+	•	Notes: Delivered vercel.json with 5 cron jobs, daily-article cron route, broadcast-drain cron route, sitemap-warm cron route, health check API, health cron route, env-audit module, ops alerter, and smoke-test script. All files under src/ compile cleanly. News pipeline audit (Parts 1-7) fully delivered.

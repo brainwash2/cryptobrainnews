@@ -1,75 +1,293 @@
-import { NextResponse } from 'next/server';
- 
-export const runtime = 'edge';
-export const revalidate = 0;
- 
-async function checkFeed(url: string, label: string) {
-  try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(5000),
-      headers: { 'User-Agent': 'CryptoBrainNews/HealthCheck' },
-    });
-    return { label, status: res.ok ? 'ok' : 'error', code: res.status };
-  } catch (e: any) {
-    return { label, status: 'error', error: e.message };
-  }
+/**
+ * app/api/health/route.ts
+ * Comprehensive health check endpoint.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { Redis }                           from '@upstash/redis';
+import { sanityHealthCheck }               from '../../../lib/news/sanity-client';
+import { SocialScheduler }                 from '../../../lib/social/scheduler';
+import { BroadcastQueue }                  from '../../../lib/news/broadcast-queue';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+
+type SystemStatus = 'healthy' | 'degraded' | 'down' | 'unconfigured';
+
+interface SystemCheck {
+  status:    SystemStatus;
+  latencyMs: number;
+  message?:  string;
+  checkedAt: string;
 }
- 
-async function checkSanity() {
-  const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-  const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production';
-  if (!projectId || projectId === 'REPLACE_ME') return { status: 'not_configured' };
-  try {
-    const res = await fetch(
-      `https://${projectId}.api.sanity.io/v2024-03-04/data/query/${dataset}?query=count(*[_type%3D%3D"post"])`,
-      { signal: AbortSignal.timeout(5000) }
-    );
-    const data = await res.json();
-    return { status: 'ok', postCount: data.result };
-  } catch (e: any) {
-    return { status: 'error', error: e.message };
-  }
+
+interface HealthReport {
+  status:    'healthy' | 'degraded' | 'down';
+  systems:   Record<string, SystemCheck>;
+  version:   string;
+  checkedAt: string;
 }
- 
-export async function GET() {
+
+async function checkRedis(): Promise<SystemCheck> {
   const start = Date.now();
- 
-  const [
-    cointelegraph,
-    coindesk,
-    theblock,
-    thedefiant,
-    sanity,
-  ] = await Promise.all([
-    checkFeed('https://cointelegraph.com/rss', 'Cointelegraph'),
-    checkFeed('https://www.coindesk.com/arc/outboundfeeds/rss/', 'CoinDesk'),
-    checkFeed('https://www.theblock.co/rss.xml', 'The Block'),
-    checkFeed('https://thedefiant.io/feed/', 'The Defiant'),
-    checkSanity(),
-  ]);
- 
-  const feeds = [cointelegraph, coindesk, theblock, thedefiant];
-  const feedsOk = feeds.filter(f => f.status === 'ok').length;
- 
-  const health = {
-    status: feedsOk >= 2 && sanity.status !== 'error' ? 'ok' : 'degraded',
-    ts: new Date().toISOString(),
-    durationMs: Date.now() - start,
-    version: process.env.npm_package_version || '1.0.0',
-    env: {
-      sanityConfigured: !!(process.env.NEXT_PUBLIC_SANITY_PROJECT_ID && process.env.NEXT_PUBLIC_SANITY_PROJECT_ID !== 'REPLACE_ME'),
-      redisConfigured: !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN),
-      groqConfigured: !!process.env.GROQ_API_KEY,
-      adminSecretSet: !!process.env.ADMIN_SECRET,
-      resendConfigured: !!(process.env.RESEND_API_KEY && process.env.RESEND_AUDIENCE_ID),
-      neonConfigured: !!process.env.DATABASE_URL,
-      siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'NOT SET',
-    },
-    feeds,
-    sanity,
+  try {
+    const redis  = Redis.fromEnv();
+    const result = await redis.ping();
+    return {
+      status:    result === 'PONG' ? 'healthy' : 'degraded',
+      latencyMs: Date.now() - start,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkSanity(): Promise<SystemCheck> {
+  const start = Date.now();
+  try {
+    const ok = await sanityHealthCheck();
+    return {
+      status:    ok ? 'healthy' : 'degraded',
+      latencyMs: Date.now() - start,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkTelegram(): Promise<SystemCheck> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return { status: 'unconfigured', latencyMs: 0, checkedAt: new Date().toISOString() };
+
+  const start = Date.now();
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/getMe`, {
+      signal: AbortSignal.timeout(8_000),
+    });
+    return {
+      status:    res.ok ? 'healthy' : 'degraded',
+      latencyMs: Date.now() - start,
+      message:   res.ok ? undefined : `HTTP ${res.status}`,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkTwitter(): Promise<SystemCheck> {
+  const bearer = process.env.TWITTER_BEARER_TOKEN;
+  if (!bearer) return { status: 'unconfigured', latencyMs: 0, checkedAt: new Date().toISOString() };
+
+  const start = Date.now();
+  try {
+    const res = await fetch('https://api.twitter.com/2/users/me', {
+      signal:  AbortSignal.timeout(8_000),
+      headers: { Authorization: `Bearer ${bearer}` },
+    });
+    return {
+      status:    res.ok ? 'healthy' : (res.status === 429 ? 'degraded' : 'down'),
+      latencyMs: Date.now() - start,
+      message:   res.ok ? undefined : `HTTP ${res.status}`,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkStripe(): Promise<SystemCheck> {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return { status: 'unconfigured', latencyMs: 0, checkedAt: new Date().toISOString() };
+
+  const start = Date.now();
+  try {
+    const res = await fetch('https://api.stripe.com/v1/account', {
+      signal:  AbortSignal.timeout(8_000),
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    return {
+      status:    res.ok ? 'healthy' : 'degraded',
+      latencyMs: Date.now() - start,
+      message:   res.ok ? undefined : `HTTP ${res.status}`,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkRSSFeeds(): Promise<SystemCheck> {
+  const urls = (process.env.RSS_FEED_URLS ?? '').split(',').filter(Boolean);
+  if (urls.length === 0) {
+    return { status: 'unconfigured', latencyMs: 0, checkedAt: new Date().toISOString() };
+  }
+
+  const start   = Date.now();
+  const results = await Promise.allSettled(
+    urls.slice(0, 5).map((url) =>
+      fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(6_000) }),
+    ),
+  );
+
+  const failed  = results.filter((r) => r.status === 'rejected').length;
+  const total   = results.length;
+
+  return {
+    status:    failed === 0 ? 'healthy' : failed < total ? 'degraded' : 'down',
+    latencyMs: Date.now() - start,
+    message:   failed > 0 ? `${failed}/${total} feeds unreachable` : undefined,
+    checkedAt: new Date().toISOString(),
   };
- 
-  return NextResponse.json(health, {
-    status: health.status === 'ok' ? 200 : 207,
+}
+
+async function checkPipelineLastRun(): Promise<SystemCheck> {
+  const start = Date.now();
+  try {
+    const redis      = Redis.fromEnv();
+    const lastRunRaw = await redis.get<string>('pipeline:last-success');
+
+    if (!lastRunRaw) {
+      return {
+        status: 'degraded', latencyMs: Date.now() - start,
+        message: 'No successful pipeline run recorded',
+        checkedAt: new Date().toISOString(),
+      };
+    }
+
+    const ageHours = (Date.now() - new Date(lastRunRaw).getTime()) / 3_600_000;
+    return {
+      status:    ageHours < 26 ? 'healthy' : 'degraded',
+      latencyMs: Date.now() - start,
+      message:   `Last success: ${lastRunRaw} (${ageHours.toFixed(1)}h ago)`,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkQueueDepths(): Promise<SystemCheck> {
+  const start = Date.now();
+  try {
+    const scheduler = new SocialScheduler();
+    const bqTg      = new BroadcastQueue();
+    const bqNl      = new BroadcastQueue();
+
+    const [pending, tgRetry, nlRetry] = await Promise.all([
+      scheduler.pendingCounts(),
+      bqTg.pendingCount('telegram'),
+      bqNl.pendingCount('newsletter'),
+    ]);
+
+    const totalPending = Object.values(pending).reduce(
+      (s: number, v: number) => s + v, 0
+    );
+    const totalRetry   = tgRetry + nlRetry;
+    const degraded     = totalRetry > 50 || totalPending > 200;
+
+    return {
+      status:    degraded ? 'degraded' : 'healthy',
+      latencyMs: Date.now() - start,
+      message:   `Social pending: ${totalPending} | Broadcast retry: ${totalRetry}`,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'degraded', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+const CRITICAL_SYSTEMS = new Set(['redis', 'sanity']);
+
+function aggregateStatus(systems: Record<string, SystemCheck>): HealthReport['status'] {
+  const criticalDown = [...CRITICAL_SYSTEMS].some(
+    (k) => systems[k]?.status === 'down',
+  );
+  if (criticalDown) return 'down';
+
+  const anyDown = Object.values(systems).some((s) => s.status === 'down');
+  if (anyDown) return 'degraded';
+
+  const anyDegraded = Object.values(systems).some((s) => s.status === 'degraded');
+  return anyDegraded ? 'degraded' : 'healthy';
+}
+
+export const runtime = 'nodejs';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const detail = req.nextUrl.searchParams.get('detail') === 'true';
+  const isAdmin = req.headers.get('x-cron-secret') === CRON_SECRET && CRON_SECRET !== '';
+
+  const [redis, sanity, telegram, twitter, stripe, rss, pipeline, queues] =
+    await Promise.all([
+      checkRedis(),
+      checkSanity(),
+      checkTelegram(),
+      checkTwitter(),
+      checkStripe(),
+      checkRSSFeeds(),
+      checkPipelineLastRun(),
+      checkQueueDepths(),
+    ]);
+
+  const systems: Record<string, SystemCheck> = {
+    redis,
+    sanity,
+    telegram,
+    twitter,
+    stripe,
+    rss_feeds: rss,
+    pipeline_last_run: pipeline,
+    queue_depths: queues,
+  };
+
+  const overallStatus = aggregateStatus(systems);
+
+  const report: HealthReport = {
+    status:    overallStatus,
+    systems:   detail && isAdmin ? systems : Object.fromEntries(
+      Object.entries(systems).map(([k, v]) => [k, { status: v.status, latencyMs: v.latencyMs, checkedAt: v.checkedAt }]),
+    ),
+    version:   process.env.NEXT_PUBLIC_APP_VERSION ?? 'unknown',
+    checkedAt: new Date().toISOString(),
+  };
+
+  const httpStatus = overallStatus === 'down' ? 503 : 200;
+
+  return NextResponse.json(report, {
+    status: httpStatus,
+    headers: {
+      'Cache-Control': 'no-store',
+      'X-Health-Status': overallStatus,
+    },
   });
 }
