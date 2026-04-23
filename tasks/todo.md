@@ -106,3 +106,23 @@
 - Affiliate max 2 footer + 1 inline: above this Google treats affiliate-heavy pages as thin content
 - Optimal post windows: 13:00 + 20:00 UTC match peak X/Twitter engagement for crypto content per social research in master prompt
 - nextOptimalPostTime() always returns a future slot (min 5min buffer) — no immediate accidental publishes
+
+## Part 6 – Pro Gating, Affiliate Analytics, Sponsored Slots, Newsletter Segmentation
+### Run ID: part-6-gating-analytics-segments — $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+- [x] middleware.ts                                          — Edge middleware; JWT verify via SubtleCrypto; Redis sub cache check; fail-open on cache miss
+- [x] src/lib/monetisation/analytics.ts                      — Redis-backed click + revenue tracking; daily keys (90d TTL); IP hashed via SHA-256 + salt (GDPR compliant)
+- [x] src/app/api/monetisation/analytics/track/route.ts      — Edge redirect endpoint; fire-and-forget trackClick(); 302 to partner URL
+- [x] src/app/api/monetisation/analytics/route.ts            — CRON_SECRET-gated analytics API; returns partner summaries + sitemap slugs
+- [x] src/lib/monetisation/sponsored.ts                      — Redis HASH for active sponsors; slot/category/date-range/impression-cap selection
+- [x] src/components/monetisation/SponsoredSlot.tsx          — Async server component; sidebar/banner/footer variants; FTC-compliant "Sponsored" label
+- [x] src/lib/monetisation/newsletter-segments.ts            — 5 segments: free/pro/all/engaged/churned_pro; Stripe webhook integration
+- [x] src/components/monetisation/AffiliateDashboard.tsx     — Client component; SVG sparkline; 30d/7d/all-time stats
+
+### Review
+- Middleware fail-open on Redis miss: legitimate Pro users never blocked by transient Redis errors
+- JWT verify: SubtleCrypto HMAC-SHA256 — Edge-runtime compatible, no Node.js dependency
+- Click tracking: fire-and-forget (void) so redirect latency is unaffected
+- IP hashing: first 8 bytes of SHA-256(ip + salt) — sufficient for dedup, insufficient for re-identification (GDPR)
+- Sponsored impression cap: checked pre-render; recorded post-render — commercially preferable over-delivery
+- Newsletter churned_pro segment: auto-populated on Stripe cancellation — ready for win-back campaigns

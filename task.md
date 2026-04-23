@@ -1174,3 +1174,16 @@ Files delivered:
   src/app/api/cron/social/route.ts
 Scope: X/Twitter thread automation, social scheduler, Stripe Pro subscription, affiliate link injection
 Next: Part 6 — Pro gating middleware, affiliate analytics dashboard, sponsored content slots, newsletter subscriber segmentation (free vs Pro)
+
+## TASK-P6-001 | Part 6 Pro Gating + Analytics + Sponsored + Segments | $(date -u +"%Y-%m-%dT%H:%M:%SZ") | STATUS: DELIVERED
+Files delivered:
+  middleware.ts
+  src/lib/monetisation/analytics.ts
+  src/lib/monetisation/sponsored.ts
+  src/lib/monetisation/newsletter-segments.ts
+  src/app/api/monetisation/analytics/track/route.ts
+  src/app/api/monetisation/analytics/route.ts
+  src/components/monetisation/SponsoredSlot.tsx
+  src/components/monetisation/AffiliateDashboard.tsx
+Scope: Edge Pro gating middleware, affiliate click analytics, sponsored content slots, newsletter subscriber segmentation
+Next: Part 7 — Vercel.json cron config, health-check API, environment variable audit, full integration smoke-test checklist
