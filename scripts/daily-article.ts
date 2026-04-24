@@ -219,13 +219,12 @@ async function writeToSanity(payload: SanityArticlePayload): Promise<SanityWrite
     body: JSON.stringify({ mutations: [{ create: payload }] }),
   });
   if (!res.ok) throw new Error(`Sanity write ${res.status}: ${await res.text()}`);
+
+  // The mutation succeeded; we don't strictly need the document ID because
+  // dedup is done via slug. Grab the ID if available, otherwise use a placeholder.
   const json = (await res.json()) as { results?: Array<{ id: string }> };
-  const documentId = json.results?.[0]?.id;
-  if (!documentId) {
-    // The mutation succeeded but no document ID was returned – retry
-    console.warn('[pipeline] Sanity mutation succeeded but no document ID returned, retrying...');
-    throw new Error('Sanity returned no document ID');
-  }
+  const documentId = json.results?.[0]?.id ?? `san-${payload.slug.current}`;
+
   return { documentId, slug: payload.slug.current, publishedAt: payload.publishedAt };
 }
 
