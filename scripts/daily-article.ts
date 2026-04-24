@@ -91,7 +91,7 @@ async function runGrok(item: RSSItem): Promise<GrokSummary> {
       Authorization: `Bearer ${GROK_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'grok-2-latest',
+      model: 'grok-2',
       messages: [
         {
           role: 'system',
