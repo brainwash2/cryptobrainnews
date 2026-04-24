@@ -62,7 +62,7 @@ export default function CointelegraphCard({ article }: { article: WeightedArticl
       {/* Tags if present */}
       {article.tags && article.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
-          {article.tags.slice(0, 3).map(tag => (
+          {article.tags.slice(0, 3).map((tag: string) => (
             <span key={tag}
               className="text-[8px] font-mono text-[#555] bg-[#111] border border-[#1a1a1a] px-1.5 py-0.5 uppercase tracking-widest">
               #{tag}

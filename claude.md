@@ -87,4 +87,34 @@
 
 ---
 
- 
+## Phase 1 MVP — Data Terminal Chart Upgrade (2026-04-19)
+
+### Plan (7 steps)
+1. ✅ `npm install lightweight-charts` (v5.1.0)
+2. ✅ Create `TvLightweightChart.tsx` — reusable TradingView wrapper
+3. ⬜ Upgrade `/data/markets/spot` — BTC/ETH price area charts
+4. ⬜ Upgrade `/data/onchain/bitcoin` — hash rate, fees, mempool Recharts
+5. ⬜ Upgrade `/data/onchain/ethereum` — replace CSS bars with Recharts AreaChart
+6. ⬜ Upgrade `/data/onchain/solana` — TPS history chart (60 samples)
+7. ⬜ Upgrade `/data/defi/tvl` — integrate shared TimeframeSelector
+
+### Ledger
+
+#### Step 1 — Install lightweight-charts ✅
+- **Action:** `npm install lightweight-charts --legacy-peer-deps`
+- **Result:** `"lightweight-charts": "^5.1.0"` added to package.json
+- **Note:** `--legacy-peer-deps` needed due to pre-existing `sanity-plugin-markdown` v4/v5 peer conflict
+
+#### Step 2 — TvLightweightChart.tsx ✅
+- **File:** `src/app/data/_components/charts/TvLightweightChart.tsx`
+- **API:** Uses v5 `chart.addSeries(AreaSeries, opts)` pattern (not v4 `addAreaSeries`)
+- **Features:**
+  - `"use client"` wrapper around `createChart()`
+  - `area` and `line` series support via `kind` prop
+  - Dark theme tokens: `#0a0a0a` bg, `#111` grid, `#FABF2C` crosshair
+  - `ResizeObserver` auto-resize, `chart.remove()` cleanup
+  - Compact USD price formatter (`$1.2T`, `$450B`, `$12.5M`)
+  - Empty-state fallback when data is missing
+  - Props: `data`, `kind`, `lineColor`, `topColor`, `bottomColor`, `height`, `title`, `autoFit`, `priceFormatter`
+- **TypeScript:** Clean compile (`npx tsc --noEmit` — 0 errors for this file)
+- **Fixes applied:** Removed default React import (JSX transform), removed duplicate type export

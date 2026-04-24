@@ -145,7 +145,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ id
               <div className="prose-article" dangerouslySetInnerHTML={{ __html: article.rawHtml }} />
             ) : (
               <div className="prose prose-invert max-w-none font-sans">
-                {article.body.split('\n').map((para, idx) => (
+                {article.body.split('\n').map((para: string, idx: number) => (
                   <p key={idx} className="mb-6 text-lg text-[#ccc] leading-relaxed">
                     {para}
                   </p>
@@ -164,7 +164,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ id
             <section className="mt-20 border-t border-[#1a1a1a] pt-16">
               <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-10">Related Intelligence</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                {related.map((rel) => (
+                {related.map((rel: any) => (
                   <Link key={rel.id} href={rel.url.startsWith('http') ? rel.url : `/news/${rel.id}`} className="group">
                     <div className="relative aspect-video mb-4 overflow-hidden border border-[#1a1a1a] bg-[#0a0a0a]">
                       <AppImage src={rel.image} alt={rel.title} fill className="object-cover group-hover:scale-105 transition-all" />

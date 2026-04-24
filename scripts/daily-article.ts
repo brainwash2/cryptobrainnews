@@ -27,10 +27,10 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 // Internal imports – adjust paths if your monorepo differs
-import { RSSCache as _RSSCache } from '../lib/news/rss-cache';
-import { TelegramBroadcaster as _TelegramBroadcaster } from '../lib/news/telegram';
-import { ArticleDedup } from '../lib/news/dedup';
-import { PipelineLogger } from '../lib/news/pipeline-logger';
+import { ArticleDedup } from '../src/lib/news/dedup';
+import { PipelineLogger } from '../src/lib/news/pipeline-logger';
+import { RSSCache } from '../src/lib/news/rss-cache';
+import { TelegramBroadcaster } from '../src/lib/news/telegram';
 import type {
   RSSItem,
   GrokSummary,
@@ -40,13 +40,12 @@ import type {
   SanityArticlePayload,
   SanityWriteResult,
   PipelineRun,
-  TelegramPayload,
-} from '../lib/news/types';
+} from '../src/lib/news/types';
 import {
   isGrokSummary,
   isDeepSeekEnrichment,
   isGeminiPolish,
-} from '../lib/news/types';
+} from '../src/lib/news/types';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -61,7 +60,7 @@ const SANITY_PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '';
 const SANITY_DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET ?? 'production';
 const SANITY_API_TOKEN = process.env.SANITY_API_TOKEN ?? '';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? '';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? '';
+const _TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? '';
 
 // ─── Retry helper ─────────────────────────────────────────────────────────────
 
@@ -101,44 +100,9 @@ function writeDeadLetter(runId: string, item: RSSItem, reason: string, partial: 
   return path;
 }
 
-// ─── RSS fetch ────────────────────────────────────────────────────────────────
+// ─── Minimal XML→RSSItem parser ───────────────────────────────────────────────
 
-async function fetchRSSItems(feedUrls: string[], logger: PipelineLogger): Promise<RSSItem[]> {
-  logger.setStage('rss-fetch');
-  if (feedUrls.length === 0) {
-    throw new Error('RSS_FEED_URLS is not configured – aborting run.');
-  }
-
-  const allItems: RSSItem[] = [];
-
-  await Promise.allSettled(
-    feedUrls.map(async (url) => {
-      const res = await fetch(url, {
-        signal: AbortSignal.timeout(15_000),
-        headers: { 'User-Agent': 'CryptoBrainNews/1.0' },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
-      const xml = await res.text();
-      // Minimal RSS parser – replace with your existing parser (rss-parser, etc.)
-      const items = parseRSSXML(xml, url);
-      allItems.push(...items);
-      logger.info(`Fetched ${items.length} items from ${url}`);
-    }),
-  ).then((results) => {
-    results.forEach((r, i) => {
-      if (r.status === 'rejected') {
-        logger.warn(`Feed ${feedUrls[i]} failed`, { reason: String(r.reason) });
-      }
-    });
-  });
-
-  if (allItems.length === 0) {
-    throw new Error('All RSS feeds returned zero items – aborting run.');
-  }
-  return allItems;
-}
-
-/** Minimal XML→RSSItem parser. Replace with your existing rss-parser integration. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function parseRSSXML(xml: string, _sourceUrl: string): RSSItem[] {
   const items: RSSItem[] = [];
   const itemMatches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g);
@@ -307,35 +271,6 @@ async function writeToSanity(payload: SanityArticlePayload): Promise<SanityWrite
   return { documentId, slug: payload.slug.current, publishedAt: payload.publishedAt };
 }
 
-// ─── Telegram broadcast ───────────────────────────────────────────────────────
-
-async function broadcastTelegram(payload: TelegramPayload, logger: PipelineLogger): Promise<void> {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-    logger.warn('Telegram credentials not configured – skipping broadcast');
-    return;
-  }
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      signal: AbortSignal.timeout(10_000),
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: payload.chatId,
-        text: payload.text,
-        parse_mode: payload.parseMode,
-        disable_web_page_preview: payload.disableWebPagePreview ?? false,
-      }),
-    });
-    if (!res.ok) {
-      // Telegram errors are non-fatal – warn and continue
-      const body = await res.text();
-      logger.warn(`Telegram API ${res.status}`, { body });
-    }
-  } catch (err) {
-    logger.warn('Telegram broadcast threw', { cause: String(err) });
-  }
-}
-
 // ─── Per-article processor ────────────────────────────────────────────────────
 
 async function processArticle(
@@ -409,7 +344,6 @@ async function processArticle(
     const exists = await slugExistsInSanity(finalPolish.slug);
     if (exists) {
       logger.info('Slug already exists in Sanity – skipping write', { slug: finalPolish.slug });
-      // Still mark as seen so dedup catches it next run
       await dedup.markSeen(item.link, item.title, runId);
       return { published: false };
     }
@@ -448,14 +382,16 @@ async function processArticle(
   // 7. Mark seen ONLY after successful Sanity write
   await dedup.markSeen(item.link, item.title, runId, sanityResult.documentId);
 
-  // 8. Telegram broadcast – non-fatal
-  await broadcastTelegram(
-    {
-      chatId: TELEGRAM_CHAT_ID,
-      text: `📰 *${finalPolish.title}*\n\n${grok.summary}\n\n[Read more](https://cryptobrainnews.com/news/${finalPolish.slug})`,
-      parseMode: 'Markdown',
-    },
-    logger,
+  // 8. Telegram broadcast – non-fatal (via hardened TelegramBroadcaster)
+  const telegram = new TelegramBroadcaster(TELEGRAM_BOT_TOKEN);
+  await telegram.send(
+    TelegramBroadcaster.formatArticleMessage(
+      finalPolish.title,
+      grok.summary,
+      finalPolish.slug,
+      deepSeek?.tags ?? [],
+    ),
+    runId,
   );
 
   return { published: true };
@@ -468,6 +404,7 @@ export async function runPipeline(): Promise<PipelineRun> {
   const startedAt = new Date().toISOString();
   const logger = new PipelineLogger(runId);
   const dedup = new ArticleDedup();
+  const rssCache = new RSSCache();
 
   logger.info('Pipeline run starting', { runId, maxArticles: MAX_ARTICLES_PER_RUN });
 
@@ -481,10 +418,16 @@ export async function runPipeline(): Promise<PipelineRun> {
     deadLetterPaths: [],
   };
 
-  // RSS fetch – truly fatal (nothing to do without items)
+  // RSS fetch via RSSCache (with stampede guard and 1-hr TTL)
   let items: RSSItem[];
   try {
-    items = await fetchRSSItems(RSS_FEEDS, logger);
+    const feedConfig = RSS_FEEDS.map((url, i) => ({ url, name: `Feed-${i + 1}` }));
+    const result = await rssCache.getAllItems(feedConfig);
+    items = result.items;
+    if (items.length === 0) {
+      throw new Error('All RSS feeds returned zero items – aborting run.');
+    }
+    logger.info(`Fetched ${items.length} total items from ${feedConfig.length} feeds`);
   } catch (err) {
     run.stage = 'failed';
     run.errors.push(logger.error('RSS fetch fatal', 'fatal', err, 0));
@@ -501,7 +444,6 @@ export async function runPipeline(): Promise<PipelineRun> {
   logger.info(`Dedup: ${items.length} total → ${fresh.length} fresh`);
 
   // Process up to MAX_ARTICLES_PER_RUN fresh items sequentially
-  // (sequential to stay within AI API rate limits)
   const toProcess = fresh.slice(0, MAX_ARTICLES_PER_RUN);
   for (const item of toProcess) {
     run.articlesAttempted += 1;
@@ -510,9 +452,20 @@ export async function runPipeline(): Promise<PipelineRun> {
       if (published) run.articlesPublished += 1;
       if (deadLetterPath) run.deadLetterPaths.push(deadLetterPath);
     } catch (err) {
-      // Catch-all safety net – should never reach here given per-stage handling above
       logger.error(`Unhandled error processing ${item.link}`, 'fatal', err);
     }
+  }
+
+  // Drain any queued retries from this run (Telegram + Newsletter)
+  const tg = new TelegramBroadcaster(TELEGRAM_BOT_TOKEN);
+  const tgDrain = await tg.drainRetries();
+  logger.info('Telegram retry drain', tgDrain);
+
+  if (process.env.RESEND_API_KEY) {
+    const { NewsletterService } = await import('../src/lib/news/newsletter');
+    const nl = new NewsletterService(process.env.RESEND_API_KEY);
+    const nlDrain = await nl.drainRetries();
+    logger.info('Newsletter retry drain', nlDrain);
   }
 
   run.stage = logger.hasFatal() ? 'failed' : 'complete';

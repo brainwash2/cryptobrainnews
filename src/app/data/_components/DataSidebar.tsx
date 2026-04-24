@@ -36,7 +36,7 @@ function NavSection({
       {/* Children */}
       {open && section.children && (
         <div className="ml-3 border-l border-[#1a1a1a] pl-3 mb-1">
-          {section.children.map((child) => {
+          {section.children.map((child: any) => {
             const childActive = currentPath === child.href ||
               currentPath.startsWith(child.href + '/');
             return (

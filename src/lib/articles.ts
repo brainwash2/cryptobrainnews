@@ -100,10 +100,10 @@ export async function getRelatedArticles(id: string, limit = 4): Promise<Weighte
   const others = all.filter((a) => a.id !== id);
   if (!current) return others.slice(0, limit);
   const sameCategory = others.filter((a) =>
-    a.categories.some((c) => current.categories.includes(c))
+    a.categories.some((c: string) => current.categories.includes(c))
   );
   const rest = others.filter((a) =>
-    !a.categories.some((c) => current.categories.includes(c))
+    !a.categories.some((c: string) => current.categories.includes(c))
   );
   return [...sameCategory, ...rest].slice(0, limit);
 }
