@@ -6,19 +6,19 @@
     },
     {
       "path": "/api/cron/social",
-      "schedule": "* * * * *"
+      "schedule": "0 10 * * *"
     },
     {
       "path": "/api/cron/broadcast-drain",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/health",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 7 * * *"
     },
     {
       "path": "/api/cron/sitemap-warm",
-      "schedule": "0 * * * *"
+      "schedule": "0 9 * * *"
     }
   ],
   "headers": [
