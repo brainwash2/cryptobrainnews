@@ -14,7 +14,7 @@ import { RSSCache } from '../src/lib/news/rss-cache';
 import { TelegramBroadcaster } from '../src/lib/news/telegram';
 import type {
   RSSItem,
-  GrokSummary,          // still named GrokSummary for compatibility
+  GrokSummary,
   DeepSeekEnrichment,
   GeminiPolish,
   AIStageOutputs,
@@ -35,12 +35,12 @@ const MAX_ARTICLES_PER_RUN = Number(process.env.MAX_ARTICLES_PER_RUN ?? '5');
 const DEAD_LETTER_DIR = '/tmp/dead-letter';
 
 // ── API keys ──────────────────────────────────────────────────────────────
-const GROQ_API_KEY      = process.env.GROQ_API_KEY      ?? '';  // ← matches your Vercel env
-const DEEPSEEK_API_KEY   = process.env.DEEPSEEK_API_KEY  ?? '';
-const GEMINI_API_KEY     = process.env.GEMINI_API_KEY    ?? '';
+const GROQ_API_KEY       = process.env.GROQ_API_KEY       ?? '';
+const DEEPSEEK_API_KEY   = process.env.DEEPSEEK_API_KEY   ?? '';
+const GEMINI_API_KEY     = process.env.GEMINI_API_KEY     ?? '';
 const SANITY_PROJECT_ID  = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '';
 const SANITY_DATASET     = process.env.NEXT_PUBLIC_SANITY_DATASET     ?? 'production';
-const SANITY_API_TOKEN   = process.env.SANITY_API_TOKEN  ?? '';
+const SANITY_API_TOKEN   = process.env.SANITY_API_TOKEN   ?? '';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? '';
 
 // ── Retry helper ──────────────────────────────────────────────────────────
@@ -92,16 +92,16 @@ async function runGroq(item: RSSItem): Promise<GrokSummary> {
       Authorization: `Bearer ${GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',   // free on Groq, fast enough
+      model: 'llama-3.3-70b-versatile',
       messages: [
         {
           role: 'system',
           content:
-            'You are a crypto news analyst. Respond ONLY with valid JSON. No markdown fences.',
+            'You are a crypto news analyst. Respond ONLY with valid JSON matching the GrokSummary schema. No markdown fences.',
         },
         {
           role: 'user',
-          content: `Summarise this article. Return JSON with: headline, summary (2-3 sentences), keyPoints (3-5 bullets), rawArticleUrl, sourceTitle.\nTitle: ${item.title}\nURL: ${item.link}\nContent: ${(item.content ?? item.description).slice(0, 4000)}`,
+          content: `Summarise this article. Schema: { headline, summary, keyPoints, rawArticleUrl, sourceTitle }\nTitle: ${item.title}\nURL: ${item.link}\nContent: ${(item.content ?? item.description).slice(0, 4000)}`,
         },
       ],
     }),
@@ -132,7 +132,7 @@ async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEn
         },
         {
           role: 'user',
-          content: `Expand this summary into a full article body. Return JSON with: expandedBody (Markdown), tags (string array), category (string), sentiment (bullish/bearish/neutral), relatedTickers (string array).\nSummary: ${grok.summary}\nKey points: ${grok.keyPoints.join('; ')}\nSource: ${item.link}`,
+          content: `Expand this summary into a full article body. Schema: { expandedBody, tags, category, sentiment, relatedTickers }\nSummary: ${grok.summary}\nKey points: ${grok.keyPoints.join('; ')}\nSource: ${item.link}`,
         },
       ],
     }),
@@ -157,7 +157,7 @@ async function runGemini(grok: GrokSummary, deepSeek: DeepSeekEnrichment): Promi
           {
             parts: [
               {
-                text: `Polish this crypto article for SEO. Return JSON with: title (headline), metaDescription (max 160 chars), body (Markdown), slug (kebab-case, max 80 chars).\nDraft title: ${grok.headline}\nDraft body: ${deepSeek.expandedBody.slice(0, 6000)}\nTags: ${deepSeek.tags.join(', ')}`,
+                text: `Polish this crypto article for SEO. Return JSON with: title, metaDescription, body, slug.\nDraft title: ${grok.headline}\nDraft body: ${deepSeek.expandedBody.slice(0, 6000)}\nTags: ${deepSeek.tags.join(', ')}`,
               },
             ],
           },
@@ -219,9 +219,13 @@ async function writeToSanity(payload: SanityArticlePayload): Promise<SanityWrite
     body: JSON.stringify({ mutations: [{ create: payload }] }),
   });
   if (!res.ok) throw new Error(`Sanity write ${res.status}: ${await res.text()}`);
-  const { results } = (await res.json()) as { results: Array<{ id: string }> };
-  const documentId = results[0]?.id;
-  if (!documentId) throw new Error('Sanity returned no document ID');
+  const json = (await res.json()) as { results?: Array<{ id: string }> };
+  const documentId = json.results?.[0]?.id;
+  if (!documentId) {
+    // The mutation succeeded but no document ID was returned – retry
+    console.warn('[pipeline] Sanity mutation succeeded but no document ID returned, retrying...');
+    throw new Error('Sanity returned no document ID');
+  }
   return { documentId, slug: payload.slug.current, publishedAt: payload.publishedAt };
 }
 
