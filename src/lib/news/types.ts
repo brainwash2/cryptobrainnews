@@ -100,7 +100,7 @@ export interface PipelineRun {
 
 /** Minimal shape we write to Sanity – extend with your full schema fields. */
 export interface SanityArticlePayload {
-  _type: 'article';
+    _type: 'post';
   title: string;
   slug: { _type: 'slug'; current: string };
   metaDescription: string;
