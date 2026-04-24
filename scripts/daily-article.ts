@@ -194,8 +194,9 @@ function buildFallbackPolish(grok: GrokSummary, deepSeek?: DeepSeekEnrichment): 
 
 // ── Sanity helpers ───────────────────────────────────────────────────────
 async function slugExistsInSanity(slug: string): Promise<boolean> {
+  // IMPORTANT: Use 'post' as the document type, matching your Sanity schema
   const query = encodeURIComponent(
-    `*[_type == "article" && slug.current == "${slug}"][0]._id`,
+    `*[_type == "post" && slug.current == "${slug}"][0]._id`,
   );
   const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2024-01-01/data/query/${SANITY_DATASET}?query=${query}`;
   const res = await fetch(url, {
@@ -309,8 +310,9 @@ async function processArticle(
     logger.warn('Slug check failed – proceeding with write', { cause: String(err) });
   }
 
+  // Construct the Sanity document. NOTICE: _type is 'post', not 'article'!
   const payload: SanityArticlePayload = {
-    _type: 'article',
+    _type: 'post',   // <-- Must match your Sanity schema
     title: finalPolish.title,
     slug: { _type: 'slug', current: finalPolish.slug },
     metaDescription: finalPolish.metaDescription,
