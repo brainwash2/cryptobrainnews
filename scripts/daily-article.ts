@@ -1,6 +1,6 @@
 /**
  * scripts/daily-article.ts
- * Daily automated article pipeline: RSS → Grok → DeepSeek → Gemini → Sanity
+ * Daily automated article pipeline: RSS → Groq → DeepSeek → Gemini → Sanity
  *
  * Vercel-compatible: dead-letter files go to /tmp (only writable directory).
  */
@@ -14,7 +14,7 @@ import { RSSCache } from '../src/lib/news/rss-cache';
 import { TelegramBroadcaster } from '../src/lib/news/telegram';
 import type {
   RSSItem,
-  GrokSummary,
+  GrokSummary,          // still named GrokSummary for compatibility
   DeepSeekEnrichment,
   GeminiPolish,
   AIStageOutputs,
@@ -32,17 +32,18 @@ const RSS_FEEDS: string[] = (process.env.RSS_FEED_URLS ?? '').split(',').filter(
 const MAX_ARTICLES_PER_RUN = Number(process.env.MAX_ARTICLES_PER_RUN ?? '5');
 
 // Vercel serverless has a read-only filesystem except for /tmp.
-// Use /tmp/dead-letter so the pipeline never crashes on a filesystem error.
 const DEAD_LETTER_DIR = '/tmp/dead-letter';
 
-const GROK_API_KEY = process.env.GROK_API_KEY ?? '';
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY ?? '';
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? '';
-const SANITY_PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '';
-const SANITY_DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET ?? 'production';
-const SANITY_API_TOKEN = process.env.SANITY_API_TOKEN ?? '';
+// ── API keys ──────────────────────────────────────────────────────────────
+const GROQ_API_KEY      = process.env.GROQ_API_KEY      ?? '';  // ← matches your Vercel env
+const DEEPSEEK_API_KEY   = process.env.DEEPSEEK_API_KEY  ?? '';
+const GEMINI_API_KEY     = process.env.GEMINI_API_KEY    ?? '';
+const SANITY_PROJECT_ID  = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '';
+const SANITY_DATASET     = process.env.NEXT_PUBLIC_SANITY_DATASET     ?? 'production';
+const SANITY_API_TOKEN   = process.env.SANITY_API_TOKEN  ?? '';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? '';
 
+// ── Retry helper ──────────────────────────────────────────────────────────
 async function withRetry<T>(
   fn: () => Promise<T>,
   maxAttempts: number,
@@ -63,6 +64,7 @@ async function withRetry<T>(
   throw new Error(`${label} failed after ${maxAttempts} attempts: ${String(lastError)}`);
 }
 
+// ── Dead‑letter writer (never crashes the pipeline) ──────────────────────
 function writeDeadLetter(runId: string, item: RSSItem, reason: string, partial: unknown): string {
   try {
     mkdirSync(DEAD_LETTER_DIR, { recursive: true });
@@ -75,43 +77,43 @@ function writeDeadLetter(runId: string, item: RSSItem, reason: string, partial: 
     );
     return path;
   } catch {
-    // Never let a dead-letter write crash the pipeline – log and continue
     console.warn('[pipeline] Unable to write dead-letter file (filesystem read-only?)');
     return '';
   }
 }
 
-// ─── AI Stages ────────────────────────────────────────────────────────────────
-async function runGrok(item: RSSItem): Promise<GrokSummary> {
-  const res = await fetch('https://api.x.ai/v1/chat/completions', {
+// ─── AI Stage 1: Groq (free tier, fast) ─────────────────────────────────
+async function runGroq(item: RSSItem): Promise<GrokSummary> {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     signal: AbortSignal.timeout(30_000),
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${GROK_API_KEY}`,
+      Authorization: `Bearer ${GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'grok-2',
+      model: 'llama-3.3-70b-versatile',   // free on Groq, fast enough
       messages: [
         {
           role: 'system',
           content:
-            'You are a crypto news analyst. Respond ONLY with valid JSON matching the GrokSummary schema. No markdown fences.',
+            'You are a crypto news analyst. Respond ONLY with valid JSON. No markdown fences.',
         },
         {
           role: 'user',
-          content: `Summarise this article. Schema: { headline, summary, keyPoints, rawArticleUrl, sourceTitle }\nTitle: ${item.title}\nURL: ${item.link}\nContent: ${(item.content ?? item.description).slice(0, 4000)}`,
+          content: `Summarise this article. Return JSON with: headline, summary (2-3 sentences), keyPoints (3-5 bullets), rawArticleUrl, sourceTitle.\nTitle: ${item.title}\nURL: ${item.link}\nContent: ${(item.content ?? item.description).slice(0, 4000)}`,
         },
       ],
     }),
   });
-  if (!res.ok) throw new Error(`Grok API ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`Groq API ${res.status}: ${await res.text()}`);
   const data = (await res.json()) as { choices: Array<{ message: { content: string } }> };
   const raw: unknown = JSON.parse(data.choices[0].message.content);
-  if (!isGrokSummary(raw)) throw new Error('Grok response failed type guard');
+  if (!isGrokSummary(raw)) throw new Error('Groq response failed type guard');
   return raw;
 }
 
+// ─── AI Stage 2: DeepSeek (optional, degraded if missing) ────────────────
 async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEnrichment> {
   const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
@@ -130,7 +132,7 @@ async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEn
         },
         {
           role: 'user',
-          content: `Expand this summary into a full article body. Schema: { expandedBody, tags, category, sentiment, relatedTickers }\nSummary: ${grok.summary}\nKey points: ${grok.keyPoints.join('; ')}\nSource: ${item.link}`,
+          content: `Expand this summary into a full article body. Return JSON with: expandedBody (Markdown), tags (string array), category (string), sentiment (bullish/bearish/neutral), relatedTickers (string array).\nSummary: ${grok.summary}\nKey points: ${grok.keyPoints.join('; ')}\nSource: ${item.link}`,
         },
       ],
     }),
@@ -142,6 +144,7 @@ async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEn
   return raw;
 }
 
+// ─── AI Stage 3: Gemini (optional, degraded if missing) ──────────────────
 async function runGemini(grok: GrokSummary, deepSeek: DeepSeekEnrichment): Promise<GeminiPolish> {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -154,7 +157,7 @@ async function runGemini(grok: GrokSummary, deepSeek: DeepSeekEnrichment): Promi
           {
             parts: [
               {
-                text: `Polish this crypto article. Respond ONLY with valid JSON. Schema: { title, metaDescription, body, slug }\nDraft title: ${grok.headline}\nDraft body: ${deepSeek.expandedBody.slice(0, 6000)}\nTags: ${deepSeek.tags.join(', ')}`,
+                text: `Polish this crypto article for SEO. Return JSON with: title (headline), metaDescription (max 160 chars), body (Markdown), slug (kebab-case, max 80 chars).\nDraft title: ${grok.headline}\nDraft body: ${deepSeek.expandedBody.slice(0, 6000)}\nTags: ${deepSeek.tags.join(', ')}`,
               },
             ],
           },
@@ -171,6 +174,7 @@ async function runGemini(grok: GrokSummary, deepSeek: DeepSeekEnrichment): Promi
   return raw;
 }
 
+// ── Fallback when later stages are missing ───────────────────────────────
 function buildFallbackPolish(grok: GrokSummary, deepSeek?: DeepSeekEnrichment): GeminiPolish {
   const headline = grok.headline;
   const slug = headline
@@ -188,6 +192,7 @@ function buildFallbackPolish(grok: GrokSummary, deepSeek?: DeepSeekEnrichment): 
   };
 }
 
+// ── Sanity helpers ───────────────────────────────────────────────────────
 async function slugExistsInSanity(slug: string): Promise<boolean> {
   const query = encodeURIComponent(
     `*[_type == "article" && slug.current == "${slug}"][0]._id`,
@@ -220,6 +225,7 @@ async function writeToSanity(payload: SanityArticlePayload): Promise<SanityWrite
   return { documentId, slug: payload.slug.current, publishedAt: payload.publishedAt };
 }
 
+// ── Article processor ────────────────────────────────────────────────────
 async function processArticle(
   item: RSSItem,
   runId: string,
@@ -233,18 +239,20 @@ async function processArticle(
     return { published: false };
   }
 
+  // ── Groq (fatal if missing) ──────────────────────────────────────
   logger.setStage('grok-summarise');
   let grok: GrokSummary;
   try {
-    const { result, attempts } = await withRetry(() => runGrok(item), 3, 1000, 'Grok');
+    const { result, attempts } = await withRetry(() => runGroq(item), 3, 1000, 'Groq');
     grok = result;
-    logger.info('Grok succeeded', { attempts });
+    logger.info('Groq succeeded', { attempts });
   } catch (err) {
-    const path = writeDeadLetter(runId, item, 'Grok failed', null);
-    logger.error('Grok fatal – dead-lettered', 'fatal', err, 3);
+    const path = writeDeadLetter(runId, item, 'Groq failed', null);
+    logger.error('Groq fatal – dead-lettered', 'fatal', err, 3);
     return { published: false, deadLetterPath: path || undefined };
   }
 
+  // ── DeepSeek (optional) ──────────────────────────────────────────
   logger.setStage('deepseek-enrich');
   let deepSeek: DeepSeekEnrichment | undefined;
   try {
@@ -257,9 +265,10 @@ async function processArticle(
     deepSeek = result;
     logger.info('DeepSeek succeeded', { attempts });
   } catch (err) {
-    logger.error('DeepSeek failed – degraded to Grok output only', 'degraded', err, 2);
+    logger.error('DeepSeek failed – degraded to Groq output only', 'degraded', err, 2);
   }
 
+  // ── Gemini (optional) ────────────────────────────────────────────
   logger.setStage('gemini-polish');
   let gemini: GeminiPolish | undefined;
   if (deepSeek) {
@@ -284,6 +293,7 @@ async function processArticle(
     ...(gemini ? { gemini } : {}),
   };
 
+  // ── Sanity write ─────────────────────────────────────────────────
   logger.setStage('sanity-write');
   try {
     const exists = await slugExistsInSanity(finalPolish.slug);
@@ -347,6 +357,7 @@ async function processArticle(
   return { published: true };
 }
 
+// ── Main pipeline entrypoint ─────────────────────────────────────────────
 export async function runPipeline(): Promise<PipelineRun> {
   const runId = randomUUID();
   const startedAt = new Date().toISOString();
