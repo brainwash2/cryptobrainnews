@@ -1,15 +1,7 @@
 /**
  * app/api/news/category/[slug]/route.ts
  * Edge-compatible category page data API.
- *
- * Caching layers (outermost → innermost):
- *   1. Vercel CDN   — Cache-Control: s-maxage=300, stale-while-revalidate=600
- *   2. Redis        — PageCache (5-min TTL, 50-min stale fallback)
- *   3. Sanity CDN   — readClient useCdn:true (~60 s Sanity edge cache)
- *
- * Result: p95 latency from ~300 ms (cold Sanity) → ~15 ms (Redis hit)
  */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { PageCache }       from '../../../../../lib/news/page-cache';
 import { getCategoryPage } from '../../../../../lib/news/sanity-queries';
@@ -20,9 +12,9 @@ const cache = new PageCache();
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },  // params is now a Promise
 ): Promise<NextResponse> {
-  const category = decodeURIComponent(params.slug);
+  const { slug: category } = await params;  // await it!
   const page     = Number(req.nextUrl.searchParams.get('page')  ?? '1');
   const pageSize = Number(req.nextUrl.searchParams.get('limit') ?? '12');
 
@@ -63,10 +55,9 @@ export async function GET(
 /** Sanity webhook invalidation — call from /api/sanity/webhook */
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ): Promise<NextResponse> {
-  const category = decodeURIComponent(params.slug);
-  // Invalidate all pages for this category (wildcard not supported; invalidate page 1–5)
+  const { slug: category } = await params;
   await Promise.all(
     [1, 2, 3, 4, 5].map((page) =>
       cache.invalidate('category', PageCache.buildKey({ category, page, pageSize: 12 })),
