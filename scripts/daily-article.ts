@@ -2,31 +2,12 @@
  * scripts/daily-article.ts
  * Daily automated article pipeline: RSS → Grok → DeepSeek → Gemini → Sanity
  *
- * Graceful failure model:
- *   Stage           Fatal?   Fallback
- *   ─────────────────────────────────────────────────────
- *   RSS fetch       YES      Abort run – nothing to process
- *   Grok            YES      Per-article: skip + dead-letter
- *   DeepSeek        NO       Use Grok output directly
- *   Gemini          NO       Use DeepSeek (or Grok) output directly
- *   Sanity write    YES      Per-article: retry × 3, then dead-letter
- *   Telegram        NO       Log warn, continue
- *
- * Idempotency:
- *   - Redis dedup checked BEFORE any AI calls (URL + title SHA-256)
- *   - Sanity checked by slug BEFORE write to prevent duplicate documents
- *   - markSeen() called ONLY after successful Sanity write
- *
- * Run:
- *   npx ts-node --esm scripts/daily-article.ts
- *   or via Vercel Cron with a thin wrapper that calls runPipeline()
+ * Vercel-compatible: dead-letter files go to /tmp (only writable directory).
  */
 
 import { randomUUID } from 'crypto';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-
-// Internal imports – adjust paths if your monorepo differs
 import { ArticleDedup } from '../src/lib/news/dedup';
 import { PipelineLogger } from '../src/lib/news/pipeline-logger';
 import { RSSCache } from '../src/lib/news/rss-cache';
@@ -47,11 +28,12 @@ import {
   isGeminiPolish,
 } from '../src/lib/news/types';
 
-// ─── Config ──────────────────────────────────────────────────────────────────
-
 const RSS_FEEDS: string[] = (process.env.RSS_FEED_URLS ?? '').split(',').filter(Boolean);
 const MAX_ARTICLES_PER_RUN = Number(process.env.MAX_ARTICLES_PER_RUN ?? '5');
-const DEAD_LETTER_DIR = process.env.DEAD_LETTER_DIR ?? 'scripts/dead-letter';
+
+// Vercel serverless has a read-only filesystem except for /tmp.
+// Use /tmp/dead-letter so the pipeline never crashes on a filesystem error.
+const DEAD_LETTER_DIR = '/tmp/dead-letter';
 
 const GROK_API_KEY = process.env.GROK_API_KEY ?? '';
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY ?? '';
@@ -60,9 +42,6 @@ const SANITY_PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '';
 const SANITY_DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET ?? 'production';
 const SANITY_API_TOKEN = process.env.SANITY_API_TOKEN ?? '';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? '';
-const _TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID ?? '';
-
-// ─── Retry helper ─────────────────────────────────────────────────────────────
 
 async function withRetry<T>(
   fn: () => Promise<T>,
@@ -77,60 +56,40 @@ async function withRetry<T>(
       return { result, attempts: attempt };
     } catch (err) {
       lastError = err;
-      if (attempt < maxAttempts) {
-        const delay = baseDelayMs * Math.pow(2, attempt - 1); // exponential backoff
-        await new Promise((r) => setTimeout(r, delay));
-      }
+      if (attempt < maxAttempts)
+        await new Promise(r => setTimeout(r, baseDelayMs * Math.pow(2, attempt - 1)));
     }
   }
   throw new Error(`${label} failed after ${maxAttempts} attempts: ${String(lastError)}`);
 }
 
-// ─── Dead-letter writer ───────────────────────────────────────────────────────
-
 function writeDeadLetter(runId: string, item: RSSItem, reason: string, partial: unknown): string {
-  mkdirSync(DEAD_LETTER_DIR, { recursive: true });
-  const filename = `${runId}-${Date.now()}-${item.guid.replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.json`;
-  const path = join(DEAD_LETTER_DIR, filename);
-  writeFileSync(
-    path,
-    JSON.stringify({ runId, failedAt: new Date().toISOString(), reason, item, partial }, null, 2),
-    'utf-8',
-  );
-  return path;
-}
-
-// ─── Minimal XML→RSSItem parser ───────────────────────────────────────────────
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function parseRSSXML(xml: string, _sourceUrl: string): RSSItem[] {
-  const items: RSSItem[] = [];
-  const itemMatches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g);
-  for (const [, body] of itemMatches) {
-    const get = (tag: string): string =>
-      (body.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`))?.[1] ??
-        body.match(new RegExp(`<${tag}[^>]*>([^<]*)<\\/${tag}>`))?.[1] ??
-        '').trim();
-
-    const title = get('title');
-    const link = get('link');
-    const pubDate = get('pubDate');
-    const guid = get('guid') || link;
-    const description = get('description');
-    if (!title || !link) continue;
-
-    items.push({ title, link, pubDate, guid, description, content: get('content:encoded') || undefined });
+  try {
+    mkdirSync(DEAD_LETTER_DIR, { recursive: true });
+    const filename = `${runId}-${Date.now()}-${item.guid.replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.json`;
+    const path = join(DEAD_LETTER_DIR, filename);
+    writeFileSync(
+      path,
+      JSON.stringify({ runId, failedAt: new Date().toISOString(), reason, item, partial }, null, 2),
+      'utf-8',
+    );
+    return path;
+  } catch {
+    // Never let a dead-letter write crash the pipeline – log and continue
+    console.warn('[pipeline] Unable to write dead-letter file (filesystem read-only?)');
+    return '';
   }
-  return items;
 }
 
 // ─── AI Stages ────────────────────────────────────────────────────────────────
-
 async function runGrok(item: RSSItem): Promise<GrokSummary> {
   const res = await fetch('https://api.x.ai/v1/chat/completions', {
     method: 'POST',
     signal: AbortSignal.timeout(30_000),
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROK_API_KEY}` },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${GROK_API_KEY}`,
+    },
     body: JSON.stringify({
       model: 'grok-2-latest',
       messages: [
@@ -141,11 +100,7 @@ async function runGrok(item: RSSItem): Promise<GrokSummary> {
         },
         {
           role: 'user',
-          content: `Summarise this article for a data-first crypto audience.
-Schema: { headline: string, summary: string (2-3 sentences), keyPoints: string[] (3-5 bullets), rawArticleUrl: string, sourceTitle: string }
-Title: ${item.title}
-URL: ${item.link}
-Content: ${(item.content ?? item.description).slice(0, 4000)}`,
+          content: `Summarise this article. Schema: { headline, summary, keyPoints, rawArticleUrl, sourceTitle }\nTitle: ${item.title}\nURL: ${item.link}\nContent: ${(item.content ?? item.description).slice(0, 4000)}`,
         },
       ],
     }),
@@ -161,7 +116,10 @@ async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEn
   const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
     signal: AbortSignal.timeout(45_000),
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${DEEPSEEK_API_KEY}` },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+    },
     body: JSON.stringify({
       model: 'deepseek-chat',
       messages: [
@@ -172,11 +130,7 @@ async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEn
         },
         {
           role: 'user',
-          content: `Expand this summary into a full article body.
-Schema: { expandedBody: string (Markdown), tags: string[], category: string, sentiment: "bullish"|"bearish"|"neutral", relatedTickers: string[] }
-Summary: ${grok.summary}
-Key points: ${grok.keyPoints.join('; ')}
-Source: ${item.link}`,
+          content: `Expand this summary into a full article body. Schema: { expandedBody, tags, category, sentiment, relatedTickers }\nSummary: ${grok.summary}\nKey points: ${grok.keyPoints.join('; ')}\nSource: ${item.link}`,
         },
       ],
     }),
@@ -200,12 +154,7 @@ async function runGemini(grok: GrokSummary, deepSeek: DeepSeekEnrichment): Promi
           {
             parts: [
               {
-                text: `Polish this crypto article for SEO and publication.
-Respond ONLY with valid JSON. No markdown fences.
-Schema: { title: string, metaDescription: string (max 160 chars), body: string (Markdown), slug: string (kebab-case max 80 chars) }
-Draft title: ${grok.headline}
-Draft body: ${deepSeek.expandedBody.slice(0, 6000)}
-Tags: ${deepSeek.tags.join(', ')}`,
+                text: `Polish this crypto article. Respond ONLY with valid JSON. Schema: { title, metaDescription, body, slug }\nDraft title: ${grok.headline}\nDraft body: ${deepSeek.expandedBody.slice(0, 6000)}\nTags: ${deepSeek.tags.join(', ')}`,
               },
             ],
           },
@@ -222,8 +171,6 @@ Tags: ${deepSeek.tags.join(', ')}`,
   return raw;
 }
 
-// ─── Fallback content builder (when AI stages are degraded) ──────────────────
-
 function buildFallbackPolish(grok: GrokSummary, deepSeek?: DeepSeekEnrichment): GeminiPolish {
   const headline = grok.headline;
   const slug = headline
@@ -234,15 +181,17 @@ function buildFallbackPolish(grok: GrokSummary, deepSeek?: DeepSeekEnrichment): 
   return {
     title: headline,
     metaDescription: grok.summary.slice(0, 160),
-    body: deepSeek?.expandedBody ?? `${grok.summary}\n\n${grok.keyPoints.map((p) => `- ${p}`).join('\n')}`,
+    body:
+      deepSeek?.expandedBody ??
+      `${grok.summary}\n\n${grok.keyPoints.map(p => `- ${p}`).join('\n')}`,
     slug,
   };
 }
 
-// ─── Sanity write ─────────────────────────────────────────────────────────────
-
 async function slugExistsInSanity(slug: string): Promise<boolean> {
-  const query = encodeURIComponent(`*[_type == "article" && slug.current == "${slug}"][0]._id`);
+  const query = encodeURIComponent(
+    `*[_type == "article" && slug.current == "${slug}"][0]._id`,
+  );
   const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2024-01-01/data/query/${SANITY_DATASET}?query=${query}`;
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${SANITY_API_TOKEN}` },
@@ -271,24 +220,19 @@ async function writeToSanity(payload: SanityArticlePayload): Promise<SanityWrite
   return { documentId, slug: payload.slug.current, publishedAt: payload.publishedAt };
 }
 
-// ─── Per-article processor ────────────────────────────────────────────────────
-
 async function processArticle(
   item: RSSItem,
   runId: string,
   dedup: ArticleDedup,
   logger: PipelineLogger,
 ): Promise<{ published: boolean; deadLetterPath?: string }> {
-
-  // 1. Dedup check
   logger.setStage('dedup-check');
-  const { isDuplicate, matchedOn } = await dedup.isDuplicate(item.link, item.title);
+  const { isDuplicate } = await dedup.isDuplicate(item.link, item.title);
   if (isDuplicate) {
-    logger.info(`Skipping duplicate (matched on ${matchedOn ?? 'unknown'})`, { url: item.link });
+    logger.info('Skipping duplicate', { url: item.link });
     return { published: false };
   }
 
-  // 2. Grok – FATAL per article (without a summary, there's nothing to build on)
   logger.setStage('grok-summarise');
   let grok: GrokSummary;
   try {
@@ -298,21 +242,24 @@ async function processArticle(
   } catch (err) {
     const path = writeDeadLetter(runId, item, 'Grok failed', null);
     logger.error('Grok fatal – dead-lettered', 'fatal', err, 3);
-    return { published: false, deadLetterPath: path };
+    return { published: false, deadLetterPath: path || undefined };
   }
 
-  // 3. DeepSeek – DEGRADED (fall back to Grok output)
   logger.setStage('deepseek-enrich');
   let deepSeek: DeepSeekEnrichment | undefined;
   try {
-    const { result, attempts } = await withRetry(() => runDeepSeek(item, grok), 2, 2000, 'DeepSeek');
+    const { result, attempts } = await withRetry(
+      () => runDeepSeek(item, grok),
+      2,
+      2000,
+      'DeepSeek',
+    );
     deepSeek = result;
     logger.info('DeepSeek succeeded', { attempts });
   } catch (err) {
     logger.error('DeepSeek failed – degraded to Grok output only', 'degraded', err, 2);
   }
 
-  // 4. Gemini – DEGRADED (fall back to deepSeek or Grok output)
   logger.setStage('gemini-polish');
   let gemini: GeminiPolish | undefined;
   if (deepSeek) {
@@ -330,28 +277,25 @@ async function processArticle(
     }
   }
 
-  // Resolve final content (best available stage wins)
-  const finalPolish: GeminiPolish = gemini ?? buildFallbackPolish(grok, deepSeek);
+  const finalPolish = gemini ?? buildFallbackPolish(grok, deepSeek);
   const stageOutputs: AIStageOutputs = {
     grok,
     ...(deepSeek ? { deepSeek } : {}),
     ...(gemini ? { gemini } : {}),
   };
 
-  // 5. Sanity idempotency check
   logger.setStage('sanity-write');
   try {
     const exists = await slugExistsInSanity(finalPolish.slug);
     if (exists) {
-      logger.info('Slug already exists in Sanity – skipping write', { slug: finalPolish.slug });
+      logger.info('Slug already exists – skipping write', { slug: finalPolish.slug });
       await dedup.markSeen(item.link, item.title, runId);
       return { published: false };
     }
   } catch (err) {
-    logger.warn('Sanity slug check failed – proceeding with write anyway', { cause: String(err) });
+    logger.warn('Slug check failed – proceeding with write', { cause: String(err) });
   }
 
-  // 6. Sanity write – FATAL per article
   const payload: SanityArticlePayload = {
     _type: 'article',
     title: finalPolish.title,
@@ -370,19 +314,25 @@ async function processArticle(
 
   let sanityResult: SanityWriteResult;
   try {
-    const { result, attempts } = await withRetry(() => writeToSanity(payload), 3, 2000, 'Sanity');
+    const { result, attempts } = await withRetry(
+      () => writeToSanity(payload),
+      3,
+      2000,
+      'Sanity',
+    );
     sanityResult = result;
-    logger.info('Sanity write succeeded', { documentId: sanityResult.documentId, attempts });
+    logger.info('Sanity write succeeded', {
+      documentId: sanityResult.documentId,
+      attempts,
+    });
   } catch (err) {
     const path = writeDeadLetter(runId, item, 'Sanity write failed', payload);
     logger.error('Sanity write fatal – dead-lettered', 'fatal', err, 3);
-    return { published: false, deadLetterPath: path };
+    return { published: false, deadLetterPath: path || undefined };
   }
 
-  // 7. Mark seen ONLY after successful Sanity write
   await dedup.markSeen(item.link, item.title, runId, sanityResult.documentId);
 
-  // 8. Telegram broadcast – non-fatal (via hardened TelegramBroadcaster)
   const telegram = new TelegramBroadcaster(TELEGRAM_BOT_TOKEN);
   await telegram.send(
     TelegramBroadcaster.formatArticleMessage(
@@ -397,8 +347,6 @@ async function processArticle(
   return { published: true };
 }
 
-// ─── Main entrypoint ──────────────────────────────────────────────────────────
-
 export async function runPipeline(): Promise<PipelineRun> {
   const runId = randomUUID();
   const startedAt = new Date().toISOString();
@@ -407,7 +355,6 @@ export async function runPipeline(): Promise<PipelineRun> {
   const rssCache = new RSSCache();
 
   logger.info('Pipeline run starting', { runId, maxArticles: MAX_ARTICLES_PER_RUN });
-
   const run: PipelineRun = {
     runId,
     startedAt,
@@ -418,15 +365,12 @@ export async function runPipeline(): Promise<PipelineRun> {
     deadLetterPaths: [],
   };
 
-  // RSS fetch via RSSCache (with stampede guard and 1-hr TTL)
   let items: RSSItem[];
   try {
     const feedConfig = RSS_FEEDS.map((url, i) => ({ url, name: `Feed-${i + 1}` }));
     const result = await rssCache.getAllItems(feedConfig);
     items = result.items;
-    if (items.length === 0) {
-      throw new Error('All RSS feeds returned zero items – aborting run.');
-    }
+    if (items.length === 0) throw new Error('All RSS feeds returned zero items.');
     logger.info(`Fetched ${items.length} total items from ${feedConfig.length} feeds`);
   } catch (err) {
     run.stage = 'failed';
@@ -435,15 +379,13 @@ export async function runPipeline(): Promise<PipelineRun> {
     return run;
   }
 
-  // Bulk dedup pre-check to avoid wasteful AI calls
   logger.setStage('dedup-check');
   const dedupMap = await dedup.bulkCheck(
-    items.map((i) => ({ guid: i.guid, url: i.link, title: i.title })),
+    items.map(i => ({ guid: i.guid, url: i.link, title: i.title })),
   );
-  const fresh = items.filter((i) => !dedupMap.get(i.guid)?.isDuplicate);
+  const fresh = items.filter(i => !dedupMap.get(i.guid)?.isDuplicate);
   logger.info(`Dedup: ${items.length} total → ${fresh.length} fresh`);
 
-  // Process up to MAX_ARTICLES_PER_RUN fresh items sequentially
   const toProcess = fresh.slice(0, MAX_ARTICLES_PER_RUN);
   for (const item of toProcess) {
     run.articlesAttempted += 1;
@@ -456,7 +398,6 @@ export async function runPipeline(): Promise<PipelineRun> {
     }
   }
 
-  // Drain any queued retries from this run (Telegram + Newsletter)
   const tg = new TelegramBroadcaster(TELEGRAM_BOT_TOKEN);
   const tgDrain = await tg.drainRetries();
   logger.info('Telegram retry drain', tgDrain);
@@ -471,24 +412,22 @@ export async function runPipeline(): Promise<PipelineRun> {
   run.stage = logger.hasFatal() ? 'failed' : 'complete';
   run.errors = [...logger.getErrors()];
   run.completedAt = new Date().toISOString();
-
   logger.info('Pipeline run complete', {
     articlesAttempted: run.articlesAttempted,
     articlesPublished: run.articlesPublished,
     deadLetterCount: run.deadLetterPaths.length,
-    fatalErrors: run.errors.filter((e) => e.severity === 'fatal').length,
+    fatalErrors: run.errors.filter(e => e.severity === 'fatal').length,
   });
-
   return run;
 }
 
 // CLI entrypoint
 if (require.main === module) {
   runPipeline()
-    .then((run) => {
+    .then(run => {
       process.exitCode = run.stage === 'failed' ? 1 : 0;
     })
-    .catch((err) => {
+    .catch(err => {
       console.error('Unhandled pipeline crash:', err);
       process.exitCode = 1;
     });
