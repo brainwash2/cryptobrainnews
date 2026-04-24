@@ -1,13 +1,10 @@
 /**
  * lib/monetisation/stripe.ts
- * Stripe Pro subscription integration.
+ * Stripe Pro subscription integration – dynamic import to survive missing modules.
  */
-
-import Stripe      from 'stripe';
 import { Redis }   from '@upstash/redis';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-
 const STRIPE_SECRET_KEY     = process.env.STRIPE_SECRET_KEY ?? '';
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 const BASE_URL              = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cryptobrainnews.com';
@@ -21,8 +18,6 @@ export type PricePlan = keyof typeof PRICE_IDS;
 export type SubscriptionTier   = 'free' | 'pro' | 'team';
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export interface UserSubscription {
   userId:         string;
   tier:           SubscriptionTier;
@@ -30,7 +25,7 @@ export interface UserSubscription {
   customerId:     string;
   subscriptionId: string;
   priceId:        string;
-  currentPeriodEnd: string; // ISO-8601
+  currentPeriodEnd: string;
   cancelAtPeriodEnd:boolean;
 }
 
@@ -44,28 +39,31 @@ export interface PortalSessionResult {
 }
 
 // ─── Redis helpers ────────────────────────────────────────────────────────────
-
 const SUB_KEY_PREFIX   = 'sub:';
-const SUB_TTL_SECONDS  = 60 * 60 * 24; // 24 hr
+const SUB_TTL_SECONDS  = 60 * 60 * 24;
 
 function subKey(userId: string): string {
   return SUB_KEY_PREFIX + userId;
 }
 
-// ─── Stripe client (lazy — avoids init errors on edge imports) ────────────────
+// ─── Stripe client (lazy dynamic import – survives missing package at build) ──
+let _Stripe: any = null;   // eslint-disable-line @typescript-eslint/no-explicit-any
 
-let _stripe: Stripe | null = null;
-function getStripe(): Stripe {
-  if (!_stripe) {
-    if (!STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is not set');
-    // @ts-expect-error - API version mismatch due to local stripe package version
-    _stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2025-06-15.acacia' });
+async function getStripe(): Promise<any> {  // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (_Stripe) return _Stripe;
+    try {
+    const mod = await import('stripe');
+    const Stripe = mod.default ?? mod;
+    _Stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2026-03-25.dahlia' });
+    return _Stripe;
+  } catch (err: unknown) {
+    
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Stripe is not available: ${message}. Please run 'npm install stripe' and ensure it's in your deployment.`);
   }
-  return _stripe;
 }
 
 // ─── Subscription state store ─────────────────────────────────────────────────
-
 export class SubscriptionStore {
   private readonly redis: Redis;
 
@@ -90,7 +88,6 @@ export class SubscriptionStore {
     );
   }
 
-  /** Find userId by Stripe customerId — O(n) scan, keep users < 10k. */
   async findByCustomerId(customerId: string): Promise<UserSubscription | null> {
     const keys = await this.redis.keys(`${SUB_KEY_PREFIX}*`);
     for (const key of keys) {
@@ -102,13 +99,12 @@ export class SubscriptionStore {
 }
 
 // ─── Checkout ─────────────────────────────────────────────────────────────────
-
 export async function createCheckoutSession(
   userId:    string,
   userEmail: string,
   plan:      PricePlan,
 ): Promise<CheckoutSessionResult> {
-  const stripe  = getStripe();
+  const stripe  = await getStripe();
   const priceId = PRICE_IDS[plan];
   if (!priceId) throw new Error(`Price ID not configured for plan: ${plan}`);
 
@@ -131,11 +127,10 @@ export async function createCheckoutSession(
 }
 
 // ─── Customer Portal ──────────────────────────────────────────────────────────
-
 export async function createPortalSession(
   userId: string,
 ): Promise<PortalSessionResult> {
-  const stripe = getStripe();
+  const stripe = await getStripe();
   const store  = new SubscriptionStore();
   const sub    = await store.get(userId);
 
@@ -152,14 +147,13 @@ export async function createPortalSession(
 }
 
 // ─── Webhook event handler ────────────────────────────────────────────────────
-
 function tierFromPriceId(priceId: string): SubscriptionTier {
   if (priceId === PRICE_IDS.pro_monthly || priceId === PRICE_IDS.pro_yearly) return 'pro';
   return 'free';
 }
 
-function mapStripeStatus(status: Stripe.Subscription.Status): SubscriptionStatus {
-  const map: Partial<Record<Stripe.Subscription.Status, SubscriptionStatus>> = {
+function mapStripeStatus(status: string): SubscriptionStatus {
+  const map: Record<string, SubscriptionStatus> = {
     active:             'active',
     trialing:           'trialing',
     past_due:           'past_due',
@@ -176,10 +170,10 @@ export async function handleWebhookEvent(
   rawBody:   string,
   signature: string,
 ): Promise<{ handled: boolean; event: string }> {
-  const stripe = getStripe();
+  const stripe = await getStripe();
   const store  = new SubscriptionStore();
 
-  let event: Stripe.Event;
+  let event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET);
   } catch {
@@ -202,14 +196,12 @@ export async function handleWebhookEvent(
     event.type === 'customer.subscription.updated' ||
     event.type === 'customer.subscription.deleted'
   ) {
-    const subscription = event.data.object as Stripe.Subscription;
+    const subscription = event.data.object;
     const userId       = subscription.metadata['userId'] ?? '';
     if (!userId) return { handled: false, event: event.type };
 
     const priceId = subscription.items.data[0]?.price.id ?? '';
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const periodEnd = (subscription as any).current_period_end;
+    const periodEnd = subscription.current_period_end;
     
     await store.set({
       userId,
@@ -224,7 +216,7 @@ export async function handleWebhookEvent(
   }
 
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session;
+    const session = event.data.object;
     const userId     = session.metadata?.['userId'] ?? session.client_reference_id ?? '';
     const customerId = session.customer as string;
     if (userId && customerId) {
@@ -246,7 +238,5 @@ export async function handleWebhookEvent(
 
   return { handled: true, event: event.type };
 }
-
-// ─── Convenience re-export ────────────────────────────────────────────────────
 
 export const subscriptionStore = new SubscriptionStore();
