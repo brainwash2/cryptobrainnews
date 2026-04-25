@@ -5,7 +5,7 @@
  * Receives pre-fetched DefiLlama TVL data from the server component.
  * Renders a gradient-filled area chart matching the CryptoBrainNews terminal theme.
  */
-import React, { useState, useEffect } from "react";
+import React, { useSyncExternalStore } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -57,8 +57,7 @@ const AXIS = {
 /* ── Component ──────────────────────────────────────────────────────────── */
 
 export default function EthTvlClient({ tvlChart, latestTvl }: Props) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
   if (tvlChart.length === 0) {
     return (

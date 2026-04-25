@@ -5,7 +5,7 @@
  * Receives pre-computed TPS samples and TVL chart data from the server.
  * Renders purple-themed (#9945FF) area charts with mounted guard.
  */
-import React, { useState, useEffect } from "react";
+import React, { useSyncExternalStore } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -76,8 +76,7 @@ const AXIS = {
 /* ── Component ──────────────────────────────────────────────────────────── */
 
 export default function SolanaChartsClient({ tpsData, tvlChart, latestTvl }: Props) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
   return (
     <div className="space-y-6">

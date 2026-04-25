@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { TimeframeSelector }  from "../../../_components/TimeframeSelector";
 import type { Timeframe }     from "../../../_components/TimeframeSelector";
 import TvLightweightChart     from "../../../_components/charts/TvLightweightChart";
@@ -285,10 +285,8 @@ function usePriceHistory(): PriceHistoryState {
 
 export default function SpotClient({ globalData, fearAndGreed, coins, exchanges }: Props) {
   const [tf, setTf]           = useState<Timeframe>("1D");
-  const [mounted, setMounted] = useState(false);
+  const mounted               = useSyncExternalStore(() => () => {}, () => true, () => false);
   const priceHistory          = usePriceHistory();
-
-  useEffect(() => { setMounted(true); }, []);
 
   /** Slice price history based on selected timeframe */
   const slicePriceData = useCallback(

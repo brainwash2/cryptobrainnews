@@ -8,7 +8,7 @@
  *
  * Both use pre‑fetched server data and slice client‑side.
  */
-import React, { useState, useEffect } from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -96,9 +96,8 @@ const CATEGORY_COLORS = [
 /* ── Component ───────────────────────────────────────────────────────────── */
 
 export default function DeFiTvlClient({ categories, totalHistory }: Props) {
-  const [tf, setTf]           = useState<Timeframe>("30D");
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const [tf, setTf]  = useState<Timeframe>("30D");
+  const mounted       = useSyncExternalStore(() => () => {}, () => true, () => false);
 
   const tvlData = sliceHistory(totalHistory, tf);
 

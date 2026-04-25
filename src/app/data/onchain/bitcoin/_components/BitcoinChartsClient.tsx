@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import {
   ResponsiveContainer, AreaChart, Area,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -17,9 +17,8 @@ interface Props {
 const AXIS = { stroke: "#444", fontSize: 9, fontFamily: "monospace", tickLine: false, axisLine: false } as const;
 
 export default function BitcoinChartsClient({ addrData, txData, hashData, feeData, mempoolData }: Props) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const [days, setDays] = useState<7 | 30 | 90>(30);
-  useEffect(() => { setMounted(true); }, []);
 
   const slice = (data: BtcChartRow[]) => {
     const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date));
@@ -75,6 +74,7 @@ export default function BitcoinChartsClient({ addrData, txData, hashData, feeDat
                     <YAxis {...AXIS} width={52}
                       tickFormatter={(v: number) => v >= 1e6 ? `${(v/1e6).toFixed(1)}M` : `${(v/1e3).toFixed(0)}K`} />
                     <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: 11 }}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       formatter={(v: any) => [`${Number(v).toLocaleString()}`, "Addresses"]} />
                     <Area type="monotone" dataKey="value" stroke="#f97316" fill="url(#gradAddr)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
                   </AreaChart>
@@ -98,6 +98,7 @@ export default function BitcoinChartsClient({ addrData, txData, hashData, feeDat
                     <YAxis {...AXIS} width={52}
                       tickFormatter={(v: number) => v >= 1e6 ? `${(v/1e6).toFixed(1)}M` : `${(v/1e3).toFixed(0)}K`} />
                     <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: 11 }}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       formatter={(v: any) => [`${Number(v).toLocaleString()}`, "Txns"]} />
                     <Bar dataKey="value" fill="#FABF2C" fillOpacity={0.8} radius={[1, 1, 0, 0]} isAnimationActive={false} />
                   </BarChart>
@@ -131,6 +132,7 @@ export default function BitcoinChartsClient({ addrData, txData, hashData, feeDat
                     <YAxis {...AXIS} width={52}
                       tickFormatter={(v: number) => v >= 1e9 ? `${(v/1e9).toFixed(0)}G` : v >= 1e6 ? `${(v/1e6).toFixed(0)}M` : `${(v/1e3).toFixed(0)}K`} />
                     <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: 11 }}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       formatter={(v: any) => [`${Number(v).toLocaleString()} H/s`, "Hash Rate"]} />
                     <Area type="monotone" dataKey="value" stroke="#00d672" fill="url(#gradHash)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
                   </AreaChart>
@@ -161,6 +163,7 @@ export default function BitcoinChartsClient({ addrData, txData, hashData, feeDat
                     <YAxis {...AXIS} width={52}
                       tickFormatter={(v: number) => `$${v >= 1e3 ? (v/1e3).toFixed(1) + 'K' : v.toFixed(2)}`} />
                     <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: 11 }}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       formatter={(v: any) => [`$${Number(v).toFixed(2)}`, "Avg Fee"]} />
                     <Area type="monotone" dataKey="value" stroke="#ff4757" fill="url(#gradFee)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
                   </AreaChart>
@@ -191,6 +194,7 @@ export default function BitcoinChartsClient({ addrData, txData, hashData, feeDat
                     <YAxis {...AXIS} width={52}
                       tickFormatter={(v: number) => v >= 1e6 ? `${(v/1e6).toFixed(1)}MB` : `${(v/1e3).toFixed(0)}KB`} />
                     <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: 11 }}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       formatter={(v: any) => [`${(Number(v) / 1e6).toFixed(2)} MB`, "Mempool"]} />
                     <Area type="monotone" dataKey="value" stroke="#3b82f6" fill="url(#gradMem)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
                   </AreaChart>
