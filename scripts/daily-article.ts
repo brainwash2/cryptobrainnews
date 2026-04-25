@@ -319,32 +319,23 @@ async function processArticle(
     ],
   };
 
-  const payload: SanityArticlePayload = {
+  // Only fields defined in the Sanity "post" schema are sent.
+  const payload = {
     _type: 'post',
     title: finalPolish.title,
     slug: { _type: 'slug', current: finalPolish.slug },
     body: [bodyBlock],
-    metaDescription: finalPolish.metaDescription,   // for type compliance (ignored by Sanity)
-    sentiment: deepSeek?.sentiment ?? 'neutral',    // for type compliance (ignored)
-    relatedTickers: deepSeek?.relatedTickers ?? [], // for type compliance (ignored)
-    sourceUrl: item.link,                           // for type compliance (ignored)
     excerpt: grok.summary.slice(0, 180),
     category: deepSeek?.category ?? 'News',
     tags: deepSeek?.tags ?? [],
     publishedAt: new Date().toISOString(),
     status: 'published',
-    generatedBy: {
-      grok,
-      ...(deepSeek ? { deepSeek } : {}),
-      ...(gemini ? { gemini } : {}),
-    },
-    pipelineRunId: runId,
     seo: {
       metaTitle: finalPolish.title.slice(0, 70),
       metaDescription: finalPolish.metaDescription.slice(0, 160),
       noIndex: false,
     },
-  };
+  } as SanityArticlePayload;
 
   let sanityResult: SanityWriteResult;
   try {

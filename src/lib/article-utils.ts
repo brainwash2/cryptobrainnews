@@ -7,5 +7,6 @@ export function articleHref(article: WeightedArticle): string {
   if (article.sourceType === 'editorial' || article.sourceType === 'alpha') {
     return `/news/${article.id}`;
   }
-  return article.url;
+  // Fallback to internal link if no external URL is available
+  return article.url ?? `/news/${article.id}`;
 }
