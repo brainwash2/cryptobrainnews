@@ -1192,3 +1192,22 @@ Next: Part 7 — Vercel.json cron config, health-check API, environment variable
 	•	Reference: TASK-P7-001 — Part 7 Ops Hardening
 	•	New Status: COMPLETED
 	•	Notes: Delivered vercel.json with 5 cron jobs, daily-article cron route, broadcast-drain cron route, sitemap-warm cron route, health check API, health cron route, env-audit module, ops alerter, and smoke-test script. All files under src/ compile cleanly. News pipeline audit (Parts 1-7) fully delivered.
+
+## TASK-DATA-STEP3-7 | Data Terminal Phase 1 Steps 3-7 | 2026-04-25T04:30:00Z | STATUS: COMPLETED
+Files delivered:
+  src/app/data/markets/spot/_components/SpotClient.tsx (modified — BTC/ETH TvLightweightChart)
+  src/app/data/onchain/bitcoin/page.tsx (modified — 3 new fetchBtcChart calls)
+  src/app/data/onchain/bitcoin/_components/BitcoinChartsClient.tsx (modified — hash-rate, fees, mempool charts)
+  src/app/data/onchain/ethereum/page.tsx (modified — uses EthTvlClient)
+  src/app/data/onchain/ethereum/_components/EthTvlClient.tsx (new — Recharts AreaChart)
+  src/app/data/onchain/solana/page.tsx (modified — 60 TPS samples, uses SolanaChartsClient)
+  src/app/data/onchain/solana/_components/SolanaChartsClient.tsx (new — TPS + TVL Recharts)
+  src/app/data/defi/tvl/_components/DeFiTvlClient.tsx (modified — shared TimeframeSelector)
+Scope:
+  Step 3: BTC/ETH price history via TvLightweightChart (CoinGecko market_chart, client-side fetch)
+  Step 4: Bitcoin hash-rate, transaction-fees-usd, mempool-size charts (blockchain.info, server-side)
+  Step 5: Ethereum DeFi TVL — CSS bar chart replaced with Recharts AreaChart
+  Step 6: Solana TPS history (60 samples from RPC) + TVL Recharts AreaChart
+  Step 7: DeFi TVL — custom button group replaced with shared TimeframeSelector
+Rules enforced: isAnimationActive={false}, mounted guard, no mock data, no premium gates, strict TypeScript
+Next: Phase 2 — Futures & Perpetuals, ETFs, Stablecoins deep dive, Treasuries, Scaling Solutions

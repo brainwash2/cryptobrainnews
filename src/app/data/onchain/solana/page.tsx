@@ -1,6 +1,8 @@
 import React, { Suspense } from "react";
-import { DataHeader }    from "../../_components/DataHeader";
-import { ChartSkeleton } from "../../_components/ChartSkeleton";
+import { DataHeader }       from "../../_components/DataHeader";
+import { ChartSkeleton }    from "../../_components/ChartSkeleton";
+import SolanaChartsClient   from "./_components/SolanaChartsClient";
+import type { TpsPoint }    from "./_components/SolanaChartsClient";
 
 export const metadata = { title: "Solana On-Chain | CryptoBrainNews" };
 export const revalidate = 300;
@@ -29,7 +31,7 @@ async function SolData() {
   const tvlR   = await ft("https://api.llama.fi/v2/historicalChainTvl/Solana");
   const tpsR   = await ft("https://api.mainnet-beta.solana.com", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getRecentPerformanceSamples", params: [1] }),
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getRecentPerformanceSamples", params: [60] }),
   });
 
   const [priceJ, tvlJ, tpsJ] = await Promise.allSettled([
@@ -42,9 +44,23 @@ async function SolData() {
   const solPrice = priceJ.status === "fulfilled" ? (priceJ.value as any)?.solana?.usd as number ?? 0 : 0;
   const tvlRaw   = tvlJ.status   === "fulfilled" ? (tvlJ.value as Array<{date:number;tvl:number}>) ?? [] : [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tpsSample = tpsJ.status  === "fulfilled" ? (tpsJ.value as any)?.result?.[0] : null;
-  const liveTps   = tpsSample?.numTransactions && tpsSample?.samplePeriodSecs
-    ? Math.round(tpsSample.numTransactions / tpsSample.samplePeriodSecs) : 0;
+  const tpsSamples = tpsJ.status  === "fulfilled" ? (tpsJ.value as any)?.result as Array<{
+    numTransactions: number;
+    samplePeriodSecs: number;
+    slot: number;
+  }> ?? [] : [];
+
+  // Compute TPS from each sample (reversed so oldest first)
+  const tpsData: TpsPoint[] = [...tpsSamples]
+    .reverse()
+    .map((s, i) => ({
+      label: String(i + 1),
+      tps: s.samplePeriodSecs > 0 ? Math.round(s.numTransactions / s.samplePeriodSecs) : 0,
+    }))
+    .filter((p) => p.tps > 0);
+
+  const liveTps = tpsSamples.length > 0 && tpsSamples[0]?.samplePeriodSecs > 0
+    ? Math.round(tpsSamples[0].numTransactions / tpsSamples[0].samplePeriodSecs) : 0;
 
   const latestTvl = Array.isArray(tvlRaw) && tvlRaw.length ? tvlRaw[tvlRaw.length - 1]?.tvl ?? 0 : 0;
   const tvlChart  = Array.isArray(tvlRaw) ? tvlRaw.slice(-90).map((p) => ({
@@ -71,31 +87,9 @@ async function SolData() {
         <Card label="Source"       value="Mainnet RPC" sub="api.mainnet-beta.solana.com" color="#888" />
         <Card label="Network"      value="Solana" sub="High-performance L1" color="#9945ff" />
       </div>
-      {tvlChart.length > 0 && (() => {
-        const max = Math.max(...tvlChart.map((x) => x.tvl));
-        return (
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#9945ff] pl-3 mb-4">
-              Solana DeFi TVL (90D)
-            </h3>
-            <p className="text-[10px] text-[#555] font-mono pl-3 mb-4">Source: DefiLlama</p>
-            <div className="flex items-end gap-[2px] h-24">
-              {tvlChart.map((p, i) => (
-                <div key={i} className="flex-1 flex flex-col justify-end"
-                  title={`$${(p.tvl/1e9).toFixed(2)}B — ${p.date}`}>
-                  <div className="w-full rounded-sm opacity-80"
-                    style={{ height: `${Math.max(max > 0 ? (p.tvl/max)*100 : 0, 2)}%`, backgroundColor: "#9945ff" }} />
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between text-[9px] font-mono text-[#333] mt-2">
-              <span>{tvlChart[0]?.date}</span>
-              <span className="text-[#9945ff]">${(latestTvl/1e9).toFixed(2)}B</span>
-              <span>{tvlChart[tvlChart.length-1]?.date}</span>
-            </div>
-          </div>
-        );
-      })()}
+
+      {/* Recharts charts — TPS history + TVL replaces the old CSS bar chart */}
+      <SolanaChartsClient tpsData={tpsData} tvlChart={tvlChart} latestTvl={latestTvl} />
     </div>
   );
 }

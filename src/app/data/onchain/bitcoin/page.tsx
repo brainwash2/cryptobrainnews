@@ -47,10 +47,13 @@ async function fetchBtcChart(chart: string, days: number): Promise<BtcChartRow[]
 }
 
 async function BitcoinData() {
-  const [btcStats, addrData, txData] = await Promise.all([
+  const [btcStats, addrData, txData, hashData, feeData, mempoolData] = await Promise.all([
     getBitcoinStats().catch(() => null),
-    fetchBtcChart("n-unique-addresses", 90),
-    fetchBtcChart("n-transactions",     90),
+    fetchBtcChart("n-unique-addresses",    90),
+    fetchBtcChart("n-transactions",        90),
+    fetchBtcChart("hash-rate",             90),
+    fetchBtcChart("transaction-fees-usd",  90),
+    fetchBtcChart("mempool-size",          90),
   ]);
 
   return (
@@ -81,13 +84,18 @@ async function BitcoinData() {
         </div>
       ) : (
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-8 text-center">
-          <p className="text-[#555] font-mono text-xs uppercase">Ne
-            twork stats temporarily unavailable</p>
+          <p className="text-[#555] font-mono text-xs uppercase">Network stats temporarily unavailable</p>
         </div>
       )}
 
       {/* Charts client component — handles timeframe selector + rendering */}
-      <BitcoinChartsClient addrData={addrData} txData={txData} />
+      <BitcoinChartsClient
+        addrData={addrData}
+        txData={txData}
+        hashData={hashData}
+        feeData={feeData}
+        mempoolData={mempoolData}
+      />
 
       <div className="border border-[#1a1a1a] bg-[#080808] p-5">
         <h3 className="text-xs font-black uppercase tracking-widest text-white mb-4">About These Metrics</h3>

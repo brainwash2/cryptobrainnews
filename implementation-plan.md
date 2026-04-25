@@ -910,3 +910,44 @@ curl -s https://cryptobrainnews.vercel.app/tags -o /dev/null -w '%{http_code}\n'
 	•	Reference: Phase X
 	•	New Status: COMPLETED
 	•	Notes: Summary notes.
+
+## Phase 1 MVP — Steps 3-7 Complete (2026-04-25)
+
+### Step 3: SpotClient BTC/ETH Price Charts
+- Added `usePriceHistory()` hook fetching CoinGecko `/coins/{id}/market_chart` client-side
+- Two side-by-side `TvLightweightChart` panels (BTC orange #F7931A, ETH blue #627EEA)
+- Hidden on 1D timeframe (movers chart sufficient)
+- Data sliced to 7D or 30D based on selected timeframe
+
+### Step 4: Bitcoin On-Chain — 3 New Charts
+- Server-side fetches: `hash-rate`, `transaction-fees-usd`, `mempool-size` (blockchain.info)
+- Three additional Recharts AreaCharts in BitcoinChartsClient (green/red/blue themed)
+- Fixed missing `isAnimationActive={false}` on existing Active Addresses area
+- Fixed broken "Network stats temporarily unavailable" text wrapping
+
+### Step 5: Ethereum TVL — Recharts AreaChart
+- Created `EthTvlClient.tsx` replacing CSS bar chart with proper Recharts AreaChart
+- Gradient fill (#3b82f6), dark tooltips, mounted guard, isAnimationActive={false}
+- Server data pass-through preserved (DefiLlama 90D)
+
+### Step 6: Solana TPS History
+- Changed RPC `getRecentPerformanceSamples` param from `[1]` to `[60]`
+- Created `SolanaChartsClient.tsx` with TPS history + TVL Recharts AreaCharts
+- Purple #9945FF theme, computed TPS from numTransactions/samplePeriodSecs
+- Replaced CSS bar TVL chart with Recharts AreaChart
+
+### Step 7: DeFi TVL — TimeframeSelector
+- Replaced custom `TF` type and button group with shared `TimeframeSelector`
+- Available timeframes: 30D, YTD, 1Y (via `available` prop)
+- Mapped `Timeframe` to days count via `DAYS_MAP` record
+
+### Verification
+- `npx tsc --noEmit` — 0 errors
+- All `isAnimationActive={false}` verified on every Recharts animation-capable component
+- No mock data — all numbers from live APIs (CoinGecko, blockchain.info, DefiLlama, Solana RPC)
+- No AlphaGate or premium gates present
+
+[2026-04-25] STATUS UPDATE
+	•	Reference: Phase 1 MVP Steps 3-7
+	•	New Status: COMPLETED
+	•	Notes: All 5 steps delivered. TypeScript clean. Ready for Phase 2.

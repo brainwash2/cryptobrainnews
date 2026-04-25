@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { DataHeader }    from "../../_components/DataHeader";
 import { ChartSkeleton } from "../../_components/ChartSkeleton";
+import EthTvlClient      from "./_components/EthTvlClient";
 
 export const metadata = { title: "Ethereum On-Chain | CryptoBrainNews" };
 export const revalidate = 1800;
@@ -82,31 +83,9 @@ async function EthData() {
         <Card label="% ETH Staked"     value={totalStaked > 0 ? `${((totalStaked/120_000_000)*100).toFixed(1)}%` : "—"} sub="of ~120M supply" color="#888" />
         <Card label="ETH Burned"       value="4.4M+ ETH" sub="since EIP-1559" color="#ff4757" />
       </div>
-      {tvlChart.length > 0 && (() => {
-        const max = Math.max(...tvlChart.map((x) => x.tvl));
-        return (
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#3b82f6] pl-3 mb-4">
-              Ethereum DeFi TVL (90D)
-            </h3>
-            <p className="text-[10px] text-[#555] font-mono pl-3 mb-4">Source: DefiLlama</p>
-            <div className="flex items-end gap-[2px] h-24">
-              {tvlChart.map((p, i) => (
-                <div key={i} className="flex-1 flex flex-col justify-end"
-                  title={`$${(p.tvl/1e9).toFixed(2)}B — ${p.date}`}>
-                  <div className="w-full rounded-sm opacity-80"
-                    style={{ height: `${Math.max(max > 0 ? (p.tvl/max)*100 : 0, 2)}%`, backgroundColor: "#3b82f6" }} />
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between text-[9px] font-mono text-[#333] mt-2">
-              <span>{tvlChart[0]?.date}</span>
-              <span className="text-[#3b82f6]">${(latestTvl/1e9).toFixed(1)}B</span>
-              <span>{tvlChart[tvlChart.length-1]?.date}</span>
-            </div>
-          </div>
-        );
-      })()}
+
+      {/* Recharts AreaChart replaces the old CSS bar chart */}
+      <EthTvlClient tvlChart={tvlChart} latestTvl={latestTvl} />
     </div>
   );
 }

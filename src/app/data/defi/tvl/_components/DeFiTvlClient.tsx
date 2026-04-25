@@ -21,8 +21,8 @@ import {
   Tooltip,
   Cell,
 } from "recharts";
-
-type TF = "30D" | "90D" | "1Y";
+import { TimeframeSelector } from "../../../_components/TimeframeSelector";
+import type { Timeframe }    from "../../../_components/TimeframeSelector";
 
 interface Category {
   category: string;
@@ -48,8 +48,11 @@ function fmtUsd(n: number): string {
   return `$${n.toLocaleString()}`;
 }
 
-function sliceHistory(data: TvlHistoryPoint[], tf: TF): TvlHistoryPoint[] {
-  const days = tf === "30D" ? 30 : tf === "90D" ? 90 : 365;
+function sliceHistory(data: TvlHistoryPoint[], tf: Timeframe): TvlHistoryPoint[] {
+  const DAYS_MAP: Record<Timeframe, number> = {
+    "1D": 1, "7D": 7, "30D": 30, "YTD": 365, "1Y": 365,
+  };
+  const days = DAYS_MAP[tf] ?? 30;
   return data.slice(-days);
 }
 
@@ -93,7 +96,7 @@ const CATEGORY_COLORS = [
 /* ── Component ───────────────────────────────────────────────────────────── */
 
 export default function DeFiTvlClient({ categories, totalHistory }: Props) {
-  const [tf, setTf]           = useState<TF>("30D");
+  const [tf, setTf]           = useState<Timeframe>("30D");
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -113,22 +116,11 @@ export default function DeFiTvlClient({ categories, totalHistory }: Props) {
               Source: DefiLlama (Ethereum TVL as proxy)
             </p>
           </div>
-          <div className="flex gap-1">
-            {(["30D", "90D", "1Y"] as TF[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTf(t)}
-                className={[
-                  "px-3 py-1.5 text-[10px] font-black uppercase tracking-widest border transition-all",
-                  tf === t
-                    ? "bg-[#FABF2C] text-black border-[#FABF2C]"
-                    : "text-[#555] border-[#1a1a1a] hover:border-[#FABF2C]/60 hover:text-[#FABF2C]",
-                ].join(" ")}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+          <TimeframeSelector
+            value={tf}
+            onChange={setTf}
+            available={["30D", "YTD", "1Y"]}
+          />
         </div>
         <div style={{ height: 240 }}>
           {mounted && tvlData.length > 0 ? (

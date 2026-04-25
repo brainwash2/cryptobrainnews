@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { TimeframeSelector }  from "../../../_components/TimeframeSelector";
 import type { Timeframe }     from "../../../_components/TimeframeSelector";
+import TvLightweightChart     from "../../../_components/charts/TvLightweightChart";
+import type { TvDataPoint }   from "../../../_components/charts/TvLightweightChart";
 import {
   ResponsiveContainer,
   BarChart,
@@ -229,13 +231,73 @@ function DominanceChart({
   );
 }
 
+/* ── Price History (CoinGecko market_chart) ──────────────────────────────── */
+
+interface PriceHistoryState {
+  btc: TvDataPoint[];
+  eth: TvDataPoint[];
+  loading: boolean;
+}
+
+function usePriceHistory(): PriceHistoryState {
+  const [state, setState] = useState<PriceHistoryState>({ btc: [], eth: [], loading: true });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [btcRes, ethRes] = await Promise.all([
+          fetch(
+            "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily"
+          ),
+          fetch(
+            "https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=30&interval=daily"
+          ),
+        ]);
+
+        const toPoints = async (res: Response): Promise<TvDataPoint[]> => {
+          if (!res.ok) return [];
+          const json = await res.json() as { prices?: [number, number][] };
+          return (json.prices ?? []).map(([ts, price]) => ({
+            time: new Date(ts).toISOString().slice(0, 10),
+            value: price,
+          }));
+        };
+
+        if (cancelled) return;
+        setState({
+          btc: await toPoints(btcRes),
+          eth: await toPoints(ethRes),
+          loading: false,
+        });
+      } catch {
+        if (!cancelled) setState((s) => ({ ...s, loading: false }));
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  return state;
+}
+
 /* ── Main ─────────────────────────────────────────────────────────────────── */
 
 export default function SpotClient({ globalData, fearAndGreed, coins, exchanges }: Props) {
   const [tf, setTf]           = useState<Timeframe>("1D");
   const [mounted, setMounted] = useState(false);
+  const priceHistory          = usePriceHistory();
 
   useEffect(() => { setMounted(true); }, []);
+
+  /** Slice price history based on selected timeframe */
+  const slicePriceData = useCallback(
+    (data: TvDataPoint[]): TvDataPoint[] => {
+      if (tf === "7D") return data.slice(-7);
+      return data; // 30D = full 30-day dataset
+    },
+    [tf],
+  );
 
   const totalMcap     = globalData?.total_market_cap?.usd ?? 0;
   const total24hVol   = globalData?.total_volume?.usd ?? 0;
@@ -328,6 +390,57 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
           <DominanceChart globalData={globalData} mounted={mounted} />
         </div>
       </div>
+
+      {/* Chart row 1b: BTC & ETH Price History (hidden on 1D) */}
+      {tf !== "1D" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+            <div className="mb-4">
+              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">
+                Bitcoin Price ({tf})
+              </h3>
+              <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">
+                Source: CoinGecko market_chart - Client fetch
+              </p>
+            </div>
+            {priceHistory.loading ? (
+              <div className="flex items-center justify-center h-[220px] text-[#333] font-mono text-xs uppercase animate-pulse">
+                Loading BTC chart...
+              </div>
+            ) : (
+              <TvLightweightChart
+                data={slicePriceData(priceHistory.btc)}
+                lineColor="#F7931A"
+                height={220}
+                title="BTC Price"
+              />
+            )}
+          </div>
+
+          <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+            <div className="mb-4">
+              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">
+                Ethereum Price ({tf})
+              </h3>
+              <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">
+                Source: CoinGecko market_chart - Client fetch
+              </p>
+            </div>
+            {priceHistory.loading ? (
+              <div className="flex items-center justify-center h-[220px] text-[#333] font-mono text-xs uppercase animate-pulse">
+                Loading ETH chart...
+              </div>
+            ) : (
+              <TvLightweightChart
+                data={slicePriceData(priceHistory.eth)}
+                lineColor="#627EEA"
+                height={220}
+                title="ETH Price"
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Chart row 2: Exchange Volume */}
       <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
