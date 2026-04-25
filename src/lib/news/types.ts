@@ -98,21 +98,31 @@ export interface PipelineRun {
 
 // ─── Sanity ──────────────────────────────────────────────────────────────────
 
-/** Minimal shape we write to Sanity – extend with your full schema fields. */
+/**
+ * Minimal shape we write to Sanity.
+ * The `body` field can be either a plain string or a Portable Text array.
+ */
 export interface SanityArticlePayload {
-    _type: 'post';
+  _type: 'post';                           // must match your Sanity schema name
   title: string;
   slug: { _type: 'slug'; current: string };
-  metaDescription: string;
-  body: string;           // Portable Text or Markdown depending on your schema
-  tags: string[];
-  category: string;
-  sentiment: 'bullish' | 'bearish' | 'neutral';
-  relatedTickers: string[];
-  sourceUrl: string;
-  publishedAt: string;    // ISO-8601
-  generatedBy: AIStageOutputs;
-  pipelineRunId: string;
+  metaDescription?: string;                // optional; we put this in seo.metaDescription now
+  body: string | Array<Record<string, unknown>>;   // allow both plain string and Portable Text
+  tags?: string[];
+  category?: string;
+  sentiment?: 'bullish' | 'bearish' | 'neutral';
+  relatedTickers?: string[];
+  sourceUrl?: string;
+  publishedAt: string;                     // ISO-8601
+  generatedBy?: AIStageOutputs;            // removed from payload to avoid schema warnings
+  pipelineRunId?: string;                  // same
+  excerpt?: string;
+  status?: string;                         // 'published', 'draft', etc.
+  seo?: {
+    metaTitle: string;
+    metaDescription: string;
+    noIndex: boolean;
+  };
 }
 
 export interface SanityWriteResult {
