@@ -17,7 +17,6 @@ import type {
   GrokSummary,
   DeepSeekEnrichment,
   GeminiPolish,
-  AIStageOutputs,
   SanityArticlePayload,
   SanityWriteResult,
   PipelineRun,
@@ -194,7 +193,6 @@ function buildFallbackPolish(grok: GrokSummary, deepSeek?: DeepSeekEnrichment): 
 
 // ── Sanity helpers ───────────────────────────────────────────────────────
 async function slugExistsInSanity(slug: string): Promise<boolean> {
-  // IMPORTANT: Use 'post' as the document type, matching your Sanity schema
   const query = encodeURIComponent(
     `*[_type == "post" && slug.current == "${slug}"][0]._id`,
   );
@@ -291,11 +289,6 @@ async function processArticle(
   }
 
   const finalPolish = gemini ?? buildFallbackPolish(grok, deepSeek);
-  const stageOutputs: AIStageOutputs = {
-    grok,
-    ...(deepSeek ? { deepSeek } : {}),
-    ...(gemini ? { gemini } : {}),
-  };
 
   // ── Sanity write ─────────────────────────────────────────────────
   logger.setStage('sanity-write');
@@ -310,27 +303,43 @@ async function processArticle(
     logger.warn('Slug check failed – proceeding with write', { cause: String(err) });
   }
 
-  // Construct the Sanity document. NOTICE: _type is 'post', not 'article'!
-  const payload: SanityArticlePayload = {
-    _type: 'post',   // <-- Must match your Sanity schema
+  // Convert the plain‑text body into a valid Portable Text block (required by Sanity)
+  const bodyBlock = {
+    _key: randomUUID(),
+    _type: 'block',
+    style: 'normal',
+    markDefs: [],
+    children: [
+      {
+        _type: 'span',
+        _key: randomUUID(),
+        text: finalPolish.body,
+        marks: [],
+      },
+    ],
+  };
+
+  const payload = {
+    _type: 'post',
     title: finalPolish.title,
     slug: { _type: 'slug', current: finalPolish.slug },
-    metaDescription: finalPolish.metaDescription,
-    body: finalPolish.body,
-    tags: deepSeek?.tags ?? [],
+    body: [bodyBlock],
+    excerpt: grok.summary.slice(0, 180),
     category: deepSeek?.category ?? 'News',
-    sentiment: deepSeek?.sentiment ?? 'neutral',
-    relatedTickers: deepSeek?.relatedTickers ?? [],
-    sourceUrl: item.link,
+    tags: deepSeek?.tags ?? [],
     publishedAt: new Date().toISOString(),
-    generatedBy: stageOutputs,
-    pipelineRunId: runId,
+    status: 'published',
+    seo: {
+      metaTitle: finalPolish.title.slice(0, 70),
+      metaDescription: finalPolish.metaDescription.slice(0, 160),
+      noIndex: false,
+    },
   };
 
   let sanityResult: SanityWriteResult;
   try {
     const { result, attempts } = await withRetry(
-      () => writeToSanity(payload),
+      () => writeToSanity(payload as SanityArticlePayload),
       3,
       2000,
       'Sanity',
