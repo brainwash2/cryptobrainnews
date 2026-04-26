@@ -1,17 +1,15 @@
-'use client';
-
-import React, { Suspense, useState } from 'react';
+import React, { Suspense } from 'react';
 import { DataHeader }       from '../_components/DataHeader';
 import { ChartSkeleton }    from '../_components/ChartSkeleton';
 import ScalingTable          from './_components/ScalingTable';
 import TvlBars               from './_components/TvlBars';
+import { QuickLink }         from './_components/QuickLink';
 import {
   getAllL2s,
   getL2FeeData,
   getOptimisticRollups,
   getZkRollups,
 } from '@/lib/scaling-data';
-import Link from 'next/link';
 
 export const metadata = {
   title: 'L2 Scaling Overview | CryptoBrainNews',
@@ -23,25 +21,6 @@ function fmtUsd(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
   if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
   return '—';
-}
-
-function QuickLink({ href, label, color }: { href: string; label: string; color: string }) {
-  const [hover, setHover] = useState(false);
-  return (
-    <Link
-      href={href}
-      className="px-4 py-2 border text-[10px] font-black uppercase tracking-widest transition-all"
-      style={{
-        borderColor: color,
-        color: hover ? '#000' : color,
-        background: hover ? color : 'transparent',
-      }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-    >
-      {label}
-    </Link>
-  );
 }
 
 async function ScalingOverviewData() {
