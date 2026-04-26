@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import React, { useState, useCallback, useSyncExternalStore } from "react";
 import { TimeframeSelector }  from "../../../_components/TimeframeSelector";
 import type { Timeframe }     from "../../../_components/TimeframeSelector";
 import TvLightweightChart     from "../../../_components/charts/TvLightweightChart";
@@ -68,11 +68,7 @@ function fngColor(val: string): string {
   return "text-[#ff4757]";
 }
 
-/* ── Shared chart tooltip ─────────────────────────────────────────────────
-   Use plain `any` for Recharts tooltip props — Recharts types payload as
-   `readonly Payload<V,N>[]` which conflicts with mutable array types.
-   This is the idiomatic workaround used across the codebase (see BlockChartCard).
-──────────────────────────────────────────────────────────────────────────── */
+/* ── Shared chart tooltip ───────────────────────────────────────────────── */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function PctTooltip({ active, payload, label }: any) {
@@ -101,7 +97,7 @@ function BtcTooltip({ active, payload, label }: any) {
   );
 }
 
-/* ── Chart 1: Top 12 Movers (timeframe-controlled) ──────────────────────── */
+/* ── Chart 1: Top 12 Movers ────────────────────────────────────────────── */
 
 function PerformanceChart({
   coins,
@@ -144,7 +140,7 @@ function PerformanceChart({
   );
 }
 
-/* ── Chart 2: Top 10 Exchanges by 24h Volume ─────────────────────────────── */
+/* ── Chart 2: Top 10 Exchanges by 24h Volume ────────────────────────────── */
 
 function ExchangeVolumeChart({
   exchanges,
@@ -180,7 +176,7 @@ function ExchangeVolumeChart({
   );
 }
 
-/* ── Chart 3: Market Cap Dominance ───────────────────────────────────────── */
+/* ── Chart 3: Market Cap Dominance ──────────────────────────────────────── */
 
 const DOM_COLORS: Record<string, string> = {
   BTC:    "#F7931A",
@@ -231,7 +227,7 @@ function DominanceChart({
   );
 }
 
-/* ── Price History (CoinGecko market_chart) ──────────────────────────────── */
+/* ── Price History (CoinGecko market_chart) ─────────────────────────────── */
 
 interface PriceHistoryState {
   btc: TvDataPoint[];
@@ -242,7 +238,7 @@ interface PriceHistoryState {
 function usePriceHistory(): PriceHistoryState {
   const [state, setState] = useState<PriceHistoryState>({ btc: [], eth: [], loading: true });
 
-  useEffect(() => {
+  React.useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
@@ -258,10 +254,15 @@ function usePriceHistory(): PriceHistoryState {
         const toPoints = async (res: Response): Promise<TvDataPoint[]> => {
           if (!res.ok) return [];
           const json = await res.json() as { prices?: [number, number][] };
-          return (json.prices ?? []).map(([ts, price]) => ({
+          const raw = (json.prices ?? []).map(([ts, price]) => ({
             time: new Date(ts).toISOString().slice(0, 10),
             value: price,
           }));
+          // Deduplicate by date — keep the last entry for each day
+          const deduped = Array.from(
+            new Map(raw.map((d) => [d.time, d])).values()
+          ).sort((a, b) => a.time.localeCompare(b.time));
+          return deduped;
         };
 
         if (cancelled) return;
@@ -281,18 +282,17 @@ function usePriceHistory(): PriceHistoryState {
   return state;
 }
 
-/* ── Main ─────────────────────────────────────────────────────────────────── */
+/* ── Main ───────────────────────────────────────────────────────────────── */
 
 export default function SpotClient({ globalData, fearAndGreed, coins, exchanges }: Props) {
   const [tf, setTf]           = useState<Timeframe>("1D");
   const mounted               = useSyncExternalStore(() => () => {}, () => true, () => false);
   const priceHistory          = usePriceHistory();
 
-  /** Slice price history based on selected timeframe */
   const slicePriceData = useCallback(
     (data: TvDataPoint[]): TvDataPoint[] => {
       if (tf === "7D") return data.slice(-7);
-      return data; // 30D = full 30-day dataset
+      return data;
     },
     [tf],
   );
@@ -504,6 +504,7 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {coin.image && (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img src={coin.image} alt={coin.symbol} width={20} height={20} className="rounded-full shrink-0" />
                         )}
                         <span className="font-bold text-white">{coin.name}</span>

@@ -144,3 +144,64 @@
 - All Part 7 files created under src/ with correct paths
 - npx tsc --noEmit passes cleanly
 - News pipeline audit and refactor (Parts 1-7) COMPLETE
+
+## Data Terminal – Phase 1 MVP
+### Run ID: data-terminal-phase-1 — 2026-04-25
+
+- [x] Install lightweight-charts@^5.1.0
+- [x] TvLightweightChart component
+- [x] /data/markets/spot — BTC/ETH price history via CoinGecko
+- [x] /data/onchain/bitcoin — hash-rate, fees, mempool from blockchain.info
+- [x] /data/onchain/ethereum — EthTvlClient Recharts AreaChart
+- [x] /data/onchain/solana — TPS + TVL AreaChart (Solana RPC)
+- [x] /data/defi/tvl — TimeframeSelector integration
+
+## Data Terminal – Phase 2: Futures, ETFs, Stablecoins, Treasuries, Scaling
+### Run ID: data-terminal-phase-2 — 2026-04-25
+
+### Futures & Perpetuals
+- [x] Bybit v5 confirmed as live data source (derivatives.ts)
+- [x] OI history chart + funding rate chart with timeframe toggle (FuturesClient.tsx)
+- [x] Exchange volume rankings table (CoinGecko derivatives/exchanges)
+- [x] Live funding rate table (Bybit v5 /market/tickers?category=linear)
+- [x] FIX: Removed `any` casts → custom Tooltip content components
+- [x] FIX: Source badge "Binance" → "Bybit"
+- [x] FIX: Added isAnimationActive={false} to all chart elements
+
+### ETFs
+- [x] BTC ETFs: live AUM via BlackRock iShares + Grayscale scraper (etf-scraper.ts)
+- [x] ETH ETFs: same architecture
+- [x] SOL ETFs: filings tracker + live CoinGecko SOL price
+- [x] XRP ETFs: filings tracker + live CoinGecko XRP price
+- [x] Crypto ETFs: filings tracker + DOGE/LTC/ADA live prices
+- [x] ETF Comparison: combined BTC vs ETH view, all products ranked by AUM
+
+### Stablecoins
+- [x] USD-Pegged: DefiLlama stablecoins API → supply, dominance, peg health (StablecoinUsdClient.tsx)
+- [x] By Chain: chain-supply aggregation from DefiLlama, KPI cards, bar chart
+- [x] Non-USD, Non-Fiat: ComingSoon stubs in place
+
+### Treasuries
+- [x] BTC: CoinGecko public treasury API → holdings bar chart, P&L per company
+- [x] ETH: same architecture
+- [x] SOL: seed data (3 known holders) × live CoinGecko SOL price
+- [x] Crypto: merged BTC+ETH view, combined company table
+
+### Scaling Solutions
+- [x] Overview: OPT vs ZK split, fee leaderboard, full L2 table
+- [x] L2 Comparison: side-by-side OPT vs ZK, fee column from DefiLlama
+- [x] Optimistic: TVL bars, live gas prices from public RPCs
+- [x] ZK: TVL + proof technology comparison table
+- [x] L1 EVM: TVL bars + table
+- [x] L1 Non-EVM: TVL + VM/consensus reference
+- [x] Data Availability: Celestia, EigenDA, Avail, ETH Blobs cards + comparison
+
+### Review
+- 0 TypeScript errors (npx tsc --noEmit)
+- No mock data anywhere in Phase 2 pages
+- No premium gates (AlphaGate) in /data/* routes
+- All Recharts charts have isAnimationActive={false}
+- All client components have mounted guard
+- Bybit v5 confirmed live (Binance blocked on Vercel)
+- Phase 2 COMPLETE
+

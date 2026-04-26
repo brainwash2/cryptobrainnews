@@ -1,4 +1,6 @@
-import React, { Suspense } from 'react';
+'use client';
+
+import React, { Suspense, useState } from 'react';
 import { DataHeader }       from '../_components/DataHeader';
 import { ChartSkeleton }    from '../_components/ChartSkeleton';
 import ScalingTable          from './_components/ScalingTable';
@@ -21,6 +23,25 @@ function fmtUsd(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
   if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
   return '—';
+}
+
+function QuickLink({ href, label, color }: { href: string; label: string; color: string }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <Link
+      href={href}
+      className="px-4 py-2 border text-[10px] font-black uppercase tracking-widest transition-all"
+      style={{
+        borderColor: color,
+        color: hover ? '#000' : color,
+        background: hover ? color : 'transparent',
+      }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      {label}
+    </Link>
+  );
 }
 
 async function ScalingOverviewData() {
@@ -55,19 +76,7 @@ async function ScalingOverviewData() {
       {/* ── Quick Nav ──────────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-2">
         {QUICK_LINKS.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className="px-4 py-2 border text-[10px] font-black uppercase tracking-widest transition-all hover:text-black"
-            style={{
-              borderColor: l.color,
-              color:        l.color,
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = l.color; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-          >
-            {l.label}
-          </Link>
+          <QuickLink key={l.href} href={l.href} label={l.label} color={l.color} />
         ))}
       </div>
 

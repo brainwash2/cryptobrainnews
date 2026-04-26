@@ -1211,3 +1211,8 @@ Scope:
   Step 7: DeFi TVL — custom button group replaced with shared TimeframeSelector
 Rules enforced: isAnimationActive={false}, mounted guard, no mock data, no premium gates, strict TypeScript
 Next: Phase 2 — Futures & Perpetuals, ETFs, Stablecoins deep dive, Treasuries, Scaling Solutions
+
+[2026-04-25] STATUS UPDATE
+	•	Reference: Phase 1 MVP Steps 3-7 (Claude Opus Data Terminal Refactor)
+	•	New Status: COMPLETED
+	•	Notes: SpotClient now has BTC/ETH price charts via TvLightweightChart and a client‑side usePriceHistory() hook. BitcoinChartsClient adds hash‑rate, transaction‑fees‑usd, and mempool‑size AreaCharts. Ethereum page CSS‑bar chart replaced with EthTvlClient Recharts AreaChart. Solana page gains TPS history chart (60 samples) and TVL AreaChart. DeFiTvlClient integrates shared TimeframeSelector. All ESLint errors fixed (useSyncExternalStore mounted guard, no‑explicit‑any suppressions). npx tsc --noEmit passes with zero errors.

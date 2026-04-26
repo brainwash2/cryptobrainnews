@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import {
   ComposedChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, AreaChart, Area,
@@ -32,15 +32,54 @@ const CHART_STYLE = {
   eth:     '#3b82f6',
 };
 
+// --- Tooltip components (declared outside render to satisfy react-hooks/static-components) ---
+
+interface TooltipPayloadItem { name: string; value: number }
+interface ChartTooltipProps { active?: boolean; payload?: TooltipPayloadItem[]; label?: string }
+
+function OITooltip({ active, payload, label }: ChartTooltipProps) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs font-mono">
+      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
+      {payload.map((p) => (
+        <p key={p.name} className="text-white">
+          <span style={{ color: p.name.includes('BTC') ? CHART_STYLE.btc : CHART_STYLE.eth }}>{p.name.toUpperCase()}</span>:{' '}
+          <span className="font-black">${(p.value / 1e9).toFixed(2)}B</span>
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function FRTooltip({ active, payload, label }: ChartTooltipProps) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs font-mono">
+      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
+      {payload.map((p) => (
+        <p key={p.name} className="text-white">
+          <span style={{ color: p.name.includes('BTC') ? CHART_STYLE.btc : CHART_STYLE.eth }}>{p.name.toUpperCase()}</span>:{' '}
+          <span className="font-black">{p.value.toFixed(4)}%</span>
+        </p>
+      ))}
+    </div>
+  );
+}
+
+// --- Mounted guard via useSyncExternalStore (avoids set-state-in-effect) ---
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export default function FuturesClient({
   exchanges,
   fundingRates,
   oiHistory,
   fundingHistory,
 }: Props) {
-  const [tf, setTf]           = useState<Timeframe>('30D');
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const [tf, setTf] = useState<Timeframe>('30D');
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const totalVolume = exchanges.reduce((s, e) => s + (e.volume24h ?? 0), 0);
   const totalOi     = exchanges.reduce((s, e) => s + (e.openInterest ?? 0), 0);
@@ -51,23 +90,6 @@ export default function FuturesClient({
   const days        = tf === '7D' ? 7 : 30;
   const oiChartData = oiHistory.slice(-days);
   const frChartData = fundingHistory.slice(-days);
-
-  // Separate formatter functions with explicit any casting (works around Recharts strict types)
-  const oiFormatter: any = (value: any, name: string) => {
-    const n = typeof value === 'number' ? value : Number(value);
-    return [
-      isNaN(n) ? '—' : `$${(n / 1e9).toFixed(2)}B`,
-      name.toUpperCase(),
-    ];
-  };
-
-  const frFormatter: any = (value: any, name: string) => {
-    const n = typeof value === 'number' ? value : Number(value);
-    return [
-      isNaN(n) ? '—' : `${n.toFixed(4)}%`,
-      name.toUpperCase(),
-    ];
-  };
 
   return (
     <div className="space-y-10">
@@ -134,14 +156,8 @@ export default function FuturesClient({
                   tickFormatter={(v: number) => `$${(v / 1e9).toFixed(0)}B`}
                 />
                 <Tooltip
-                  contentStyle={{
-                    background: '#0a0a0a',
-                    border: '1px solid #1a1a1a',
-                    borderRadius: 0,
-                    fontFamily: 'monospace',
-                    fontSize: 11,
-                  }}
-                  formatter={oiFormatter}
+                  content={<OITooltip />}
+                  cursor={{ fill: '#ffffff08' }}
                 />
                 <Legend
                   iconType="line"
@@ -151,8 +167,8 @@ export default function FuturesClient({
                     textTransform: 'uppercase',
                   }}
                 />
-                <Bar dataKey="btc" name="BTC OI" fill={CHART_STYLE.btc} opacity={0.7} />
-                <Bar dataKey="eth" name="ETH OI" fill={CHART_STYLE.eth} opacity={0.7} />
+                <Bar dataKey="btc" name="BTC OI" fill={CHART_STYLE.btc} opacity={0.7} isAnimationActive={false} />
+                <Bar dataKey="eth" name="ETH OI" fill={CHART_STYLE.eth} opacity={0.7} isAnimationActive={false} />
               </ComposedChart>
             </ResponsiveContainer>
           ) : (
@@ -215,14 +231,8 @@ export default function FuturesClient({
                   tickFormatter={(v: number) => `${v.toFixed(3)}%`}
                 />
                 <Tooltip
-                  contentStyle={{
-                    background: '#0a0a0a',
-                    border: '1px solid #1a1a1a',
-                    borderRadius: 0,
-                    fontFamily: 'monospace',
-                    fontSize: 11,
-                  }}
-                  formatter={frFormatter}
+                  content={<FRTooltip />}
+                  cursor={{ fill: '#ffffff08' }}
                 />
                 <Legend
                   iconType="line"
@@ -240,6 +250,7 @@ export default function FuturesClient({
                   fill="url(#frBtc)"
                   strokeWidth={1.5}
                   dot={false}
+                  isAnimationActive={false}
                 />
                 <Area
                   type="monotone"
@@ -249,6 +260,7 @@ export default function FuturesClient({
                   fill="url(#frEth)"
                   strokeWidth={1.5}
                   dot={false}
+                  isAnimationActive={false}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -294,7 +306,7 @@ export default function FuturesClient({
         <div>
           <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-3"><span className="w-2 h-2 bg-[#00d672] rounded-full animate-pulse" />Live Funding Rates</div>
-            <span className="text-[9px] text-[#00d672] font-mono tracking-widest bg-[#00d672]/10 border border-[#00d672]/30 px-2 py-1">Binance</span>
+            <span className="text-[9px] text-[#00d672] font-mono tracking-widest bg-[#00d672]/10 border border-[#00d672]/30 px-2 py-1">Bybit</span>
           </h3>
           <div className="border border-[#1a1a1a] bg-[#0a0a0a] overflow-x-auto">
             <table className="w-full text-xs">

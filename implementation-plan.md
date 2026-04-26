@@ -951,3 +951,8 @@ curl -s https://cryptobrainnews.vercel.app/tags -o /dev/null -w '%{http_code}\n'
 	•	Reference: Phase 1 MVP Steps 3-7
 	•	New Status: COMPLETED
 	•	Notes: All 5 steps delivered. TypeScript clean. Ready for Phase 2.
+
+[2026-04-25] STATUS UPDATE
+	•	Reference: Phase 1 MVP (Steps 1-7)
+	•	New Status: COMPLETED
+	•	Notes: All seven Phase 1 MVP steps delivered across two commits (eebea58, 513e46d). SpotClient gains BTC/ETH price history; Bitcoin on‑chain gets three new blockchain‑metric charts; Ethereum and Solana pages replace CSS bars with proper Recharts AreaCharts; DeFi TVL integrates shared TimeframeSelector. 12 files changed, 1,750 insertions, 232 deletions. Strict TypeScript, zero mock data, zero premium gates. Ready for Phase 2 (Futures, ETFs, Stablecoins, Treasuries, Scaling).
