@@ -956,3 +956,8 @@ curl -s https://cryptobrainnews.vercel.app/tags -o /dev/null -w '%{http_code}\n'
 	•	Reference: Phase 1 MVP (Steps 1-7)
 	•	New Status: COMPLETED
 	•	Notes: All seven Phase 1 MVP steps delivered across two commits (eebea58, 513e46d). SpotClient gains BTC/ETH price history; Bitcoin on‑chain gets three new blockchain‑metric charts; Ethereum and Solana pages replace CSS bars with proper Recharts AreaCharts; DeFi TVL integrates shared TimeframeSelector. 12 files changed, 1,750 insertions, 232 deletions. Strict TypeScript, zero mock data, zero premium gates. Ready for Phase 2 (Futures, ETFs, Stablecoins, Treasuries, Scaling).
+
+[2026-04-27] STATUS UPDATE
+	•	Reference: Phase A — Already Possible (DeepSeek V4)
+	•	New Status: COMPLETED
+	•	Notes: All 11 tasks from the DeepSeek V4 research blueprint delivered. 15 files created/modified across Bitcoin, Ethereum, Futures, Stablecoins, ETFs, Spot, Revenue, Gas, and Prices pages. New components: RevenueTrendClient. L2 gas integrated via public RPC. Trending coins from CoinGecko. Fear & Greed 90D history from alternative.me. Next: Phase B — Dune SQL rewrites + new free API integrations.

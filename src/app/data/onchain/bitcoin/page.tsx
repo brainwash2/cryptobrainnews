@@ -6,11 +6,17 @@ import BitcoinChartsClient  from "./_components/BitcoinChartsClient";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
-  description: "Bitcoin network health - hash rate, mempool, fees, transactions, and active addresses.",
+  description: "Bitcoin network health - hash rate, mempool, fees, transactions, miner revenue, and UTXO age bands.",
 };
 export const revalidate = 1800;
 
 export interface BtcChartRow { date: string; value: number; }
+
+export interface UtxoAgeBand {
+  date: string;
+  band:  string;
+  value: number;
+}
 
 function StatCard({ label, value, sub, color = "#FABF2C" }: {
   label: string; value: string; sub?: string; color?: string;
@@ -46,26 +52,43 @@ async function fetchBtcChart(chart: string, days: number): Promise<BtcChartRow[]
   } catch { return []; }
 }
 
+async function fetchUtxoAgeBands(): Promise<UtxoAgeBand[]> {
+  try {
+    const url = "https://blockchain.info/charts/utxo-age?format=json&timespan=90days&sampled=true&cors=true";
+    const res = await fetch(url, { next: { revalidate: 1800 } });
+    if (!res.ok) return [];
+    const d = await res.json() as { values?: Array<{ x: number; y: number }> };
+    return (d.values ?? []).slice(-30).map((p) => ({
+      date: new Date(p.x * 1000).toISOString().slice(0, 10),
+      band: "UTXO",
+      value: p.y,
+    }));
+  } catch { return []; }
+}
+
 async function BitcoinData() {
-  const [btcStats, addrData, txData, hashData, feeData, mempoolData] = await Promise.all([
-    getBitcoinStats().catch(() => null),
-    fetchBtcChart("n-unique-addresses",    90),
-    fetchBtcChart("n-transactions",        90),
-    fetchBtcChart("hash-rate",             90),
-    fetchBtcChart("transaction-fees-usd",  90),
-    fetchBtcChart("mempool-size",          90),
-  ]);
+  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData] =
+    await Promise.all([
+      getBitcoinStats().catch(() => null),
+      fetchBtcChart("n-unique-addresses",    90),
+      fetchBtcChart("n-transactions",        90),
+      fetchBtcChart("hash-rate",             90),
+      fetchBtcChart("transaction-fees-usd",  90),
+      fetchBtcChart("mempool-size",          90),
+      fetchBtcChart("miners-revenue",        90),
+      fetchUtxoAgeBands(),
+    ]);
 
   return (
     <div className="space-y-10 pb-20">
       <DataHeader
         title="Bitcoin On-Chain"
-        description="Real-time Bitcoin network health - hash rate, mempool, fees, and transaction activity."
+        description="Real-time Bitcoin network health — hash rate, mempool, fees, miner revenue, transaction activity, and UTXO age bands."
       />
 
       <div className="flex items-center gap-3">
         <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
-          Live - blockchain.info + mempool.space
+          Live — blockchain.info + mempool.space
         </span>
       </div>
 
@@ -88,13 +111,14 @@ async function BitcoinData() {
         </div>
       )}
 
-      {/* Charts client component — handles timeframe selector + rendering */}
       <BitcoinChartsClient
         addrData={addrData}
         txData={txData}
         hashData={hashData}
         feeData={feeData}
         mempoolData={mempoolData}
+        minerRevData={minerRevData}
+        utxoData={utxoData}
       />
 
       <div className="border border-[#1a1a1a] bg-[#080808] p-5">
@@ -103,7 +127,8 @@ async function BitcoinData() {
           {[
             ["Hash Rate (EH/s)", "Total computational power securing the Bitcoin network. Higher = more secure."],
             ["Mempool Tx Count",  "Transactions waiting to be confirmed. Spike = network congestion."],
-            ["Avg Fee Rate",      "Estimated fee in sat/vB for confirmation within 30 minutes."],
+            ["Miner Revenue",     "Total USD value earned by miners per day (block subsidy + fees)."],
+            ["UTXO Age Bands",    "Distribution of when coins last moved. Rising old coins = HODLing, falling = distribution."],
             ["Difficulty",        "Auto-adjusts every 2016 blocks (~2 weeks) to maintain 10-min block times."],
           ].map(([k, v]) => (
             <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>

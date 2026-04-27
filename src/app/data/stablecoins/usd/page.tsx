@@ -6,14 +6,12 @@ import StablecoinUsdClient from "./_components/StablecoinUsdClient";
 
 export const metadata = {
   title: "USD Stablecoins | CryptoBrainNews",
-  description: "Circulating supply, peg health, and 24h change for major USD-pegged stablecoins - live from DefiLlama.",
+  description: "Circulating supply, peg deviation, and 24h change for major USD-pegged stablecoins.",
 };
 export const revalidate = 3600;
 
 async function StablecoinData() {
   const all = await getStablecoinsOverview().catch(() => []);
-
-  // Filter to USD-pegged only, already sorted by circulatingUsd desc
   const usd = all.filter((s) => s.pegType === "peggedUSD");
 
   const totalSupply  = usd.reduce((s, c) => s + c.circulatingUsd, 0);
@@ -26,20 +24,18 @@ async function StablecoinData() {
     <div className="space-y-8 pb-20">
       <DataHeader
         title="USD Stablecoins"
-        description="Circulating supply, dominance, and peg health for USD-pegged stablecoins - Source: DefiLlama."
+        description="Circulating supply, peg deviation, dominance, and 24h change for USD-pegged stablecoins."
       />
 
-      {/* Source badge */}
       <div className="flex items-center gap-3">
         <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
-          Live - DefiLlama
+          Live — DefiLlama
         </span>
         <span className="text-[#333] font-mono text-[10px] uppercase tracking-widest">
           {usd.length} USD-pegged assets tracked
         </span>
       </div>
 
-      {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
           <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Total USD Supply</p>
@@ -68,7 +64,6 @@ async function StablecoinData() {
         </div>
       </div>
 
-      {/* Client charts + table */}
       <StablecoinUsdClient stablecoins={usd} totalSupply={totalSupply} />
     </div>
   );

@@ -1216,3 +1216,8 @@ Next: Phase 2 — Futures & Perpetuals, ETFs, Stablecoins deep dive, Treasuries,
 	•	Reference: Phase 1 MVP Steps 3-7 (Claude Opus Data Terminal Refactor)
 	•	New Status: COMPLETED
 	•	Notes: SpotClient now has BTC/ETH price charts via TvLightweightChart and a client‑side usePriceHistory() hook. BitcoinChartsClient adds hash‑rate, transaction‑fees‑usd, and mempool‑size AreaCharts. Ethereum page CSS‑bar chart replaced with EthTvlClient Recharts AreaChart. Solana page gains TPS history chart (60 samples) and TVL AreaChart. DeFiTvlClient integrates shared TimeframeSelector. All ESLint errors fixed (useSyncExternalStore mounted guard, no‑explicit‑any suppressions). npx tsc --noEmit passes with zero errors.
+
+[2026-04-27] STATUS UPDATE
+	•	Reference: Phase A (DeepSeek V4 — 11 Frontend Improvements)
+	•	New Status: COMPLETED
+	•	Notes: All 11 Phase A tasks delivered by DeepSeek V4 Pro and applied. Bitcoin page gains Miner Revenue chart + UTXO Age Bands. Ethereum page gains Supply Growth panel. Futures page gains Bybit liquidations table. Stablecoins page gains Peg Deviation gauges. ETF page gains Premium/Discount column. Spot page gains Volume Dominance chart. Revenue page gains 30D/90D trend chart (RevenueTrendClient). Gas page gains L2 gas cards (Arbitrum/OP/Base). Prices page gains Trending Coins + Fear & Greed 90D history. All charts enforce mounted guard + isAnimationActive={false}. TypeScript compiles clean (npx tsc --noEmit). Zero mock data, zero premium gates.

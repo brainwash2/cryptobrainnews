@@ -1,0 +1,595 @@
+ 
+
+## `metrics.txt` – CryptoBrainNews Data Platform: Product Specification
+
+**Goal:** To build the definitive, institutional-grade data terminal for cryptocurrency markets, on-chain activity, DeFi, and the emerging agentic economy. This document outlines the complete product vision for the `/data` section of CryptoBrainNews.
+
+The following metrics are organized by market vertical and represent the target state for the platform. For each metric, we will identify a reliable data source, a suitable visualization method, and a caching strategy.
+
+---
+
+### 1. Markets
+This section aggregates data from centralized and decentralized trading venues to provide a complete view of global market activity.
+
+#### 1.1 Spot
+This section will provide granular visibility into the cash market, focusing on the following metrics:
+- **Global Aggregate Volumes:**
+    - Cryptocurrency Monthly Exchange Volume (Total and by asset)
+    - Daily Exchange Volume (7-Day Moving Average)
+    - USD- Denominated Exchange Volume (Total and by asset)
+    - BTC & ETH Total Exchange Volume (7DMA)
+- **Market Structure & Share:**
+    - Share of Trade Volume by Pair Denomination (e.g., USD, USDT, BTC, ETH)
+    - Monthly Exchange Volume Market Share (e.g., Binance, Coinbase, Kraken)
+    - Monthly Spot Pairs for Exchanges (Most active pairs)
+    - Spot Volume by Asset (Dominance of top assets)
+    - Spot Volume Share by Asset (Comparative analysis)
+- **Regional & Derivative Flows:**
+    - Asia-Based, Europe-Based, North America-Based, South America-Based Customer Exchange Volume
+    - BTC/EUR Volumes (in BTC)
+    - ETH/EUR Volumes (in ETH)
+    - BTC Spot to Futures Volume (30DMA)
+    - ETH Spot to Futures Volume (30DMA)
+- **Exchange-Specific & Advanced Metrics:**
+    - Share of BUSD / TUSD / FDUSD Trading on Binance
+    - Binance Share of Volume by Fee Type (e.g., VIP, Taker, Maker)
+
+#### 1.2 Futures & Perpetuals
+Data on derivatives markets, providing insights into sentiment, leverage, and institutional positioning.
+- **Open Interest (OI):**
+    - Aggregated Open Interest of Bitcoin, Ethereum, and Solana Futures (in USD and native units)
+    - Share of Open Interest across Bitcoin Futures (by exchange)
+    - Top 5 Bitcoin / Ether Futures Open Interest Exchanges
+    - Futures Open Interest by Asset (Total and per asset)
+    - CME Futures: Volume, OI, and Large Holder Report (COTs)
+- **Volume & Liquidations:**
+    - Volume of Bitcoin, Ethereum, and Solana Futures
+    - Total Futures Volumes (Aggregate and by asset)
+    - BTC & ETH Futures Volume (7DMA)
+    - Futures Volume by Asset (Comparative)
+    - BTC & ETH Liquidations (Long, Short, and Total Number)
+    - Hyperliquid Total Cumulative Liquidations and Daily Liquidations
+- **Funding & Basis:**
+    - BTC & ETH Funding Rates (7DMA, APY)
+    - BTC Annualized Daily Basis (Binance)
+    - BTC Long/Short Ratio on Binance (Accounts)
+    - FTT Average Funding Rate
+- **Advanced Metrics:**
+    - APT Perpetual Volume
+    - FTT Futures Volumes
+    - FTXDXY-PERP Volume and Open Interest
+    - Coinbase International Daily Volume
+    - Volume and OI of CME Solana futures
+
+#### 1.3 Crypto Indices
+Proprietary and third-party indices for tracking sector-specific performance.
+- GMCI Indices: Price and Performance data for:
+    - GM30 (Top 30), GML1 (Layer 1), GML2 (Layer 2), GMMEME (Memecoins), GMDEFI (DeFi), GMDEPIN (DePIN), GMGM (Gaming), GMAI (AI), GMSMALL (Small Cap), GMMID (Mid Cap), GMUSA (US Tokens)
+- Ecosystem Indices: GMSOL (Solana Select), GMETH (Ethereum Select), GMSOLMEME (Solana Memecoins), GMSOLEX (Solana ex-Memecoins)
+- Price Performance of GMCI Indices (1D, 7D, 30D, YTD, 1Y)
+
+#### 1.4 CME COTs (Commitment of Traders)
+Institutional positioning data from the Chicago Mercantile Exchange.
+- Large Open Interest Holders for Bitcoin, Ether, and Micro Bitcoin Futures
+- Open Interest by Trader Category (Long/Short): Producer/Merchant/Processor/User, Swap Dealers, Managed Money, Other Reportables
+- Net Positions by Trader Category
+
+#### 1.5 Options
+Data on volatility and institutional hedging activity.
+- **Aggregated Metrics:**
+    - Aggregated Open Interest & Volume of Bitcoin and Ethereum Options
+    - Share of Open Interest Across Bitcoin and Ethereum Options
+    - Open Interest Put/Call Ratio
+- **Deribit (Leading Exchange):**
+    - Bitcoin & Ether Options Open Interest (in BTC/ETH) by Expiry
+- **CME Options:**
+    - Volume and OI of CME Bitcoin and Ethereum Options
+- **Volatility Metrics:**
+    - BTC & ETH DVol Index vs Spot, Vol of Vol, Variance Premium
+    - BTC & ETH ATM Implied Volatility
+    - BTC & ETH Option Skew (Delta 5, 25)
+    - BTC & ETH Put/Call Ratio
+
+#### 1.6 Prices
+Core pricing and market health indicators.
+- **Core Market Health:**
+    - Crypto Total Market Cap
+    - Bitcoin & Ethereum Dominance
+    - Fear and Greed Index
+- **Asset Prices:**
+    - BTC Price, ETH Price, and prices for all major L1s and DeFi tokens
+- **Performance & Correlation:**
+    - Price Performance (30D, 90D, 1Y, YTD) for all major assets
+    - L1 Price Performance (1Y)
+    - Bitcoin vs Top 20 Marketcap Price Performance (1H, 1D, 1M)
+    - Bitcoin vs DeFi Price Performance (1H, 1D, 1M)
+    - BTC Pearson Correlation (30D) vs. other assets
+    - Annualized BTC Volatility (30D)
+- **Comparative & Traditional Finance:**
+    - Bitcoin & Ethereum vs. Traditional Finance Market Cap Ratios (e.g., Gold, S&P 500)
+    - Crypto Stocks Market Caps (e.g., Coinbase, MicroStrategy)
+    - Bitcoin vs Crypto Stocks Performance
+    - Crypto Mining Stocks Market Caps
+    - Bitcoin vs Crypto Mining Stocks Performance
+- **Volmex Indices:**
+    - BVIV (Bitcoin Volatility), EVIV (Ethereum Volatility), BVCORR (Bitcoin Correlation), EVCORR (Ethereum Correlation)
+- **Market Composition:**
+    - DeFi Token Market Caps & DeFi Dominance
+    - Bitcoin Market Cap, Ether Market Cap
+
+#### 1.7 Companies
+Financial performance and on-chain metrics of public crypto companies.
+- **Exchange & Broker Data:**
+    - Coinbase: Valuation, Monthly Transacting Users, Assets Held, Total Volume, Volume by Customer Segment, Revenue, Gross Profit Breakdown, Trade Volume Share by Asset
+    - Robinhood: Crypto Volume (Quarterly), Revenue (Quarterly)
+- **Financial Services & Mining:**
+    - Square (Block): Bitcoin Sales (Quarterly), % of Gross Profit from Bitcoin Sales
+    - Silvergate: Fee Income from Digital Currency Customers (Quarterly), SEN Network Transfer Volume (Quarterly)
+    - Genesis Global Trading: Active Loans, Loan Originations, Loan Composition (Quarterly)
+    - Circle: Revenue
+- **Comparative & Sector Data:**
+    - Coinbase vs Uniswap Market Cap
+    - Top Crypto Protocols By Revenue (Daily)
+    - Top 10 Crypto Categories By Revenue (Daily, with Market Share)
+- **Other:**
+    - Net XRP Sales by Ripple (Quarterly)
+
+#### 1.8 Exchange Tokens
+- Exchange Token Performance (1Y)
+- FTT Burns, BNB Burns
+
+#### 1.9 Sports Tokens
+- Sports Token Market Caps, Prices, and Price Performance (1Y)
+
+---
+
+### 2. Exchange-Traded Funds (ETFs)
+Comprehensive data on the rapidly growing crypto ETF market.
+
+#### 2.1 Bitcoin ETFs
+- **Core Flows & Volumes:**
+    - Spot Bitcoin ETF Volumes (Daily, Cumulative, Market Share)
+    - Spot vs Futures Bitcoin ETF Market Share
+    - Spot Bitcoin ETF Flows (Daily, Total Net Flows, in USD and BTC)
+    - Spot Bitcoin ETF On-Chain Holdings (Daily, in BTC, and as % of BTC Supply)
+    - Spot Bitcoin ETF On-Chain Flows (Daily, in USD and BTC, Total Net Flows)
+- **Assets Under Management (AUM):**
+    - Spot Bitcoin ETF AUM (Daily, Total and ex-GBTC)
+    - Grayscale Revenue from GBTC and ETHE (Estimated)
+- **Performance & Premium/Discount:**
+    - Daily Volume of GBTC
+    - Daily GBTC Premium/Discount to NAV
+    - BITO Performance vs BTC (YTD)
+- **Issuer-Specific Data:**
+    - BlackRock Bitcoin ETF (IBIT): Volumes, Flows, AUM, On-chain Holdings
+    - Fidelity Bitcoin ETF (FBTC): Volumes, Flows, AUM, On-chain Holdings
+- **Global Markets:**
+    - Hong Kong Spot Bitcoin ETF Volumes, Flows, and AUM
+- **Market Impact:**
+    - Spot Bitcoin ETF Volumes as Share of Total BTC Spot Market Volume (7DMA)
+
+#### 2.2 Ethereum ETFs
+*(Mirrors Bitcoin ETF structure)*
+- Spot Ethereum ETF Volumes (Daily, Cumulative, Market Share)
+- Spot vs Futures Ethereum ETF Market Share
+- Spot Ethereum ETF Flows (Daily, Total Net Flows, in USD and ETH)
+- Spot Ethereum ETF On-Chain Holdings & Flows (Daily, in ETH, Market Share)
+- Spot Ethereum ETF AUM (Daily)
+- Issuer-Specific: BlackRock (ETHA) and Fidelity (FETH) Volumes, Flows, AUM
+- Hong Kong Spot Ethereum ETF Volumes and Flows
+- Ether Futures ETF Volumes
+- Daily Volume of ETHE, Premium/Discount to NAV
+- Spot Ethereum ETF Volumes as Share of Total ETH Spot Market Volume (7DMA)
+
+#### 2.3 Solana ETFs
+- Cumulative & Daily Spot Solana ETF Volumes
+- Spot Solana ETF Market Share
+- Cumulative & Daily Futures Solana ETF Volumes
+- Futures Solana ETF Market Share
+- Spot Solana ETF Flows, Total Net Flows, AUM
+
+#### 2.4 XRP ETFs
+- Spot XRP ETF Volumes (Daily, Cumulative, Market Share)
+- Spot XRP ETF Flows and AUM
+
+#### 2.5 Crypto ETFs (Other Assets)
+- Spot Dogecoin, Litecoin, ZEC, LINK ETF Volumes (Daily and Cumulative)
+
+#### 2.6 ETF Comparison
+- Spot ETF Market Share by Coin (Total and Excluding BTC/ETH)
+- Spot ETF Volumes by Coin (Total and Excluding BTC/ETH)
+- Cumulative Spot ETF Volumes (Total and Excluding BTC/ETH)
+- Spot ETF AUM Market Share by Coin
+
+---
+
+### 3. Crypto Treasuries
+Tracking corporate holdings of digital assets.
+
+#### 3.1 Bitcoin Treasuries
+- Cumulative Holdings, Market Caps, and Stacked Market Caps of Bitcoin Treasury Companies
+- Bitcoin Treasury Holdings vs. Cumulative Market Cap
+- Cumulative Bitcoin Treasuries vs. BTC Price
+- Strategy (MSTR) Bitcoin Holdings vs. Stock Price
+- Bitcoin Treasury Companies Premium/Discount to NAV
+- Corporate Bitcoin Holdings ($5M+), with and without Strategy
+- Total Liabilities of Bitcoin Treasury Companies
+
+#### 3.2 Ethereum Treasuries
+- Stacked & Cumulative Market Caps of Ethereum Treasury Companies
+- Cumulative ETH Treasury Holdings by Public Companies (in ETH and USD)
+- Corporate Ethereum Treasury Holdings (Stacked)
+- Total Liabilities of Ethereum Treasury Companies
+- Ethereum Treasury Companies Premium/Discount to NAV
+- Bitmine Cumulative Ethereum Holdings (in ETH and USD) and Daily ETH Buyings
+
+#### 3.3 Solana Treasuries
+- Cumulative SOL Holdings by Public Companies (in SOL and USD)
+- Cumulative & Stacked Market Cap of Public Companies Holding SOL
+- Stacked SOL Holdings by Public Companies (in SOL and USD)
+- Total Liabilities of Solana Treasury Companies
+- Solana Treasury Companies Premium/Discount to NAV
+
+#### 3.4 Crypto Treasuries (General)
+- Stacked & Cumulative Market Cap of Digital Asset Treasury Companies (DATs) Holding Crypto (by Asset)
+- Stacked Crypto Holdings Value in USD by DATs (by Asset)
+- Top DATs by Crypto Holdings (USD), with and without Strategy
+- Percentage of Supply Held by Public Companies
+- Total Liabilities of DATs
+
+---
+
+### 4. Stablecoins
+Analysis of the on-chain dollar and its alternatives.
+
+#### 4.1 USD-Pegged
+- **Supply & Distribution:**
+    - Total Stablecoin Supply (Global, Per Chain, Ethereum)
+    - Share of Total Ethereum Stablecoin Supply
+    - Total Fiat-backed vs. Crypto-backed/Algorithmic Stablecoin Supply on Ethereum
+    - USDT & USDC Supply by Blockchain
+    - US vs Non-US Stablecoin Market Cap
+- **On-Chain Activity:**
+    - Ethereum On-chain Volume of Stablecoins (Daily and Filtered)
+    - Ethereum Stablecoin Velocity (30DMA)
+    - Ethereum Stablecoin Senders
+    - Daily Number of Stablecoin Transfers on Ethereum
+- **Address & Compliance Data:**
+    - USDT & USDC Banned Addresses on Ethereum
+    - USDC & USDT Addresses with Balance Over $X
+- **Yield-Bearing Tokens:**
+    - Current Marketcap & Daily Marketcap of USD Yield-Bearing Tokens
+
+#### 4.2 Non-USD Pegged
+- Share of Ethereum Fiat Stablecoin Supply (in USD) by Currency (e.g., EUR, GBP)
+- Total EURO Stablecoin Supply on Ethereum
+
+#### 4.3 Non-Fiat Pegged
+- Gold-backed Stablecoins: Total Exchange Volume (7DMA) and Total Market Cap
+
+---
+
+### 5. On-Chain Metrics
+Direct from the ledger, providing fundamental network health and activity data.
+
+#### 5.1 Bitcoin
+- **Network Activity:**
+    - Transactions (Daily, 7DMA, Monthly)
+    - Active & New Addresses (Daily, 7DMA, Monthly)
+    - On-Chain Volume (Daily, 7DMA, Monthly)
+    - Percentage of Supply Active
+- **Mining & Economics:**
+    - Miner Revenue (Daily, 7DMA, Monthly)
+    - Transaction Fee % of Total Miner Revenue
+    - Miner Revenue per TH/s (Monthly)
+    - Average Transaction Fee (7DMA)
+    - Percentage of BTC Supply in Profit (7DMA)
+    - Bitcoin Addresses with Balance Over X BTC
+    - Lightning Network Capacity
+    - Hash Rate (EH/s, Monthly), Hashprice Index, ASIC Price Index
+    - Annualized & Monthly Electricity Consumption
+- **Supply Dynamics:**
+    - Supply and Block Reward, Halving Schedule
+- **Inscriptions & Runes:**
+    - Runes: Transactions, Transaction Share, Fees, Fees Share, Transactions by Type, Fees by Type
+    - Bitcoin Transactions & Fees by Type
+    - Ordinals Inscriptions by Type
+- **Mining Pools:**
+    - Bitcoin Hash Rate Pool Market Share
+
+#### 5.2 Ethereum
+- **Post-Merge Economics (EIP-1559):**
+    - Burned ETH (Daily, Cumulative)
+    - Net ETH Emission after EIP-1559
+- **Network Activity:**
+    - Transactions (Daily, 7DMA, Monthly)
+    - Active & New Addresses (Daily, 7DMA, Monthly)
+    - On-Chain Volume (Daily, 7DMA, Monthly)
+    - Percentage of ETH Supply in Profit (7DMA)
+    - Percentage of Supply Active
+    - Ethereum Addresses with Balance Over X ETH
+- **Staking & Consensus:**
+    - Cumulative ETH Deposited to Beacon Chain and Validators
+    - ETH Staking Rewards Reference Rate
+    - Net cbETH Change
+    - Ethereum Validator Queue
+    - Percentage ETH Staked
+    - Lido Node Operator Keys
+    - Percentage of Blocks Proposed by Each MEV-Boost Relay
+    - Cumulative Staked ETH by Validator
+- **Validator Economics:**
+    - Block Validator Revenue (Daily, 7DMA, Monthly)
+    - Average Transaction Fee (7DMA)
+- **Pre-Merge (PoW) Data:**
+    - PoW Ethereum Hash Rate (TH/s, 7DMA)
+    - PoW Ethereum Miner Revenue per TH/s (7DMA)
+- **Smart Contracts & Gas:**
+    - Top 20 Gas Consuming Smart Contracts (30D)
+    - Average Gas Spent Per Transaction
+    - Cost of an ETH Transfer
+    - Average Block Gas Limit
+    - Blocks per Day
+    - Median Gas Price (in Gwei)
+    - Ethereum Smart Contracts Deployed (Daily and Cumulative)
+
+#### 5.3 Solana
+- Transactions (Daily, 7DMA, Monthly)
+- Active Addresses (Daily, 7DMA, Monthly)
+- Total Fees, Weekly Fee Breakdown (USD)
+- Jito Validator Tips
+- Real Economic Value (USD)
+- DEX Traders (Single Day vs Ongoing)
+- Daily Validators and 7DMA
+
+#### 5.4 Avalanche
+- Active & New Addresses on C-Chain (7DMA, Monthly)
+- User Transactions on C-Chain (Daily, 7DMA, Monthly)
+- Daily Transactions Fees on C-Chain
+- Average Transaction Fee (7DMA, in AVAX)
+- **Subnets Data:**
+    - Cumulative Unique Addresses, Deployed Contracts, Contract Deployers
+    - Active Addresses, Transactions Count, TPS (7DMA)
+
+#### 5.5 Aptos
+- User Transactions (Daily, 7DMA, Monthly)
+- Active & New Addresses (7DMA, Monthly)
+- Daily Amount of Blocks
+- Daily Transactions Fees (in APT)
+- Average Transaction Fee (7DMA, in APT)
+
+#### 5.6 Comparison (Cross-Chain)
+- Transaction Fees, Count, Active/New Addresses, On-Chain Volume, Block Producers Revenue, Average Fee (7DMA)
+- Percentage of Supply in Profit & Active (1Y)
+- Node Requirements (RAM, Internet, Storage)
+- Ethereum vs Solana: Chain Fees, App Fees, TVL, DEX Volume, Circulating Stablecoin Supply
+- Percentage of Inactive Supply For At Least 1 Year (BTC and SOL)
+- Fees per Chain and Market Share
+- ZCash: Shielded Supply and Market Share
+
+#### 5.7 Flows
+- Crypto Cards: Daily Transactions, Users, USD Volume (Total and per Chain)
+- Crypto Cards Monthly Volume by Network and Currency (with Market Share)
+
+---
+
+### 6. Scaling Solutions
+Tracking the adoption and economics of Layer 2s and other scaling technologies.
+
+#### 6.1 Overview
+- Value Locked in Ethereum Scaling Solutions by Type (Escrow Contracts, L1 Bridges, Plasma, Validium, Optimistic & ZK Rollups)
+- Unique Depositors & Withdrawers to Ethereum Bridges
+- Ethereum Layer 2 L1 Data Fees (Total, Share, % of ETH Fees)
+- Layer 2 Revenue
+- Active Addresses by Chain (7DMA)
+- Daily L1 Data Fees (in ETH and USD)
+- Blob Metrics: Number by Chain, Number of Blob Transactions, Average Blobs per Tx
+- Layer 2 Median Transaction Fees (Daily)
+- LayerZero Daily Messages
+- Value Locked in Bitcoin L2s (in USD and BTC)
+
+#### 6.2 Layer 1: EVM Blockchains
+- Daily New Unique Addresses for EVM-Chains
+- Transaction Count on EVM Chains (Daily, 7DMA)
+- SKALE Ecosystem Transaction & User Count
+
+#### 6.3 Layer 1: Non-EVM Blockchains
+- Terra Classic: Transactions (Daily, 7DMA), Staked LUNC (USD Value), LUNC Staking Addresses
+- NEAR: Transactions, Active Addresses (Daily, 7DMA)
+- XRP Ledger: Transaction Count, Active/New Addresses, Average Fee (in XRP), Monthly Volume (in XRP)
+- Stellar: Transactions, Active/New Addresses, Average Fee (in Stroops), Operations (Daily, 7DMA)
+- TON: Transactions, Active Addresses (Daily, 7DMA)
+
+#### 6.4 Layer 2: Optimistic Rollups
+- Transaction Count (Daily, 7DMA)
+- Active Addresses (Daily, 7DMA)
+- Daily New Unique Addresses
+- Base Fees by Recipient
+
+#### 6.5 Layer 2: ZK Rollups
+- Transactions (Daily, 7DMA)
+- Active Addresses (Daily, 7DMA)
+- Daily New Unique Addresses
+- StarkEx Applications: ETH Volume, Unique Users, Transaction Count (Daily, 7DMA)
+
+#### 6.6 Data Availability
+- Total Data Posted (Daily, Market Share)
+- Celestia: Data Posted per Namespace, Blobs Posted per Namespace, Blobs Count & Size (Daily), Transactions (Daily)
+- Manta Pacific Fee Comparison (Daily)
+
+---
+
+### 7. Decentralized Finance (DeFi)
+Comprehensive data on the DeFi ecosystem.
+
+#### 7.1 Exchange (DEXs)
+- **Aggregate Volume:**
+    - DEX Volume (Total, Share of DEX Volume)
+    - DEX to CEX Spot Trade Volume (%)
+    - Uniswap vs. Coinbase and Binance Trade Volume (7DMA)
+    - Solana vs Ethereum Weekly DEX Volume (%)
+- **Market Structure:**
+    - DEX Activity by Frontend
+    - New Tokens Appearing on DEXs (Count, Share)
+    - DEX Aggregator Trade Volume and Market Share
+    - DEX Users & Transactions Per Chain (Daily, Market Share)
+- **Ethereum-Specific:**
+    - Ethereum DEX Aggregator Trade Volume & Market Share
+    - Trader Type share of Ethereum DEX volume
+    - Ethereum DEX Volume & Traders (Total, by Exchange)
+    - Wrapped Bitcoin DEX Sales on Ethereum
+    - Ethereum Uniswap Interface Fees
+- **Advanced:**
+    - MetaDAO's Futarchy AMM Daily and Cumulative Fees & Volume (USD)
+
+#### 7.2 Restaking
+- Ethereum Liquid Restaking: Unique Daily Depositors, TVL
+- EigenLayer: Daily Total Net Flows, Unique Daily Depositors/Withdrawers, TVL (by Restaking Type & Asset)
+- Restaker Analysis: New Unique Daily Beaconchain Stakers vs Restakers, Share of New/Active Restaking vs Regular Validators
+
+#### 7.3 Lending
+- **Aggregate Metrics:**
+    - Ethereum Lending TVL
+    - Total Ethereum Outstanding Debt & Share by Protocol
+    - Net Borrows by Protocol
+    - Unique Borrowers
+    - Lending Market Liquidations (Total)
+- **Protocol-Specific (Ethereum):**
+    - Aave: TVL, Outstanding Debt, Loan-to-Value Ratio, Value Locked in Layer2s, Non-Ethereum Liquidations
+    - Compound: Outstanding Debt, TVL, Loan-to-Value Ratio
+    - MakerDAO: TVL, Outstanding Debt, Loan-to-Value Ratio
+    - Sky Ecosystem: Daily Outstanding Stablecoin Supply
+- **Asset-Specific:**
+    - Top 5 Lending Markets for ETH, USDC, USDT Borrowed
+    - USDC & USDT Supply Rates
+- **Layer 2 & Other Chains:**
+    - Aave TVL and Outstanding Debt on Optimism, Arbitrum, Avalanche, Polygon
+    - Aave Layer2s Daily Outstanding Debt & Daily Unique Borrowers (ex-Ethereum)
+    - Solana Lending TVL
+
+#### 7.4 Launchpads
+- **Pump.fun:**
+    - Revenue (Daily)
+    - Graduated Tokens Volume on Raydium (Daily)
+    - Percent Graduated Tokens (Daily)
+- **Solana Launchpads:**
+    - Fees, Volume, Volume Market Share (Daily)
+    - Tokens Graduations (Per Launchpad, Daily Market Share)
+    - Tokens Launched (Per Launchpad, Daily Market Share)
+- **General Launchpads:**
+    - Tokens Launched (Count, Market Share)
+
+#### 7.5 Prediction Markets & Betting
+- **Polymarket:**
+    - Active Traders (Monthly), New Markets (Monthly)
+    - Open Interest per Market (Daily), Volume by Category (Daily)
+    - Crypto Up or Down Daily USD Volume & Market Share
+- **Kalshi:**
+    - Daily Active Markets, Volume by Category (Daily)
+- **Comparison:**
+    - Polymarket, Polymarket US, and Kalshi Volume (Monthly, Cumulative, Market Share)
+    - Polymarket and Kalshi Open Interest (Daily)
+    - Prediction Markets to Spot Exchanges Volume Ratio
+    - Weekly Prediction Market Notional Volume (USD, Market Share)
+
+#### 7.6 Derivatives
+- Perpetual Protocol Trade Volume & Market Share
+- DEX to CEX Futures Trade Volume (%)
+- **Hyperliquid:**
+    - Daily Perpetuals Volume (USD)
+    - vs. Binance Monthly Perpetual Volumes
+    - vs. Exchanges Monthly Perpetual Volumes & Open Interest
+    - Open Interest
+    - Total Cumulative Liquidations & Daily Liquidations
+    - Total Cumulative Perpetuals Volume
+    - Daily Volume per Builder, Daily Revenue per Builder
+    - Market Share of Staked HYPE by Validator
+- **HIP-3:**
+    - Daily Open Interest & Volume by DEX (USD)
+    - Daily Volume by Asset (USD)
+    - Volume vs Hyperliquid Total Perpetuals Volume Market Share
+
+#### 7.7 Real World Assets (RWA)
+- Total Value Locked RWA by Protocol
+- RWA Market Cap by Blockchain, Issuer, Issuer Country (with Market Share)
+- RWA Monthly Transfer Volume by Asset Class, Issuer, Blockchain
+
+#### 7.8 Exploits
+- Funds Stolen by DeFi Attackers (Total, Largest)
+- Stolen Funds by using Flash Loans, by Blockchain
+- Stolen vs Returned Funds in DeFi Attacks
+
+#### 7.9 Protocol Revenue
+- DeFi Fees & Revenue (Daily, Monthly, Cumulative)
+- DeFi Fees by Recipient
+- Annualized DeFi revenue by protocol (30-day sample)
+- Cumulative & Weekly Protocols Buybacks in USD
+- Pump Buybacks
+
+#### 7.10 Value Locked
+- Total Value Locked (TVL) by Category, Blockchain, Project
+- Share of Total Value Locked by Smart Contract Language
+- ICO Treasury Balances
+- Gross Value Locked Day-over-Day Growth (7DMA)
+- Value Locked in Liquid Staking
+- BTC on Ethereum (e.g., WBTC): Mints, Burns, and Total Value Locked
+- Wrapped ETH on Ethereum
+
+#### 7.11 Social (DeSo)
+- friend.tech: Transactions, Daily Unique Buyers & Sellers, Protocol Fees
+- Farcaster: Daily Users, Daily Activity, Revenue
+
+---
+
+### 8. Non-Fungible Tokens (NFTs)
+Tracking the digital collectibles market.
+
+#### 8.1 Overview
+- NFT Trade Volume by Chain
+- Ethereum NFT Buyers, Sellers, Total Traders, Mints
+
+#### 8.2 Art & Collectibles
+- Trade Volume & Sales (Ethereum vs Non-Ethereum)
+- Transactions (Ethereum)
+- Top NFT Artists
+- Floor Price of Popular NFTs (e.g., BAYC, CryptoPunks) and Bitcoin NFTs
+- Average Sale Price (Ethereum)
+- Pokemon TCG Marketplaces Weekly Volume
+- Hyperliquid's Hypurr Floor Price (USD)
+
+#### 8.3 Gaming
+- Trade Volume & Sales (Ethereum vs Non-Ethereum)
+- Transactions (Ethereum)
+- Ethereum Metaverse Average Land Sale Price (7DMA)
+
+#### 8.4 Marketplaces
+- Ethereum NFT Marketplace Monthly Volume (Total, Unfiltered, Market Share, Aggregators)
+- Solana NFT Marketplace Volume Daily
+- Monthly Unique Ethereum NFT Traders
+- Ratio of Wash Trading Volume on Ethereum NFT Marketplaces
+- Monthly NFT Marketplace Revenue & Fees
+
+---
+
+### 9. Alternative Metrics
+Broader market signals and non-financial data.
+
+#### 9.1 Venture Funding
+- Monthly & Quarterly Venture Funding by Category and Stage
+- Monthly & Quarterly Venture Deals Count by Category and Stage
+- Share of Deals Count by Category (Monthly, Quarterly)
+
+#### 9.2 Politics
+- Crypto PAC: Total Raised & Spending per Committee, by Cycle, Cumulative
+
+#### 9.3 Web Traffic
+- Blockchain-related Mentions in SEC Filings
+- Google Search Volumes for crypto-related terms (Bitcoin, Ethereum, Coinbase, Uniswap, NFT, OpenSea, Web3, Solana, Onchain, Memecoin, Kalshi, Polymarket, Prediction Markets)
+
+#### 9.4 App Usage
+- Crypto Apps Ranking on App Store & Google Play (US) – Overall and by Category (Finance, Utilities)
+
+#### 9.5 Social
+- Pageviews of Bitcoin's Wikipedia page
+- New Weekly YouTube Subscribers & Views of Influencers
+- Tweet Volume
+- New Weekly Crypto Subreddits' Subscribers

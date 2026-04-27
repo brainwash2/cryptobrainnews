@@ -6,11 +6,10 @@ import EthTvlClient      from "./_components/EthTvlClient";
 export const metadata = { title: "Ethereum On-Chain | CryptoBrainNews" };
 export const revalidate = 1800;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function ft(url: string, opts?: any): Promise<Response | null> {
+async function ft(url: string, opts?: RequestInit): Promise<Response | null> {
   const ac = new AbortController();
   const id = setTimeout(() => ac.abort(), 6_000);
-  try { return await fetch(url, { signal: ac.signal, cache: "no-store", ...opts }); }
+  try { return await fetch(url, { signal: ac.signal, cache: "no-store", ...(opts ?? {}) }); }
   catch { return null; }
   finally { clearTimeout(id); }
 }
@@ -25,6 +24,50 @@ function Card({ label, value, sub, color = "#3b82f6" }: { label: string; value: 
   );
 }
 
+interface EthSupplyRow {
+  date:       string;
+  supply:     number;
+  burned:     number;
+  netEmission:number;
+}
+
+async function fetchEthSupplyGrowth(): Promise<EthSupplyRow[]> {
+  const key = process.env.ETHERSCAN_API_KEY;
+  if (!key) return [];
+  try {
+    const res = await fetch(
+      `https://api.etherscan.io/api?module=stats&action=ethsupply&apikey=${key}`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return [];
+    const json = await res.json() as { status: string; result?: string };
+    if (json.status !== "1" || !json.result) return [];
+
+    const currentSupply = parseFloat(json.result) / 1e18;
+
+    const burnRes = await fetch(
+      `https://api.etherscan.io/api?module=stats&action=ethburned&apikey=${key}`,
+      { next: { revalidate: 3600 } }
+    );
+    let burned = 0;
+    if (burnRes.ok) {
+      const burnJson = await burnRes.json() as { status: string; result?: string };
+      if (burnJson.status === "1" && burnJson.result) {
+        burned = parseFloat(burnJson.result) / 1e18;
+      }
+    }
+
+    return [{
+      date:        new Date().toISOString().slice(0, 10),
+      supply:      currentSupply,
+      burned:      burned,
+      netEmission: currentSupply - 120_520_000,
+    }];
+  } catch {
+    return [];
+  }
+}
+
 async function EthData() {
   const priceR  = await ft("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd");
   const beaconR = await ft("https://beaconcha.in/api/v1/epoch/latest");
@@ -34,20 +77,23 @@ async function EthData() {
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_gasPrice", params: [] }),
   });
 
-  const [priceJ, beaconJ, tvlJ, gasJ] = await Promise.allSettled([
+  const [priceJ, beaconJ, tvlJ, gasJ, supplyRows] = await Promise.allSettled([
     priceR?.ok  ? priceR.json()  : Promise.resolve(null),
     beaconR?.ok ? beaconR.json() : Promise.resolve(null),
     tvlR?.ok    ? tvlR.json()    : Promise.resolve(null),
     gasR?.ok    ? gasR.json()    : Promise.resolve(null),
+    fetchEthSupplyGrowth(),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const price  = priceJ.status  === "fulfilled" ? (priceJ.value  as any)?.ethereum?.usd  as number ?? 0 : 0;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const beacon = beaconJ.status === "fulfilled" ? (beaconJ.value as any)?.data : null;
-  const tvlRaw = tvlJ.status    === "fulfilled" ? (tvlJ.value    as Array<{date:number;tvl:number}>) ?? [] : [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const gasHex = gasJ.status    === "fulfilled" ? (gasJ.value    as any)?.result as string : null;
+  const priceValue  = priceJ.status  === "fulfilled" ? (priceJ.value  as Record<string, { usd: number }> | null) : null;
+  const beaconValue = beaconJ.status === "fulfilled" ? (beaconJ.value as { data?: { eligibleether?: number; validatorscount?: number; stakingapr?: number } } | null) : null;
+  const tvlValue    = tvlJ.status    === "fulfilled" ? (tvlJ.value as Array<{ date: number; tvl: number }> | null) : null;
+  const gasValue    = gasJ.status    === "fulfilled" ? (gasJ.value as { result?: string } | null) : null;
+
+  const price          = priceValue?.ethereum?.usd ?? 0;
+  const beacon         = beaconValue?.data;
+  const tvlRaw         = tvlValue ?? [];
+  const gasHex         = gasValue?.result ?? null;
 
   const totalStaked    = beacon?.eligibleether   ? beacon.eligibleether / 1e9 : 0;
   const validatorCount = beacon?.validatorscount  ?? 0;
@@ -62,10 +108,14 @@ async function EthData() {
 
   const fmtN = (n: number) => n >= 1e6 ? `${(n/1e6).toFixed(1)}M` : n >= 1e3 ? `${(n/1e3).toFixed(1)}K` : n.toFixed(0);
 
+  const supplyData = (supplyRows.status === "fulfilled" ? supplyRows.value : []) as EthSupplyRow[];
+  const currentSupply = supplyData[0]?.supply ?? 0;
+  const burnedEth     = supplyData[0]?.burned ?? 0;
+
   return (
     <div className="space-y-10 pb-20">
       <DataHeader title="Ethereum On-Chain"
-        description="Ethereum network health — staking, gas, TVL, and on-chain activity." />
+        description="Ethereum network health — staking, gas, TVL, supply growth, and on-chain activity." />
       <div className="flex items-center gap-3">
         <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
           Live — beaconcha.in + DefiLlama + cloudflare-eth.com
@@ -81,10 +131,39 @@ async function EthData() {
           color={avgGasGwei > 50 ? "#ff4757" : "#FABF2C"} sub="cloudflare-eth.com" />
         <Card label="DeFi TVL"         value={latestTvl > 0 ? `$${(latestTvl/1e9).toFixed(1)}B` : "—"} sub="DefiLlama" color="#FABF2C" />
         <Card label="% ETH Staked"     value={totalStaked > 0 ? `${((totalStaked/120_000_000)*100).toFixed(1)}%` : "—"} sub="of ~120M supply" color="#888" />
-        <Card label="ETH Burned"       value="4.4M+ ETH" sub="since EIP-1559" color="#ff4757" />
+        <Card label="ETH Burned"       value={burnedEth > 0 ? `${(burnedEth/1e6).toFixed(1)}M ETH` : "4.4M+ ETH"} sub="since EIP-1559" color="#ff4757" />
       </div>
 
-      {/* Recharts AreaChart replaces the old CSS bar chart */}
+      {currentSupply > 0 && (
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#3b82f6] pl-3 mb-5">
+            ETH Supply Growth (Post-Merge)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="border border-[#1a1a1a] bg-[#080808] p-4">
+              <p className="text-[9px] font-mono text-[#555] uppercase mb-2">Total ETH Supply</p>
+              <p className="text-2xl font-black text-white tabular-nums">{(currentSupply / 1e6).toFixed(2)}M</p>
+              <p className="text-[9px] font-mono text-[#555] mt-1">ETH</p>
+            </div>
+            <div className="border border-[#1a1a1a] bg-[#080808] p-4">
+              <p className="text-[9px] font-mono text-[#555] uppercase mb-2">Cumulative Burned</p>
+              <p className="text-2xl font-black text-[#ff4757] tabular-nums">{(burnedEth / 1e6).toFixed(2)}M</p>
+              <p className="text-[9px] font-mono text-[#555] mt-1">ETH since EIP-1559</p>
+            </div>
+            <div className="border border-[#1a1a1a] bg-[#080808] p-4">
+              <p className="text-[9px] font-mono text-[#555] uppercase mb-2">Net Since Merge</p>
+              <p className={`text-2xl font-black tabular-nums ${supplyData[0]?.netEmission && supplyData[0].netEmission > 0 ? "text-[#ff4757]" : "text-[#00d672]"}`}>
+                {supplyData[0]?.netEmission ? `${(supplyData[0].netEmission / 1e6).toFixed(3)}M` : "—"}
+              </p>
+              <p className="text-[9px] font-mono text-[#555] mt-1">ETH (inflationary)</p>
+            </div>
+          </div>
+          <p className="text-[9px] text-[#333] font-mono mt-4">
+            Source: Etherscan stats/ethsupply + stats/ethburned · Requires ETHERSCAN_API_KEY
+          </p>
+        </div>
+      )}
+
       <EthTvlClient tvlChart={tvlChart} latestTvl={latestTvl} />
     </div>
   );

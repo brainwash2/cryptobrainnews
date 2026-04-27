@@ -6,21 +6,12 @@ import type { Timeframe }     from "../../../_components/TimeframeSelector";
 import TvLightweightChart     from "../../../_components/charts/TvLightweightChart";
 import type { TvDataPoint }   from "../../../_components/charts/TvLightweightChart";
 import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Cell,
-  ReferenceLine,
+  ResponsiveContainer, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Cell, ReferenceLine,
 } from "recharts";
 import type {
-  GlobalMarketData,
-  FearAndGreedData,
-  ExtendedCoinData,
-  CoinGeckoExchange,
+  GlobalMarketData, FearAndGreedData,
+  ExtendedCoinData, CoinGeckoExchange,
 } from "@/lib/market-data";
 
 interface Props {
@@ -30,10 +21,8 @@ interface Props {
   exchanges:    CoinGeckoExchange[];
 }
 
-/* ── Formatters ─────────────────────────────────────────────────────────── */
-
 function fmtUsd(n: number | null | undefined, decimals = 2): string {
-  if (n === null || n === undefined || isNaN(n)) return "-";
+  if (n === null || n === undefined || isNaN(n)) return "—";
   if (n >= 1e12) return `$${(n / 1e12).toFixed(decimals)}T`;
   if (n >= 1e9)  return `$${(n / 1e9).toFixed(decimals)}B`;
   if (n >= 1e6)  return `$${(n / 1e6).toFixed(decimals)}M`;
@@ -42,7 +31,7 @@ function fmtUsd(n: number | null | undefined, decimals = 2): string {
 
 function fmtPct(n: number | null | undefined): React.ReactNode {
   if (n === null || n === undefined || isNaN(n)) {
-    return <span className="text-[#555]">-</span>;
+    return <span className="text-[#555]">—</span>;
   }
   const pos = n >= 0;
   return (
@@ -67,8 +56,6 @@ function fngColor(val: string): string {
   if (v >= 25) return "text-[#f97316]";
   return "text-[#ff4757]";
 }
-
-/* ── Shared chart tooltip ───────────────────────────────────────────────── */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function PctTooltip({ active, payload, label }: any) {
@@ -97,22 +84,11 @@ function BtcTooltip({ active, payload, label }: any) {
   );
 }
 
-/* ── Chart 1: Top 12 Movers ────────────────────────────────────────────── */
-
-function PerformanceChart({
-  coins,
-  tf,
-  mounted,
-}: {
-  coins:   ExtendedCoinData[];
-  tf:      Timeframe;
-  mounted: boolean;
+function PerformanceChart({ coins, tf, mounted }: {
+  coins: ExtendedCoinData[]; tf: Timeframe; mounted: boolean;
 }) {
   const data = [...coins]
-    .map((c) => ({
-      name:   c.symbol.toUpperCase(),
-      change: Number(c[pctKey(tf)] ?? 0),
-    }))
+    .map((c) => ({ name: c.symbol.toUpperCase(), change: Number(c[pctKey(tf)] ?? 0) }))
     .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
     .slice(0, 12);
 
@@ -140,17 +116,10 @@ function PerformanceChart({
   );
 }
 
-/* ── Chart 2: Top 10 Exchanges by 24h Volume ────────────────────────────── */
-
-function ExchangeVolumeChart({
-  exchanges,
-  mounted,
-}: {
-  exchanges: CoinGeckoExchange[];
-  mounted:   boolean;
+function ExchangeVolumeChart({ exchanges, mounted }: {
+  exchanges: CoinGeckoExchange[]; mounted: boolean;
 }) {
-  const data = [...exchanges]
-    .slice(0, 10)
+  const data = [...exchanges].slice(0, 10)
     .map((ex) => ({
       name:   ex.name.length > 10 ? ex.name.slice(0, 10) + "..." : ex.name,
       volume: Math.round(ex.trade_volume_24h_btc),
@@ -168,7 +137,8 @@ function ExchangeVolumeChart({
       <BarChart data={data} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
         <CartesianGrid stroke="#1a1a1a" strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey="name" stroke="#555" fontSize={9} tickLine={false} axisLine={false} fontFamily="monospace" />
-        <YAxis stroke="#555" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}K`} width={40} />
+        <YAxis stroke="#555" fontSize={10} tickLine={false} axisLine={false}
+          tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}K`} width={40} />
         <Tooltip content={<BtcTooltip />} cursor={{ fill: "#ffffff08" }} />
         <Bar dataKey="volume" fill="#FABF2C" fillOpacity={0.8} maxBarSize={36} radius={[2, 2, 0, 0]} isAnimationActive={false} />
       </BarChart>
@@ -176,30 +146,17 @@ function ExchangeVolumeChart({
   );
 }
 
-/* ── Chart 3: Market Cap Dominance ──────────────────────────────────────── */
-
 const DOM_COLORS: Record<string, string> = {
-  BTC:    "#F7931A",
-  ETH:    "#627EEA",
-  USDT:   "#26A17B",
-  BNB:    "#F3BA2F",
-  SOL:    "#9945FF",
-  USDC:   "#2775CA",
-  XRP:    "#00AAE4",
-  OTHERS: "#555555",
+  BTC: "#F7931A", ETH: "#627EEA", USDT: "#26A17B", BNB: "#F3BA2F",
+  SOL: "#9945FF", USDC: "#2775CA", XRP: "#00AAE4", OTHERS: "#555555",
 };
 
-function DominanceChart({
-  globalData,
-  mounted,
-}: {
-  globalData: GlobalMarketData | null;
-  mounted:    boolean;
+function DominanceChart({ globalData, mounted }: {
+  globalData: GlobalMarketData | null; mounted: boolean;
 }) {
   const pct   = globalData?.market_cap_percentage ?? {};
   const SHOW  = ["btc", "eth", "usdt", "bnb", "sol", "usdc", "xrp"];
-  const known = SHOW
-    .map((k) => ({ name: k.toUpperCase(), pct: Number(pct[k] ?? 0) }))
+  const known = SHOW.map((k) => ({ name: k.toUpperCase(), pct: Number(pct[k] ?? 0) }))
     .filter((d) => d.pct > 0);
   const knownSum = known.reduce((s, d) => s + d.pct, 0);
   const data = [...known, { name: "OTHERS", pct: Math.max(0, 100 - knownSum) }];
@@ -215,7 +172,8 @@ function DominanceChart({
       <BarChart data={data} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
         <CartesianGrid stroke="#1a1a1a" strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey="name" stroke="#555" fontSize={10} tickLine={false} axisLine={false} fontFamily="monospace" />
-        <YAxis stroke="#555" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v.toFixed(0)}%`} width={36} />
+        <YAxis stroke="#555" fontSize={10} tickLine={false} axisLine={false}
+          tickFormatter={(v: number) => `${v.toFixed(0)}%`} width={36} />
         <Tooltip content={<PctTooltip />} cursor={{ fill: "#ffffff08" }} />
         <Bar dataKey="pct" maxBarSize={44} radius={[2, 2, 0, 0]} isAnimationActive={false}>
           {data.map((entry, i) => (
@@ -227,13 +185,41 @@ function DominanceChart({
   );
 }
 
-/* ── Price History (CoinGecko market_chart) ─────────────────────────────── */
+function VolumeDominanceChart({ exchanges, mounted }: {
+  exchanges: CoinGeckoExchange[]; mounted: boolean;
+}) {
+  const totalBtcVol = exchanges.reduce((s, e) => s + e.trade_volume_24h_btc, 0);
+  const data = exchanges.slice(0, 10).map((e) => ({
+    name:  e.name.length > 12 ? e.name.slice(0, 12) + "..." : e.name,
+    volBtc: Math.round(e.trade_volume_24h_btc),
+    share:  totalBtcVol > 0 ? (e.trade_volume_24h_btc / totalBtcVol) * 100 : 0,
+  }));
 
-interface PriceHistoryState {
-  btc: TvDataPoint[];
-  eth: TvDataPoint[];
-  loading: boolean;
+  if (!mounted) return (
+    <div className="h-[200px] flex items-center justify-center text-[#333] font-mono text-xs uppercase animate-pulse">
+      Rendering...
+    </div>
+  );
+
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart data={data} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+        <CartesianGrid stroke="#1a1a1a" strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="name" stroke="#555" fontSize={9} tickLine={false} axisLine={false} fontFamily="monospace" />
+        <YAxis stroke="#555" fontSize={10} tickLine={false} axisLine={false}
+          tickFormatter={(v: number) => `${v.toFixed(0)}%`} width={36} />
+        <Tooltip content={<PctTooltip />} cursor={{ fill: "#ffffff08" }} />
+        <Bar dataKey="share" maxBarSize={40} radius={[2, 2, 0, 0]} isAnimationActive={false}>
+          {data.map((_, i) => (
+            <Cell key={`vol-${i}`} fill="#FABF2C" fillOpacity={0.75 + i * 0.025} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
 }
+
+interface PriceHistoryState { btc: TvDataPoint[]; eth: TvDataPoint[]; loading: boolean; }
 
 function usePriceHistory(): PriceHistoryState {
   const [state, setState] = useState<PriceHistoryState>({ btc: [], eth: [], loading: true });
@@ -243,14 +229,9 @@ function usePriceHistory(): PriceHistoryState {
     async function load() {
       try {
         const [btcRes, ethRes] = await Promise.all([
-          fetch(
-            "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily"
-          ),
-          fetch(
-            "https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=30&interval=daily"
-          ),
+          fetch("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily"),
+          fetch("https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=30&interval=daily"),
         ]);
-
         const toPoints = async (res: Response): Promise<TvDataPoint[]> => {
           if (!res.ok) return [];
           const json = await res.json() as { prices?: [number, number][] };
@@ -258,22 +239,12 @@ function usePriceHistory(): PriceHistoryState {
             time: new Date(ts).toISOString().slice(0, 10),
             value: price,
           }));
-          // Deduplicate by date — keep the last entry for each day
-          const deduped = Array.from(
-            new Map(raw.map((d) => [d.time, d])).values()
-          ).sort((a, b) => a.time.localeCompare(b.time));
-          return deduped;
+          return Array.from(new Map(raw.map((d) => [d.time, d])).values())
+            .sort((a, b) => a.time.localeCompare(b.time));
         };
-
         if (cancelled) return;
-        setState({
-          btc: await toPoints(btcRes),
-          eth: await toPoints(ethRes),
-          loading: false,
-        });
-      } catch {
-        if (!cancelled) setState((s) => ({ ...s, loading: false }));
-      }
+        setState({ btc: await toPoints(btcRes), eth: await toPoints(ethRes), loading: false });
+      } catch { if (!cancelled) setState((s) => ({ ...s, loading: false })); }
     }
     load();
     return () => { cancelled = true; };
@@ -281,8 +252,6 @@ function usePriceHistory(): PriceHistoryState {
 
   return state;
 }
-
-/* ── Main ───────────────────────────────────────────────────────────────── */
 
 export default function SpotClient({ globalData, fearAndGreed, coins, exchanges }: Props) {
   const [tf, setTf]           = useState<Timeframe>("1D");
@@ -293,9 +262,7 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
     (data: TvDataPoint[]): TvDataPoint[] => {
       if (tf === "7D") return data.slice(-7);
       return data;
-    },
-    [tf],
-  );
+    }, [tf]);
 
   const totalMcap     = globalData?.total_market_cap?.usd ?? 0;
   const total24hVol   = globalData?.total_volume?.usd ?? 0;
@@ -313,152 +280,97 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
   return (
     <div className="space-y-10">
 
-      {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          {
-            label: "Total Market Cap",
-            value: fmtUsd(totalMcap),
+          { label: "Total Market Cap", value: fmtUsd(totalMcap),
             sub: `${mcapChange24h >= 0 ? "+" : ""}${mcapChange24h.toFixed(2)}% (24h)`,
-            subColor: mcapChange24h >= 0 ? "text-[#00d672]" : "text-[#ff4757]",
-          },
-          {
-            label: "24h Volume",
-            value: fmtUsd(total24hVol),
-            sub: "Global spot",
-            subColor: "text-[#888]",
-          },
-          {
-            label: "BTC Dominance",
-            value: `${btcDom.toFixed(1)}%`,
-            sub: "of total market cap",
-            subColor: "text-[#888]",
-          },
-          {
-            label: "ETH Dominance",
-            value: `${ethDom.toFixed(1)}%`,
-            sub: "of total market cap",
-            subColor: "text-[#888]",
-          },
-          {
-            label: "Fear & Greed",
-            value: fng ? fng.value : "-",
-            sub: fng?.value_classification ?? "N/A",
-            subColor: fng ? fngColor(fng.value) : "text-[#888]",
-          },
+            subColor: mcapChange24h >= 0 ? "text-[#00d672]" : "text-[#ff4757]" },
+          { label: "24h Volume", value: fmtUsd(total24hVol), sub: "Global spot", subColor: "text-[#888]" },
+          { label: "BTC Dominance", value: `${btcDom.toFixed(1)}%`, sub: "of total market cap", subColor: "text-[#888]" },
+          { label: "ETH Dominance", value: `${ethDom.toFixed(1)}%`, sub: "of total market cap", subColor: "text-[#888]" },
+          { label: "Fear & Greed", value: fng ? fng.value : "—",
+            sub: fng?.value_classification ?? "N/A", subColor: fng ? fngColor(fng.value) : "text-[#888]" },
         ].map((stat) => (
           <div key={stat.label} className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">
-              {stat.label}
-            </p>
-            <p className="text-2xl font-black text-[#FABF2C] tabular-nums leading-none">
-              {stat.value}
-            </p>
+            <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{stat.label}</p>
+            <p className="text-2xl font-black text-[#FABF2C] tabular-nums leading-none">{stat.value}</p>
             <p className={`text-[10px] font-mono mt-2 ${stat.subColor}`}>{stat.sub}</p>
           </div>
         ))}
       </div>
 
-      {/* Chart row 1: Movers + Dominance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div>
-              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">
-                Top Movers
-              </h3>
-              <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">
-                Top 12 by absolute {tf} change
-              </p>
+              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">Top Movers</h3>
+              <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">Top 12 by absolute {tf} change</p>
             </div>
             <TimeframeSelector value={tf} onChange={setTf} available={["1D", "7D", "30D"]} />
           </div>
           <PerformanceChart coins={coins} tf={tf} mounted={mounted} />
         </div>
-
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
           <div className="mb-4">
-            <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">
-              Market Cap Dominance
-            </h3>
-            <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">
-              % share of total market cap - Source: CoinGecko
-            </p>
+            <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">Market Cap Dominance</h3>
+            <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">% share of total market cap</p>
           </div>
           <DominanceChart globalData={globalData} mounted={mounted} />
         </div>
       </div>
 
-      {/* Chart row 1b: BTC & ETH Price History (hidden on 1D) */}
       {tf !== "1D" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
             <div className="mb-4">
-              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">
-                Bitcoin Price ({tf})
-              </h3>
-              <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">
-                Source: CoinGecko market_chart - Client fetch
-              </p>
+              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">Bitcoin Price ({tf})</h3>
+              <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">CoinGecko market_chart</p>
             </div>
             {priceHistory.loading ? (
               <div className="flex items-center justify-center h-[220px] text-[#333] font-mono text-xs uppercase animate-pulse">
                 Loading BTC chart...
               </div>
             ) : (
-              <TvLightweightChart
-                data={slicePriceData(priceHistory.btc)}
-                lineColor="#F7931A"
-                height={220}
-                title="BTC Price"
-              />
+              <TvLightweightChart data={slicePriceData(priceHistory.btc)} lineColor="#F7931A" height={220} title="BTC Price" />
             )}
           </div>
-
           <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
             <div className="mb-4">
-              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">
-                Ethereum Price ({tf})
-              </h3>
-              <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">
-                Source: CoinGecko market_chart - Client fetch
-              </p>
+              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">Ethereum Price ({tf})</h3>
+              <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">CoinGecko market_chart</p>
             </div>
             {priceHistory.loading ? (
               <div className="flex items-center justify-center h-[220px] text-[#333] font-mono text-xs uppercase animate-pulse">
                 Loading ETH chart...
               </div>
             ) : (
-              <TvLightweightChart
-                data={slicePriceData(priceHistory.eth)}
-                lineColor="#627EEA"
-                height={220}
-                title="ETH Price"
-              />
+              <TvLightweightChart data={slicePriceData(priceHistory.eth)} lineColor="#627EEA" height={220} title="ETH Price" />
             )}
           </div>
         </div>
       )}
 
-      {/* Chart row 2: Exchange Volume */}
-      <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
-        <div className="mb-4">
-          <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">
-            Top 10 CEX - 24h Volume (BTC)
-          </h3>
-          <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">
-            Source: CoinGecko exchanges API - Cached 1 hr
-          </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+          <div className="mb-4">
+            <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">Top 10 CEX — 24h Volume (BTC)</h3>
+            <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">Source: CoinGecko exchanges API</p>
+          </div>
+          <ExchangeVolumeChart exchanges={exchanges} mounted={mounted} />
         </div>
-        <ExchangeVolumeChart exchanges={exchanges} mounted={mounted} />
+        <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+          <div className="mb-4">
+            <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">CEX Volume Dominance</h3>
+            <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">% of total 24h CEX volume</p>
+          </div>
+          <VolumeDominanceChart exchanges={exchanges} mounted={mounted} />
+        </div>
       </div>
 
-      {/* Top 50 Coins Table */}
       <div>
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <h3 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
-            <span className="w-2 h-2 bg-[#FABF2C] rounded-full" />
-            Top 50 Assets
+            <span className="w-2 h-2 bg-[#FABF2C] rounded-full" />Top 50 Assets
           </h3>
           <TimeframeSelector value={tf} onChange={setTf} available={["1D", "7D", "30D"]} />
         </div>
@@ -467,46 +379,32 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
             <thead>
               <tr className="border-b border-[#1a1a1a] bg-[#080808]">
                 {["#", "Asset", "Price", "1h%", `${tf} Perf`, "Market Cap", "24h Volume"].map((h) => (
-                  <th
-                    key={h}
-                    className={[
-                      "px-4 py-3 font-black text-[#555] uppercase tracking-widest whitespace-nowrap",
-                      h === "Asset" || h === "#" ? "text-left" : "text-right",
-                      h === `${tf} Perf` ? "text-[#FABF2C]" : "",
-                    ].join(" ")}
-                  >
-                    {h}
-                  </th>
+                  <th key={h} className={["px-4 py-3 font-black text-[#555] uppercase tracking-widest whitespace-nowrap",
+                    h === "Asset" || h === "#" ? "text-left" : "text-right",
+                    h === `${tf} Perf` ? "text-[#FABF2C]" : "",
+                  ].join(" ")}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {sortedCoins.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-[#555] font-mono text-xs uppercase tracking-widest">
-                    Syncing market data...
-                  </td>
-                </tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-[#555] font-mono text-xs">
+                  Syncing market data...
+                </td></tr>
               )}
               {sortedCoins.map((coin, i) => {
                 const tfPct = coin[pctKey(tf)] as number | null;
                 const h1Pct = coin.price_change_percentage_1h_in_currency;
                 const price = coin.current_price;
                 return (
-                  <tr
-                    key={coin.id}
-                    className={[
-                      "border-b border-[#111] hover:bg-[#0f0f0f] transition-colors",
-                      i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]",
-                    ].join(" ")}
-                  >
+                  <tr key={coin.id} className={["border-b border-[#111] hover:bg-[#0f0f0f] transition-colors",
+                    i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]",
+                  ].join(" ")}>
                     <td className="px-4 py-3 text-[#555] tabular-nums w-10">{i + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        {coin.image && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={coin.image} alt={coin.symbol} width={20} height={20} className="rounded-full shrink-0" />
-                        )}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        {coin.image && <img src={coin.image} alt={coin.symbol} width={20} height={20} className="rounded-full shrink-0" />}
                         <span className="font-bold text-white">{coin.name}</span>
                         <span className="text-[#555] uppercase text-[10px]">{coin.symbol}</span>
                       </div>
@@ -514,9 +412,7 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
                     <td className="px-4 py-3 text-right font-mono tabular-nums text-white">
                       {price >= 1
                         ? `$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                        : price > 0
-                          ? `$${price.toFixed(price < 0.001 ? 8 : price < 0.01 ? 6 : 4)}`
-                          : "-"}
+                        : price > 0 ? `$${price.toFixed(price < 0.001 ? 8 : price < 0.01 ? 6 : 4)}` : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">{fmtPct(h1Pct)}</td>
                     <td className="px-4 py-3 text-right">{fmtPct(tfPct)}</td>
@@ -528,75 +424,58 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
             </tbody>
           </table>
         </div>
-        <p className="text-[10px] text-[#333] font-mono mt-2 text-right">Source: CoinGecko - Cached 5 min</p>
+        <p className="text-[10px] text-[#333] font-mono mt-2 text-right">Source: CoinGecko — Cached 5 min</p>
       </div>
 
-      {/* CEX Rankings Table */}
       <div>
         <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center gap-3">
-          <span className="w-2 h-2 bg-[#00d672] rounded-full" />
-          CEX Rankings by 24h Volume
+          <span className="w-2 h-2 bg-[#00d672] rounded-full" />CEX Rankings by 24h Volume
         </h3>
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-[#1a1a1a] bg-[#080808]">
                 {["#", "Exchange", "Country", "Trust Score", "24h Volume (BTC)", "24h Vol Norm"].map((h) => (
-                  <th
-                    key={h}
-                    className={[
-                      "px-4 py-3 font-black text-[#555] uppercase tracking-widest",
-                      h === "Exchange" || h === "#" ? "text-left" : "text-right",
-                    ].join(" ")}
-                  >
-                    {h}
-                  </th>
+                  <th key={h} className={["px-4 py-3 font-black text-[#555] uppercase tracking-widest",
+                    h === "Exchange" || h === "#" ? "text-left" : "text-right",
+                  ].join(" ")}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {exchanges.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-[#555] font-mono text-xs uppercase">
-                    Syncing exchange data...
-                  </td>
-                </tr>
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-[#555] font-mono text-xs">
+                  Syncing exchange data...
+                </td></tr>
               )}
               {exchanges.map((ex, i) => (
-                <tr
-                  key={ex.id}
-                  className={[
-                    "border-b border-[#111] hover:bg-[#0f0f0f] transition-colors",
-                    i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]",
-                  ].join(" ")}
-                >
+                <tr key={ex.id} className={["border-b border-[#111] hover:bg-[#0f0f0f] transition-colors",
+                  i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]",
+                ].join(" ")}>
                   <td className="px-4 py-3 text-[#555] tabular-nums w-10">{i + 1}</td>
                   <td className="px-4 py-3 font-bold text-white">{ex.name}</td>
-                  <td className="px-4 py-3 text-right text-[#888]">{ex.country ?? "-"}</td>
+                  <td className="px-4 py-3 text-right text-[#888]">{ex.country ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
                     {ex.trust_score !== null ? (
                       <span className={`font-mono font-bold ${
                         (ex.trust_score ?? 0) >= 8 ? "text-[#00d672]" :
                         (ex.trust_score ?? 0) >= 5 ? "text-[#FABF2C]" : "text-[#ff4757]"
-                      }`}>
-                        {ex.trust_score}/10
-                      </span>
-                    ) : "-"}
+                      }`}>{ex.trust_score}/10</span>
+                    ) : "—"}
                   </td>
                   <td className="px-4 py-3 text-right font-mono tabular-nums text-[#FABF2C]">
-                    {ex.trade_volume_24h_btc?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? "-"} BTC
+                    {ex.trade_volume_24h_btc?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? "—"} BTC
                   </td>
                   <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">
-                    {ex.trade_volume_24h_btc_normalized?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? "-"} BTC
+                    {ex.trade_volume_24h_btc_normalized?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? "—"} BTC
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="text-[10px] text-[#333] font-mono mt-2 text-right">Source: CoinGecko - Cached 1 hr</p>
+        <p className="text-[10px] text-[#333] font-mono mt-2 text-right">Source: CoinGecko — Cached 1 hr</p>
       </div>
-
     </div>
   );
 }
