@@ -58,11 +58,12 @@ You never generate original implementation code – you only transcribe, format,
 - Once created, numeric IDs go into environment variables; terminal switches to live Dune data.
 - `docs/DUNE_QUERIES.md` must be updated with the new query IDs.
 
-### News Pipeline — Built by Claude 4.6 Sonnet (Operational)
+### News Pipeline — Built by Claude 4.6 Sonnet (Functional, requires re‑audit)
 - Daily article pipeline: RSS → Groq → DeepSeek → Gemini → Sanity (5 articles per run).
 - Telegram broadcasting, newsletter via Resend, social scheduler (X/Twitter threads).
 - Pro gating (Stripe), affiliate links, sponsored content, health checks, ops alerts.
-- All 7 pipeline audit parts delivered (Typescript strict mode, dedup, caching, SEO/GEO, social, monetisation, ops).
+- All 7 original pipeline audit parts delivered (Typescript strict mode, dedup, caching, SEO/GEO, social, monetisation, ops).
+- **IMPORTANT: This section requires a full re‑audit.** The news pipeline is functional but not yet considered complete. A full refactoring pass via Claude 4.7 is planned. Do NOT describe the news pipeline as "fully operational" or "complete" — it is functional but pending re‑audit and refactoring.
 
 ## Pending Work
 
@@ -73,7 +74,8 @@ You never generate original implementation code – you only transcribe, format,
 - Testing framework: design and implementation after full data terminal sign‑off.
 
 ### News Section & Pipeline
-- Full news section audit and refactoring via Claude 4.7 (notgpt.io, 2–3 prompts/day).
+- FULL RE‑AUDIT of the news pipeline (functional but not complete).
+- Refactoring via Claude 4.7 (notgpt.io, 2–3 prompts/day).
 - Enhance editorial workflow, category pages, search, AI pipeline, caching, SEO.
 - Grok to research news pipeline improvements and competitive analysis before Claude 4.7 code generation.
 
