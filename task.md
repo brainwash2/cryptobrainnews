@@ -78,3 +78,8 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase D — Dune Query 5 (Whale Transfers Cross‑Chain)
 	•	New Status: COMPLETED
 	•	Notes: Created Dune query 7400911 (tokens.transfers > $1M, 7‑day, 6 chains). Wired to DUNE_WHALES_ID. /data/defi/whale-watch now gains live cross‑chain whale data with seed fallback.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — Dune Query 6 (Protocol DAU)
+	•	New Status: COMPLETED
+	•	Notes: Created Dune query 7401328 (6 protocol-specific .trades tables UNION). Wired to DUNE_PROTOCOL_DAU_ID. /data/defi/tvl now gains live DAU data with seed fallback.
