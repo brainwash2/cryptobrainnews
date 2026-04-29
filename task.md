@@ -48,3 +48,8 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 - [x] Greeks.live: seed block trades on Options page
 - [x] New /data/markets/liquidity page (Hyperliquid + Drift depth heatmap)
 - [x] ESLint/TS fixes: OptionsClient (useSyncExternalStore, unknown, &apos;)
+
+[YYYY-MM-DD] STATUS UPDATE
+	•	Reference: Phase X (Task description)
+	•	New Status: COMPLETED
+	•	Notes: Brief notes on what was built.
