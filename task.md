@@ -58,3 +58,8 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase X (Task description)
 	•	New Status: COMPLETED
 	•	Notes: Brief notes on what was built.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D (Live Dune SQL Integration)
+	•	New Status: COMPLETED
+	•	Notes: Replaced all 9 stub Dune functions with live API calls via dune.com. Uses 24‑hour Redis cache (cached()) and seed fallback arrays. No pages need changes — all existing consumers (governance, NFTs, whales, etc.) automatically gain live data once DUNE_API_KEY and per‑query IDs are set in .env.local. Dune execution count limited to 9 per day maximum, well under free‑tier limits.

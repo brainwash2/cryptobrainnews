@@ -179,6 +179,7 @@ async function duneOrSeed(
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. DAO Governance — Tally + Snapshot proposals & votes
+// Blueprint Query 1 · SQL in docs/DUNE_QUERIES.md
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_DAO_GOVERNANCE: DuneRow[] = [
@@ -205,6 +206,7 @@ export async function getDAOGovernance(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 2. NFT Top Collections by 7‑Day Volume (Cross‑Chain)
+// Blueprint Query 2
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_NFT_COLLECTIONS: DuneRow[] = [
@@ -229,6 +231,7 @@ export async function getNFTTopCollectionsByVolume(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 3. DEX Liquidity Pools — Top 20 by 24h Volume & Depth
+// Blueprint Query 3
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_DEX_POOLS: DuneRow[] = [
@@ -255,6 +258,7 @@ export async function getDEXLiquidityPools(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 4. Stablecoin Holder Distribution — USDT/USDC balance buckets
+// Blueprint Query 4
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_STABLECOIN_HOLDERS: DuneRow[] = [
@@ -281,6 +285,7 @@ export async function getStablecoinHolderDistribution(): Promise<DuneResultSet> 
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 5. Cross‑Chain Whale Transfers — >$1M across 6+ chains
+// Blueprint Query 5
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_WHALES: DuneRow[] = [
@@ -305,6 +310,7 @@ export async function getCrossChainWhaleTransfers(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 6. Protocol Daily Active Users — Top 15 DeFi Protocols (30‑Day)
+// Blueprint Query 6
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_PROTOCOL_DAU: DuneRow[] = [
@@ -336,6 +342,7 @@ export async function getProtocolDailyActiveUsers(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 7. Top Token Pairs — Top 20 by 24h DEX Volume
+// Blueprint Query 7
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_TOKEN_PAIRS: DuneRow[] = [
@@ -362,6 +369,7 @@ export async function getTopTokenPairs(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 8. L2 Active Addresses Comparison — 5 Chains, 30‑Day
+// Blueprint Query 8
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_L2_ADDRESSES: DuneRow[] = [
@@ -393,6 +401,7 @@ export async function getL2ActiveAddressesComparison(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 9. CEX‑to‑DEX Volume Ratio — 90‑Day DEX aggregate
+// Blueprint Query 9
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_CEX_DEX_VOLUME: DuneRow[] = [
