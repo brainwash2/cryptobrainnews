@@ -83,3 +83,8 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase D — Dune Query 6 (Protocol DAU)
 	•	New Status: COMPLETED
 	•	Notes: Created Dune query 7401328 (6 protocol-specific .trades tables UNION). Wired to DUNE_PROTOCOL_DAU_ID. /data/defi/tvl now gains live DAU data with seed fallback.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — Dune Query 7 (Top Token Pairs)
+	•	New Status: COMPLETED
+	•	Notes: Created Dune query 7401393 (protocol-specific .trades tables UNION for 24h top pairs). Wired to DUNE_TOP_PAIRS_ID. /data/defi/dex-volume now gains live top‑pairs data with seed fallback.
