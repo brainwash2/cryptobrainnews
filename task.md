@@ -38,3 +38,13 @@ We follow only `docs/DeepSeekV4-Research-Blueprint.md`.
 ## Data Terminal – Phase C (Paid API Minimum Viable) ← ACTIVE
 Status: Planning · Master prompt ready at docs/phase-c-master-prompt.md
 Deferred from Phase B: Spot On Chain → Zerion whale alerts
+
+## Data Terminal – Phase C (Paid API Minimum Viable — Completed, then replaced with free alternatives)
+### Run ID: phase-c-free-replacements — $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+- [x] Glassnode: seed only (SOPR/MVRV/NUPL — no free equivalent)
+- [x] Kaiko: replaced with Hyperliquid (BTC/ETH) + Drift (SOL) — free public APIs
+- [x] Santiment: free tier added (1,000 calls/month) + ApeWisdom (Reddit mentions)
+- [x] CoinShares: manual seed ETF flows on Bitcoin ETFs + Comparison pages
+- [x] Greeks.live: seed block trades on Options page
+- [x] New /data/markets/liquidity page (Hyperliquid + Drift depth heatmap)
+- [x] ESLint/TS fixes: OptionsClient (useSyncExternalStore, unknown, &apos;)
