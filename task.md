@@ -68,3 +68,8 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase D — Dune Query 2 (NFT Top Collections)
 	•	New Status: COMPLETED
 	•	Notes: Created Dune query 7400802 (nft.trades 7-day cross-chain volume). Wired to DUNE_NFT_COLLECTIONS_ID. /data/nfts/collections now serves live data with seed fallback.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — Dune Query 3 (DEX Liquidity Pools)
+	•	New Status: COMPLETED
+	•	Notes: Created Dune query 7400811 (dex.trades 24h pool volume). Wired to DUNE_DEX_POOLS_ID. /data/defi/dex-volume now gains live pool data with seed fallback.
