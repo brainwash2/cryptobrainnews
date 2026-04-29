@@ -73,3 +73,8 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase D — Dune Query 3 (DEX Liquidity Pools)
 	•	New Status: COMPLETED
 	•	Notes: Created Dune query 7400811 (dex.trades 24h pool volume). Wired to DUNE_DEX_POOLS_ID. /data/defi/dex-volume now gains live pool data with seed fallback.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — Dune Query 5 (Whale Transfers Cross‑Chain)
+	•	New Status: COMPLETED
+	•	Notes: Created Dune query 7400911 (tokens.transfers > $1M, 7‑day, 6 chains). Wired to DUNE_WHALES_ID. /data/defi/whale-watch now gains live cross‑chain whale data with seed fallback.
