@@ -24,3 +24,17 @@ We follow only `docs/DeepSeekV4-Research-Blueprint.md`.
 - [ ] End‑to‑end test Pro checkout flow (Stripe)
 - [ ] Content cadence: publish 1 editorial/day, schedule 3 X/Twitter threads/week
 - [ ] Mobile responsiveness pass on top 10 pages
+
+## Data Terminal – Phase B (New Free APIs)
+### Run ID: phase-b-new-apis — $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+- [x] B‑1 Flipside Crypto: src/lib/flipside.ts, FLIPSIDE_API_KEY, /data/defi/social with seed fallback
+- [x] B‑2 CoinGlass: src/lib/coinglass.ts, COINGLASS_API_KEY, new /data/markets/liquidations page
+- [x] B‑3 Token Terminal: src/lib/token-terminal.ts, TOKEN_TERMINAL_API_KEY
+- [x] B‑4 LunarCrush: src/lib/lunarcrush.ts, /data/alternative/social with seed fallback
+- [x] B‑5 IntoTheBlock: src/lib/intotheblock.ts, MVRV/concentration seed
+- [x] B‑6 Spot On Chain: src/lib/spotonchain.ts (deprecated; Zerion replacement deferred)
+- [x] B‑7 DefiLlama /unlocks: extended defi-data.ts, new /data/defi/token-unlocks page
+
+## Data Terminal – Phase C (Paid API Minimum Viable) ← ACTIVE
+Status: Planning · Master prompt ready at docs/phase-c-master-prompt.md
+Deferred from Phase B: Spot On Chain → Zerion whale alerts
