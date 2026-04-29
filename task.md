@@ -98,3 +98,8 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase D — DUNE_QUERIES.md finalised
 	•	New Status: COMPLETED
 	•	Notes: Replaced the old docs/DUNE_QUERIES.md with a production‑accurate version listing all 8 live queries with IDs, exact SQL, column names, and removed 16 stub queries. Added DUNE_API_KEY and all 8 query ID environment variables to the reference section. Documented which dune.ts functions remain seed‑only and why (getCEXvsDEXVolumeRatio uses DefiLlama; getNextUnlocks re‑exports from defi-data.ts).
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase E — Master Prompt finalised
+	•	New Status: PLANNING
+	•	Notes: Created docs/phase-e-master-prompt.md. Prompt covers 8 page‑specific client components + 5 shared components + global CSS, with exact design tokens, chart configurations, and strict rules. Ready to submit to DeepSeek V4 in a new chat.
