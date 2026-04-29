@@ -93,3 +93,8 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase D — Dune Query 8 (L2 Active Addresses Comparison)
 	•	New Status: COMPLETED
 	•	Notes: Created Dune query 7401413 (5 chain‑specific transaction tables UNION). Wired to DUNE_L2_ACTIVE_ID. /data/scaling/l2-comparison now gains live address data with seed fallback.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — DUNE_QUERIES.md finalised
+	•	New Status: COMPLETED
+	•	Notes: Replaced the old docs/DUNE_QUERIES.md with a production‑accurate version listing all 8 live queries with IDs, exact SQL, column names, and removed 16 stub queries. Added DUNE_API_KEY and all 8 query ID environment variables to the reference section. Documented which dune.ts functions remain seed‑only and why (getCEXvsDEXVolumeRatio uses DefiLlama; getNextUnlocks re‑exports from defi-data.ts).
