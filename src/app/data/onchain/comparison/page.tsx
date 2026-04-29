@@ -1,11 +1,16 @@
-import React, { Suspense }              from 'react';
-import { DataHeader }                   from '../../_components/DataHeader';
-import { ChartSkeleton }                from '../../_components/ChartSkeleton';
-import { getAllChainsSummary }           from '@/lib/onchain-data';
+// src/app/data/onchain/comparison/page.tsx — add Flipside/Free tab
+// Adds a third tab ("Free APIs") that uses existing REST APIs for cross‑chain
+// active address comparison. This replaces the planned Flipside SQL tab while
+// Flipside is gated behind organization access.
+import React, { Suspense } from "react";
+import { DataHeader }       from "../../_components/DataHeader";
+import { ChartSkeleton }    from "../../_components/ChartSkeleton";
+import { getAllChainsSummary } from "@/lib/onchain-data";
+import { getBTCActiveAddresses, getETHActiveAddresses } from "@/lib/onchain-extended";
 
 export const metadata = {
-  title: 'On-Chain Comparison | CryptoBrainNews',
-  description: 'Cross-chain TVL, 24h change, and protocol count comparison across all major blockchains.',
+  title: "On-Chain Comparison | CryptoBrainNews",
+  description: "Cross-chain TVL, 24h change, protocol count, and active address comparison across all major blockchains.",
 };
 export const revalidate = 3600;
 
@@ -26,15 +31,82 @@ function PctCell({ v }: { v: number | null }) {
   );
 }
 
+interface ActiveAddressRow {
+  chain: string;
+  today: number;
+  yesterday: number;
+  changePct: number | null;
+  source: string;
+}
+
 async function ComparisonData() {
   const chains = await getAllChainsSummary();
   const totalTvl = chains.reduce((s, c) => s + c.tvl, 0);
+
+  // Fetch active address data from free REST APIs
+  const [btcAddr, ethAddr] = await Promise.all([
+    getBTCActiveAddresses(7).catch(() => []),
+    getETHActiveAddresses(7).catch(() => []),
+  ]);
+
+  // Build active address comparison rows
+  const addrRows: ActiveAddressRow[] = [];
+
+  // BTC
+  if (btcAddr.length >= 2) {
+    const today     = Number(btcAddr[btcAddr.length - 1]?.active_addresses ?? 0);
+    const yesterday = Number(btcAddr[btcAddr.length - 2]?.active_addresses ?? 0);
+    addrRows.push({
+      chain: "Bitcoin",
+      today,
+      yesterday,
+      changePct: yesterday > 0 ? ((today - yesterday) / yesterday) * 100 : null,
+      source: "blockchain.info",
+    });
+  } else {
+    addrRows.push({
+      chain: "Bitcoin", today: 0, yesterday: 0, changePct: null,
+      source: "Unavailable (blockchain.info)",
+    });
+  }
+
+  // ETH
+  if (ethAddr.length >= 2) {
+    const today     = Number(ethAddr[ethAddr.length - 1]?.active_addresses ?? 0);
+    const yesterday = Number(ethAddr[ethAddr.length - 2]?.active_addresses ?? 0);
+    addrRows.push({
+      chain: "Ethereum",
+      today,
+      yesterday,
+      changePct: yesterday > 0 ? ((today - yesterday) / yesterday) * 100 : null,
+      source: "Etherscan Stats",
+    });
+  } else {
+    addrRows.push({
+      chain: "Ethereum", today: 0, yesterday: 0, changePct: null,
+      source: "Set ETHERSCAN_API_KEY for live data",
+    });
+  }
+
+  // Solana — approximate from TVL as activity proxy
+  const solChain = chains.find((c) => c.name === "Solana");
+  if (solChain) {
+    addrRows.push({
+      chain: "Solana",
+      today: 0,
+      yesterday: 0,
+      changePct: null,
+      source: "TVL proxy — no free address API",
+    });
+  }
+
+  const hasAddrData = addrRows.some((r) => r.today > 0);
 
   return (
     <div className="space-y-10 pb-20">
       <DataHeader
         title="Cross-Chain Comparison"
-        description="TVL, 24h/7d change, and protocol count across all major blockchains – ranked by total value locked."
+        description="TVL, 24h/7d change, protocol count, and active address comparison across all major blockchains."
       />
 
       {/* ── Headline Stats ─────────────────────────────────────────── */}
@@ -80,6 +152,62 @@ async function ComparisonData() {
             );
           })}
         </div>
+      </div>
+
+      {/* ── Active Addresses tab ───────────────────────────────────── */}
+      <div>
+        <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center gap-3">
+          <span className="w-2 h-2 bg-[#3b82f6] rounded-full" />
+          Active Addresses — Free REST APIs
+        </h3>
+
+        <div className="flex items-center gap-3 mb-4">
+          <span className={`border font-mono text-[10px] px-3 py-1 uppercase tracking-widest ${
+            hasAddrData
+              ? "border-[#00d672]/40 text-[#00d672]"
+              : "border-[#FABF2C]/40 text-[#FABF2C]"
+          }`}>
+            {hasAddrData ? "● Live — blockchain.info + Etherscan" : "◌ Partial — configure ETHERSCAN_API_KEY"}
+          </span>
+          <span className="text-[#333] font-mono text-[10px] uppercase tracking-widest">
+            Free APIs — no SQL engine required
+          </span>
+        </div>
+
+        <div className="border border-[#1a1a1a] overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-[#1a1a1a] bg-[#080808]">
+                {["Chain", "Today", "Yesterday", "24h Change", "Data Source"].map((h) => (
+                  <th key={h} className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${
+                    ["Chain", "Data Source"].includes(h) ? "text-left" : "text-right"
+                  }`}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {addrRows.map((r, i) => (
+                <tr key={r.chain} className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${
+                  i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]"
+                }`}>
+                  <td className="px-4 py-3 font-bold text-white">{r.chain}</td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-[#FABF2C]">
+                    {r.today > 0 ? r.today.toLocaleString() : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">
+                    {r.yesterday > 0 ? r.yesterday.toLocaleString() : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right"><PctCell v={r.changePct} /></td>
+                  <td className="px-4 py-3 text-[#555] font-mono">{r.source}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-[10px] text-[#333] font-mono mt-2">
+          BTC: blockchain.info/charts/n-unique-addresses (free, no key) · ETH: Etherscan Stats API (free key) ·
+          Solana: no free daily address API — shown as TVL proxy in main table above.
+        </p>
       </div>
 
       {/* ── Full Chain Table ───────────────────────────────────────── */}
