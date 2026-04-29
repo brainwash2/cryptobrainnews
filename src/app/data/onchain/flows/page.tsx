@@ -1,7 +1,8 @@
-import React, { Suspense }              from 'react';
-import { DataHeader }                   from '../../_components/DataHeader';
-import { ChartSkeleton }                from '../../_components/ChartSkeleton';
-import { getDexFlowsByChain }           from '@/lib/onchain-data';
+import React, { Suspense } from 'react';
+import { DataHeader }       from '../../_components/DataHeader';
+import { ChartSkeleton }    from '../../_components/ChartSkeleton';
+import { getDexFlowsByChain } from '@/lib/onchain-data';
+import { getNetExchangeFlows } from '@/lib/glassnode';
 
 export const metadata = {
   title: 'CEX / DEX Flows | CryptoBrainNews',
@@ -20,12 +21,80 @@ async function FlowsData() {
   const total24h = dexFlows.reduce((s, d) => s + d.total24h, 0);
   const total7d  = dexFlows.reduce((s, d) => s + d.total7d, 0);
 
+  // Glassnode exchange net flows
+  const netFlows = await getNetExchangeFlows().catch(() => []);
+  const isGlassnodeLive = netFlows.some(f => f.source === 'live');
+
   return (
     <div className="space-y-10 pb-20">
       <DataHeader
         title="Exchange Flows"
         description="DEX protocol volumes as an on-chain flow proxy – top protocols by 24h volume."
       />
+
+      {/* ── Net Exchange Flows — Glassnode ───────────────────────────────────── */}
+      <div className="bg-[#0a0a0a] border border-[#FABF2C]/30 p-6">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3">
+              Net Exchange Flows — BTC & ETH
+            </h3>
+            <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
+              Negative = outflow from exchanges (typically bullish) · Positive = inflow (typically bearish)
+            </p>
+          </div>
+          <span className={`border font-mono text-[10px] px-3 py-1 uppercase tracking-widest ${
+            isGlassnodeLive
+              ? 'border-[#00d672]/40 text-[#00d672]'
+              : 'border-[#FABF2C]/40 text-[#FABF2C]'
+          }`}>
+            {isGlassnodeLive ? '● Live — Glassnode' : '◌ Seed — Set GLASSNODE_API_KEY'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {netFlows.map((flow) => {
+            const accent    = flow.asset === 'BTC' ? '#FABF2C' : '#3b82f6';
+            const trendIcon = flow.trend === 'accumulation' ? '🟢' : flow.trend === 'distribution' ? '🔴' : '⚪';
+            const trendLabel = flow.trend === 'accumulation' ? 'Accumulation' : flow.trend === 'distribution' ? 'Distribution' : 'Neutral';
+            return (
+              <div key={flow.asset} className="border border-[#1a1a1a] bg-[#080808] p-5"
+                style={{ borderLeftColor: accent, borderLeftWidth: 3 }}>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-black uppercase tracking-widest" style={{ color: accent }}>
+                    {flow.asset}
+                  </h4>
+                  <span className="text-[10px] font-mono px-2 py-0.5 border" style={{
+                    color: flow.trend === 'accumulation' ? '#00d672' :
+                           flow.trend === 'distribution' ? '#ff4757' : '#888',
+                    borderColor: flow.trend === 'accumulation' ? '#00d67240' :
+                                flow.trend === 'distribution' ? '#ff475740' : '#333',
+                  }}>
+                    {trendIcon} {trendLabel}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[9px] font-mono text-[#555] uppercase mb-1">Net Flow (24h)</p>
+                    <p className={`text-2xl font-black tabular-nums ${flow.netFlow24h <= 0 ? 'text-[#00d672]' : 'text-[#ff4757]'}`}>
+                      {flow.netFlow24h > 0 ? '+' : ''}{flow.netFlow24h.toLocaleString()} {flow.asset}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-mono text-[#555] uppercase mb-1">Net Flow (7d)</p>
+                    <p className={`text-2xl font-black tabular-nums ${flow.netFlow7d <= 0 ? 'text-[#00d672]' : 'text-[#ff4757]'}`}>
+                      {flow.netFlow7d > 0 ? '+' : ''}{flow.netFlow7d.toLocaleString()} {flow.asset}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-[9px] text-[#333] font-mono mt-3">
+          Source: Glassnode exchange net flows · Requires GLASSNODE_API_KEY for live data
+        </p>
+      </div>
 
       {/* ── Note on CEX flows ─────────────────────────────────────── */}
       <div className="border border-[#FABF2C]/20 bg-[#FABF2C]/[0.02] p-5">

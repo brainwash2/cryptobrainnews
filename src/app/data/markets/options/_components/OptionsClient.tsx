@@ -1,17 +1,20 @@
+// src/app/data/markets/options/_components/OptionsClient.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useSyncExternalStore } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import type { OptionsAggregate, HistVolPoint } from '@/lib/options';
+import type { OptionsFlowSummary } from '@/lib/greekslive';
 
 interface Props {
   btcAgg: OptionsAggregate | null;
   ethAgg: OptionsAggregate | null;
   btcVol: HistVolPoint[];
   ethVol: HistVolPoint[];
+  greeksFlow: OptionsFlowSummary | null;
 }
 
 function fmtUsd(n: number): string {
@@ -57,18 +60,19 @@ function AggPanel({ agg }: { agg: OptionsAggregate }) {
   );
 }
 
-// ── Only `any` satisfies Recharts' Formatter regardless of version ────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyFormatter = (value: any, name: any) => [string, string];
+type AnyFormatter = (value: unknown, name: unknown) => [string, string];
 
 const volTooltipFormatter: AnyFormatter = (value, name) => {
   const n = Number(value ?? 0);
   return [isNaN(n) ? '—' : `${n.toFixed(1)}%`, `${String(name).toUpperCase()} DVol`];
 };
 
-export default function OptionsClient({ btcAgg, ethAgg, btcVol, ethVol }: Props) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+export default function OptionsClient({ btcAgg, ethAgg, btcVol, ethVol, greeksFlow }: Props) {
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   const volMap = new Map<string, { date: string; btc?: number; eth?: number }>();
   btcVol.forEach(({ date, value }) => { volMap.set(date, { date, btc: value }); });
@@ -137,6 +141,88 @@ export default function OptionsClient({ btcAgg, ethAgg, btcVol, ethVol }: Props)
           )}
         </div>
       </div>
+
+      {/* ── Block Trades / Options Flow — Greeks.live ─────────────────────────── */}
+      {greeksFlow && greeksFlow.trades.length > 0 && (
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+          <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3">
+                Block Trades / Options Flow
+              </h3>
+              <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
+                Large notional options trades — Source: Greeks.live
+              </p>
+            </div>
+            <span className={`border font-mono text-[10px] px-3 py-1 uppercase tracking-widest ${
+              greeksFlow.source === 'live'
+                ? 'border-[#00d672]/40 text-[#00d672]'
+                : 'border-[#FABF2C]/40 text-[#FABF2C]'
+            }`}>
+              {greeksFlow.source === 'live' ? '● Live — Greeks.live' : '◌ Manual — Greeks.live seed'}
+            </span>
+          </div>
+
+          <div className="border border-[#1a1a1a] overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-[#1a1a1a] bg-[#080808]">
+                  {['Time', 'Symbol', 'Type', 'Strike', 'Expiry', 'Qty', 'Notional', 'Premium', 'IV', 'Sentiment'].map((h) => (
+                    <th key={h} className={`px-3 py-2 font-black text-[#555] uppercase tracking-widest ${
+                      ['Time', 'Symbol', 'Type', 'Sentiment'].includes(h) ? 'text-left' : 'text-right'
+                    }`}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {greeksFlow.trades.map((t, i) => (
+                  <tr key={`${t.timestamp}-${i}`} className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${
+                    i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'
+                  }`}>
+                    <td className="px-3 py-2 font-mono text-[#555] text-[10px]">
+                      {new Date(t.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </td>
+                    <td className="px-3 py-2 font-bold text-white">{t.symbol}</td>
+                    <td className="px-3 py-2">
+                      <span className={`font-mono font-bold text-xs px-2 py-0.5 border ${
+                        t.type === 'call' ? 'text-[#00d672] border-[#00d672]/30 bg-[#00d672]/10' :
+                        t.type === 'put' ? 'text-[#ff4757] border-[#ff4757]/30 bg-[#ff4757]/10' :
+                        'text-[#FABF2C] border-[#FABF2C]/30 bg-[#FABF2C]/10'
+                      }`}>
+                        {t.type.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-[#888]">
+                      ${t.strike.toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono text-[#555] text-[10px]">
+                      {t.expiry}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-white">{t.quantity}</td>
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-[#FABF2C]">
+                      ${(t.notionalUsd / 1e6).toFixed(1)}M
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-[#888]">
+                      ${(t.premiumUsd / 1e3).toFixed(0)}K
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-[#555]">
+                      {t.iv !== null ? `${t.iv.toFixed(1)}%` : '—'}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`font-mono font-black text-xs ${
+                        t.sentiment === 'bullish' ? 'text-[#00d672]' :
+                        t.sentiment === 'bearish' ? 'text-[#ff4757]' : 'text-[#FABF2C]'
+                      }`}>
+                        {t.sentiment.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="border border-[#1a1a1a] bg-[#080808] p-5">
         <p className="text-[10px] text-[#555] font-mono leading-relaxed">
