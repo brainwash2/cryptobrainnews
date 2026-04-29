@@ -63,3 +63,8 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase D (Live Dune SQL Integration)
 	•	New Status: COMPLETED
 	•	Notes: Replaced all 9 stub Dune functions with live API calls via dune.com. Uses 24‑hour Redis cache (cached()) and seed fallback arrays. No pages need changes — all existing consumers (governance, NFTs, whales, etc.) automatically gain live data once DUNE_API_KEY and per‑query IDs are set in .env.local. Dune execution count limited to 9 per day maximum, well under free‑tier limits.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — Dune Query 2 (NFT Top Collections)
+	•	New Status: COMPLETED
+	•	Notes: Created Dune query 7400802 (nft.trades 7-day cross-chain volume). Wired to DUNE_NFT_COLLECTIONS_ID. /data/nfts/collections now serves live data with seed fallback.
