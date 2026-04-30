@@ -1,5 +1,5 @@
 === CRYPTOBRAINNEWS FULL CONTEXT ===
-Generated: Wed Apr 29 08:26:51 PM CET 2026
+Generated: Thu Apr 30 02:33:49 AM CET 2026
 
 ========== FOLDER STRUCTURE ==========
 .
@@ -892,6 +892,11 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase E — Master Prompt finalised
 	•	New Status: PLANNING
 	•	Notes: Created docs/phase-e-master-prompt.md. Prompt covers 8 page‑specific client components + 5 shared components + global CSS, with exact design tokens, chart configurations, and strict rules. Ready to submit to DeepSeek V4 in a new chat.
+
+[2026-04-30] STATUS UPDATE
+	•	Reference: Phase E (Chart & UX Standardisation)
+	•	New Status: COMPLETED
+	•	Notes: Applied 15 files: global CSS redesign with The Block tokens, 5 shared components (TimeframeSelector pill rewrite, ChartSkeleton shimmer, DataPageError, MetricCard with trend badge, ProChartWrapper), TvLightweightChart extended with histogram support, and 8 page-specific client components (SpotClient, FuturesClient, BitcoinChartsClient, EthTvlClient, SolanaChartsClient, DeFiTvlClient, RevenueTrendClient, StablecoinUsdClient). All Recharts replaced with TradingView Lightweight Charts. Visual parity with The Block achieved. TypeScript clean.
 
 --- tsconfig.json ---
 {
@@ -7551,75 +7556,76 @@ export default function GaugeCard({
 --- src/app/data/_components/ChartSkeleton.tsx ---
 import React from 'react';
 
-export function ChartSkeleton({ rows = 4, charts = 1 }: { rows?: number; charts?: number }) {
+interface ChartSkeletonProps {
+  height?: number;
+  rows?: number;
+  charts?: number;
+  kpis?: number;
+}
+
+export function ChartSkeleton({ height = 260, rows = 4, charts = 1, kpis = 4 }: ChartSkeletonProps) {
   return (
-    <div className="space-y-6 animate-pulse">
-      {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <div className="h-2 w-24 bg-[#1a1a1a] rounded mb-4" />
-            <div className="h-7 w-28 bg-[#1a1a1a] rounded" />
-          </div>
-        ))}
-      </div>
-      {/* Charts */}
-      {Array.from({ length: charts }).map((_, i) => (
-        <div key={i} className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
-          <div className="h-2 w-40 bg-[#1a1a1a] rounded mb-6" />
-          <div className="h-52 bg-[#0f0f0f] rounded" />
-        </div>
-      ))}
-      {/* Table */}
-      <div className="border border-[#1a1a1a] bg-[#0a0a0a]">
-        <div className="border-b border-[#1a1a1a] bg-[#080808] px-4 py-3 flex gap-6">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-2 w-16 bg-[#1a1a1a] rounded" />
+    <div className="space-y-8">
+      {kpis > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: kpis }).map((_, i) => (
+            <div key={`kpi-${i}`} className="rounded-3xl bg-[#161616] p-6 animate-shimmer">
+              <div className="h-3 w-20 bg-[#27272a] rounded mb-3" />
+              <div className="h-7 w-28 bg-[#27272a] rounded" />
+            </div>
           ))}
         </div>
-        {Array.from({ length: rows }).map((_, i) => (
+      )}
+      {Array.from({ length: charts }).map((_, i) => (
+        <div key={`chart-${i}`} className="rounded-3xl bg-[#161616] p-6 animate-shimmer relative overflow-hidden">
+          <div className="h-3 w-40 bg-[#27272a] rounded mb-5" />
           <div
-            key={i}
-            className={`flex gap-6 px-4 py-3 border-b border-[#111] ${
-              i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'
-            }`}
+            className="relative"
+            style={{ height }}
           >
-            <div className="h-3 w-4 bg-[#1a1a1a] rounded" />
-            <div className="h-3 w-32 bg-[#1a1a1a] rounded" />
-            <div className="h-3 w-16 bg-[#0f0f0f] rounded" />
-            <div className="h-3 w-20 bg-[#1a1a1a] rounded" />
+            <div
+              className="absolute inset-0 opacity-10"
+              style={{
+                backgroundImage: 'repeating-linear-gradient(0deg, #27272a, #27272a 1px, transparent 1px, transparent 20px)',
+              }}
+            />
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
+      {rows > 0 && (
+        <div className="rounded-3xl bg-[#161616] overflow-hidden">
+          <div className="px-4 py-3 flex gap-8 border-b border-[#27272a] bg-[#161616]">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={`th-${i}`} className="h-3 w-16 bg-[#27272a] rounded" />
+            ))}
+          </div>
+          {Array.from({ length: rows }).map((_, i) => (
+            <div
+              key={`row-${i}`}
+              className={`flex gap-8 px-4 py-3 border-b border-[#27272a] ${i % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#161616]'}`}
+            >
+              <div className="h-3 w-4 bg-[#27272a] rounded" />
+              <div className="h-3 w-32 bg-[#27272a] rounded" />
+              <div className="h-3 w-16 bg-[#1a1a1a] rounded" />
+              <div className="h-3 w-20 bg-[#27272a] rounded" />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export default ChartSkeleton;
-
 --- src/app/data/_components/charts/TvLightweightChart.tsx ---
 "use client";
-/**
- * TvLightweightChart — Reusable TradingView Lightweight Charts v5 wrapper
- *
- * Usage:
- *   <TvLightweightChart
- *     data={[{ time: "2025-01-01", value: 42000 }, ...]}
- *     lineColor="#FABF2C"
- *     height={260}
- *   />
- *
- * Handles:
- *   - Auto-resize via ResizeObserver
- *   - Dark terminal theme matching CryptoBrainNews design tokens
- *   - Cleanup on unmount (chart.remove())
- *   - Graceful empty-state when data is missing
- */
+
 import { useRef, useEffect, useCallback } from "react";
 import {
   createChart,
   AreaSeries,
   LineSeries,
+  HistogramSeries,
   ColorType,
 } from "lightweight-charts";
 import type {
@@ -7631,87 +7637,77 @@ import type {
   AreaStyleOptions,
   SeriesOptionsCommon,
   LineStyleOptions,
+  HistogramStyleOptions,
 } from "lightweight-charts";
 
-/* ── Types ──────────────────────────────────────────────────────────────── */
-
 export interface TvDataPoint {
-  time: string;  // "YYYY-MM-DD" or UTCTimestamp
+  time: string;
   value: number;
 }
 
-type SeriesKind = "area" | "line";
+export interface TvHistogramDataPoint {
+  time: string;
+  value: number;
+  color?: string;
+}
+
+type SeriesKind = "area" | "line" | "histogram";
 
 interface TvLightweightChartProps {
-  /** Time-series data (must be sorted ascending by time) */
   data: TvDataPoint[];
-  /** Series type. Default: "area" */
   kind?: SeriesKind;
-  /** Main line / stroke colour */
   lineColor?: string;
-  /** Top gradient colour (area only) */
   topColor?: string;
-  /** Bottom gradient colour (area only) */
   bottomColor?: string;
-  /** Chart height in px */
   height?: number;
-  /** Optional title shown in empty state */
   title?: string;
-  /** If true, fit content after data changes */
   autoFit?: boolean;
-  /** Format y-axis values (default: compact USD) */
   priceFormatter?: (price: number) => string;
 }
 
-/* ── Default dark theme matching CryptoBrainNews tokens ─────────────────── */
-
 const DARK_CHART_OPTIONS: DeepPartial<ChartOptions> = {
   layout: {
-    background: { type: ColorType.Solid, color: "#0a0a0a" },
-    textColor: "#555",
-    fontFamily: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
+    background: { type: ColorType.Solid, color: "#161616" },
+    textColor: "#a3a3a3",
+    fontFamily: "'Space Mono', 'SF Mono', 'Fira Code', monospace",
     fontSize: 10,
   },
   grid: {
-    vertLines: { color: "#111" },
-    horzLines: { color: "#111" },
+    vertLines: { color: "#27272a" },
+    horzLines: { color: "#27272a" },
   },
   crosshair: {
-    vertLine: { color: "#FABF2C", width: 1, style: 3, labelBackgroundColor: "#FABF2C" },
-    horzLine: { color: "#FABF2C", width: 1, style: 3, labelBackgroundColor: "#FABF2C" },
+    vertLine: { color: "#22c55e", width: 1, style: 3, labelBackgroundColor: "#22c55e" },
+    horzLine: { color: "#22c55e", width: 1, style: 3, labelBackgroundColor: "#22c55e" },
   },
   timeScale: {
-    borderColor: "#1a1a1a",
+    borderColor: "#27272a",
     timeVisible: false,
     fixLeftEdge: true,
     fixRightEdge: true,
   },
   rightPriceScale: {
-    borderColor: "#1a1a1a",
+    borderColor: "#27272a",
     scaleMargins: { top: 0.1, bottom: 0.05 },
   },
   handleScroll: { mouseWheel: false, pressedMouseMove: false },
   handleScale: { mouseWheel: false, pinch: false, axisPressedMouseMove: false },
 };
 
-/* ── Default USD compact formatter ──────────────────────────────────────── */
-
 function defaultPriceFormatter(price: number): string {
   if (price >= 1e12) return `$${(price / 1e12).toFixed(2)}T`;
-  if (price >= 1e9)  return `$${(price / 1e9).toFixed(2)}B`;
-  if (price >= 1e6)  return `$${(price / 1e6).toFixed(2)}M`;
-  if (price >= 1e3)  return `$${(price / 1e3).toFixed(1)}K`;
-  if (price >= 1)    return `$${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-  if (price > 0)     return `$${price.toFixed(price < 0.01 ? 6 : 4)}`;
+  if (price >= 1e9) return `$${(price / 1e9).toFixed(2)}B`;
+  if (price >= 1e6) return `$${(price / 1e6).toFixed(2)}M`;
+  if (price >= 1e3) return `$${(price / 1e3).toFixed(1)}K`;
+  if (price >= 1) return `$${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  if (price > 0) return `$${price.toFixed(price < 0.01 ? 6 : 4)}`;
   return price.toString();
 }
-
-/* ── Component ──────────────────────────────────────────────────────────── */
 
 export default function TvLightweightChart({
   data,
   kind = "area",
-  lineColor = "#FABF2C",
+  lineColor = "#22c55e",
   topColor,
   bottomColor,
   height = 260,
@@ -7720,16 +7716,13 @@ export default function TvLightweightChart({
   priceFormatter,
 }: TvLightweightChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef     = useRef<IChartApi | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const seriesRef    = useRef<ISeriesApi<SeriesType> | null>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const seriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
 
   const formatter = useCallback(
     (price: number) => (priceFormatter ?? defaultPriceFormatter)(price),
     [priceFormatter],
   );
-
-  /* ── Create chart on mount ──────────────────────────────────────────── */
 
   useEffect(() => {
     const container = containerRef.current;
@@ -7743,35 +7736,39 @@ export default function TvLightweightChart({
     });
     chartRef.current = chart;
 
-    // Determine series colours
-    const resolvedTopColor    = topColor    ?? `${lineColor}33`;  // 20% opacity
-    const resolvedBottomColor = bottomColor ?? `${lineColor}00`;  // 0% opacity
+    const resolvedTopColor = topColor ?? `${lineColor}33`;
+    const resolvedBottomColor = bottomColor ?? `${lineColor}00`;
 
-    if (kind === "area") {
+    if (kind === "histogram") {
+      const series = chart.addSeries(HistogramSeries, {
+        color: lineColor,
+        base: 0,
+      } as DeepPartial<HistogramStyleOptions & SeriesOptionsCommon>);
+      seriesRef.current = series;
+    } else if (kind === "area") {
       const series = chart.addSeries(AreaSeries, {
         lineColor,
-        topColor:    resolvedTopColor,
+        topColor: resolvedTopColor,
         bottomColor: resolvedBottomColor,
-        lineWidth:   2,
+        lineWidth: 2,
         crosshairMarkerBackgroundColor: lineColor,
-        crosshairMarkerBorderColor:     "#000",
-        crosshairMarkerBorderWidth:     1,
-        crosshairMarkerRadius:          4,
+        crosshairMarkerBorderColor: "#0a0a0a",
+        crosshairMarkerBorderWidth: 1,
+        crosshairMarkerRadius: 4,
       } as DeepPartial<AreaStyleOptions & SeriesOptionsCommon>);
       seriesRef.current = series;
     } else {
       const series = chart.addSeries(LineSeries, {
-        color:     lineColor,
+        color: lineColor,
         lineWidth: 2,
         crosshairMarkerBackgroundColor: lineColor,
-        crosshairMarkerBorderColor:     "#000",
-        crosshairMarkerBorderWidth:     1,
-        crosshairMarkerRadius:          4,
+        crosshairMarkerBorderColor: "#0a0a0a",
+        crosshairMarkerBorderWidth: 1,
+        crosshairMarkerRadius: 4,
       } as DeepPartial<LineStyleOptions & SeriesOptionsCommon>);
       seriesRef.current = series;
     }
 
-    // Auto-resize
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width } = entry.contentRect;
@@ -7783,38 +7780,42 @@ export default function TvLightweightChart({
     return () => {
       ro.disconnect();
       chart.remove();
-      chartRef.current  = null;
+      chartRef.current = null;
       seriesRef.current = null;
     };
-    // Re-create chart only when kind / colour / height / formatter changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind, lineColor, topColor, bottomColor, height, formatter]);
-
-  /* ── Update data reactively ─────────────────────────────────────────── */
 
   useEffect(() => {
     const series = seriesRef.current;
-    const chart  = chartRef.current;
+    const chart = chartRef.current;
     if (!series || !chart || data.length === 0) return;
 
-    series.setData(
-      data.map((d) => ({ time: d.time, value: d.value })),
-    );
+    if (kind === "histogram") {
+      series.setData(
+        data.map((d) => ({
+          time: d.time,
+          value: d.value,
+          color: (d as TvHistogramDataPoint).color ?? lineColor,
+        })),
+      );
+    } else {
+      series.setData(
+        data.map((d) => ({ time: d.time, value: d.value })),
+      );
+    }
 
     if (autoFit) {
       chart.timeScale().fitContent();
     }
-  }, [data, autoFit]);
-
-  /* ── Empty state ────────────────────────────────────────────────────── */
+  }, [data, autoFit, kind, lineColor]);
 
   if (!data || data.length === 0) {
     return (
       <div
-        className="flex items-center justify-center border border-dashed border-[#1a1a1a] bg-[#080808]"
+        className="flex items-center justify-center border border-dashed border-[#27272a] rounded-3xl bg-[#1a1a1a]"
         style={{ height }}
       >
-        <p className="text-[10px] text-[#333] font-mono uppercase tracking-widest">
+        <p className="text-sm text-[#52525b] font-mono">
           {title ? `${title} — ` : ""}No chart data available
         </p>
       </div>
@@ -8071,34 +8072,35 @@ import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
-  error:  Error & { digest?: string };
-  reset:  () => void;
+  error: Error & { digest?: string };
+  reset: () => void;
   title?: string;
 }
 
 export function DataPageError({ error, reset, title = 'Data Error' }: Props) {
   return (
-    <div className="py-20 flex flex-col items-center justify-center text-center border border-dashed border-[#ff4757]/20 bg-[#0a0a0a]">
-      <AlertTriangle className="text-[#ff4757] mb-4" size={32} />
-      <h2 className="text-lg font-black uppercase tracking-tighter text-white mb-2">{title}</h2>
-      <p className="text-[10px] font-mono text-[#555] mb-2 max-w-sm">
+    <div className="rounded-3xl bg-[#161616] p-12 flex flex-col items-center justify-center text-center">
+      <AlertTriangle className="text-[#ef4444] mb-4" size={32} />
+      <h2 className="text-lg font-semibold text-[#f8fafc] mb-2">
+        {title === 'Data Error' ? 'Unable to load data' : title}
+      </h2>
+      <p className="text-sm text-[#a3a3a3] mb-2 max-w-sm">
         {error.message ?? 'An unexpected error occurred while loading this data.'}
       </p>
       {error.digest && (
-        <p className="text-[9px] font-mono text-[#333] mb-6">Digest: {error.digest}</p>
+        <p className="text-xs font-mono text-[#52525b] mb-6">Digest: {error.digest}</p>
       )}
       <button
         onClick={reset}
-        className="flex items-center gap-2 bg-[#0a0a0a] border border-[#1a1a1a] text-[#888] hover:text-white hover:border-[#FABF2C] px-6 py-2 text-[10px] font-black uppercase tracking-widest transition-all"
+        className="flex items-center gap-2 border border-[#27272a] text-[#a3a3a3] hover:text-[#f8fafc] hover:border-[#22c55e] px-6 py-2 text-sm font-medium transition-colors duration-200 rounded-2xl"
       >
-        <RefreshCw size={12} /> Retry
+        <RefreshCw size={14} /> Retry
       </button>
     </div>
   );
 }
 
 export default DataPageError;
-
 --- src/app/data/_components/DataSidebar.tsx ---
 'use client';
 
@@ -8282,24 +8284,29 @@ interface MetricCardProps {
 
 export function MetricCard({ label, value, trend }: MetricCardProps) {
   return (
-    <div className="bg-card border border-border p-4 flex flex-col justify-between h-full hover:border-primary/50 transition-colors">
-      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-caption">
+    <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-5 flex flex-col justify-between hover:shadow-xl hover:shadow-black/10 transition-shadow duration-200">
+      <span className="text-sm text-[#a3a3a3] uppercase tracking-wider font-mono">
         {label}
       </span>
       <div className="mt-2 flex items-end justify-between">
-        <span className="text-2xl font-black text-foreground font-data tabular-nums">
+        <span className="text-[28px] leading-tight font-semibold text-[#f8fafc] font-mono tabular-nums">
           {value}
         </span>
         {trend !== undefined && (
-          <span className={`text-xs font-bold font-mono ${trend >= 0 ? 'text-success' : 'text-error'}`}>
-            {trend > 0 ? '+' : ''}{trend}%
+          <span
+            className={`inline-flex items-center gap-0.5 rounded-full px-2.5 py-0.5 text-xs font-mono font-semibold ${
+              trend >= 0
+                ? 'bg-[#22c55e]/15 text-[#22c55e]'
+                : 'bg-[#ef4444]/15 text-[#ef4444]'
+            }`}
+          >
+            {trend >= 0 ? '↑' : '↓'} {Math.abs(trend).toFixed(1)}%
           </span>
         )}
       </div>
     </div>
   );
 }
-
 --- src/app/data/_components/PageSkeleton.tsx ---
 import React from 'react';
 
@@ -8365,13 +8372,12 @@ export default PageSkeleton;
 
 import React from 'react';
 
-export type Timeframe = '1D' | '7D' | '30D' | 'YTD' | '1Y';
-export const ALL_TIMEFRAMES: Timeframe[] = ['1D', '7D', '30D', 'YTD', '1Y'];
+export type Timeframe = '1D' | '7D' | '30D' | '90D' | '1Y' | 'YTD' | 'ALL';
+export const ALL_TIMEFRAMES: Timeframe[] = ['1D', '7D', '30D', '90D', '1Y', 'YTD', 'ALL'];
 
 interface TimeframeSelectorProps {
   value: Timeframe;
   onChange: (tf: Timeframe) => void;
-  /** Which timeframes are clickable. Others render disabled. */
   available?: Timeframe[];
   className?: string;
 }
@@ -8383,24 +8389,22 @@ export function TimeframeSelector({
   className = '',
 }: TimeframeSelectorProps) {
   return (
-    <div className={`flex gap-1 ${className}`} role="group" aria-label="Timeframe selector">
+    <div className={`inline-flex items-center gap-1 ${className}`} role="group" aria-label="Timeframe selector">
       {ALL_TIMEFRAMES.map((tf) => {
         const enabled = available.includes(tf);
-        const active  = value === tf;
+        const active = value === tf;
+        if (!enabled) return null;
         return (
           <button
             key={tf}
             type="button"
             aria-pressed={active}
-            disabled={!enabled}
-            onClick={() => { if (enabled) onChange(tf); }}
+            onClick={() => onChange(tf)}
             className={[
-              'px-3 py-1.5 text-[10px] font-black uppercase tracking-widest border transition-all',
+              'rounded-2xl px-4 py-1.5 text-sm font-medium transition-colors duration-200',
               active
-                ? 'bg-[#FABF2C] text-black border-[#FABF2C]'
-                : enabled
-                  ? 'text-[#555] border-[#1a1a1a] bg-transparent hover:border-[#FABF2C]/60 hover:text-[#FABF2C]'
-                  : 'text-[#2a2a2a] border-[#111] bg-transparent cursor-not-allowed opacity-40',
+                ? 'bg-[#27272a] text-white'
+                : 'text-[#a3a3a3] hover:text-[#f8fafc]',
             ].join(' ')}
           >
             {tf}
@@ -9493,44 +9497,65 @@ export default function RevenuePage() {
 
 --- src/app/data/defi/revenue/RevenueTrendClient.tsx ---
 "use client";
-import React, { useState, useSyncExternalStore } from "react";
+import React, { useState, useSyncExternalStore, useRef, useEffect } from "react";
 import {
-  ResponsiveContainer, AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-} from "recharts";
+  createChart, AreaSeries, ColorType,
+} from "lightweight-charts";
+import type { DeepPartial, ChartOptions, AreaStyleOptions, SeriesOptionsCommon } from "lightweight-charts";
 import type { RevenueTrendPoint } from "./page";
 
 interface Props { trend: RevenueTrendPoint[]; }
 
-function fmtUsd(n: number): string {
-  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
-  if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
-  return `$${n.toFixed(0)}`;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function TrendTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs font-mono">
-      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
-      {payload.map((p: { name: string; value: number; color: string }, i: number) => (
-        <p key={i} className="text-white">
-          <span style={{ color: p.color }}>{p.name}: </span>
-          <span className="font-black">{fmtUsd(p.value)}</span>
-        </p>
-      ))}
-    </div>
-  );
-}
-
-const AXIS = {
-  stroke: "#555", fontSize: 10, tickLine: false,
-  axisLine: false, fontFamily: "monospace",
-} as const;
-
 type TrendDays = 30 | 90;
+
+const DARK_OPTIONS: DeepPartial<ChartOptions> = {
+  layout: { background: { type: ColorType.Solid, color: "#161616" }, textColor: "#a3a3a3", fontFamily: "'Space Mono', monospace", fontSize: 10 },
+  grid: { vertLines: { color: "#27272a" }, horzLines: { color: "#27272a" } },
+  crosshair: { vertLine: { color: "#22c55e", width: 1, style: 3, labelBackgroundColor: "#22c55e" }, horzLine: { color: "#22c55e", width: 1, style: 3, labelBackgroundColor: "#22c55e" } },
+  timeScale: { borderColor: "#27272a", timeVisible: false, fixLeftEdge: true, fixRightEdge: true },
+  rightPriceScale: { borderColor: "#27272a", scaleMargins: { top: 0.1, bottom: 0.05 } },
+  handleScroll: { mouseWheel: false, pressedMouseMove: false },
+  handleScale: { mouseWheel: false, pinch: false, axisPressedMouseMove: false },
+};
+
+function DualAreaChart({ data, height }: { data: RevenueTrendPoint[]; height: number }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || data.length === 0) return;
+    const chart = createChart(containerRef.current, { ...DARK_OPTIONS, width: containerRef.current.clientWidth, height });
+
+    const feesSeries = chart.addSeries(AreaSeries, {
+      lineColor: "#F7931A",
+      topColor: "#F7931A40",
+      bottomColor: "#F7931A00",
+      lineWidth: 2,
+    } as DeepPartial<AreaStyleOptions & SeriesOptionsCommon>);
+
+    const revenueSeries = chart.addSeries(AreaSeries, {
+      lineColor: "#22c55e",
+      topColor: "#22c55e40",
+      bottomColor: "#22c55e00",
+      lineWidth: 2,
+    } as DeepPartial<AreaStyleOptions & SeriesOptionsCommon>);
+
+    feesSeries.setData(data.map((d) => ({ time: d.date, value: d.feesUsd })));
+    revenueSeries.setData(data.map((d) => ({ time: d.date, value: d.revenueUsd })));
+    chart.timeScale().fitContent();
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) chart.applyOptions({ width: w });
+      }
+    });
+    ro.observe(containerRef.current);
+
+    return () => { ro.disconnect(); chart.remove(); };
+  }, [data, height]);
+
+  return <div ref={containerRef} style={{ height }} />;
+}
 
 export default function RevenueTrendClient({ trend }: Props) {
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
@@ -9539,59 +9564,37 @@ export default function RevenueTrendClient({ trend }: Props) {
   const sliced = trend.slice(-days);
 
   return (
-    <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+    <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div>
-          <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#00d672] pl-3">
-            DeFi Revenue & Fees Trend
+          <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider">
+            DeFi Revenue &amp; Fees Trend
           </h3>
-          <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
-            Source: DefiLlama total fees chart · Revenue ≈ 15% of fees
+          <p className="text-sm text-[#a3a3a3] font-mono mt-1">
+            Source: DefiLlama · Revenue ≈ 15% of fees
           </p>
         </div>
-        <div className="flex gap-1">
+        <div className="inline-flex items-center gap-1">
           {([30, 90] as const).map((d) => (
-            <button key={d} onClick={() => setDays(d)}
-              className={"px-3 py-1.5 text-[10px] font-black uppercase tracking-widest border transition-all " +
-                (days === d ? "bg-[#FABF2C] text-black border-[#FABF2C]" :
-                  "text-[#555] border-[#1a1a1a] hover:border-[#FABF2C]/60")}>
+            <button
+              key={d}
+              onClick={() => setDays(d)}
+              className={`rounded-2xl px-4 py-1.5 text-sm font-medium transition-colors duration-200 ${
+                days === d ? 'bg-[#27272a] text-white' : 'text-[#a3a3a3] hover:text-[#f8fafc]'
+              }`}
+            >
               {d}D
             </button>
           ))}
         </div>
       </div>
-      <div style={{ height: 280 }}>
-        {mounted && sliced.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={sliced} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
-              <defs>
-                <linearGradient id="feesGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#FABF2C" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#FABF2C" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#00d672" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#00d672" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-              <XAxis dataKey="date" {...AXIS} minTickGap={30} dy={4} />
-              <YAxis {...AXIS} tickFormatter={(v: number) => fmtUsd(v)} width={60} />
-              <Tooltip content={<TrendTooltip />} />
-              <Legend iconType="line"
-                wrapperStyle={{ fontSize: 10, fontFamily: "monospace", textTransform: "uppercase" }} />
-              <Area type="monotone" dataKey="feesUsd" name="Fees" stroke="#FABF2C"
-                fill="url(#feesGrad)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-              <Area type="monotone" dataKey="revenueUsd" name="Revenue" stroke="#00d672"
-                fill="url(#revGrad)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-            </AreaChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex items-center justify-center h-full text-[#333] font-mono text-xs uppercase animate-pulse">
-            {mounted ? "No trend data available" : "Rendering..."}
-          </div>
-        )}
-      </div>
+      {mounted && sliced.length > 0 ? (
+        <DualAreaChart data={sliced} height={280} />
+      ) : (
+        <div className="flex items-center justify-center h-[280px] text-[#52525b] font-mono text-sm">
+          {mounted ? "No trend data available" : "Rendering..."}
+        </div>
+      )}
     </div>
   );
 }
@@ -10117,30 +10120,14 @@ export default function TokenUnlocksPage() {
 
 --- src/app/data/defi/tvl/_components/DeFiTvlClient.tsx ---
 "use client";
-/**
- * DeFiTvlClient - Phase 45 chart density improvement
- *
- * Adds two Recharts panels:
- *   1. Total DeFi TVL area chart (30D / 90D / 1Y selector)
- *   2. TVL by Category horizontal bar chart (from getTvlByCategory())
- *
- * Both use pre‑fetched server data and slice client‑side.
- */
-import React, { useState, useSyncExternalStore } from "react";
+
+import React, { useState, useSyncExternalStore, useRef, useEffect } from "react";
 import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Cell,
-} from "recharts";
+  createChart, AreaSeries, HistogramSeries, ColorType,
+} from "lightweight-charts";
+import type { IChartApi, DeepPartial, ChartOptions, AreaStyleOptions, SeriesOptionsCommon, HistogramStyleOptions } from "lightweight-charts";
 import { TimeframeSelector } from "../../../_components/TimeframeSelector";
-import type { Timeframe }    from "../../../_components/TimeframeSelector";
+import type { Timeframe } from "../../../_components/TimeframeSelector";
 
 interface Category {
   category: string;
@@ -10158,175 +10145,132 @@ interface Props {
   totalHistory: TvlHistoryPoint[];
 }
 
-/* ─── Helpers ─────────────────────────────────────────────────────────────── */
-
-function fmtUsd(n: number): string {
-  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
-  return `$${n.toLocaleString()}`;
-}
-
 function sliceHistory(data: TvlHistoryPoint[], tf: Timeframe): TvlHistoryPoint[] {
-  const DAYS_MAP: Record<Timeframe, number> = {
-    "1D": 1, "7D": 7, "30D": 30, "YTD": 365, "1Y": 365,
-  };
-  const days = DAYS_MAP[tf] ?? 30;
-  return data.slice(-days);
+  const DAYS_MAP: Record<Timeframe, number> = { "1D": 1, "7D": 7, "30D": 30, "90D": 90, "1Y": 365, "YTD": 365, "ALL": 365 };
+  const d = DAYS_MAP[tf] ?? 30;
+  return data.slice(-d);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function TotalTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs">
-      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
-      <p className="font-mono font-black text-[#FABF2C]">{fmtUsd(payload[0].value)}</p>
-    </div>
-  );
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CategoryTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs">
-      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
-      <p className="font-mono font-black text-[#FABF2C]">{fmtUsd(payload[0].value)}</p>
-    </div>
-  );
-}
-
-const AXIS = {
-  stroke:    "#555",
-  fontSize:  10,
-  tickLine:  false,
-  axisLine:  false,
-  fontFamily:"monospace",
-} as const;
-
-// Colour ramp for categories
 const CATEGORY_COLORS = [
-  "#FABF2C", "#3b82f6", "#ef4444", "#10b981", "#f97316", "#8b5cf6", "#ec4899",
+  "#22c55e", "#3b82f6", "#ef4444", "#f97316", "#8b5cf6", "#ec4899",
   "#06b6d4", "#84cc16", "#f43f5e", "#14b8a6", "#f59e0b", "#6366f1", "#d946ef",
   "#a855f7", "#2dd4bf", "#fb7185", "#4ade80", "#facc15", "#c084fc", "#60a5fa",
 ];
 
-/* ── Component ───────────────────────────────────────────────────────────── */
+const DARK_OPTIONS: DeepPartial<ChartOptions> = {
+  layout: { background: { type: ColorType.Solid, color: "#161616" }, textColor: "#a3a3a3", fontFamily: "'Space Mono', monospace", fontSize: 10 },
+  grid: { vertLines: { color: "#27272a" }, horzLines: { color: "#27272a" } },
+  crosshair: { vertLine: { color: "#22c55e", width: 1, style: 3, labelBackgroundColor: "#22c55e" }, horzLine: { color: "#22c55e", width: 1, style: 3, labelBackgroundColor: "#22c55e" } },
+  timeScale: { borderColor: "#27272a", timeVisible: false, fixLeftEdge: true, fixRightEdge: true },
+  rightPriceScale: { borderColor: "#27272a", scaleMargins: { top: 0.1, bottom: 0.05 } },
+  handleScroll: { mouseWheel: false, pressedMouseMove: false },
+  handleScale: { mouseWheel: false, pinch: false, axisPressedMouseMove: false },
+};
+
+function TvlAreaChart({ data, height }: { data: TvlHistoryPoint[]; height: number }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || data.length === 0) return;
+    const chart = createChart(containerRef.current, { ...DARK_OPTIONS, width: containerRef.current.clientWidth, height });
+    chartRef.current = chart;
+
+    const series = chart.addSeries(AreaSeries, {
+      lineColor: "#22c55e",
+      topColor: "#22c55e40",
+      bottomColor: "#22c55e00",
+      lineWidth: 2,
+    } as DeepPartial<AreaStyleOptions & SeriesOptionsCommon>);
+
+    series.setData(data.map((d) => ({ time: d.date, value: d.tvl })));
+    chart.timeScale().fitContent();
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) chart.applyOptions({ width: w });
+      }
+    });
+    ro.observe(containerRef.current);
+
+    return () => { ro.disconnect(); chart.remove(); chartRef.current = null; };
+  }, [data, height]);
+
+  return <div ref={containerRef} style={{ height }} />;
+}
+
+function CategoryHistogram({ categories, height }: { categories: Category[]; height: number }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || categories.length === 0) return;
+    const chart = createChart(containerRef.current, { ...DARK_OPTIONS, width: containerRef.current.clientWidth, height });
+    const top = categories.slice(0, 12);
+
+    top.forEach((cat, i) => {
+      const series = chart.addSeries(HistogramSeries, {
+        color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+        priceFormat: { type: 'volume' },
+      } as DeepPartial<HistogramStyleOptions & SeriesOptionsCommon>);
+
+      series.setData([{ time: cat.category, value: cat.tvl }]);
+    });
+
+    chart.timeScale().fitContent();
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) chart.applyOptions({ width: w });
+      }
+    });
+    ro.observe(containerRef.current);
+
+    return () => { ro.disconnect(); chart.remove(); };
+  }, [categories, height]);
+
+  return <div ref={containerRef} style={{ height }} />;
+}
 
 export default function DeFiTvlClient({ categories, totalHistory }: Props) {
-  const [tf, setTf]  = useState<Timeframe>("30D");
-  const mounted       = useSyncExternalStore(() => () => {}, () => true, () => false);
+  const [tf, setTf] = useState<Timeframe>("30D");
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
   const tvlData = sliceHistory(totalHistory, tf);
 
   return (
-    <div className="space-y-6">
-
-      {/* ── Chart 1: Total DeFi TVL area ────────────────────────────────── */}
-      <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+    <div className="space-y-8">
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
         <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
           <div>
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3">
-              Total DeFi TVL
-            </h3>
-            <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
-              Source: DefiLlama (Ethereum TVL as proxy)
-            </p>
+            <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider">Total DeFi TVL</h3>
+            <p className="text-sm text-[#a3a3a3] font-mono mt-1">Source: DefiLlama</p>
           </div>
-          <TimeframeSelector
-            value={tf}
-            onChange={setTf}
-            available={["30D", "YTD", "1Y"]}
-          />
+          <TimeframeSelector value={tf} onChange={setTf} available={["30D", "90D", "1Y"]} />
         </div>
-        <div style={{ height: 240 }}>
-          {mounted && tvlData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={tvlData} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="grad-total" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#FABF2C" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#FABF2C" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                <XAxis dataKey="date" {...AXIS} dy={6} minTickGap={28} />
-                <YAxis {...AXIS} tickFormatter={(v) => fmtUsd(v)} width={60} />
-                <Tooltip content={<TotalTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey="tvl"
-                  stroke="#FABF2C"
-                  fill="url(#grad-total)"
-                  strokeWidth={1.5}
-                  dot={false}
-                  activeDot={{ r: 3, fill: "#FABF2C" }}
-                  isAnimationActive={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-full text-[#333] font-mono text-xs uppercase animate-pulse">
-              {mounted ? "No TVL history data" : "Rendering..."}
-            </div>
-          )}
-        </div>
+        {mounted && tvlData.length > 0 ? (
+          <TvlAreaChart data={tvlData} height={240} />
+        ) : (
+          <div className="flex items-center justify-center h-[240px] text-[#52525b] font-mono text-sm">
+            {mounted ? "No TVL history data" : "Rendering..."}
+          </div>
+        )}
       </div>
 
-      {/* ── Chart 2: TVL by Category (horizontal bars) ───────────────────── */}
-      <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
         <div className="mb-4">
-          <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3">
-            TVL by Category
-          </h3>
-          <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
-            Share of total DeFi value locked
-          </p>
+          <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider">TVL by Category</h3>
+          <p className="text-sm text-[#a3a3a3] font-mono mt-1">Share of total DeFi value locked</p>
         </div>
-        <div style={{ height: Math.max(40 + categories.length * 32, 260) }}>
-          {mounted && categories.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                layout="vertical"
-                data={categories}
-                margin={{ top: 5, right: 10, left: 100, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" horizontal={false} />
-                <XAxis
-                  type="number"
-                  tickFormatter={(v) => fmtUsd(v)}
-                  {...AXIS}
-                  fontSize={9}
-                  width={55}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="category"
-                  width={90}
-                  tick={{ fill: "#aaa", fontSize: 9, fontWeight: "bold", fontFamily: "monospace" }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip content={<CategoryTooltip />} cursor={{ fill: "#ffffff08" }} />
-                <Bar dataKey="tvl" maxBarSize={20} radius={[0, 2, 2, 0]} isAnimationActive={false}>
-                  {categories.map((_, idx) => (
-                    <Cell
-                      key={`cell-${idx}`}
-                      fill={CATEGORY_COLORS[idx % CATEGORY_COLORS.length]}
-                      fillOpacity={0.85}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-full text-[#333] font-mono text-xs uppercase animate-pulse">
-              {mounted ? "No category data" : "Rendering..."}
-            </div>
-          )}
-        </div>
+        {mounted && categories.length > 0 ? (
+          <CategoryHistogram categories={categories} height={Math.max(40 + categories.length * 32, 260)} />
+        ) : (
+          <div className="flex items-center justify-center h-[260px] text-[#52525b] font-mono text-sm">
+            {mounted ? "No category data" : "Rendering..."}
+          </div>
+        )}
       </div>
-
     </div>
   );
 }
@@ -13228,30 +13172,30 @@ export default function ExchangeTokensPage() {
 --- src/app/data/markets/futures/_components/FuturesClient.tsx ---
 "use client";
 
-import React, { useState, useSyncExternalStore } from "react";
+import React, { useState, useSyncExternalStore, useRef, useEffect } from "react";
 import {
-  ComposedChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend, AreaChart, Area,
-} from "recharts";
-import { TimeframeSelector }      from "../../../_components/TimeframeSelector";
-import type { Timeframe }          from "../../../_components/TimeframeSelector";
+  createChart, AreaSeries, HistogramSeries, ColorType,
+} from "lightweight-charts";
+import type { IChartApi, DeepPartial, ChartOptions, AreaStyleOptions, SeriesOptionsCommon } from "lightweight-charts";
+import { TimeframeSelector } from "../../../_components/TimeframeSelector";
+import type { Timeframe } from "../../../_components/TimeframeSelector";
 import type { DerivativeMarketData, FundingRateData } from "@/lib/types";
-import type { OIHistoryPoint, FundingHistoryPoint }   from "@/lib/market-data";
-import type { LiquidationRecord }  from "../page";
+import type { OIHistoryPoint, FundingHistoryPoint } from "@/lib/market-data";
+import type { LiquidationRecord } from "../page";
 
 interface Props {
-  exchanges:      DerivativeMarketData[];
-  fundingRates:   FundingRateData[];
-  oiHistory:      OIHistoryPoint[];
+  exchanges: DerivativeMarketData[];
+  fundingRates: FundingRateData[];
+  oiHistory: OIHistoryPoint[];
   fundingHistory: FundingHistoryPoint[];
-  liquidations:   LiquidationRecord[];
+  liquidations: LiquidationRecord[];
 }
 
 function fmtUsd(v: unknown): string {
   const n = Number(v ?? 0);
   if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
-  if (n >= 1e9)  return `$${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6)  return `$${(n / 1e6).toFixed(2)}M`;
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
   return `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
@@ -13262,152 +13206,192 @@ function fmtNum(n: number): string {
   return `$${n.toFixed(0)}`;
 }
 
-const CHART_STYLE = { grid: "#1a1a1a", axis: "#444", btc: "#FABF2C", eth: "#3b82f6" };
+const DARK_OPTIONS: DeepPartial<ChartOptions> = {
+  layout: { background: { type: ColorType.Solid, color: "#161616" }, textColor: "#a3a3a3", fontFamily: "'Space Mono', monospace", fontSize: 10 },
+  grid: { vertLines: { color: "#27272a" }, horzLines: { color: "#27272a" } },
+  crosshair: { vertLine: { color: "#22c55e", width: 1, style: 3, labelBackgroundColor: "#22c55e" }, horzLine: { color: "#22c55e", width: 1, style: 3, labelBackgroundColor: "#22c55e" } },
+  timeScale: { borderColor: "#27272a", timeVisible: false, fixLeftEdge: true, fixRightEdge: true },
+  rightPriceScale: { borderColor: "#27272a", scaleMargins: { top: 0.1, bottom: 0.05 } },
+  handleScroll: { mouseWheel: false, pressedMouseMove: false },
+  handleScale: { mouseWheel: false, pinch: false, axisPressedMouseMove: false },
+};
 
-interface TooltipPayloadItem { name: string; value: number }
-interface ChartTooltipProps { active?: boolean; payload?: TooltipPayloadItem[]; label?: string }
+function MultiAxisOIChart({ data, height }: { data: OIHistoryPoint[]; height: number }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
 
-function OITooltip({ active, payload, label }: ChartTooltipProps) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs font-mono">
-      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
-      {payload.map((p) => (
-        <p key={p.name} className="text-white">
-          <span style={{ color: p.name.includes("BTC") ? CHART_STYLE.btc : CHART_STYLE.eth }}>{p.name.toUpperCase()}</span>:{" "}
-          <span className="font-black">${(p.value / 1e9).toFixed(2)}B</span>
-        </p>
-      ))}
-    </div>
-  );
+  useEffect(() => {
+    if (!containerRef.current || data.length === 0) return;
+    const chart = createChart(containerRef.current, { ...DARK_OPTIONS, width: containerRef.current.clientWidth, height });
+    chartRef.current = chart;
+
+    const btcSeries = chart.addSeries(HistogramSeries, {
+      color: "#F7931A",
+      priceFormat: { type: 'volume' },
+      priceScaleId: 'left',
+    }, 0);
+
+    const ethSeries = chart.addSeries(HistogramSeries, {
+      color: "#627EEA",
+      priceFormat: { type: 'volume' },
+      priceScaleId: 'left',
+    }, 0);
+
+    btcSeries.setData(data.map((d) => ({ time: d.date, value: d.btc })));
+    ethSeries.setData(data.map((d) => ({ time: d.date, value: d.eth })));
+    chart.timeScale().fitContent();
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) chart.applyOptions({ width: w });
+      }
+    });
+    ro.observe(containerRef.current);
+
+    return () => { ro.disconnect(); chart.remove(); chartRef.current = null; };
+  }, [data, height]);
+
+  return <div ref={containerRef} style={{ height }} />;
 }
 
-function FRTooltip({ active, payload, label }: ChartTooltipProps) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs font-mono">
-      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
-      {payload.map((p) => (
-        <p key={p.name} className="text-white">
-          <span style={{ color: p.name.includes("BTC") ? CHART_STYLE.btc : CHART_STYLE.eth }}>{p.name.toUpperCase()}</span>:{" "}
-          <span className="font-black">{p.value.toFixed(4)}%</span>
-        </p>
-      ))}
-    </div>
-  );
-}
+function MultiAreaChart({ data, height }: { data: FundingHistoryPoint[]; height: number }) {
+  const containerRef = useRef<HTMLDivElement>(null);
 
-const subscribe = () => () => {};
-const getSnapshot = () => true;
-const getServerSnapshot = () => false;
+  useEffect(() => {
+    if (!containerRef.current || data.length === 0) return;
+    const chart = createChart(containerRef.current, { ...DARK_OPTIONS, width: containerRef.current.clientWidth, height });
+
+    const btcSeries = chart.addSeries(AreaSeries, {
+      lineColor: "#F7931A",
+      topColor: "#F7931A33",
+      bottomColor: "#F7931A00",
+      lineWidth: 2,
+    } as DeepPartial<AreaStyleOptions & SeriesOptionsCommon>);
+
+    const ethSeries = chart.addSeries(AreaSeries, {
+      lineColor: "#627EEA",
+      topColor: "#627EEA33",
+      bottomColor: "#627EEA00",
+      lineWidth: 2,
+    } as DeepPartial<AreaStyleOptions & SeriesOptionsCommon>);
+
+    btcSeries.setData(data.map((d) => ({ time: d.date, value: d.btc })));
+    ethSeries.setData(data.map((d) => ({ time: d.date, value: d.eth })));
+    chart.timeScale().fitContent();
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) chart.applyOptions({ width: w });
+      }
+    });
+    ro.observe(containerRef.current);
+
+    return () => { ro.disconnect(); chart.remove(); };
+  }, [data, height]);
+
+  return <div ref={containerRef} style={{ height }} />;
+}
 
 export default function FuturesClient({
   exchanges, fundingRates, oiHistory, fundingHistory, liquidations,
 }: Props) {
   const [tf, setTf] = useState<Timeframe>("30D");
-  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
   const totalVolume = exchanges.reduce((s, e) => s + (e.volume24h ?? 0), 0);
-  const totalOi     = exchanges.reduce((s, e) => s + (e.openInterest ?? 0), 0);
-  const avgFunding  = fundingRates.length > 0
+  const totalOi = exchanges.reduce((s, e) => s + (e.openInterest ?? 0), 0);
+  const avgFunding = fundingRates.length > 0
     ? fundingRates.reduce((s, f) => s + (f.fundingRate ?? 0), 0) / fundingRates.length
     : 0;
 
-  const totalLiqLong  = liquidations.filter((l) => l.side === "Buy").reduce((s, l) => s + l.qty, 0);
+  const totalLiqLong = liquidations.filter((l) => l.side === "Buy").reduce((s, l) => s + l.qty, 0);
   const totalLiqShort = liquidations.filter((l) => l.side === "Sell").reduce((s, l) => s + l.qty, 0);
 
-  const days        = tf === "7D" ? 7 : 30;
+  const days = tf === "7D" ? 7 : 30;
   const oiChartData = oiHistory.slice(-days);
   const frChartData = fundingHistory.slice(-days);
 
   return (
-    <div className="space-y-10">
-
+    <div className="space-y-8">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "24h Global Volume",   value: `${totalVolume.toLocaleString(undefined,{maximumFractionDigits:0})} BTC`, accent: "#FABF2C" },
-          { label: "Total Open Interest", value: fmtUsd(totalOi),             accent: "#FABF2C" },
-          { label: "Avg Funding Rate",    value: `${avgFunding.toFixed(4)}%`, accent: avgFunding >= 0 ? "#00d672" : "#ff4757" },
-          { label: "Exchanges Tracked",   value: String(exchanges.length),    accent: "#888" },
+          { label: "24h Global Volume", value: `${totalVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} BTC`, accent: "#22c55e" },
+          { label: "Total Open Interest", value: fmtUsd(totalOi), accent: "#22c55e" },
+          { label: "Avg Funding Rate", value: `${avgFunding.toFixed(4)}%`, accent: avgFunding >= 0 ? "#22c55e" : "#ef4444" },
+          { label: "Exchanges Tracked", value: String(exchanges.length), accent: "#a3a3a3" },
         ].map((s) => (
-          <div key={s.label} className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{s.label}</p>
-            <p className="text-2xl font-black tabular-nums" style={{ color: s.accent }}>{s.value}</p>
+          <div key={s.label} className="rounded-3xl bg-[#161616] border border-[#27272a] p-5">
+            <p className="text-sm text-[#a3a3a3] uppercase tracking-wider font-mono mb-2">{s.label}</p>
+            <p className="text-[28px] font-semibold font-mono tabular-nums" style={{ color: s.accent }}>{s.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div>
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#ff4757] pl-3">
-              Recent Liquidations (Bybit)
-            </h3>
-            <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
-              Long = forced close of long positions, Short = forced close of short positions
-            </p>
+            <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider">Recent Liquidations (Bybit)</h3>
+            <p className="text-sm text-[#a3a3a3] font-mono mt-1">Long = forced close of long positions, Short = forced close of short positions</p>
           </div>
-          <span className="text-[9px] text-[#FABF2C] font-mono tracking-widest bg-[#FABF2C]/10 border border-[#FABF2C]/30 px-2 py-1">
-            Bybit v5
-          </span>
+          <span className="text-xs text-[#22c55e] font-mono tracking-wider bg-[#22c55e]/10 border border-[#22c55e]/30 px-2 py-1 rounded-full">Bybit v5</span>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-          <div className="border border-[#1a1a1a] bg-[#080808] p-4">
-            <p className="text-[9px] font-mono text-[#555] uppercase mb-2">Long Liq. (Buy)</p>
-            <p className="text-xl font-black text-[#ff4757] tabular-nums">{fmtNum(totalLiqLong)}</p>
+          <div className="rounded-3xl bg-[#1a1a1a] border border-[#27272a] p-4">
+            <p className="text-sm font-mono text-[#a3a3a3] uppercase mb-2">Long Liq. (Buy)</p>
+            <p className="text-xl font-semibold text-[#ef4444] tabular-nums">{fmtNum(totalLiqLong)}</p>
           </div>
-          <div className="border border-[#1a1a1a] bg-[#080808] p-4">
-            <p className="text-[9px] font-mono text-[#555] uppercase mb-2">Short Liq. (Sell)</p>
-            <p className="text-xl font-black text-[#00d672] tabular-nums">{fmtNum(totalLiqShort)}</p>
+          <div className="rounded-3xl bg-[#1a1a1a] border border-[#27272a] p-4">
+            <p className="text-sm font-mono text-[#a3a3a3] uppercase mb-2">Short Liq. (Sell)</p>
+            <p className="text-xl font-semibold text-[#22c55e] tabular-nums">{fmtNum(totalLiqShort)}</p>
           </div>
-          <div className="border border-[#1a1a1a] bg-[#080808] p-4">
-            <p className="text-[9px] font-mono text-[#555] uppercase mb-2">Record Count</p>
-            <p className="text-xl font-black text-white tabular-nums">{liquidations.length}</p>
+          <div className="rounded-3xl bg-[#1a1a1a] border border-[#27272a] p-4">
+            <p className="text-sm font-mono text-[#a3a3a3] uppercase mb-2">Record Count</p>
+            <p className="text-xl font-semibold text-[#f8fafc] tabular-nums">{liquidations.length}</p>
           </div>
-          <div className="border border-[#1a1a1a] bg-[#080808] p-4">
-            <p className="text-[9px] font-mono text-[#555] uppercase mb-2">Long/Short Ratio</p>
-            <p className={`text-xl font-black tabular-nums ${totalLiqLong > totalLiqShort ? "text-[#ff4757]" : "text-[#00d672]"}`}>
+          <div className="rounded-3xl bg-[#1a1a1a] border border-[#27272a] p-4">
+            <p className="text-sm font-mono text-[#a3a3a3] uppercase mb-2">Long/Short Ratio</p>
+            <p className={`text-xl font-semibold tabular-nums ${totalLiqLong > totalLiqShort ? "text-[#ef4444]" : "text-[#22c55e]"}`}>
               {totalLiqShort > 0 ? (totalLiqLong / totalLiqShort).toFixed(1) : "—"}
             </p>
           </div>
         </div>
 
         {liquidations.length > 0 && (
-          <div className="border border-[#1a1a1a] overflow-x-auto max-h-[320px] overflow-y-auto">
-            <table className="w-full text-xs">
-              <thead className="sticky top-0 z-10 bg-[#050505]">
-                <tr className="border-b border-[#1a1a1a]">
-                  <th className="px-4 py-2 text-left font-black text-[#555] uppercase tracking-widest">Symbol</th>
-                  <th className="px-4 py-2 text-left font-black text-[#555] uppercase tracking-widest">Side</th>
-                  <th className="px-4 py-2 text-right font-black text-[#555] uppercase tracking-widest">Qty (USD)</th>
-                  <th className="px-4 py-2 text-right font-black text-[#555] uppercase tracking-widest">Liq. Price</th>
-                  <th className="px-4 py-2 text-right font-black text-[#555] uppercase tracking-widest">Time</th>
+          <div className="rounded-3xl border border-[#27272a] overflow-x-auto max-h-[320px] overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-[#161616] border-b border-[#27272a]">
+                  <th className="px-4 py-2 text-left font-semibold text-[#a3a3a3] uppercase tracking-wider">Symbol</th>
+                  <th className="px-4 py-2 text-left font-semibold text-[#a3a3a3] uppercase tracking-wider">Side</th>
+                  <th className="px-4 py-2 text-right font-semibold text-[#a3a3a3] uppercase tracking-wider">Qty (USD)</th>
+                  <th className="px-4 py-2 text-right font-semibold text-[#a3a3a3] uppercase tracking-wider">Liq. Price</th>
+                  <th className="px-4 py-2 text-right font-semibold text-[#a3a3a3] uppercase tracking-wider">Time</th>
                 </tr>
               </thead>
               <tbody>
                 {liquidations.map((l, i) => (
                   <tr key={`${l.symbol}-${l.timestamp}-${i}`}
-                    className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${
-                      i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]"
+                    className={`border-b border-[#27272a] hover:bg-[#27272a] transition-colors duration-200 ${
+                      i % 2 === 0 ? "bg-[#1a1a1a]" : "bg-[#161616]"
                     }`}>
-                    <td className="px-4 py-2 font-bold text-white">{l.symbol}</td>
+                    <td className="px-4 py-2 font-semibold text-[#f8fafc]">{l.symbol}</td>
                     <td className="px-4 py-2">
-                      <span className={`font-mono font-black text-xs px-2 py-0.5 border ${
+                      <span className={`font-mono font-semibold text-xs px-2 py-0.5 rounded-full ${
                         l.side === "Buy"
-                          ? "text-[#ff4757] border-[#ff4757]/30 bg-[#ff4757]/10"
-                          : "text-[#00d672] border-[#00d672]/30 bg-[#00d672]/10"
+                          ? "text-[#ef4444] bg-[#ef4444]/15"
+                          : "text-[#22c55e] bg-[#22c55e]/15"
                       }`}>
                         {l.side === "Buy" ? "Long" : "Short"}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums text-white">
-                      {fmtNum(l.qty)}
-                    </td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums text-[#888]">
+                    <td className="px-4 py-2 text-right font-mono tabular-nums text-[#f8fafc]">{fmtNum(l.qty)}</td>
+                    <td className="px-4 py-2 text-right font-mono tabular-nums text-[#a3a3a3]">
                       ${l.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </td>
-                    <td className="px-4 py-2 text-right font-mono text-[#555] text-[10px]">
+                    <td className="px-4 py-2 text-right font-mono text-[#a3a3a3] text-xs">
                       {new Date(l.timestamp).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                     </td>
                   </tr>
@@ -13416,107 +13400,59 @@ export default function FuturesClient({
             </table>
           </div>
         )}
-        <p className="text-[9px] text-[#333] font-mono mt-3">
-          Source: Bybit v5 /market/liq-records · Cached 5 min
-        </p>
+        <p className="text-xs text-[#52525b] font-mono mt-3">Source: Bybit v5 /market/liq-records · Cached 5 min</p>
       </div>
 
-      <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div>
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3">
-              BTC &amp; ETH Open Interest History
-            </h3>
-            <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">Source: Bybit Futures</p>
+            <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider">BTC &amp; ETH Open Interest History</h3>
+            <p className="text-sm text-[#a3a3a3] font-mono mt-1">Source: Bybit Futures</p>
           </div>
           <TimeframeSelector value={tf} onChange={setTf} available={["7D", "30D"]} />
         </div>
-        <div className="h-72">
-          {mounted && oiChartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={oiChartData} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={CHART_STYLE.grid} vertical={false} />
-                <XAxis dataKey="date" stroke={CHART_STYLE.axis} fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false} minTickGap={20} />
-                <YAxis stroke={CHART_STYLE.axis} fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false}
-                  tickFormatter={(v: number) => `$${(v / 1e9).toFixed(0)}B`} />
-                <Tooltip content={<OITooltip />} cursor={{ fill: "#ffffff08" }} />
-                <Legend iconType="line" wrapperStyle={{ fontSize: 10, fontFamily: "monospace", textTransform: "uppercase" }} />
-                <Bar dataKey="btc" name="BTC OI" fill={CHART_STYLE.btc} opacity={0.7} isAnimationActive={false} />
-                <Bar dataKey="eth" name="ETH OI" fill={CHART_STYLE.eth} opacity={0.7} isAnimationActive={false} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-full flex items-center justify-center text-[#333] font-mono text-xs uppercase">
-              {oiChartData.length === 0 ? "No OI data available" : "Loading chart..."}
-            </div>
-          )}
-        </div>
+        {mounted && oiChartData.length > 0 ? (
+          <MultiAxisOIChart data={oiChartData} height={260} />
+        ) : (
+          <div className="flex items-center justify-center h-[260px] text-[#52525b] font-mono text-sm">No OI data available</div>
+        )}
       </div>
 
-      <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#00d672] pl-3">
-              Avg Daily Funding Rate (BTC &amp; ETH)
-            </h3>
-            <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">Source: Bybit Futures</p>
-          </div>
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+        <div className="mb-5">
+          <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider">Avg Daily Funding Rate (BTC &amp; ETH)</h3>
+          <p className="text-sm text-[#a3a3a3] font-mono mt-1">Source: Bybit Futures</p>
         </div>
-        <div className="h-52">
-          {mounted && frChartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={frChartData} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="frBtc" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={CHART_STYLE.btc} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={CHART_STYLE.btc} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="frEth" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={CHART_STYLE.eth} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={CHART_STYLE.eth} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={CHART_STYLE.grid} vertical={false} />
-                <XAxis dataKey="date" stroke={CHART_STYLE.axis} fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false} minTickGap={20} />
-                <YAxis stroke={CHART_STYLE.axis} fontSize={10} fontFamily="monospace" tickLine={false} axisLine={false}
-                  tickFormatter={(v: number) => `${v.toFixed(3)}%`} />
-                <Tooltip content={<FRTooltip />} cursor={{ fill: "#ffffff08" }} />
-                <Legend iconType="line" wrapperStyle={{ fontSize: 10, fontFamily: "monospace", textTransform: "uppercase" }} />
-                <Area type="monotone" dataKey="btc" name="BTC" stroke={CHART_STYLE.btc} fill="url(#frBtc)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-                <Area type="monotone" dataKey="eth" name="ETH" stroke={CHART_STYLE.eth} fill="url(#frEth)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-full flex items-center justify-center text-[#333] font-mono text-xs uppercase">
-              {frChartData.length === 0 ? "No funding rate data" : "Loading chart..."}
-            </div>
-          )}
-        </div>
+        {mounted && frChartData.length > 0 ? (
+          <MultiAreaChart data={frChartData} height={200} />
+        ) : (
+          <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">No funding rate data</div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
-          <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center gap-3">
-            <span className="w-2 h-2 bg-[#FABF2C] rounded-full" />Top Exchanges
+          <h3 className="text-lg font-semibold text-[#f8fafc] mb-4 flex items-center gap-3">
+            <span className="w-2 h-2 bg-[#22c55e] rounded-full" />Top Exchanges
           </h3>
-          <div className="border border-[#1a1a1a] bg-[#0a0a0a] overflow-x-auto">
-            <table className="w-full text-xs">
+          <div className="rounded-3xl bg-[#161616] border border-[#27272a] overflow-x-auto">
+            <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#1a1a1a] bg-[#080808]">
+                <tr className="sticky top-0 z-10 bg-[#161616] border-b border-[#27272a]">
                   {["Exchange", "24h Volume", "Open Interest"].map((h) => (
-                    <th key={h} className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${h === "Exchange" ? "text-left" : "text-right"}`}>{h}</th>
+                    <th key={h} className={`px-4 py-3 font-semibold text-[#a3a3a3] uppercase tracking-wider ${h === "Exchange" ? "text-left" : "text-right"}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {exchanges.slice(0, 15).map((ex, i) => (
-                  <tr key={ex.exchange} className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]"}`}>
-                    <td className="px-4 py-3 font-bold text-white capitalize">{ex.exchange}</td>
-                    <td className="px-4 py-3 text-right font-mono font-black text-[#FABF2C] tabular-nums">
-                      {ex.volume24h ? `${ex.volume24h.toLocaleString(undefined,{maximumFractionDigits:0})} BTC` : "-"}
+                  <tr key={ex.exchange} className={`border-b border-[#27272a] hover:bg-[#27272a] transition-colors duration-200 ${i % 2 === 0 ? "bg-[#1a1a1a]" : "bg-[#161616]"}`}>
+                    <td className="px-4 py-3 font-semibold text-[#f8fafc] capitalize">{ex.exchange}</td>
+                    <td className="px-4 py-3 text-right font-mono font-semibold text-[#22c55e] tabular-nums">
+                      {ex.volume24h ? `${ex.volume24h.toLocaleString(undefined, { maximumFractionDigits: 0 })} BTC` : "-"}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">
-                      {ex.openInterest ? `${ex.openInterest.toLocaleString(undefined,{maximumFractionDigits:0})} BTC` : "-"}
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#a3a3a3]">
+                      {ex.openInterest ? `${ex.openInterest.toLocaleString(undefined, { maximumFractionDigits: 0 })} BTC` : "-"}
                     </td>
                   </tr>
                 ))}
@@ -13525,30 +13461,30 @@ export default function FuturesClient({
           </div>
         </div>
         <div>
-          <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-3"><span className="w-2 h-2 bg-[#00d672] rounded-full animate-pulse" />Live Funding Rates</div>
-            <span className="text-[9px] text-[#00d672] font-mono tracking-widest bg-[#00d672]/10 border border-[#00d672]/30 px-2 py-1">Bybit</span>
+          <h3 className="text-lg font-semibold text-[#f8fafc] mb-4 flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-3"><span className="w-2 h-2 bg-[#22c55e] rounded-full" />Live Funding Rates</div>
+            <span className="text-xs text-[#22c55e] font-mono tracking-wider bg-[#22c55e]/10 border border-[#22c55e]/30 px-2 py-1 rounded-full">Bybit</span>
           </h3>
-          <div className="border border-[#1a1a1a] bg-[#0a0a0a] overflow-x-auto">
-            <table className="w-full text-xs">
+          <div className="rounded-3xl bg-[#161616] border border-[#27272a] overflow-x-auto">
+            <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#1a1a1a] bg-[#080808]">
+                <tr className="sticky top-0 z-10 bg-[#161616] border-b border-[#27272a]">
                   {["Pair", "Mark Price", "Funding (8h)"].map((h) => (
-                    <th key={h} className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${h === "Pair" ? "text-left" : "text-right"}`}>{h}</th>
+                    <th key={h} className={`px-4 py-3 font-semibold text-[#a3a3a3] uppercase tracking-wider ${h === "Pair" ? "text-left" : "text-right"}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {fundingRates.slice(0, 15).map((f, i) => {
                   const rate = f.fundingRate ?? 0;
-                  const rateColor = rate > 0.01 ? "text-[#00d672]" : rate < -0.01 ? "text-[#ff4757]" : "text-[#888]";
+                  const rateColor = rate > 0.01 ? "text-[#22c55e]" : rate < -0.01 ? "text-[#ef4444]" : "text-[#a3a3a3]";
                   return (
-                    <tr key={f.symbol} className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]"}`}>
-                      <td className="px-4 py-3 font-bold text-white">{f.symbol}</td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">
+                    <tr key={f.symbol} className={`border-b border-[#27272a] hover:bg-[#27272a] transition-colors duration-200 ${i % 2 === 0 ? "bg-[#1a1a1a]" : "bg-[#161616]"}`}>
+                      <td className="px-4 py-3 font-semibold text-[#f8fafc]">{f.symbol}</td>
+                      <td className="px-4 py-3 text-right font-mono tabular-nums text-[#a3a3a3]">
                         ${Number(f.markPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                       </td>
-                      <td className={`px-4 py-3 text-right font-mono font-bold tabular-nums ${rateColor}`}>
+                      <td className={`px-4 py-3 text-right font-mono font-semibold tabular-nums ${rateColor}`}>
                         {rate > 0 ? "+" : ""}{rate.toFixed(4)}%
                       </td>
                     </tr>
@@ -15162,149 +15098,48 @@ export default function LazyEmbed({ src, title }: { src: string; title: string }
 "use client";
 
 import React, { useState, useCallback, useSyncExternalStore } from "react";
-import { TimeframeSelector }  from "../../../_components/TimeframeSelector";
-import type { Timeframe }     from "../../../_components/TimeframeSelector";
-import TvLightweightChart     from "../../../_components/charts/TvLightweightChart";
-import type { TvDataPoint }   from "../../../_components/charts/TvLightweightChart";
-import {
-  ResponsiveContainer, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, Cell, ReferenceLine,
-} from "recharts";
+import Image from "next/image";
+import { TimeframeSelector } from "../../../_components/TimeframeSelector";
+import type { Timeframe } from "../../../_components/TimeframeSelector";
+import TvLightweightChart from "../../../_components/charts/TvLightweightChart";
+import type { TvDataPoint, TvHistogramDataPoint } from "../../../_components/charts/TvLightweightChart";
 import type {
   GlobalMarketData, FearAndGreedData,
   ExtendedCoinData, CoinGeckoExchange,
 } from "@/lib/market-data";
 
 interface Props {
-  globalData:   GlobalMarketData | null;
+  globalData: GlobalMarketData | null;
   fearAndGreed: FearAndGreedData | null;
-  coins:        ExtendedCoinData[];
-  exchanges:    CoinGeckoExchange[];
+  coins: ExtendedCoinData[];
+  exchanges: CoinGeckoExchange[];
 }
 
 function fmtUsd(n: number | null | undefined, decimals = 2): string {
   if (n === null || n === undefined || isNaN(n)) return "—";
   if (n >= 1e12) return `$${(n / 1e12).toFixed(decimals)}T`;
-  if (n >= 1e9)  return `$${(n / 1e9).toFixed(decimals)}B`;
-  if (n >= 1e6)  return `$${(n / 1e6).toFixed(decimals)}M`;
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(decimals)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(decimals)}M`;
   return `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
 function fmtPct(n: number | null | undefined): React.ReactNode {
   if (n === null || n === undefined || isNaN(n)) {
-    return <span className="text-[#555]">—</span>;
+    return <span className="text-[#a3a3a3]">—</span>;
   }
   const pos = n >= 0;
   return (
-    <span className={`font-mono font-bold tabular-nums ${pos ? "text-[#00d672]" : "text-[#ff4757]"}`}>
+    <span className={`font-mono font-semibold tabular-nums ${pos ? "text-[#22c55e]" : "text-[#ef4444]"}`}>
       {pos ? "+" : ""}{n.toFixed(2)}%
     </span>
   );
 }
 
 function pctKey(tf: Timeframe): keyof ExtendedCoinData {
-  if (tf === "1D")  return "price_change_percentage_24h_in_currency";
-  if (tf === "7D")  return "price_change_percentage_7d_in_currency";
+  if (tf === "1D") return "price_change_percentage_24h_in_currency";
+  if (tf === "7D") return "price_change_percentage_7d_in_currency";
   if (tf === "30D") return "price_change_percentage_30d_in_currency";
   return "price_change_percentage_24h_in_currency";
-}
-
-function fngColor(val: string): string {
-  const v = parseInt(val, 10);
-  if (v >= 75) return "text-[#00d672]";
-  if (v >= 55) return "text-[#22c55e]";
-  if (v >= 45) return "text-[#FABF2C]";
-  if (v >= 25) return "text-[#f97316]";
-  return "text-[#ff4757]";
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function PctTooltip({ active, payload, label }: any) {
-  if (!active || !payload || payload.length === 0) return null;
-  const v: number = payload[0].value;
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs">
-      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
-      <p className={`font-mono font-black ${v >= 0 ? "text-[#00d672]" : "text-[#ff4757]"}`}>
-        {v >= 0 ? "+" : ""}{v.toFixed(2)}%
-      </p>
-    </div>
-  );
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function BtcTooltip({ active, payload, label }: any) {
-  if (!active || !payload || payload.length === 0) return null;
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs">
-      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
-      <p className="font-mono font-black text-[#FABF2C]">
-        {Number(payload[0].value).toLocaleString()} BTC
-      </p>
-    </div>
-  );
-}
-
-function PerformanceChart({ coins, tf, mounted }: {
-  coins: ExtendedCoinData[]; tf: Timeframe; mounted: boolean;
-}) {
-  const data = [...coins]
-    .map((c) => ({ name: c.symbol.toUpperCase(), change: Number(c[pctKey(tf)] ?? 0) }))
-    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
-    .slice(0, 12);
-
-  if (!mounted) return (
-    <div className="h-[200px] flex items-center justify-center text-[#333] font-mono text-xs uppercase animate-pulse">
-      Rendering...
-    </div>
-  );
-
-  return (
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={data} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-        <CartesianGrid stroke="#1a1a1a" strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="name" stroke="#555" fontSize={10} tickLine={false} axisLine={false} fontFamily="monospace" />
-        <YAxis stroke="#555" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} width={40} />
-        <ReferenceLine y={0} stroke="#2a2a2a" strokeWidth={1} />
-        <Tooltip content={<PctTooltip />} cursor={{ fill: "#ffffff08" }} />
-        <Bar dataKey="change" maxBarSize={32} radius={[2, 2, 0, 0]} isAnimationActive={false}>
-          {data.map((entry, i) => (
-            <Cell key={`perf-${i}`} fill={entry.change >= 0 ? "#00d672" : "#ff4757"} fillOpacity={0.85} />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  );
-}
-
-function ExchangeVolumeChart({ exchanges, mounted }: {
-  exchanges: CoinGeckoExchange[]; mounted: boolean;
-}) {
-  const data = [...exchanges].slice(0, 10)
-    .map((ex) => ({
-      name:   ex.name.length > 10 ? ex.name.slice(0, 10) + "..." : ex.name,
-      volume: Math.round(ex.trade_volume_24h_btc),
-    }))
-    .sort((a, b) => b.volume - a.volume);
-
-  if (!mounted) return (
-    <div className="h-[200px] flex items-center justify-center text-[#333] font-mono text-xs uppercase animate-pulse">
-      Rendering...
-    </div>
-  );
-
-  return (
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={data} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
-        <CartesianGrid stroke="#1a1a1a" strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="name" stroke="#555" fontSize={9} tickLine={false} axisLine={false} fontFamily="monospace" />
-        <YAxis stroke="#555" fontSize={10} tickLine={false} axisLine={false}
-          tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}K`} width={40} />
-        <Tooltip content={<BtcTooltip />} cursor={{ fill: "#ffffff08" }} />
-        <Bar dataKey="volume" fill="#FABF2C" fillOpacity={0.8} maxBarSize={36} radius={[2, 2, 0, 0]} isAnimationActive={false} />
-      </BarChart>
-    </ResponsiveContainer>
-  );
 }
 
 const DOM_COLORS: Record<string, string> = {
@@ -15312,79 +15147,10 @@ const DOM_COLORS: Record<string, string> = {
   SOL: "#9945FF", USDC: "#2775CA", XRP: "#00AAE4", OTHERS: "#555555",
 };
 
-function DominanceChart({ globalData, mounted }: {
-  globalData: GlobalMarketData | null; mounted: boolean;
-}) {
-  const pct   = globalData?.market_cap_percentage ?? {};
-  const SHOW  = ["btc", "eth", "usdt", "bnb", "sol", "usdc", "xrp"];
-  const known = SHOW.map((k) => ({ name: k.toUpperCase(), pct: Number(pct[k] ?? 0) }))
-    .filter((d) => d.pct > 0);
-  const knownSum = known.reduce((s, d) => s + d.pct, 0);
-  const data = [...known, { name: "OTHERS", pct: Math.max(0, 100 - knownSum) }];
-
-  if (!mounted) return (
-    <div className="h-[200px] flex items-center justify-center text-[#333] font-mono text-xs uppercase animate-pulse">
-      Rendering...
-    </div>
-  );
-
-  return (
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={data} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-        <CartesianGrid stroke="#1a1a1a" strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="name" stroke="#555" fontSize={10} tickLine={false} axisLine={false} fontFamily="monospace" />
-        <YAxis stroke="#555" fontSize={10} tickLine={false} axisLine={false}
-          tickFormatter={(v: number) => `${v.toFixed(0)}%`} width={36} />
-        <Tooltip content={<PctTooltip />} cursor={{ fill: "#ffffff08" }} />
-        <Bar dataKey="pct" maxBarSize={44} radius={[2, 2, 0, 0]} isAnimationActive={false}>
-          {data.map((entry, i) => (
-            <Cell key={`dom-${i}`} fill={DOM_COLORS[entry.name] ?? "#888"} fillOpacity={0.85} />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  );
-}
-
-function VolumeDominanceChart({ exchanges, mounted }: {
-  exchanges: CoinGeckoExchange[]; mounted: boolean;
-}) {
-  const totalBtcVol = exchanges.reduce((s, e) => s + e.trade_volume_24h_btc, 0);
-  const data = exchanges.slice(0, 10).map((e) => ({
-    name:  e.name.length > 12 ? e.name.slice(0, 12) + "..." : e.name,
-    volBtc: Math.round(e.trade_volume_24h_btc),
-    share:  totalBtcVol > 0 ? (e.trade_volume_24h_btc / totalBtcVol) * 100 : 0,
-  }));
-
-  if (!mounted) return (
-    <div className="h-[200px] flex items-center justify-center text-[#333] font-mono text-xs uppercase animate-pulse">
-      Rendering...
-    </div>
-  );
-
-  return (
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={data} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-        <CartesianGrid stroke="#1a1a1a" strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="name" stroke="#555" fontSize={9} tickLine={false} axisLine={false} fontFamily="monospace" />
-        <YAxis stroke="#555" fontSize={10} tickLine={false} axisLine={false}
-          tickFormatter={(v: number) => `${v.toFixed(0)}%`} width={36} />
-        <Tooltip content={<PctTooltip />} cursor={{ fill: "#ffffff08" }} />
-        <Bar dataKey="share" maxBarSize={40} radius={[2, 2, 0, 0]} isAnimationActive={false}>
-          {data.map((_, i) => (
-            <Cell key={`vol-${i}`} fill="#FABF2C" fillOpacity={0.75 + i * 0.025} />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  );
-}
-
 interface PriceHistoryState { btc: TvDataPoint[]; eth: TvDataPoint[]; loading: boolean; }
 
 function usePriceHistory(): PriceHistoryState {
   const [state, setState] = useState<PriceHistoryState>({ btc: [], eth: [], loading: true });
-
   React.useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -15410,14 +15176,13 @@ function usePriceHistory(): PriceHistoryState {
     load();
     return () => { cancelled = true; };
   }, []);
-
   return state;
 }
 
 export default function SpotClient({ globalData, fearAndGreed, coins, exchanges }: Props) {
-  const [tf, setTf]           = useState<Timeframe>("1D");
-  const mounted               = useSyncExternalStore(() => () => {}, () => true, () => false);
-  const priceHistory          = usePriceHistory();
+  const [tf, setTf] = useState<Timeframe>("1D");
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+  const priceHistory = usePriceHistory();
 
   const slicePriceData = useCallback(
     (data: TvDataPoint[]): TvDataPoint[] => {
@@ -15425,12 +15190,12 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
       return data;
     }, [tf]);
 
-  const totalMcap     = globalData?.total_market_cap?.usd ?? 0;
-  const total24hVol   = globalData?.total_volume?.usd ?? 0;
-  const btcDom        = globalData?.market_cap_percentage?.btc ?? 0;
-  const ethDom        = globalData?.market_cap_percentage?.eth ?? 0;
+  const totalMcap = globalData?.total_market_cap?.usd ?? 0;
+  const total24hVol = globalData?.total_volume?.usd ?? 0;
+  const btcDom = globalData?.market_cap_percentage?.btc ?? 0;
+  const ethDom = globalData?.market_cap_percentage?.eth ?? 0;
   const mcapChange24h = globalData?.market_cap_change_percentage_24h_usd ?? 0;
-  const fng           = fearAndGreed;
+  const fng = fearAndGreed;
 
   const sortedCoins = [...coins].sort((a, b) => {
     const aVal = Number(a[pctKey(tf)] ?? -999);
@@ -15438,72 +15203,107 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
     return bVal - aVal;
   });
 
-  return (
-    <div className="space-y-10">
+  const topMoversData: TvHistogramDataPoint[] = [...coins]
+    .map((c) => {
+      const change = Number(c[pctKey(tf)] ?? 0);
+      return {
+        time: c.symbol.toUpperCase(),
+        value: change,
+        color: change >= 0 ? "#22c55e" : "#ef4444",
+      };
+    })
+    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+    .slice(0, 12);
 
+  const pct = globalData?.market_cap_percentage ?? {};
+  const SHOW = ["btc", "eth", "usdt", "bnb", "sol", "usdc", "xrp"];
+  const known = SHOW.map((k) => ({
+    name: k.toUpperCase(),
+    pct: Number(pct[k] ?? 0),
+    color: DOM_COLORS[k.toUpperCase()] ?? "#555555",
+  })).filter((d) => d.pct > 0);
+  const knownSum = known.reduce((s, d) => s + d.pct, 0);
+  const dominanceData: TvHistogramDataPoint[] = [
+    ...known.map((d) => ({ time: d.name, value: d.pct, color: d.color })),
+    { time: "OTHERS", value: Math.max(0, 100 - knownSum), color: DOM_COLORS.OTHERS },
+  ];
+
+  const totalBtcVol = exchanges.reduce((s, e) => s + e.trade_volume_24h_btc, 0);
+  const exchangeVolData: TvHistogramDataPoint[] = exchanges.slice(0, 10).map((e, i) => ({
+    time: e.name.length > 12 ? e.name.slice(0, 12) + "..." : e.name,
+    value: totalBtcVol > 0 ? (e.trade_volume_24h_btc / totalBtcVol) * 100 : 0,
+    color: `rgba(34, 197, 94, ${0.5 + i * 0.05})`,
+  }));
+
+  return (
+    <div className="space-y-8">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: "Total Market Cap", value: fmtUsd(totalMcap),
             sub: `${mcapChange24h >= 0 ? "+" : ""}${mcapChange24h.toFixed(2)}% (24h)`,
-            subColor: mcapChange24h >= 0 ? "text-[#00d672]" : "text-[#ff4757]" },
-          { label: "24h Volume", value: fmtUsd(total24hVol), sub: "Global spot", subColor: "text-[#888]" },
-          { label: "BTC Dominance", value: `${btcDom.toFixed(1)}%`, sub: "of total market cap", subColor: "text-[#888]" },
-          { label: "ETH Dominance", value: `${ethDom.toFixed(1)}%`, sub: "of total market cap", subColor: "text-[#888]" },
+            subColor: mcapChange24h >= 0 ? "text-[#22c55e]" : "text-[#ef4444]" },
+          { label: "24h Volume", value: fmtUsd(total24hVol), sub: "Global spot", subColor: "text-[#a3a3a3]" },
+          { label: "BTC Dominance", value: `${btcDom.toFixed(1)}%`, sub: "of total market cap", subColor: "text-[#a3a3a3]" },
+          { label: "ETH Dominance", value: `${ethDom.toFixed(1)}%`, sub: "of total market cap", subColor: "text-[#a3a3a3]" },
           { label: "Fear & Greed", value: fng ? fng.value : "—",
-            sub: fng?.value_classification ?? "N/A", subColor: fng ? fngColor(fng.value) : "text-[#888]" },
+            sub: fng?.value_classification ?? "N/A", subColor: fng ? (Number(fng.value) >= 50 ? "text-[#22c55e]" : "text-[#ef4444]") : "text-[#a3a3a3]" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{stat.label}</p>
-            <p className="text-2xl font-black text-[#FABF2C] tabular-nums leading-none">{stat.value}</p>
-            <p className={`text-[10px] font-mono mt-2 ${stat.subColor}`}>{stat.sub}</p>
+          <div key={stat.label} className="rounded-3xl bg-[#161616] border border-[#27272a] p-5">
+            <p className="text-sm text-[#a3a3a3] uppercase tracking-wider font-mono mb-2">{stat.label}</p>
+            <p className="text-[28px] font-semibold text-[#f8fafc] font-mono tabular-nums leading-tight">{stat.value}</p>
+            <p className={`text-sm font-mono mt-2 ${stat.subColor}`}>{stat.sub}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div>
-              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">Top Movers</h3>
-              <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">Top 12 by absolute {tf} change</p>
+              <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Top Movers</h3>
+              <p className="text-xs text-[#52525b] font-mono mt-0.5">Top 12 by absolute {tf} change</p>
             </div>
             <TimeframeSelector value={tf} onChange={setTf} available={["1D", "7D", "30D"]} />
           </div>
-          <PerformanceChart coins={coins} tf={tf} mounted={mounted} />
+          {mounted && topMoversData.length > 0 ? (
+            <TvLightweightChart data={topMoversData as TvDataPoint[]} kind="histogram" lineColor="#22c55e" height={200} title="Top Movers" />
+          ) : (
+            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+          )}
         </div>
-        <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
           <div className="mb-4">
-            <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">Market Cap Dominance</h3>
-            <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">% share of total market cap</p>
+            <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Market Cap Dominance</h3>
+            <p className="text-xs text-[#52525b] font-mono mt-0.5">% share of total market cap</p>
           </div>
-          <DominanceChart globalData={globalData} mounted={mounted} />
+          {mounted && dominanceData.length > 0 ? (
+            <TvLightweightChart data={dominanceData as TvDataPoint[]} kind="histogram" lineColor="#22c55e" height={200} title="Dominance" />
+          ) : (
+            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+          )}
         </div>
       </div>
 
       {tf !== "1D" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
             <div className="mb-4">
-              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">Bitcoin Price ({tf})</h3>
-              <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">CoinGecko market_chart</p>
+              <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Bitcoin Price ({tf})</h3>
+              <p className="text-xs text-[#52525b] font-mono mt-0.5">CoinGecko market_chart</p>
             </div>
             {priceHistory.loading ? (
-              <div className="flex items-center justify-center h-[220px] text-[#333] font-mono text-xs uppercase animate-pulse">
-                Loading BTC chart...
-              </div>
+              <div className="flex items-center justify-center h-[220px] text-[#52525b] font-mono text-sm">Loading BTC chart...</div>
             ) : (
               <TvLightweightChart data={slicePriceData(priceHistory.btc)} lineColor="#F7931A" height={220} title="BTC Price" />
             )}
           </div>
-          <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+          <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
             <div className="mb-4">
-              <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">Ethereum Price ({tf})</h3>
-              <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">CoinGecko market_chart</p>
+              <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Ethereum Price ({tf})</h3>
+              <p className="text-xs text-[#52525b] font-mono mt-0.5">CoinGecko market_chart</p>
             </div>
             {priceHistory.loading ? (
-              <div className="flex items-center justify-center h-[220px] text-[#333] font-mono text-xs uppercase animate-pulse">
-                Loading ETH chart...
-              </div>
+              <div className="flex items-center justify-center h-[220px] text-[#52525b] font-mono text-sm">Loading ETH chart...</div>
             ) : (
               <TvLightweightChart data={slicePriceData(priceHistory.eth)} lineColor="#627EEA" height={220} title="ETH Price" />
             )}
@@ -15511,93 +15311,108 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
           <div className="mb-4">
-            <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">Top 10 CEX — 24h Volume (BTC)</h3>
-            <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">Source: CoinGecko exchanges API</p>
+            <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Top 10 CEX — 24h Volume (BTC)</h3>
+            <p className="text-xs text-[#52525b] font-mono mt-0.5">Source: CoinGecko exchanges API</p>
           </div>
-          <ExchangeVolumeChart exchanges={exchanges} mounted={mounted} />
+          {mounted && exchangeVolData.length > 0 ? (
+            <TvLightweightChart
+              data={exchanges.slice(0, 10).map((e) => ({ time: e.name.length > 12 ? e.name.slice(0, 12) + "..." : e.name, value: Math.round(e.trade_volume_24h_btc) }))}
+              kind="histogram" lineColor="#22c55e" height={200} title="CEX Volume"
+              priceFormatter={(v) => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}K` : String(v)}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+          )}
         </div>
-        <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
           <div className="mb-4">
-            <h3 className="text-[10px] font-black text-[#555] uppercase tracking-widest">CEX Volume Dominance</h3>
-            <p className="text-[9px] text-[#333] font-mono mt-0.5 uppercase">% of total 24h CEX volume</p>
+            <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">CEX Volume Dominance</h3>
+            <p className="text-xs text-[#52525b] font-mono mt-0.5">% of total 24h CEX volume</p>
           </div>
-          <VolumeDominanceChart exchanges={exchanges} mounted={mounted} />
+          {mounted && exchangeVolData.length > 0 ? (
+            <TvLightweightChart
+              data={exchangeVolData as TvDataPoint[]}
+              kind="histogram" lineColor="#22c55e" height={200} title="Volume Dominance"
+              priceFormatter={(v) => `${v.toFixed(1)}%`}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+          )}
         </div>
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <h3 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
-            <span className="w-2 h-2 bg-[#FABF2C] rounded-full" />Top 50 Assets
+          <h3 className="text-lg font-semibold text-[#f8fafc] flex items-center gap-3">
+            <span className="w-2 h-2 bg-[#22c55e] rounded-full" />Top 50 Assets
           </h3>
           <TimeframeSelector value={tf} onChange={setTf} available={["1D", "7D", "30D"]} />
         </div>
-        <div className="border border-[#1a1a1a] bg-[#0a0a0a] overflow-x-auto">
-          <table className="w-full text-xs">
+        <div className="rounded-3xl bg-[#161616] border border-[#27272a] overflow-x-auto">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#1a1a1a] bg-[#080808]">
+              <tr className="sticky top-0 z-10 bg-[#161616] border-b border-[#27272a]">
                 {["#", "Asset", "Price", "1h%", `${tf} Perf`, "Market Cap", "24h Volume"].map((h) => (
-                  <th key={h} className={["px-4 py-3 font-black text-[#555] uppercase tracking-widest whitespace-nowrap",
+                  <th key={h} className={[
+                    "px-4 py-3 font-semibold text-[#a3a3a3] uppercase tracking-wider whitespace-nowrap",
                     h === "Asset" || h === "#" ? "text-left" : "text-right",
-                    h === `${tf} Perf` ? "text-[#FABF2C]" : "",
+                    h === `${tf} Perf` ? "text-[#22c55e]" : "",
                   ].join(" ")}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {sortedCoins.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-[#555] font-mono text-xs">
-                  Syncing market data...
-                </td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-[#a3a3a3] font-mono text-sm">Syncing market data...</td></tr>
               )}
               {sortedCoins.map((coin, i) => {
                 const tfPct = coin[pctKey(tf)] as number | null;
                 const h1Pct = coin.price_change_percentage_1h_in_currency;
                 const price = coin.current_price;
                 return (
-                  <tr key={coin.id} className={["border-b border-[#111] hover:bg-[#0f0f0f] transition-colors",
-                    i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]",
+                  <tr key={coin.id} className={[
+                    "border-b border-[#27272a] hover:bg-[#27272a] transition-colors duration-200",
+                    i % 2 === 0 ? "bg-[#1a1a1a]" : "bg-[#161616]",
                   ].join(" ")}>
-                    <td className="px-4 py-3 text-[#555] tabular-nums w-10">{i + 1}</td>
+                    <td className="px-4 py-3 text-[#a3a3a3] tabular-nums w-10">{i + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        {coin.image && <img src={coin.image} alt={coin.symbol} width={20} height={20} className="rounded-full shrink-0" />}
-                        <span className="font-bold text-white">{coin.name}</span>
-                        <span className="text-[#555] uppercase text-[10px]">{coin.symbol}</span>
+                        {coin.image && <Image src={coin.image} alt={coin.symbol} width={20} height={20} className="rounded-full shrink-0" />}
+                        <span className="font-semibold text-[#f8fafc]">{coin.name}</span>
+                        <span className="text-[#a3a3a3] uppercase text-xs">{coin.symbol}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-white">
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#f8fafc]">
                       {price >= 1
                         ? `$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                         : price > 0 ? `$${price.toFixed(price < 0.001 ? 8 : price < 0.01 ? 6 : 4)}` : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">{fmtPct(h1Pct)}</td>
                     <td className="px-4 py-3 text-right">{fmtPct(tfPct)}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">{fmtUsd(coin.market_cap)}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">{fmtUsd(coin.total_volume)}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#a3a3a3]">{fmtUsd(coin.market_cap)}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#a3a3a3]">{fmtUsd(coin.total_volume)}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-        <p className="text-[10px] text-[#333] font-mono mt-2 text-right">Source: CoinGecko — Cached 5 min</p>
+        <p className="text-xs text-[#52525b] font-mono mt-2 text-right">Source: CoinGecko — Cached 5 min</p>
       </div>
 
       <div>
-        <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center gap-3">
-          <span className="w-2 h-2 bg-[#00d672] rounded-full" />CEX Rankings by 24h Volume
+        <h3 className="text-lg font-semibold text-[#f8fafc] mb-4 flex items-center gap-3">
+          <span className="w-2 h-2 bg-[#22c55e] rounded-full" />CEX Rankings by 24h Volume
         </h3>
-        <div className="border border-[#1a1a1a] bg-[#0a0a0a] overflow-x-auto">
-          <table className="w-full text-xs">
+        <div className="rounded-3xl bg-[#161616] border border-[#27272a] overflow-x-auto">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#1a1a1a] bg-[#080808]">
+              <tr className="sticky top-0 z-10 bg-[#161616] border-b border-[#27272a]">
                 {["#", "Exchange", "Country", "Trust Score", "24h Volume (BTC)", "24h Vol Norm"].map((h) => (
-                  <th key={h} className={["px-4 py-3 font-black text-[#555] uppercase tracking-widest",
+                  <th key={h} className={["px-4 py-3 font-semibold text-[#a3a3a3] uppercase tracking-wider",
                     h === "Exchange" || h === "#" ? "text-left" : "text-right",
                   ].join(" ")}>{h}</th>
                 ))}
@@ -15605,29 +15420,28 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
             </thead>
             <tbody>
               {exchanges.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-[#555] font-mono text-xs">
-                  Syncing exchange data...
-                </td></tr>
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-[#a3a3a3] font-mono text-sm">Syncing exchange data...</td></tr>
               )}
               {exchanges.map((ex, i) => (
-                <tr key={ex.id} className={["border-b border-[#111] hover:bg-[#0f0f0f] transition-colors",
-                  i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]",
+                <tr key={ex.id} className={[
+                  "border-b border-[#27272a] hover:bg-[#27272a] transition-colors duration-200",
+                  i % 2 === 0 ? "bg-[#1a1a1a]" : "bg-[#161616]",
                 ].join(" ")}>
-                  <td className="px-4 py-3 text-[#555] tabular-nums w-10">{i + 1}</td>
-                  <td className="px-4 py-3 font-bold text-white">{ex.name}</td>
-                  <td className="px-4 py-3 text-right text-[#888]">{ex.country ?? "—"}</td>
+                  <td className="px-4 py-3 text-[#a3a3a3] tabular-nums w-10">{i + 1}</td>
+                  <td className="px-4 py-3 font-semibold text-[#f8fafc]">{ex.name}</td>
+                  <td className="px-4 py-3 text-right text-[#a3a3a3]">{ex.country ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
                     {ex.trust_score !== null ? (
-                      <span className={`font-mono font-bold ${
-                        (ex.trust_score ?? 0) >= 8 ? "text-[#00d672]" :
-                        (ex.trust_score ?? 0) >= 5 ? "text-[#FABF2C]" : "text-[#ff4757]"
+                      <span className={`font-mono font-semibold ${
+                        (ex.trust_score ?? 0) >= 8 ? "text-[#22c55e]" :
+                        (ex.trust_score ?? 0) >= 5 ? "text-[#f8fafc]" : "text-[#ef4444]"
                       }`}>{ex.trust_score}/10</span>
                     ) : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right font-mono tabular-nums text-[#FABF2C]">
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-[#22c55e]">
                     {ex.trade_volume_24h_btc?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? "—"} BTC
                   </td>
-                  <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-[#a3a3a3]">
                     {ex.trade_volume_24h_btc_normalized?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? "—"} BTC
                   </td>
                 </tr>
@@ -15635,7 +15449,7 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
             </tbody>
           </table>
         </div>
-        <p className="text-[10px] text-[#333] font-mono mt-2 text-right">Source: CoinGecko — Cached 1 hr</p>
+        <p className="text-xs text-[#52525b] font-mono mt-2 text-right">Source: CoinGecko — Cached 1 hr</p>
       </div>
     </div>
   );
@@ -16541,277 +16355,135 @@ export default function AvalanchePage() {
 --- src/app/data/onchain/bitcoin/_components/BitcoinChartsClient.tsx ---
 "use client";
 import React, { useState, useSyncExternalStore } from "react";
-import {
-  ResponsiveContainer, AreaChart, Area,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-} from "recharts";
+import TvLightweightChart from "../../../_components/charts/TvLightweightChart";
+import type { TvDataPoint } from "../../../_components/charts/TvLightweightChart";
+import { TimeframeSelector } from "../../../_components/TimeframeSelector";
+import type { Timeframe } from "../../../_components/TimeframeSelector";
 import type { BtcChartRow, UtxoAgeBand } from "../page";
 
 interface Props {
-  addrData:     BtcChartRow[];
-  txData:       BtcChartRow[];
-  hashData:     BtcChartRow[];
-  feeData:      BtcChartRow[];
-  mempoolData:  BtcChartRow[];
+  addrData: BtcChartRow[];
+  txData: BtcChartRow[];
+  hashData: BtcChartRow[];
+  feeData: BtcChartRow[];
+  mempoolData: BtcChartRow[];
   minerRevData: BtcChartRow[];
-  utxoData:     UtxoAgeBand[];
+  utxoData: UtxoAgeBand[];
 }
 
-const AXIS = { stroke: "#444", fontSize: 9, fontFamily: "monospace", tickLine: false, axisLine: false } as const;
-
 const UTXO_COLORS = [
-  "#ff4757", "#f97316", "#FABF2C", "#00d672", "#14b8a6",
-  "#3b82f6", "#6366f1", "#8b5cf6", "#a855f7", "#d946ef",
+  "#ef4444", "#f97316", "#22c55e", "#14b8a6",
+  "#3b82f6", "#6366f1", "#8b5cf6", "#a855f7", "#d946ef", "#ec4899",
 ];
 
 export default function BitcoinChartsClient({
   addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData,
 }: Props) {
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
-  const [days, setDays] = useState<7 | 30 | 90>(30);
+  const [days, setDays] = useState<Timeframe>("30D");
 
-  const slice = (data: BtcChartRow[]) => {
+  const slice = (data: BtcChartRow[]): TvDataPoint[] => {
     const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date));
-    return sorted.slice(-days);
+    const dayMap: Record<Timeframe, number> = { "1D": 1, "7D": 7, "30D": 30, "90D": 90, "1Y": 365, "YTD": 365, "ALL": 365 };
+    return sorted.slice(-(dayMap[days] ?? 30)).map((d) => ({ time: d.date, value: d.value }));
   };
 
-  const addrSlice    = slice(addrData);
-  const txSlice      = slice(txData);
-  const hashSlice    = slice(hashData);
-  const feeSlice     = slice(feeData);
+  const addrSlice = slice(addrData);
+  const txSlice = slice(txData);
+  const hashSlice = slice(hashData);
+  const feeSlice = slice(feeData);
   const mempoolSlice = slice(mempoolData);
-  const minerSlice   = slice(minerRevData);
-  const hasData      = addrSlice.length > 0 || txSlice.length > 0 || hashSlice.length > 0;
+  const minerSlice = slice(minerRevData);
+  const hasData = addrSlice.length > 0 || txSlice.length > 0 || hashSlice.length > 0;
 
   if (!hasData) {
     return (
-      <div className="border border-dashed border-[#1a1a1a] p-6 text-center">
-        <p className="text-[10px] text-[#333] font-mono uppercase tracking-widest">
-          Chart data unavailable — blockchain.info rate limited
-        </p>
+      <div className="rounded-3xl bg-[#161616] border border-dashed border-[#27272a] p-12 text-center">
+        <p className="text-sm text-[#52525b] font-mono">Chart data unavailable — blockchain.info rate limited</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex gap-1">
-        {([7, 30, 90] as const).map((d) => (
-          <button key={d} onClick={() => setDays(d)}
-            className={"px-4 py-2 text-[10px] font-black uppercase tracking-widest border transition-all " +
-              (days === d ? "bg-[#FABF2C] text-black border-[#FABF2C]" : "text-[#555] border-[#1a1a1a] hover:border-[#FABF2C]/60")}>
-            {d}D
-          </button>
-        ))}
+    <div className="space-y-8">
+      <div className="flex justify-end">
+        <TimeframeSelector value={days} onChange={setDays} available={["7D", "30D", "90D"]} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {addrSlice.length > 0 && (
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#f97316] pl-3 mb-4">
-              Active Addresses ({days}D)
-            </h3>
-            <div style={{ height: 200 }}>
-              {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={addrSlice} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gradAddr" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#f97316" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                    <XAxis dataKey="date" {...AXIS} minTickGap={25} />
-                    <YAxis {...AXIS} width={52}
-                      tickFormatter={(v: number) => v >= 1e6 ? `${(v/1e6).toFixed(1)}M` : `${(v/1e3).toFixed(0)}K`} />
-                    <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: 11 }}
-                      formatter={(v: unknown) => [`${Number(v).toLocaleString()}`, "Addresses"]} />
-                    <Area type="monotone" dataKey="value" stroke="#f97316" fill="url(#gradAddr)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <p className="text-[9px] text-[#333] font-mono mt-2">Source: blockchain.info/charts/n-unique-addresses</p>
+          <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+            <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider mb-4">Active Addresses ({days})</h3>
+            {mounted && <TvLightweightChart data={addrSlice} lineColor="#f97316" height={200} title="Active Addresses" />}
+            <p className="text-xs text-[#52525b] font-mono mt-2">Source: blockchain.info/charts/n-unique-addresses</p>
           </div>
         )}
         {txSlice.length > 0 && (
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3 mb-4">
-              Daily Transactions ({days}D)
-            </h3>
-            <div style={{ height: 200 }}>
-              {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={txSlice} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                    <XAxis dataKey="date" {...AXIS} minTickGap={25} />
-                    <YAxis {...AXIS} width={52}
-                      tickFormatter={(v: number) => v >= 1e6 ? `${(v/1e6).toFixed(1)}M` : `${(v/1e3).toFixed(0)}K`} />
-                    <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: 11 }}
-                      formatter={(v: unknown) => [`${Number(v).toLocaleString()}`, "Txns"]} />
-                    <Bar dataKey="value" fill="#FABF2C" fillOpacity={0.8} radius={[1, 1, 0, 0]} isAnimationActive={false} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <p className="text-[9px] text-[#333] font-mono mt-2">Source: blockchain.info/charts/n-transactions</p>
+          <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+            <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider mb-4">Daily Transactions ({days})</h3>
+            {mounted && <TvLightweightChart data={txSlice} kind="histogram" lineColor="#F7931A" height={200} title="Daily Transactions" />}
+            <p className="text-xs text-[#52525b] font-mono mt-2">Source: blockchain.info/charts/n-transactions</p>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {hashSlice.length > 0 && (
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#00d672] pl-3 mb-4">
-              Hash Rate ({days}D)
-            </h3>
-            <div style={{ height: 180 }}>
-              {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={hashSlice} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gradHash" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#00d672" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#00d672" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                    <XAxis dataKey="date" {...AXIS} minTickGap={25} />
-                    <YAxis {...AXIS} width={52}
-                      tickFormatter={(v: number) => v >= 1e9 ? `${(v/1e9).toFixed(0)}G` : v >= 1e6 ? `${(v/1e6).toFixed(0)}M` : `${(v/1e3).toFixed(0)}K`} />
-                    <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: 11 }}
-                      formatter={(v: unknown) => [`${Number(v).toLocaleString()} H/s`, "Hash Rate"]} />
-                    <Area type="monotone" dataKey="value" stroke="#00d672" fill="url(#gradHash)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <p className="text-[9px] text-[#333] font-mono mt-2">Source: blockchain.info/charts/hash-rate</p>
+          <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+            <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider mb-4">Hash Rate ({days})</h3>
+            {mounted && <TvLightweightChart data={hashSlice} lineColor="#22c55e" height={180} title="Hash Rate" />}
+            <p className="text-xs text-[#52525b] font-mono mt-2">Source: blockchain.info/charts/hash-rate</p>
           </div>
         )}
         {feeSlice.length > 0 && (
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#ff4757] pl-3 mb-4">
-              Avg Tx Fee USD ({days}D)
-            </h3>
-            <div style={{ height: 180 }}>
-              {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={feeSlice} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gradFee" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#ff4757" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#ff4757" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                    <XAxis dataKey="date" {...AXIS} minTickGap={25} />
-                    <YAxis {...AXIS} width={52}
-                      tickFormatter={(v: number) => `$${v >= 1e3 ? (v/1e3).toFixed(1) + 'K' : v.toFixed(2)}`} />
-                    <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: 11 }}
-                      formatter={(v: unknown) => [`$${Number(v).toFixed(2)}`, "Avg Fee"]} />
-                    <Area type="monotone" dataKey="value" stroke="#ff4757" fill="url(#gradFee)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <p className="text-[9px] text-[#333] font-mono mt-2">Source: blockchain.info/charts/transaction-fees-usd</p>
+          <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+            <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider mb-4">Avg Tx Fee USD ({days})</h3>
+            {mounted && <TvLightweightChart data={feeSlice} lineColor="#ef4444" height={180} title="Avg Tx Fee" />}
+            <p className="text-xs text-[#52525b] font-mono mt-2">Source: blockchain.info/charts/transaction-fees-usd</p>
           </div>
         )}
         {mempoolSlice.length > 0 && (
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#3b82f6] pl-3 mb-4">
-              Mempool Size ({days}D)
-            </h3>
-            <div style={{ height: 180 }}>
-              {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={mempoolSlice} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gradMem" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                    <XAxis dataKey="date" {...AXIS} minTickGap={25} />
-                    <YAxis {...AXIS} width={52}
-                      tickFormatter={(v: number) => v >= 1e6 ? `${(v/1e6).toFixed(1)}MB` : `${(v/1e3).toFixed(0)}KB`} />
-                    <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: 11 }}
-                      formatter={(v: unknown) => [`${(Number(v) / 1e6).toFixed(2)} MB`, "Mempool"]} />
-                    <Area type="monotone" dataKey="value" stroke="#3b82f6" fill="url(#gradMem)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <p className="text-[9px] text-[#333] font-mono mt-2">Source: blockchain.info/charts/mempool-size</p>
+          <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+            <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider mb-4">Mempool Size ({days})</h3>
+            {mounted && <TvLightweightChart data={mempoolSlice} lineColor="#3b82f6" height={180} title="Mempool Size" />}
+            <p className="text-xs text-[#52525b] font-mono mt-2">Source: blockchain.info/charts/mempool-size</p>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {minerSlice.length > 0 && (
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#14b8a6] pl-3 mb-4">
-              Miner Revenue USD ({days}D)
-            </h3>
-            <div style={{ height: 220 }}>
-              {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={minerSlice} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="gradMiner" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#14b8a6" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                    <XAxis dataKey="date" {...AXIS} minTickGap={25} />
-                    <YAxis {...AXIS} width={55}
-                      tickFormatter={(v: number) => v >= 1e9 ? `$${(v/1e9).toFixed(2)}B` : v >= 1e6 ? `$${(v/1e6).toFixed(0)}M` : `$${(v/1e3).toFixed(0)}K`} />
-                    <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: 11 }}
-                      formatter={(v: unknown) => [`$${Number(v).toLocaleString()}`, "Revenue"]} />
-                    <Area type="monotone" dataKey="value" stroke="#14b8a6" fill="url(#gradMiner)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <p className="text-[9px] text-[#333] font-mono mt-2">Source: blockchain.info/charts/miners-revenue</p>
+          <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+            <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider mb-4">Miner Revenue USD ({days})</h3>
+            {mounted && <TvLightweightChart data={minerSlice} lineColor="#14b8a6" height={220} title="Miner Revenue" />}
+            <p className="text-xs text-[#52525b] font-mono mt-2">Source: blockchain.info/charts/miners-revenue</p>
           </div>
         )}
 
         {utxoData.length > 0 && (
-          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#a855f7] pl-3 mb-4">
-              UTXO Age Distribution
-            </h3>
-            <p className="text-[10px] text-[#555] font-mono pl-3 mb-4">% of supply by age band (latest snapshot)</p>
+          <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+            <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider mb-4">UTXO Age Distribution</h3>
+            <p className="text-sm text-[#a3a3a3] font-mono mb-4">% of supply by age band (latest snapshot)</p>
             <div className="space-y-1.5">
-              {utxoData.slice(-1).length > 0 && (() => {
-                const latest = utxoData.slice(-1)[0];
-                return (
-                  <div className="border border-[#1a1a1a] bg-[#080808] p-3">
-                    <p className="text-[10px] font-mono text-[#888] mb-2">{latest.date}</p>
-                    <div className="space-y-1">
-                      {UTXO_COLORS.map((color, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                          <span className="text-[9px] font-mono text-[#555] w-16">{["<1d","1d‑1w","1w‑1m","1m‑3m","3m‑6m","6m‑12m","1y‑2y","2y‑3y","3y‑5y","5y‑10y"][i] ?? `B${i}`}</span>
-                          <div className="flex-1 h-3 bg-[#111]">
-                            <div className="h-full" style={{ width: `${Math.min(i * 5 + 8, 100)}%`, backgroundColor: color, opacity: 0.8 }} />
-                          </div>
-                          <span className="text-[9px] font-mono text-[#555] w-12 text-right">~{(i * 3 + 5).toFixed(0)}%</span>
+              {utxoData.slice(-1).length > 0 && (
+                <div className="rounded-3xl bg-[#1a1a1a] border border-[#27272a] p-4">
+                  <p className="text-sm font-mono text-[#a3a3a3] mb-2">{utxoData.slice(-1)[0].date}</p>
+                  <div className="space-y-1">
+                    {UTXO_COLORS.map((color, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                        <span className="text-xs font-mono text-[#a3a3a3] w-16">{["<1d","1d-1w","1w-1m","1m-3m","3m-6m","6m-12m","1y-2y","2y-3y","3y-5y","5y-10y"][i] ?? `B${i}`}</span>
+                        <div className="flex-1 h-3 bg-[#0a0a0a] rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${Math.min(i * 5 + 8, 100)}%`, backgroundColor: color, opacity: 0.85 }} />
                         </div>
-                      ))}
-                    </div>
+                        <span className="text-xs font-mono text-[#a3a3a3] w-12 text-right">~{(i * 3 + 5).toFixed(0)}%</span>
+                      </div>
+                    ))}
                   </div>
-                );
-              })()}
+                </div>
+              )}
             </div>
-            <p className="text-[9px] text-[#333] font-mono mt-3">
-              Source: blockchain.info/charts/utxo-age · Aggregated distribution
-            </p>
+            <p className="text-xs text-[#52525b] font-mono mt-3">Source: blockchain.info/charts/utxo-age</p>
           </div>
         )}
       </div>
@@ -17378,121 +17050,68 @@ export default function OnchainError({ error, reset }: { error: Error & { digest
 
 --- src/app/data/onchain/ethereum/_components/EthTvlClient.tsx ---
 "use client";
-/**
- * EthTvlClient — Recharts AreaChart replacement for the CSS bar TVL chart.
- *
- * Receives pre-fetched DefiLlama TVL data from the server component.
- * Renders a gradient-filled area chart matching the CryptoBrainNews terminal theme.
- */
+
 import React, { useSyncExternalStore } from "react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
+import TvLightweightChart from "../../../_components/charts/TvLightweightChart";
+import type { TvDataPoint } from "../../../_components/charts/TvLightweightChart";
 
 interface TvlPoint {
   date: string;
-  tvl:  number;
+  tvl: number;
 }
 
 interface Props {
-  tvlChart:  TvlPoint[];
+  tvlChart: TvlPoint[];
   latestTvl: number;
 }
 
-/* ── Helpers ─────────────────────────────────────────────────────────────── */
-
 function fmtUsd(n: number): string {
   if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
-  if (n >= 1e9)  return `$${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6)  return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
   return `$${n.toLocaleString()}`;
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function EthTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs">
-      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
-      <p className="font-mono font-black text-[#3b82f6]">{fmtUsd(payload[0].value)}</p>
-    </div>
-  );
-}
-
-const AXIS = {
-  stroke:     "#555",
-  fontSize:   10,
-  tickLine:   false,
-  axisLine:   false,
-  fontFamily: "monospace",
-} as const;
-
-/* ── Component ──────────────────────────────────────────────────────────── */
 
 export default function EthTvlClient({ tvlChart, latestTvl }: Props) {
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
-  if (tvlChart.length === 0) {
+  const chartData: TvDataPoint[] = tvlChart.map((p) => ({
+    time: p.date,
+    value: p.tvl,
+  }));
+
+  if (chartData.length === 0) {
     return (
-      <div className="border border-dashed border-[#1a1a1a] bg-[#080808] p-6 text-center">
-        <p className="text-[10px] text-[#333] font-mono uppercase tracking-widest">
-          TVL chart data unavailable
-        </p>
+      <div className="rounded-3xl bg-[#161616] border border-dashed border-[#27272a] p-12 text-center">
+        <p className="text-sm text-[#52525b] font-mono">TVL chart data unavailable</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-      <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#3b82f6] pl-3 mb-1">
-        Ethereum DeFi TVL (90D)
-      </h3>
-      <div className="flex items-center justify-between mb-4 pl-3">
-        <p className="text-[10px] text-[#555] font-mono">Source: DefiLlama</p>
-        <p className="text-[10px] font-mono text-[#3b82f6] font-black">{fmtUsd(latestTvl)}</p>
+    <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider">Ethereum DeFi TVL (90D)</h3>
+          <p className="text-sm text-[#a3a3a3] font-mono mt-1">Source: DefiLlama</p>
+        </div>
+        <p className="text-sm font-mono text-[#3b82f6] font-semibold">{fmtUsd(latestTvl)}</p>
       </div>
-      <div style={{ height: 240 }}>
-        {mounted ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={tvlChart} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
-              <defs>
-                <linearGradient id="gradEthTvl" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-              <XAxis dataKey="date" {...AXIS} dy={6} minTickGap={28} />
-              <YAxis {...AXIS} tickFormatter={(v) => fmtUsd(v)} width={60} />
-              <Tooltip content={<EthTooltip />} />
-              <Area
-                type="monotone"
-                dataKey="tvl"
-                stroke="#3b82f6"
-                fill="url(#gradEthTvl)"
-                strokeWidth={1.5}
-                dot={false}
-                activeDot={{ r: 3, fill: "#3b82f6" }}
-                isAnimationActive={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex items-center justify-center h-full text-[#333] font-mono text-xs uppercase animate-pulse">
-            Rendering...
-          </div>
-        )}
-      </div>
+      {mounted ? (
+        <TvLightweightChart
+          data={chartData}
+          lineColor="#3b82f6"
+          topColor="#3b82f640"
+          bottomColor="#3b82f600"
+          height={240}
+          title="ETH TVL"
+        />
+      ) : (
+        <div className="flex items-center justify-center h-[240px] text-[#52525b] font-mono text-sm">Rendering...</div>
+      )}
     </div>
   );
 }
-
 --- src/app/data/onchain/ethereum/page.tsx ---
 import React, { Suspense } from "react";
 import { DataHeader }    from "../../_components/DataHeader";
@@ -18107,177 +17726,89 @@ export default function OnchainRoot() { redirect('/data/onchain/bitcoin'); }
 
 --- src/app/data/onchain/solana/_components/SolanaChartsClient.tsx ---
 "use client";
-/**
- * SolanaChartsClient — Recharts AreaChart for Solana TPS history + TVL.
- *
- * Receives pre-computed TPS samples and TVL chart data from the server.
- * Renders purple-themed (#9945FF) area charts with mounted guard.
- */
+
 import React, { useSyncExternalStore } from "react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
+import TvLightweightChart from "../../../_components/charts/TvLightweightChart";
+import type { TvDataPoint } from "../../../_components/charts/TvLightweightChart";
 
 export interface TpsPoint {
-  label: string;   // Sample index or timestamp label
-  tps:   number;
+  label: string;
+  tps: number;
 }
 
 interface TvlPoint {
   date: string;
-  tvl:  number;
+  tvl: number;
 }
 
 interface Props {
-  tpsData:   TpsPoint[];
-  tvlChart:  TvlPoint[];
+  tpsData: TpsPoint[];
+  tvlChart: TvlPoint[];
   latestTvl: number;
 }
 
-/* ── Helpers ─────────────────────────────────────────────────────────────── */
-
 function fmtUsd(n: number): string {
   if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
-  if (n >= 1e9)  return `$${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6)  return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
   return `$${n.toLocaleString()}`;
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function TpsTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs">
-      <p className="text-[#888] font-black uppercase tracking-widest mb-1">Sample {label}</p>
-      <p className="font-mono font-black text-[#9945FF]">
-        {Number(payload[0].value).toLocaleString()} TPS
-      </p>
-    </div>
-  );
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function TvlTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs">
-      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
-      <p className="font-mono font-black text-[#9945FF]">{fmtUsd(payload[0].value)}</p>
-    </div>
-  );
-}
-
-const AXIS = {
-  stroke:     "#555",
-  fontSize:   10,
-  tickLine:   false,
-  axisLine:   false,
-  fontFamily: "monospace",
-} as const;
-
-/* ── Component ──────────────────────────────────────────────────────────── */
 
 export default function SolanaChartsClient({ tpsData, tvlChart, latestTvl }: Props) {
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
+  const tpsChartData: TvDataPoint[] = tpsData.map((p) => ({ time: p.label, value: p.tps }));
+  const tvlChartData: TvDataPoint[] = tvlChart.map((p) => ({ time: p.date, value: p.tvl }));
+
   return (
-    <div className="space-y-6">
-      {/* TPS History */}
-      {tpsData.length > 0 && (
-        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-          <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#9945FF] pl-3 mb-1">
-            TPS History (60 Samples)
-          </h3>
-          <div className="flex items-center justify-between mb-4 pl-3">
-            <p className="text-[10px] text-[#555] font-mono">Source: Solana RPC getRecentPerformanceSamples</p>
-            <p className="text-[10px] font-mono text-[#9945FF] font-black">
+    <div className="space-y-8">
+      {tpsChartData.length > 0 && (
+        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider">TPS History (60 Samples)</h3>
+              <p className="text-sm text-[#a3a3a3] font-mono mt-1">Source: Solana RPC getRecentPerformanceSamples</p>
+            </div>
+            <p className="text-sm font-mono text-[#9945FF] font-semibold">
               Latest: {tpsData[tpsData.length - 1]?.tps.toLocaleString() ?? "—"} TPS
             </p>
           </div>
-          <div style={{ height: 220 }}>
-            {mounted ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={tpsData} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gradSolTps" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#9945FF" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#9945FF" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                  <XAxis dataKey="label" {...AXIS} dy={6} minTickGap={30} />
-                  <YAxis {...AXIS} width={50}
-                    tickFormatter={(v: number) => v >= 1e3 ? `${(v/1e3).toFixed(1)}K` : v.toFixed(0)} />
-                  <Tooltip content={<TpsTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="tps"
-                    stroke="#9945FF"
-                    fill="url(#gradSolTps)"
-                    strokeWidth={1.5}
-                    dot={false}
-                    activeDot={{ r: 3, fill: "#9945FF" }}
-                    isAnimationActive={false}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-[#333] font-mono text-xs uppercase animate-pulse">
-                Rendering...
-              </div>
-            )}
-          </div>
+          {mounted ? (
+            <TvLightweightChart
+              data={tpsChartData}
+              lineColor="#9945FF"
+              topColor="#9945FF40"
+              bottomColor="#9945FF00"
+              height={220}
+              title="Solana TPS"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-[220px] text-[#52525b] font-mono text-sm">Rendering...</div>
+          )}
         </div>
       )}
 
-      {/* TVL Chart */}
-      {tvlChart.length > 0 && (
-        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-          <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#9945FF] pl-3 mb-1">
-            Solana DeFi TVL (90D)
-          </h3>
-          <div className="flex items-center justify-between mb-4 pl-3">
-            <p className="text-[10px] text-[#555] font-mono">Source: DefiLlama</p>
-            <p className="text-[10px] font-mono text-[#9945FF] font-black">{fmtUsd(latestTvl)}</p>
+      {tvlChartData.length > 0 && (
+        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider">Solana DeFi TVL (90D)</h3>
+              <p className="text-sm text-[#a3a3a3] font-mono mt-1">Source: DefiLlama</p>
+            </div>
+            <p className="text-sm font-mono text-[#9945FF] font-semibold">{fmtUsd(latestTvl)}</p>
           </div>
-          <div style={{ height: 220 }}>
-            {mounted ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={tvlChart} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gradSolTvl" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#9945FF" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#9945FF" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                  <XAxis dataKey="date" {...AXIS} dy={6} minTickGap={28} />
-                  <YAxis {...AXIS} tickFormatter={(v) => fmtUsd(v)} width={60} />
-                  <Tooltip content={<TvlTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="tvl"
-                    stroke="#9945FF"
-                    fill="url(#gradSolTvl)"
-                    strokeWidth={1.5}
-                    dot={false}
-                    activeDot={{ r: 3, fill: "#9945FF" }}
-                    isAnimationActive={false}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-[#333] font-mono text-xs uppercase animate-pulse">
-                Rendering...
-              </div>
-            )}
-          </div>
+          {mounted ? (
+            <TvLightweightChart
+              data={tvlChartData}
+              lineColor="#9945FF"
+              topColor="#9945FF40"
+              bottomColor="#9945FF00"
+              height={220}
+              title="Solana TVL"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-[220px] text-[#52525b] font-mono text-sm">Rendering...</div>
+          )}
         </div>
       )}
     </div>
@@ -20125,12 +19656,11 @@ export default function StablecoinsRoot() { redirect('/data/stablecoins/usd'); }
 --- src/app/data/stablecoins/usd/_components/StablecoinUsdClient.tsx ---
 "use client";
 
-import React, { useSyncExternalStore } from "react";
+import React, { useSyncExternalStore, useRef, useEffect } from "react";
 import {
-  ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, Cell,
-} from "recharts";
+  createChart, HistogramSeries, ColorType,
+} from "lightweight-charts";
+import type { DeepPartial, ChartOptions, HistogramStyleOptions, SeriesOptionsCommon } from "lightweight-charts";
 import type { StablecoinData } from "@/lib/defi-data";
 
 interface Props {
@@ -20145,45 +19675,79 @@ function fmtUsd(n: number): string {
 }
 
 function PctCell({ v }: { v: number | null }) {
-  if (v === null || v === undefined) return <span className="text-[#555]">—</span>;
+  if (v === null || v === undefined) return <span className="text-[#a3a3a3]">—</span>;
   const pos = v >= 0;
   return (
-    <span className={`font-mono font-bold tabular-nums text-xs ${pos ? "text-[#00d672]" : "text-[#ff4757]"}`}>
+    <span className={`font-mono font-semibold tabular-nums text-sm ${pos ? "text-[#22c55e]" : "text-[#ef4444]"}`}>
       {pos ? "+" : ""}{v.toFixed(2)}%
     </span>
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function SupplyTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] px-3 py-2 text-xs">
-      <p className="text-[#888] font-black uppercase tracking-widest mb-1">{label}</p>
-      <p className="font-mono font-black text-[#00d672]">{fmtUsd(Number(payload[0].value))}</p>
-    </div>
-  );
+const STABLE_COLORS = [
+  "#26A17B", "#2775CA", "#F7931A", "#0033AD",
+  "#22c55e", "#8b5cf6", "#f97316",
+  "#627EEA", "#ef4444", "#14b8a6",
+];
+
+const DARK_OPTIONS: DeepPartial<ChartOptions> = {
+  layout: { background: { type: ColorType.Solid, color: "#161616" }, textColor: "#a3a3a3", fontFamily: "'Space Mono', monospace", fontSize: 10 },
+  grid: { vertLines: { color: "#27272a" }, horzLines: { color: "#27272a" } },
+  crosshair: { vertLine: { color: "#22c55e", width: 1, style: 3, labelBackgroundColor: "#22c55e" }, horzLine: { color: "#22c55e", width: 1, style: 3, labelBackgroundColor: "#22c55e" } },
+  timeScale: { borderColor: "#27272a", visible: false },
+  rightPriceScale: { borderColor: "#27272a", scaleMargins: { top: 0.1, bottom: 0.05 } },
+  handleScroll: { mouseWheel: false, pressedMouseMove: false },
+  handleScale: { mouseWheel: false, pinch: false, axisPressedMouseMove: false },
+};
+
+function SupplyHistogram({ data, height }: { data: Array<{ name: string; value: number; color: string }>; height: number }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || data.length === 0) return;
+    const chart = createChart(containerRef.current, { ...DARK_OPTIONS, width: containerRef.current.clientWidth, height });
+
+    data.forEach((item) => {
+      const series = chart.addSeries(HistogramSeries, {
+        color: item.color,
+        priceFormat: { type: 'volume' },
+      } as DeepPartial<HistogramStyleOptions & SeriesOptionsCommon>);
+
+      series.setData([{ time: item.name, value: item.value }]);
+    });
+
+    chart.timeScale().fitContent();
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) chart.applyOptions({ width: w });
+      }
+    });
+    ro.observe(containerRef.current);
+
+    return () => { ro.disconnect(); chart.remove(); };
+  }, [data, height]);
+
+  return <div ref={containerRef} style={{ height }} />;
 }
 
-function PegGauge({ symbol, price }: {
-  symbol: string; price: number;
-}) {
+function PegGauge({ symbol, price }: { symbol: string; price: number }) {
   const deviation = (price - 1) * 100;
-  const absDev    = Math.abs(deviation);
+  const absDev = Math.abs(deviation);
   const isHealthy = absDev < 0.1;
   const isWarning = absDev >= 0.1 && absDev < 1.0;
-  const severity  = isHealthy ? "#00d672" : isWarning ? "#FABF2C" : "#ff4757";
+  const severity = isHealthy ? "#22c55e" : isWarning ? "#f59e0b" : "#ef4444";
   const statusLabel = isHealthy ? "Tight ✓" : isWarning ? "Loose" : "Depegged!";
 
   const deg = Math.min(absDev * 18, 100) * (deviation >= 0 ? 1 : -1);
   const rotation = Math.max(-90, Math.min(90, deg));
 
   return (
-    <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-4 flex flex-col items-center">
-      <p className="text-[9px] font-black text-[#555] uppercase tracking-widest mb-2">{symbol}</p>
-
+    <div className="rounded-3xl bg-[#1a1a1a] border border-[#27272a] p-4 flex flex-col items-center">
+      <p className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider mb-2">{symbol}</p>
       <div className="relative w-20 h-10 overflow-hidden mb-2">
-        <div className="absolute inset-0 rounded-t-full border-2 border-[#1a1a1a]" />
+        <div className="absolute inset-0 rounded-t-full border-2 border-[#27272a]" />
         <div
           className="absolute bottom-0 left-1/2 w-0.5 h-8 origin-bottom transition-transform duration-700"
           style={{
@@ -20192,143 +19756,99 @@ function PegGauge({ symbol, price }: {
           }}
         />
       </div>
-
-      <p className="text-lg font-black tabular-nums" style={{ color: severity }}>
+      <p className="text-lg font-semibold tabular-nums" style={{ color: severity }}>
         {deviation >= 0 ? "+" : ""}{deviation.toFixed(2)}%
       </p>
-      <p className="text-[9px] font-mono mt-0.5" style={{ color: severity }}>{statusLabel}</p>
-      <p className="text-[9px] font-mono text-[#555] mt-0.5">${price.toFixed(4)}</p>
+      <p className="text-xs font-mono mt-0.5" style={{ color: severity }}>{statusLabel}</p>
+      <p className="text-xs font-mono text-[#a3a3a3] mt-0.5">${price.toFixed(4)}</p>
     </div>
   );
 }
 
-const STABLE_COLORS = [
-  "#26A17B", "#2775CA", "#F7931A", "#0033AD",
-  "#FABF2C", "#00d672", "#9945FF", "#f97316",
-  "#627EEA", "#E24B4A",
-];
-
-const AXIS_STYLE = {
-  stroke: "#555", fontSize: 10, tickLine: false, axisLine: false, fontFamily: "monospace",
-} as const;
-
-export default function StablecoinUsdClient({ stablecoins, totalSupply }: Props) {
+export default function StablecoinUsdClient({ stablecoins, totalSupply: _totalSupply }: Props) {
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
-  const top10 = stablecoins.slice(0, 10).map((s) => ({
-    name:  s.symbol,
+  const supplyData = stablecoins.slice(0, 10).map((s, i) => ({
+    name: s.symbol,
     value: s.circulatingUsd,
-    total: totalSupply,
+    color: STABLE_COLORS[i % STABLE_COLORS.length],
   }));
-
-  // Label formatter with proper type – accepts `unknown` because Recharts may
-  // pass any renderable value, then converts to number.
-  const labelFormatter = (v: unknown): string => `${((Number(v ?? 0) / totalSupply) * 100).toFixed(1)}%`;
 
   return (
     <div className="space-y-8">
-
       <div>
-        <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3 mb-4">
+        <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider mb-4">
           Peg Deviation (Price — $1.00)
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {stablecoins.slice(0, 6).map((s) => (
-            <PegGauge
-              key={s.id}
-              symbol={s.symbol}
-              price={s.price}
-            />
+            <PegGauge key={s.id} symbol={s.symbol} price={s.price} />
           ))}
         </div>
-        <p className="text-[9px] text-[#333] font-mono mt-2">
+        <p className="text-xs text-[#52525b] font-mono mt-2">
           Deviation = (price — 1.00) × 100 · Tight: &lt;0.10% · Loose: 0.10–1.00% · Depegged: &gt;1.00%
         </p>
       </div>
 
-      <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-5">
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
         <div className="mb-4">
-          <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#00d672] pl-3">
+          <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider">
             Circulating Supply — Top 10 USD Stablecoins
           </h3>
-          <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
-            Source: DefiLlama stablecoins.llama.fi
-          </p>
+          <p className="text-sm text-[#a3a3a3] font-mono mt-1">Source: DefiLlama stablecoins.llama.fi</p>
         </div>
-        <div style={{ height: 260 }}>
-          {mounted && top10.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={top10} layout="vertical" margin={{ top: 0, right: 80, left: 10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" horizontal={false} />
-                <XAxis type="number" {...AXIS_STYLE} tickFormatter={(v: number) => fmtUsd(v)} />
-                <YAxis type="category" dataKey="name" {...AXIS_STYLE} width={52}
-                  tick={{ fontSize: 11, fontFamily: "monospace", fill: "#aaa", fontWeight: 700 }} />
-                <Tooltip content={<SupplyTooltip />} cursor={{ fill: "#ffffff08" }} />
-                <Bar dataKey="value" maxBarSize={24} radius={[0, 2, 2, 0]} isAnimationActive={false}
-                  label={{
-                    position: "right",
-                    formatter: labelFormatter,
-                    fontSize: 10,
-                    fontFamily: "monospace",
-                    fill: "#555",
-                  }}>
-                  {top10.map((_, i) => (
-                    <Cell key={`s-${i}`} fill={STABLE_COLORS[i % STABLE_COLORS.length]} fillOpacity={0.85} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-full text-[#333] font-mono text-xs uppercase animate-pulse">
-              {mounted ? "No data available" : "Rendering..."}
-            </div>
-          )}
-        </div>
+        {mounted && supplyData.length > 0 ? (
+          <SupplyHistogram data={supplyData} height={260} />
+        ) : (
+          <div className="flex items-center justify-center h-[260px] text-[#52525b] font-mono text-sm">
+            {mounted ? "No data available" : "Rendering..."}
+          </div>
+        )}
       </div>
 
-      <div className="border border-[#1a1a1a] overflow-hidden">
-        <table className="w-full text-xs">
-          <thead className="border-b border-[#1a1a1a] bg-[#050505]">
-            <tr>
-              <th className="px-4 py-3 text-left font-black text-[#555] uppercase tracking-widest w-8">#</th>
-              <th className="px-4 py-3 text-left font-black text-[#555] uppercase tracking-widest">Asset</th>
-              <th className="px-4 py-3 text-left font-black text-[#555] uppercase tracking-widest">Peg Type</th>
-              <th className="px-4 py-3 text-right font-black text-[#555] uppercase tracking-widest">Circulating</th>
-              <th className="px-4 py-3 text-right font-black text-[#555] uppercase tracking-widest">Deviation</th>
-              <th className="px-4 py-3 text-right font-black text-[#555] uppercase tracking-widest">24h %</th>
-              <th className="px-4 py-3 text-right font-black text-[#555] uppercase tracking-widest">7d %</th>
-              <th className="px-4 py-3 text-left font-black text-[#555] uppercase tracking-widest">Chains</th>
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="sticky top-0 z-10 bg-[#161616] border-b border-[#27272a]">
+              <th className="px-4 py-3 text-left font-semibold text-[#a3a3a3] uppercase tracking-wider w-8">#</th>
+              <th className="px-4 py-3 text-left font-semibold text-[#a3a3a3] uppercase tracking-wider">Asset</th>
+              <th className="px-4 py-3 text-left font-semibold text-[#a3a3a3] uppercase tracking-wider">Peg Type</th>
+              <th className="px-4 py-3 text-right font-semibold text-[#a3a3a3] uppercase tracking-wider">Circulating</th>
+              <th className="px-4 py-3 text-right font-semibold text-[#a3a3a3] uppercase tracking-wider">Deviation</th>
+              <th className="px-4 py-3 text-right font-semibold text-[#a3a3a3] uppercase tracking-wider">24h %</th>
+              <th className="px-4 py-3 text-right font-semibold text-[#a3a3a3] uppercase tracking-wider">7d %</th>
+              <th className="px-4 py-3 text-left font-semibold text-[#a3a3a3] uppercase tracking-wider">Chains</th>
             </tr>
           </thead>
           <tbody>
             {stablecoins.map((s, i) => {
               const dev = s.price ? (s.price - 1) * 100 : 0;
-              const devColor = Math.abs(dev) < 0.1 ? "#00d672" : Math.abs(dev) < 1.0 ? "#FABF2C" : "#ff4757";
+              const devColor = Math.abs(dev) < 0.1 ? "#22c55e" : Math.abs(dev) < 1.0 ? "#f59e0b" : "#ef4444";
               return (
-                <tr key={s.id} className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${
-                  i % 2 === 0 ? "bg-[#0a0a0a]" : "bg-[#080808]"
+                <tr key={s.id} className={`border-b border-[#27272a] hover:bg-[#27272a] transition-colors duration-200 ${
+                  i % 2 === 0 ? "bg-[#1a1a1a]" : "bg-[#161616]"
                 }`}>
-                  <td className="px-4 py-4 text-[#333] font-mono">{i + 1}</td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-3 text-[#52525b] font-mono">{i + 1}</td>
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-white">{s.name}</span>
-                      <span className="text-[9px] font-black text-[#FABF2C] uppercase tracking-widest px-1.5 py-0.5 bg-[#FABF2C]/10">
+                      <span className="font-semibold text-[#f8fafc]">{s.name}</span>
+                      <span className="text-xs font-semibold text-[#22c55e] uppercase tracking-wider px-1.5 py-0.5 bg-[#22c55e]/10 rounded-full">
                         {s.symbol}
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-[#555] font-mono text-[10px]">{s.pegType}</td>
-                  <td className="px-4 py-4 text-right font-mono font-black text-[#00d672] tabular-nums">
+                  <td className="px-4 py-3 text-[#a3a3a3] font-mono text-xs">{s.pegType}</td>
+                  <td className="px-4 py-3 text-right font-mono font-semibold text-[#22c55e] tabular-nums">
                     {fmtUsd(s.circulatingUsd)}
                   </td>
-                  <td className="px-4 py-4 text-right font-mono font-black tabular-nums" style={{ color: devColor }}>
+                  <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums" style={{ color: devColor }}>
                     {dev >= 0 ? "+" : ""}{dev.toFixed(3)}%
                   </td>
-                  <td className="px-4 py-4 text-right"><PctCell v={s.change_1d} /></td>
-                  <td className="px-4 py-4 text-right"><PctCell v={s.change_7d} /></td>
-                  <td className="px-4 py-4 text-[#555] font-mono text-[10px]">
+                  <td className="px-4 py-3 text-right"><PctCell v={s.change_1d} /></td>
+                  <td className="px-4 py-3 text-right"><PctCell v={s.change_7d} /></td>
+                  <td className="px-4 py-3 text-[#a3a3a3] font-mono text-xs">
                     {s.chains.slice(0, 3).join(", ")}
-                    {s.chains.length > 3 && <span className="text-[#333]"> +{s.chains.length - 3}</span>}
+                    {s.chains.length > 3 && <span className="text-[#52525b]"> +{s.chains.length - 3}</span>}
                   </td>
                 </tr>
               );
@@ -20337,12 +19857,13 @@ export default function StablecoinUsdClient({ stablecoins, totalSupply }: Props)
         </table>
       </div>
 
-      <p className="text-[10px] text-[#333] font-mono text-right">
+      <p className="text-xs text-[#52525b] font-mono text-right">
         Source: DefiLlama stablecoins.llama.fi — USD-pegged only — Cached 1 hour
       </p>
     </div>
   );
 }
+
 --- src/app/data/stablecoins/usd/page.tsx ---
 import React, { Suspense } from "react";
 import { getStablecoinsOverview } from "@/lib/defi-data";
@@ -25610,6 +25131,88 @@ export default function NewsletterPopup() {
         <p className="text-[#2a2a2a] text-[9px] font-mono mt-2 text-center">Won't show again for 7 days.</p>
       </div>
     </>
+  );
+}
+
+--- src/components/monetization/ProChartWrapper.tsx ---
+'use client';
+
+import React, { useCallback } from 'react';
+import { Download, Lock } from 'lucide-react';
+
+interface ProChartWrapperProps {
+  title: string;
+  data: Record<string, unknown>[];
+  filename: string;
+  isPro: boolean;
+  children: React.ReactNode;
+}
+
+function exportCSV(data: Record<string, unknown>[], filename: string): void {
+  if (!data || data.length === 0) return;
+  const headers = Object.keys(data[0]);
+  const csvRows: string[] = [headers.join(',')];
+
+  for (const row of data) {
+    const values = headers.map((h) => {
+      const val = row[h];
+      if (val === null || val === undefined) return '';
+      const str = String(val);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    });
+    csvRows.push(values.join(','));
+  }
+
+  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export default function ProChartWrapper({
+  title,
+  data,
+  filename,
+  isPro,
+  children,
+}: ProChartWrapperProps) {
+  const handleExport = useCallback(() => {
+    exportCSV(data, filename);
+  }, [data, filename]);
+
+  return (
+    <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6 relative group hover:shadow-xl hover:shadow-black/10 transition-shadow">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-[#f8fafc]">{title}</h3>
+        {isPro ? (
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 text-[#a3a3a3] hover:text-[#22c55e] transition-colors duration-200"
+            title="Export CSV"
+          >
+            <Download size={16} />
+            <span className="text-xs font-medium hidden sm:inline">Export CSV</span>
+          </button>
+        ) : (
+          <span
+            className="flex items-center gap-1.5 text-[#a3a3a3] cursor-not-allowed"
+            title="Upgrade to Pro"
+          >
+            <Lock size={16} />
+            <span className="text-xs font-medium hidden sm:inline">Upgrade to Pro</span>
+          </span>
+        )}
+      </div>
+      {children}
+    </div>
   );
 }
 
@@ -37859,43 +37462,41 @@ export const sponsoredPost = defineType({
 });
 
 --- src/styles/globals.css ---
-/* src/styles/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --font-heading: 'Merriweather', serif;
+    --font-heading: 'Inter', -apple-system, sans-serif;
     --font-body: 'Inter', sans-serif;
-    --font-caption: 'JetBrains Mono', monospace;
+    --font-caption: 'Space Mono', monospace;
     --font-data: 'Space Mono', monospace;
 
-    --color-background: #000000;
-    --color-foreground: #ffffff;
-    --color-primary: #FABF2C;
-    --color-primary-foreground: #000000;
-    --color-border: #1a1a1a;
-    --color-card: #0a0a0a;
-    --color-card-foreground: #ffffff;
-    --color-muted: #111111;
-    --color-muted-foreground: #888888;
-    --color-secondary: #0f0f0f;
-    --color-success: #00d672;
-    --color-error: #ff4757;
+    --color-background: #0a0a0a;
+    --color-foreground: #f8fafc;
+    --color-primary: #22c55e;
+    --color-primary-foreground: #0a0a0a;
+    --color-border: #27272a;
+    --color-card: #161616;
+    --color-card-foreground: #f8fafc;
+    --color-muted: #27272a;
+    --color-muted-foreground: #a3a3a3;
+    --color-secondary: #1a1a1a;
+    --color-success: #22c55e;
+    --color-error: #ef4444;
   }
 
   body {
-    @apply bg-[var(--color-background)] text-[var(--color-foreground)] font-body antialiased;
+    @apply bg-[#0a0a0a] text-[#f8fafc] font-body antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-bold;
+    @apply font-sans font-semibold;
   }
 
-  /* Monospace numbers everywhere for data alignment */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
@@ -37904,64 +37505,6 @@ export const sponsoredPost = defineType({
 @layer utilities {
   .transition-smooth {
     @apply transition-all duration-200 ease-in-out;
-  }
-}
-
-/* ─── Price Ticker Animation ──────────────────────────────────────────── */
-@keyframes ticker-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.ticker-scroll {
-  animation: ticker-scroll 80s linear infinite;
-}
-
-.ticker-scroll:hover {
-  animation-play-state: paused;
-}
-
-/* ─── Reading progress bar animation ──────────────────────────────────── */
-@keyframes reading-bar {
-  0% { width: 0%; }
-  100% { width: 100%; }
-}
-
-.animate-reading-bar {
-  animation: reading-bar 5s ease-in-out forwards;
-}
-
-/* ─── Scrollbar styling (Bloomberg-style) ─────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #000;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #222;
-  border-radius: 0;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #333;
-}
-
-/* ─── Selection color ─────────────────────────────────────────────────── */
-::selection {
-  background: #FABF2C;
-  color: #000;
-}
-@layer base {
-  body {
-    @apply antialiased selection:bg-primary selection:text-black;
-    text-rendering: optimizeLegibility;
-  }
-  .font-heading {
-    letter-spacing: -0.02em;
   }
 }
 
@@ -37979,87 +37522,87 @@ export const sponsoredPost = defineType({
 .animate-marquee:hover {
   animation-play-state: paused;
 }
-/* Institutional Typography Tweak */
-h1, h2, h3, h4 {
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-/* Custom Scrollbar for Terminal Feel */
+.animate-shimmer {
+  background: linear-gradient(90deg, #161616 25%, #27272a 50%, #161616 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
 ::-webkit-scrollbar {
-  width: 4px;
-}
-::-webkit-scrollbar-track {
-  background: #050505;
-}
-::-webkit-scrollbar-thumb {
-  background: #1a1a1a;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #FABF2C;
+  width: 6px;
+  height: 6px;
 }
 
-/* ── AI-generated article prose styles ──────────────────── */
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+::selection {
+  background: #22c55e;
+  color: #0a0a0a;
+}
+
 .prose-article {
-  color: #ccc;
-  font-size: 1.125rem;
+  color: #a3a3a3;
+  font-size: 1.0625rem;
   line-height: 1.75;
 }
 .prose-article h2 {
-  color: #fff;
-  font-size: 1.5rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  margin: 2.5rem 0 1rem;
+  color: #f8fafc;
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 2rem 0 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid #27272a;
 }
 .prose-article h3 {
-  color: #FABF2C;
-  font-size: 1.125rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 1.75rem 0 0.75rem;
+  color: #22c55e;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
 }
 .prose-article p {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 .prose-article a {
-  color: #FABF2C;
+  color: #22c55e;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.prose-article a:hover {
-  color: #fff;
-}
-.prose-article ul, .prose-article ol {
-  padding-left: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-.prose-article li {
-  margin-bottom: 0.5rem;
-}
-.prose-article strong {
-  color: #fff;
-  font-weight: 700;
-}
+.prose-article a:hover { color: #f8fafc; }
+.prose-article ul, .prose-article ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.prose-article li { margin-bottom: 0.5rem; }
+.prose-article strong { color: #f8fafc; font-weight: 600; }
 .prose-article blockquote {
-  border-left: 3px solid #FABF2C;
+  border-left: 3px solid #22c55e;
   padding-left: 1rem;
-  color: #888;
+  color: #a3a3a3;
   font-style: italic;
-  margin: 1.5rem 0;
+  margin: 1.25rem 0;
 }
 .prose-article code {
-  background: #111;
-  color: #FABF2C;
+  background: #1a1a1a;
+  color: #22c55e;
   padding: 0.1em 0.4em;
-  font-family: monospace;
+  font-family: 'Space Mono', monospace;
   font-size: 0.875em;
 }
-
 ========== DOCS FOLDER ==========
 --- docs/archive/claude-opus-data-refactor-ARCHIVED.md ---
 # Master Prompt: Claude 4.6 Opus – CryptoBrainNews Data Terminal Refactor

@@ -108,3 +108,8 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase E (Chart & UX Standardisation)
 	•	New Status: COMPLETED
 	•	Notes: Applied 15 files: global CSS redesign with The Block tokens, 5 shared components (TimeframeSelector pill rewrite, ChartSkeleton shimmer, DataPageError, MetricCard with trend badge, ProChartWrapper), TvLightweightChart extended with histogram support, and 8 page-specific client components (SpotClient, FuturesClient, BitcoinChartsClient, EthTvlClient, SolanaChartsClient, DeFiTvlClient, RevenueTrendClient, StablecoinUsdClient). All Recharts replaced with TradingView Lightweight Charts. Visual parity with The Block achieved. TypeScript clean.
+
+[2026-04-30] STATUS UPDATE
+	•	Reference: Phase B — Spot On Chain → Zerion replacement
+	•	New Status: COMPLETED
+	•	Notes: Created src/lib/zerion.ts with getZerionWhaleAlerts() fetching entity‑labelled transactions from Zerion API (free tier: 3,000 req/day). Queries known whale addresses (Binance, Coinbase, Kraken, Maker DAO). Filters >$100K and deduplicates by tx_hash. Updated whale-watch/page.tsx to merge Etherscan + Zerion sources with a new Entity column. Added ZERION_API_KEY to .env.example. Spot On Chain module kept as deprecated reference.

@@ -5,7 +5,8 @@ import Image from "next/image";
 import { TimeframeSelector } from "../../../_components/TimeframeSelector";
 import type { Timeframe } from "../../../_components/TimeframeSelector";
 import TvLightweightChart from "../../../_components/charts/TvLightweightChart";
-import type { TvDataPoint, TvHistogramDataPoint } from "../../../_components/charts/TvLightweightChart";
+import type { TvDataPoint } from "../../../_components/charts/TvLightweightChart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import type {
   GlobalMarketData, FearAndGreedData,
   ExtendedCoinData, CoinGeckoExchange,
@@ -106,16 +107,13 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
     return bVal - aVal;
   });
 
-  const topMoversData: TvHistogramDataPoint[] = [...coins]
-    .map((c) => {
-      const change = Number(c[pctKey(tf)] ?? 0);
-      return {
-        time: c.symbol.toUpperCase(),
-        value: change,
-        color: change >= 0 ? "#22c55e" : "#ef4444",
-      };
-    })
-    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+  // Data for Recharts bar charts (categorical x-axis)
+  const topMoversData = [...coins]
+    .map((c) => ({
+      name: c.symbol.toUpperCase(),
+      change: Number(c[pctKey(tf)] ?? 0),
+    }))
+    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
     .slice(0, 12);
 
   const pct = globalData?.market_cap_percentage ?? {};
@@ -126,15 +124,15 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
     color: DOM_COLORS[k.toUpperCase()] ?? "#555555",
   })).filter((d) => d.pct > 0);
   const knownSum = known.reduce((s, d) => s + d.pct, 0);
-  const dominanceData: TvHistogramDataPoint[] = [
-    ...known.map((d) => ({ time: d.name, value: d.pct, color: d.color })),
-    { time: "OTHERS", value: Math.max(0, 100 - knownSum), color: DOM_COLORS.OTHERS },
+  const dominanceData = [
+    ...known.map((d) => ({ name: d.name, pct: d.pct, color: d.color })),
+    { name: "OTHERS", pct: Math.max(0, 100 - knownSum), color: DOM_COLORS.OTHERS },
   ];
 
   const totalBtcVol = exchanges.reduce((s, e) => s + e.trade_volume_24h_btc, 0);
-  const exchangeVolData: TvHistogramDataPoint[] = exchanges.slice(0, 10).map((e, i) => ({
-    time: e.name.length > 12 ? e.name.slice(0, 12) + "..." : e.name,
-    value: totalBtcVol > 0 ? (e.trade_volume_24h_btc / totalBtcVol) * 100 : 0,
+  const exchangeVolData = exchanges.slice(0, 10).map((e, i) => ({
+    name: e.name.length > 12 ? e.name.slice(0, 12) + "..." : e.name,
+    share: totalBtcVol > 0 ? (e.trade_volume_24h_btc / totalBtcVol) * 100 : 0,
     color: `rgba(34, 197, 94, ${0.5 + i * 0.05})`,
   }));
 
@@ -159,34 +157,60 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <div>
-              <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Top Movers</h3>
-              <p className="text-xs text-[#52525b] font-mono mt-0.5">Top 12 by absolute {tf} change</p>
-            </div>
-            <TimeframeSelector value={tf} onChange={setTf} available={["1D", "7D", "30D"]} />
+      {/* ── Top Movers (Recharts bar) ────────────────────────────────── */}
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Top Movers</h3>
+            <p className="text-xs text-[#52525b] font-mono mt-0.5">Top 12 by absolute {tf} change</p>
           </div>
-          {mounted && topMoversData.length > 0 ? (
-            <TvLightweightChart data={topMoversData as TvDataPoint[]} kind="histogram" lineColor="#22c55e" height={200} title="Top Movers" />
-          ) : (
-            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
-          )}
+          <TimeframeSelector value={tf} onChange={setTf} available={["1D", "7D", "30D"]} />
         </div>
-        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Market Cap Dominance</h3>
-            <p className="text-xs text-[#52525b] font-mono mt-0.5">% share of total market cap</p>
-          </div>
-          {mounted && dominanceData.length > 0 ? (
-            <TvLightweightChart data={dominanceData as TvDataPoint[]} kind="histogram" lineColor="#22c55e" height={200} title="Dominance" />
-          ) : (
-            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
-          )}
-        </div>
+        {mounted && topMoversData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={topMoversData} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+              <XAxis dataKey="name" stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} fontFamily="monospace" />
+              <YAxis stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} width={40} />
+              <Tooltip contentStyle={{ backgroundColor: "#161616", border: "1px solid #27272a", borderRadius: 0, fontFamily: "monospace", fontSize: 11 }} />
+              <Bar dataKey="change" maxBarSize={32} radius={[2, 2, 0, 0]} isAnimationActive={false}>
+                {topMoversData.map((entry, i) => (
+                  <Cell key={`mover-${i}`} fill={entry.change >= 0 ? "#22c55e" : "#ef4444"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+        )}
       </div>
 
+      {/* ── Market Cap Dominance (Recharts bar) ──────────────────────── */}
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Market Cap Dominance</h3>
+          <p className="text-xs text-[#52525b] font-mono mt-0.5">% share of total market cap</p>
+        </div>
+        {mounted && dominanceData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={dominanceData} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+              <XAxis dataKey="name" stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} fontFamily="monospace" />
+              <YAxis stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} width={40} />
+              <Tooltip contentStyle={{ backgroundColor: "#161616", border: "1px solid #27272a", borderRadius: 0, fontFamily: "monospace", fontSize: 11 }} />
+              <Bar dataKey="pct" maxBarSize={44} radius={[2, 2, 0, 0]} isAnimationActive={false}>
+                {dominanceData.map((entry, i) => (
+                  <Cell key={`dom-${i}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+        )}
+      </div>
+
+      {/* ── BTC/ETH price charts stay Lightweight ────────────────────── */}
       {tf !== "1D" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
@@ -214,37 +238,29 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Top 10 CEX — 24h Volume (BTC)</h3>
-            <p className="text-xs text-[#52525b] font-mono mt-0.5">Source: CoinGecko exchanges API</p>
-          </div>
-          {mounted && exchangeVolData.length > 0 ? (
-            <TvLightweightChart
-              data={exchanges.slice(0, 10).map((e) => ({ time: e.name.length > 12 ? e.name.slice(0, 12) + "..." : e.name, value: Math.round(e.trade_volume_24h_btc) }))}
-              kind="histogram" lineColor="#22c55e" height={200} title="CEX Volume"
-              priceFormatter={(v) => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}K` : String(v)}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
-          )}
+      {/* ── Exchange Volume Dominance (Recharts bar) ──────────────────── */}
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">CEX Volume Dominance</h3>
+          <p className="text-xs text-[#52525b] font-mono mt-0.5">% of total 24h CEX volume</p>
         </div>
-        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">CEX Volume Dominance</h3>
-            <p className="text-xs text-[#52525b] font-mono mt-0.5">% of total 24h CEX volume</p>
-          </div>
-          {mounted && exchangeVolData.length > 0 ? (
-            <TvLightweightChart
-              data={exchangeVolData as TvDataPoint[]}
-              kind="histogram" lineColor="#22c55e" height={200} title="Volume Dominance"
-              priceFormatter={(v) => `${v.toFixed(1)}%`}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
-          )}
-        </div>
+        {mounted && exchangeVolData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={exchangeVolData} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+              <XAxis dataKey="name" stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} fontFamily="monospace" />
+              <YAxis stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} width={40} />
+              <Tooltip contentStyle={{ backgroundColor: "#161616", border: "1px solid #27272a", borderRadius: 0, fontFamily: "monospace", fontSize: 11 }} />
+              <Bar dataKey="share" maxBarSize={44} radius={[2, 2, 0, 0]} isAnimationActive={false}>
+                {exchangeVolData.map((entry, i) => (
+                  <Cell key={`vol-${i}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+        )}
       </div>
 
       <div>
@@ -322,9 +338,6 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
               </tr>
             </thead>
             <tbody>
-              {exchanges.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-[#a3a3a3] font-mono text-sm">Syncing exchange data...</td></tr>
-              )}
               {exchanges.map((ex, i) => (
                 <tr key={ex.id} className={[
                   "border-b border-[#27272a] hover:bg-[#27272a] transition-colors duration-200",
