@@ -103,3 +103,8 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase E — Master Prompt finalised
 	•	New Status: PLANNING
 	•	Notes: Created docs/phase-e-master-prompt.md. Prompt covers 8 page‑specific client components + 5 shared components + global CSS, with exact design tokens, chart configurations, and strict rules. Ready to submit to DeepSeek V4 in a new chat.
+
+[2026-04-30] STATUS UPDATE
+	•	Reference: Phase E (Chart & UX Standardisation)
+	•	New Status: COMPLETED
+	•	Notes: Applied 15 files: global CSS redesign with The Block tokens, 5 shared components (TimeframeSelector pill rewrite, ChartSkeleton shimmer, DataPageError, MetricCard with trend badge, ProChartWrapper), TvLightweightChart extended with histogram support, and 8 page-specific client components (SpotClient, FuturesClient, BitcoinChartsClient, EthTvlClient, SolanaChartsClient, DeFiTvlClient, RevenueTrendClient, StablecoinUsdClient). All Recharts replaced with TradingView Lightweight Charts. Visual parity with The Block achieved. TypeScript clean.

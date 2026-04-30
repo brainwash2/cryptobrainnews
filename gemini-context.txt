@@ -1,5 +1,5 @@
 === CRYPTOBRAINNEWS FULL CONTEXT ===
-Generated: Wed Apr 29 03:40:11 PM CET 2026
+Generated: Wed Apr 29 08:26:51 PM CET 2026
 
 ========== FOLDER STRUCTURE ==========
 .
@@ -273,17 +273,17 @@ SANTIMENT_API_KEY=
 GLASSNODE_API_KEY=
 
 # ── Dune Analytics (free tier, required for live on‑chain queries) ────────────
-DUNE_API_KEY=
-# Optional: individual query ID overrides
-# DUNE_DAO_GOVERNANCE_ID=
-# DUNE_NFT_COLLECTIONS_ID=
-# DUNE_DEX_POOLS_ID=
-# DUNE_STABLECOIN_HOLDERS_ID=
-# DUNE_WHALES_ID=
-# DUNE_PROTOCOL_DAU_ID=
-# DUNE_TOP_PAIRS_ID=
-# DUNE_L2_ACTIVE_ID=
-# DUNE_CEX_DEX_VOLUME_ID=
+DUNE_API_KEY=FVUvQAo3co5FBTP0d9PQkYCAOH3LI4N7 
+
+DUNE_DAO_GOVERNANCE_ID=7400718
+DUNE_NFT_COLLECTIONS_ID=7400802
+DUNE_DEX_POOLS_ID=7400811
+DUNE_STABLECOIN_HOLDERS_ID=7400865
+DUNE_WHALES_ID= 7400911
+DUNE_PROTOCOL_DAU_ID=7401328
+DUNE_TOP_PAIRS_ID=7401393
+DUNE_L2_ACTIVE_ID=7401413
+DUNE_CEX_DEX_VOLUME_ID=
 
 --- eslint.config.mjs ---
 import { defineConfig, globalIgnores } from "eslint/config";
@@ -452,11 +452,12 @@ You never generate original implementation code – you only transcribe, format,
 - Once created, numeric IDs go into environment variables; terminal switches to live Dune data.
 - `docs/DUNE_QUERIES.md` must be updated with the new query IDs.
 
-### News Pipeline — Built by Claude 4.6 Sonnet (Operational)
+### News Pipeline — Built by Claude 4.6 Sonnet (Functional, requires re‑audit)
 - Daily article pipeline: RSS → Groq → DeepSeek → Gemini → Sanity (5 articles per run).
 - Telegram broadcasting, newsletter via Resend, social scheduler (X/Twitter threads).
 - Pro gating (Stripe), affiliate links, sponsored content, health checks, ops alerts.
-- All 7 pipeline audit parts delivered (Typescript strict mode, dedup, caching, SEO/GEO, social, monetisation, ops).
+- All 7 original pipeline audit parts delivered (Typescript strict mode, dedup, caching, SEO/GEO, social, monetisation, ops).
+- **IMPORTANT: This section requires a full re‑audit.** The news pipeline is functional but not yet considered complete. A full refactoring pass via Claude 4.7 is planned. Do NOT describe the news pipeline as "fully operational" or "complete" — it is functional but pending re‑audit and refactoring.
 
 ## Pending Work
 
@@ -467,7 +468,8 @@ You never generate original implementation code – you only transcribe, format,
 - Testing framework: design and implementation after full data terminal sign‑off.
 
 ### News Section & Pipeline
-- Full news section audit and refactoring via Claude 4.7 (notgpt.io, 2–3 prompts/day).
+- FULL RE‑AUDIT of the news pipeline (functional but not complete).
+- Refactoring via Claude 4.7 (notgpt.io, 2–3 prompts/day).
 - Enhance editorial workflow, category pages, search, AI pipeline, caching, SEO.
 - Grok to research news pipeline improvements and competitive analysis before Claude 4.7 code generation.
 
@@ -840,6 +842,56 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase X (Task description)
 	•	New Status: COMPLETED
 	•	Notes: Brief notes on what was built.
+
+[YYYY-MM-DD] STATUS UPDATE
+	•	Reference: Phase X (Task description)
+	•	New Status: COMPLETED
+	•	Notes: Brief notes on what was built.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D (Live Dune SQL Integration)
+	•	New Status: COMPLETED
+	•	Notes: Replaced all 9 stub Dune functions with live API calls via dune.com. Uses 24‑hour Redis cache (cached()) and seed fallback arrays. No pages need changes — all existing consumers (governance, NFTs, whales, etc.) automatically gain live data once DUNE_API_KEY and per‑query IDs are set in .env.local. Dune execution count limited to 9 per day maximum, well under free‑tier limits.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — Dune Query 2 (NFT Top Collections)
+	•	New Status: COMPLETED
+	•	Notes: Created Dune query 7400802 (nft.trades 7-day cross-chain volume). Wired to DUNE_NFT_COLLECTIONS_ID. /data/nfts/collections now serves live data with seed fallback.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — Dune Query 3 (DEX Liquidity Pools)
+	•	New Status: COMPLETED
+	•	Notes: Created Dune query 7400811 (dex.trades 24h pool volume). Wired to DUNE_DEX_POOLS_ID. /data/defi/dex-volume now gains live pool data with seed fallback.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — Dune Query 5 (Whale Transfers Cross‑Chain)
+	•	New Status: COMPLETED
+	•	Notes: Created Dune query 7400911 (tokens.transfers > $1M, 7‑day, 6 chains). Wired to DUNE_WHALES_ID. /data/defi/whale-watch now gains live cross‑chain whale data with seed fallback.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — Dune Query 6 (Protocol DAU)
+	•	New Status: COMPLETED
+	•	Notes: Created Dune query 7401328 (6 protocol-specific .trades tables UNION). Wired to DUNE_PROTOCOL_DAU_ID. /data/defi/tvl now gains live DAU data with seed fallback.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — Dune Query 7 (Top Token Pairs)
+	•	New Status: COMPLETED
+	•	Notes: Created Dune query 7401393 (protocol-specific .trades tables UNION for 24h top pairs). Wired to DUNE_TOP_PAIRS_ID. /data/defi/dex-volume now gains live top‑pairs data with seed fallback.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — Dune Query 8 (L2 Active Addresses Comparison)
+	•	New Status: COMPLETED
+	•	Notes: Created Dune query 7401413 (5 chain‑specific transaction tables UNION). Wired to DUNE_L2_ACTIVE_ID. /data/scaling/l2-comparison now gains live address data with seed fallback.
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase D — DUNE_QUERIES.md finalised
+	•	New Status: COMPLETED
+	•	Notes: Replaced the old docs/DUNE_QUERIES.md with a production‑accurate version listing all 8 live queries with IDs, exact SQL, column names, and removed 16 stub queries. Added DUNE_API_KEY and all 8 query ID environment variables to the reference section. Documented which dune.ts functions remain seed‑only and why (getCEXvsDEXVolumeRatio uses DefiLlama; getNextUnlocks re‑exports from defi-data.ts).
+
+[2026-04-29] STATUS UPDATE
+	•	Reference: Phase E — Master Prompt finalised
+	•	New Status: PLANNING
+	•	Notes: Created docs/phase-e-master-prompt.md. Prompt covers 8 page‑specific client components + 5 shared components + global CSS, with exact design tokens, chart configurations, and strict rules. Ready to submit to DeepSeek V4 in a new chat.
 
 --- tsconfig.json ---
 {
@@ -28359,6 +28411,7 @@ async function duneOrSeed(
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. DAO Governance — Tally + Snapshot proposals & votes
+// Blueprint Query 1 · SQL in docs/DUNE_QUERIES.md
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_DAO_GOVERNANCE: DuneRow[] = [
@@ -28385,6 +28438,7 @@ export async function getDAOGovernance(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 2. NFT Top Collections by 7‑Day Volume (Cross‑Chain)
+// Blueprint Query 2
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_NFT_COLLECTIONS: DuneRow[] = [
@@ -28409,6 +28463,7 @@ export async function getNFTTopCollectionsByVolume(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 3. DEX Liquidity Pools — Top 20 by 24h Volume & Depth
+// Blueprint Query 3
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_DEX_POOLS: DuneRow[] = [
@@ -28435,6 +28490,7 @@ export async function getDEXLiquidityPools(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 4. Stablecoin Holder Distribution — USDT/USDC balance buckets
+// Blueprint Query 4
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_STABLECOIN_HOLDERS: DuneRow[] = [
@@ -28461,6 +28517,7 @@ export async function getStablecoinHolderDistribution(): Promise<DuneResultSet> 
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 5. Cross‑Chain Whale Transfers — >$1M across 6+ chains
+// Blueprint Query 5
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_WHALES: DuneRow[] = [
@@ -28485,6 +28542,7 @@ export async function getCrossChainWhaleTransfers(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 6. Protocol Daily Active Users — Top 15 DeFi Protocols (30‑Day)
+// Blueprint Query 6
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_PROTOCOL_DAU: DuneRow[] = [
@@ -28516,6 +28574,7 @@ export async function getProtocolDailyActiveUsers(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 7. Top Token Pairs — Top 20 by 24h DEX Volume
+// Blueprint Query 7
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_TOKEN_PAIRS: DuneRow[] = [
@@ -28542,6 +28601,7 @@ export async function getTopTokenPairs(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 8. L2 Active Addresses Comparison — 5 Chains, 30‑Day
+// Blueprint Query 8
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_L2_ADDRESSES: DuneRow[] = [
@@ -28573,6 +28633,7 @@ export async function getL2ActiveAddressesComparison(): Promise<DuneResultSet> {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 9. CEX‑to‑DEX Volume Ratio — 90‑Day DEX aggregate
+// Blueprint Query 9
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SEED_CEX_DEX_VOLUME: DuneRow[] = [
@@ -39369,128 +39430,6 @@ Next: Phase 2 — Futures & Perpetuals, ETFs, Stablecoins deep dive, Treasuries,
 	•	New Status: COMPLETED
 	•	Notes: All 11 Phase A tasks delivered by DeepSeek V4 Pro and applied. Bitcoin page gains Miner Revenue chart + UTXO Age Bands. Ethereum page gains Supply Growth panel. Futures page gains Bybit liquidations table. Stablecoins page gains Peg Deviation gauges. ETF page gains Premium/Discount column. Spot page gains Volume Dominance chart. Revenue page gains 30D/90D trend chart (RevenueTrendClient). Gas page gains L2 gas cards (Arbitrum/OP/Base). Prices page gains Trending Coins + Fear & Greed 90D history. All charts enforce mounted guard + isAnimationActive={false}. TypeScript compiles clean (npx tsc --noEmit). Zero mock data, zero premium gates.
 
---- docs/claude.md ---
- 
-
-```markdown
-# CLAUDE.md – CryptoBrainNews Project Rules
-
-## 1. Project Identity
-- **Platform:** Institutional‑grade crypto intelligence terminal.
-- **Live URL:** [https://cryptobrainnews.vercel.app](https://cryptobrainnews.vercel.app)
-- **Core Mission:** Serve both humans (UI) and AI agents (APIs) with real‑time, accurate on‑chain and market data.
-- **Critical Constraints:**
-  - No mock data – every number must come from a live, verified API (CoinGecko, DefiLlama, Dune, L2Beat, Binance, etc.).
-  - Aggressive caching to respect API rate limits (use `cached` utility with Upstash Redis).
-  - Handle precision correctly (use `BigInt` for raw balances, `Intl.NumberFormat` for display).
-  - Never crash the UI if an API fails – show graceful placeholders (e.g., "—", "N/A").
-
-## 2. Tech Stack
-- **Framework:** Next.js 16 (App Router)
-- **Language:** TypeScript (strict mode)
-- **Styling:** Tailwind CSS + custom design system (`design_system.md`)
-- **Database:** Neon PostgreSQL (for agent logs, referrals, playbooks)
-- **Caching:** Upstash Redis via `src/lib/cache.ts`
-- **Data Fetching:** Edge‑compatible with `cached` wrapper; use `fetch` with `next: { revalidate }` only in Server Components.
-
-## 3. Architectural Rules
-- **Server Components by default** – data fetching happens in `async` pages/components; Client Components only for interactivity.
-- **Separate data fetching from UI** – keep API wrappers in `src/lib/` (e.g., `coingecko.ts`, `defillama.ts`, `dune.ts`).
-- **Reuse existing UI components** – `DataTable`, `BlockChartCard`, `GaugeCard`, `MetricCard`, `DataSidebar`.
-- **Time‑frame toggles** – implement a reusable `TimeframeSelector` component that can be attached to charts.
-- **No premium gating** – all data pages must be fully accessible; remove any `AlphaGate` components.
-
-## 4. TypeScript & Data Integrity
-- **No `any`.** Define strict interfaces for all API responses (e.g., `interface CoinGeckoPrice { bitcoin: { usd: number } }`).
-- **Use Zod** for runtime validation of unpredictable external API responses (optional but recommended).
-- **Extend `src/lib/types.ts`** with new interfaces as you build new sections.
-
-## 5. Data Fetching & Caching (CRITICAL)
-- **Always use the `cached` utility** – it wraps Redis and in‑memory fallback. Example:
-  ```ts
-  export async function getStablecoins() {
-    return cached('defi:stablecoins', async () => {
-      const res = await fetch('https://stablecoins.llama.fi/stablecoins?includePrices=true');
-      // ... transform and return
-    }, 3600); // TTL in seconds
-  }
-  ```
-- **Set appropriate TTLs:**
-  - Prices / funding rates: 5 minutes
-  - TVL, volume, OI: 1 hour
-  - Dune queries: 12‑24 hours
-  - Static lists (companies, categories): 1 day
-- **Error handling:** Every fetcher must return an empty array/object on failure, never throw.
-
-## 6. UI & Design System
-- **Colors:** `#050505` (bg), `#0a0a0a` (card), `#1a1a1a` (border), `#FABF2C` (gold accent), `#00d672` (success), `#ff4757` (error).
-- **Typography:** `font-sans` for headings, `font-mono` for data. Use `tabular-nums`.
-- **Tables:** alternating row colors (`even:bg-[#080808] odd:bg-[#050505]`) and sticky headers.
-- **Charts:** use `BlockChartCard` for most visualizations; extend with `composed` type for dual‑axis.
-
-## 7. Code Delivery Format
-- **All changes must be provided as `cat` commands** that can be copy‑pasted and executed directly in the terminal.
-- **Ledgers must be updated in append‑only mode** (`task.md`, `implementation-plan.md`).
-- **Wait for explicit approval after each phase.**
-
-## 8. Crypto‑Specific Conventions
-- **Decimals:** Never truncate prices below $1.00 (e.g., SHIB should show `$0.00001234`, not `$0.00`).
-- **Large numbers:** Use `Intl.NumberFormat` with appropriate suffixes (B, M, K) for market caps and volumes.
-- **API keys:** Never hardcode; always read from `process.env`. Add new variables to `.env.example`.
-- **WebSockets:** If implementing live tickers, manage connections in `useEffect` with proper cleanup.
-
-## 9. Agentic Commands (for Claude)
-- **Build verification:** Always run `npm run build` and report any errors before asking for approval.
-- **Linting:** Run `npm run lint` and fix warnings.
-- **Testing:** If you add unit tests, run `npm test`.
-
-## 10. Phase Reference (from `upgrade-data.md`)
-- **Phase 37:** Foundation & Cleanup (remove premium gates, update sidebar, create placeholders).
-- **Phase 38:** Core Markets (Spot, Futures, Options, Indices, COTs, Prices).
-- **Phase 39:** ETFs & Treasuries.
-- **Phase 40:** On‑Chain Metrics.
-- **Phase 41:** Scaling Solutions.
-- **Phase 42:** DeFi (all subsections).
-- **Phase 43:** NFTs & Alternative Metrics.
-- **Phase 44:** Final Polish & Testing.
-
-**Always begin each phase by reviewing the attached `upgrade-data.md` and `metrics.txt`.**
-```
-
----
-
-## Phase 1 MVP — Data Terminal Chart Upgrade (2026-04-19)
-
-### Plan (7 steps)
-1. ✅ `npm install lightweight-charts` (v5.1.0)
-2. ✅ Create `TvLightweightChart.tsx` — reusable TradingView wrapper
-3. ⬜ Upgrade `/data/markets/spot` — BTC/ETH price area charts
-4. ⬜ Upgrade `/data/onchain/bitcoin` — hash rate, fees, mempool Recharts
-5. ⬜ Upgrade `/data/onchain/ethereum` — replace CSS bars with Recharts AreaChart
-6. ⬜ Upgrade `/data/onchain/solana` — TPS history chart (60 samples)
-7. ⬜ Upgrade `/data/defi/tvl` — integrate shared TimeframeSelector
-
-### Ledger
-
-#### Step 1 — Install lightweight-charts ✅
-- **Action:** `npm install lightweight-charts --legacy-peer-deps`
-- **Result:** `"lightweight-charts": "^5.1.0"` added to package.json
-- **Note:** `--legacy-peer-deps` needed due to pre-existing `sanity-plugin-markdown` v4/v5 peer conflict
-
-#### Step 2 — TvLightweightChart.tsx ✅
-- **File:** `src/app/data/_components/charts/TvLightweightChart.tsx`
-- **API:** Uses v5 `chart.addSeries(AreaSeries, opts)` pattern (not v4 `addAreaSeries`)
-- **Features:**
-  - `"use client"` wrapper around `createChart()`
-  - `area` and `line` series support via `kind` prop
-  - Dark theme tokens: `#0a0a0a` bg, `#111` grid, `#FABF2C` crosshair
-  - `ResizeObserver` auto-resize, `chart.remove()` cleanup
-  - Compact USD price formatter (`$1.2T`, `$450B`, `$12.5M`)
-  - Empty-state fallback when data is missing
-  - Props: `data`, `kind`, `lineColor`, `topColor`, `bottomColor`, `height`, `title`, `autoFit`, `priceFormatter`
-- **TypeScript:** Clean compile (`npx tsc --noEmit` — 0 errors for this file)
-- **Fixes applied:** Removed default React import (JSX transform), removed duplicate type export
-
 --- docs/claude-sonnet-news-pipeline.md ---
 # Master Prompt: Claude 4.6 Sonnet – CryptoBrainNews News & Pipeline
 
@@ -39701,179 +39640,6 @@ CRITICAL INSTRUCTION: Do NOT generate any output until I paste the research brie
 Research brief (paste Grok's output below this line):
 
 [WAITING FOR INPUT]
---- docs/deepseek_clone_master_prompt.md ---
-
-# DeepSeek Clone – Research Assistant & Reviewer for CryptoBrainNews
-
-## Your Role
-
-You are a Senior Architect and Refactoring Expert with 20+ years of production experience in full‑stack development, blockchain infrastructure, and high‑performance data platforms. You have deep expertise in:
-
-- Next.js 16, TypeScript, Tailwind CSS, React
-- Crypto data ecosystems – on‑chain analytics, DeFi, L2 scaling, market data
-- Python and Rust for backend services, data pipelines, and smart contracts
-
-You value correctness, clarity, and long‑term maintainability over speed. You operate under strict rules:
-
-- All changes must be made to immutable ledgers in an **append‑only** fashion.
-- You must ask for explicit approval before generating any code or commands.
-- All code deliveries must be in the form of `cat` commands that can be copy‑pasted and executed directly in a terminal.
-
-## Your Specific Task
-
-You are the research assistant and reviewer. You do **NOT** generate original implementation code. Your job is to:
-
-1. Receive code produced by **DeepSeek V4 Pro** (primary data‑terminal coding assistant) or **Claude 4.6 Sonnet** (news/pipeline coding assistant).
-2. Format that code into exact `cat` commands (including `mkdir -p` if needed).
-3. Provide append‑only updates to `task.md` and `implementation-plan.md` using the required format.
-4. Give the git commit and push command.
-5. Review the code after it is applied, identify improvements, edge cases, or data issues, and log them in `task.md` (as a review note).
-
-You never generate original implementation code – you only transcribe, format, and review.
-
-
-## Project  Context 
-- Live site: https://cryptobrainnews.vercel.app
-- GitHub: https://github.com/brainwash2/cryptobrainnews
-- Two major parts: (1) a data terminal with 60+ pages covering crypto markets, on‑chain data, DeFi, NFTs, etc., and (2) a news section with an automated daily article pipeline.
-
-## Model Strategy (April 2026)
-- DeepSeek V4 Pro (via Zenmux.ai) – PRIMARY for data terminal refactoring, research, and audits (1M context, 384K output, 5 sessions/5h free)
-- Claude 4.6 Sonnet – for news/pipeline precision fixes and surgical data‑section patches
-- Grok (X Premium) – for market research and competitive analysis
-
-You will research **how to maximise the free tier value** of these models (rate limits, quotas, best practices) and how to use Grok for deep data research.
-
-I will upload the following context files for you to reference:
-
- 
-## Context Files (always refer to these)
-- gemini-context.txt – full project codebase snapshot
-- docs/DeepSeekV4-Research-Blueprint.md – The Block dashboard clone blueprint
-- docs/DUNE_QUERIES.md – Dune query specifications
-- docs/metrics.txt – complete product specification
-- docs/design_system.md – design system reference
-- Scaling-solution.md – notes on scaling, edge cases, and improvements ( actually it's empty now and want to build  start research about adding file for future implementatin after each refactoring ) 
-- `implementation-plan.md` –   ( empty ) 
-- task.md – task ledger
-
-**Note:**  we will have build  to research about Scaling-solution.md and  implementation-plan.md 
-
-## Completed Work
-
-### Data Terminal — Built by Claude Opus 4.6, Audited by DeepSeek V4 Pro
-- Phase 1 MVP: TvLightweightChart, spot BTC/ETH price charts, Bitcoin/Ethereum/Solana on‑chain improvements, DeFi TVL timeframe selector
-- Phase 2: FuturesClient with Bybit v5, all 24 pages verified live across Futures, ETFs, Stablecoins, Treasuries, Scaling
-- DeepSeek V4 Audit: Confirmed all 24 Phase 2 pages live. Verified Bybit v5 data source. Identified remaining `any` types and missing features. Mapped entire data terminal against The Block's dashboard. Produced the 4‑phase research blueprint (Phases A/B/C/D) now stored at docs/DeepSeekV4-Research-Blueprint.md.
-- Phase A (DeepSeek V4 implementation): 11 improvements (Miner Revenue, UTXO Age Bands, ETH Supply, Bybit Liquidations, Peg Deviation, ETF Premium, Volume Dominance, Revenue Trend, L2 Gas, Trending Coins, Fear & Greed history) — 15 files, TypeScript clean
- L2 Gas, Trending Coins, Fear & Greed history) — 15 files, TypeScript clean
-
-### News Pipeline — Built by Claude 4.6 Sonnet
-- Daily article pipeline operational (RSS→Groq→DeepSeek→Gemini→Sanity), 5 articles per cron run
-- Sanity schema issues resolved, build compiles clean on Vercel with active cron jobs
-
-### Known Fixes (DO NOT RE‑INTRODUCE)
-- TvLightweightChart data must be deduplicated by time
-- Scaling page QuickLinks are a separate 'use client' component (QuickLink.tsx)
-- Scaling page metadata stays in the server component
-- Stripe uses dynamic import
-- Vercel temp writes go to /tmp
-- All Recharts: mounted guard + isAnimationActive={false}
-
-### Key Documentation
-- docs/DeepSeekV4-Research-Blueprint.md – full The Block dashboard clone plan (Phases A/B/C/D, 10 Dune SQL sketches, ban‑risk flags)
-- docs/DUNE_QUERIES.md – Dune query specifications
-- docs/metrics.txt – complete product specification
-- docs/design_system.md – design tokens (#050505 bg, #FABF2C primary, Merriweather/Inter/Space Mono fonts)
-
-## Pending Work
-- Phase B: Dune SQL rewrites (10 queries, 24h cache, static seed fallback)
-- Phase C: New free API integrations (Flipside Crypto, CoinGlass, DefiLlama/unlocks, LunarCrush)
-- Phase D: Remaining data terminal pages (Options, CME COTs, NFT Dune wiring, Companies, Alternative social)
-- News pipeline audit (DeepSeek V4 research)
-
-
-
-
-## 🔬 Testing Framework (Future – kick off once all refactors are complete)
-After the data terminal and news pipeline refactors are fully done, we will research, design, and implement a comprehensive testing framework covering both sections.
-
-**Scope:**
-- Data section: component rendering tests (Recharts, tables, sidebars), API mock/data‑fetcher tests, snapshot tests for every page, CI integration.
-- News pipeline: RSS parsing, Groq/DeepSeek/Gemini/Stripe/Sanity integration tests, dead‑letter queue tests, cron‑job smoke tests.
-
-**Research to be done:**
-- Evaluate testing libraries (Jest, React Testing Library, Playwright, Vitest) for Next.js 16 + Turbopack.
-- Design a test‑runner strategy that works with Vercel serverless and local dev.
-- Prioritise a phased rollout: smoke tests → integration tests → unit tests → visual regression tests.
-
-**Do NOT implement this now. It is a future task to be researched and planned once all data and pipeline work is signed off.**
-
-
-
-## Current Focus
-
-We are using **Grok** (X Premium) as a research department to help build a data dashboard clone of [The Block](https://www.theblock.co/data). We are also using **Claude 4.6 Sonnet** (claude.ai) for coding and pipeline work, and ** DeepSeek V4 pro ** ( Zenmux.ai) for the data section refactor.
-
-When I provide Claude's code or DeepSeek V4 pro (for new features or fixes), you will format it as `cat` commands and update the ledgers. You will also research and provide recommendations on how to best utilise the free tiers of these models.
-
-## Workflow Reminder
-
-1. I will tell you when a new phase is approved and provide Claude's  or Deepseek v4 pro  generated code (as a code block).
-2. You will immediately produce:
-   - `mkdir -p` commands for any needed directories.
-   - `cat` commands for each file (with proper `EOF` markers).
-   - Append‑only updates to `task.md` and `implementation-plan.md` using the required format (see example below).
-   - A git commit command (e.g., `git add . && git commit -m "..." && git push origin main`).
-3. I will run those commands and report back.
-4. You will then review the code and provide a concise analysis, including any suggestions for improvements, edge cases, or data quality concerns. You will also provide the exact text to append to `Scaling-solution.md`.
-5. We repeat for the next sub‑phase.
-
-You must wait for my explicit approval before proceeding. Never generate code or commands without approval.
-
-## Example Output Format
-
-When I give you Claude's code or DeepSeek V4 pro , your response must look exactly like this – nothing more, nothing less:
-
-```bash
-mkdir -p src/lib
-cat << 'EOF' > src/lib/new-file.ts
-[Paste the entire content from Claude's or  DeepSeek V4 pro file here]
-EOF
-
-# ... more cat commands ...
-
-cat << 'EOF' >> task.md
-
-[YYYY-MM-DD] STATUS UPDATE
-	•	Reference: Phase X (Task description)
-	•	New Status: COMPLETED
-	•	Notes: Brief notes on what was built.
-EOF
-
-cat << 'EOF' >> implementation-plan.md  ( for future refecence ) 
-
-## Phase X: Title
-- Summary bullet points
-[YYYY-MM-DD] STATUS UPDATE
-	•	Reference: Phase X
-	•	New Status: COMPLETED
-	•	Notes: Summary notes.
-EOF
-
-git add .
-git commit -m "Phase X: brief description"
-git push origin main
-
-Acknowledge that you understand your role and the updated model strategy (Claude Sonnet, DeepSeek v4 pro , Grok). I will now upload the context files. Do not generate any code or commands until I provide you with Claude's  or DeepSeek v 4 output or ask a specific question.
-
-
-
-
-
-
-
-
 --- docs/deepseek_sanity_formatter.txt ---
 
 You are a Sanity CMS formatter for CryptoBrainNews.
@@ -40491,524 +40257,469 @@ Summary of Deliverables
 - Brutalist/Terminal Aesthetic: Heavy use of uppercase, tracking (letter-spacing), monospace fonts, sharp borders, and high contrast.
 
 --- docs/DUNE_QUERIES.md ---
-# CryptoBrainNews Dune Analytics Queries
+# CryptoBrainNews — Dune Analytics Queries (Production)
 
-All corrected queries used in production. Copy query IDs from your Dune dashboard and update `src/lib/dune.ts`.
+Last updated: 29 April 2026 · 8 live queries · Free tier
 
----
-
-## ON-CHAIN METRICS
-
-### Query 1: BTC Active Addresses
-<!-- Phase 45 · C3: SQL corrected. Original stub used COUNT(*) AS tx_count — identical
-     to Q2 and semantically wrong. Replaced with a UNION of sending + receiving addresses
-     using bitcoin.inputs / bitcoin.outputs to produce a genuine active_addresses count.
-     Column name changed from tx_count → active_addresses to match dune.ts expectations.
-     Dune query ID 6705328 must be updated with this corrected SQL on dune.com. -->
-```sql
-SELECT
-  day,
-  COUNT(DISTINCT address) AS active_addresses,
-  'bitcoin'               AS chain
-FROM (
-  SELECT date_trunc('day', block_time) AS day, address
-  FROM bitcoin.inputs
-  WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-
-  UNION
-
-  SELECT date_trunc('day', block_time) AS day, address
-  FROM bitcoin.outputs
-  WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-) combined
-GROUP BY 1
-ORDER BY 1 DESC
-```
-**Columns**: `day`, `active_addresses`, `chain`
+**Dune account:** New account (post‑ban) on dune.com free tier.
+**Safety rules:** 1 execution per 10 seconds · 24‑hour minimum cache · every function has a seed fallback.
 
 ---
 
-### Query 2: BTC Daily Transactions
-<!-- Phase 45 · C3: DEPRECATED — DUPLICATE OF Q1 (pre-fix).
-     This query is identical SQL to the original stub in Q1 and maps to Dune ID 6705623
-     (BTC_DAILY_TRANSACTIONS). It is retained in this document for audit trail purposes
-     (append-only policy). getBTCDailyTransactions() in dune.ts continues to reference
-     ID 6705623 and remains callable — the function is not removed.
-     DO NOT author new SQL for this ID until Q1 (6705328) is confirmed live and correct.
-     Once Q1 is verified, Q2 / ID 6705623 should be archived on dune.com. -->
-```sql
-SELECT
-  date_trunc('day', block_time) AS day,
-  COUNT(*) AS tx_count,
-  'bitcoin' AS chain
-FROM bitcoin.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-GROUP BY 1
-ORDER BY 1 DESC
-```
-**Columns**: `day`, `tx_count`, `chain`
+## Live Queries (8)
+
+All 8 queries are created on dune.com and wired into `src/lib/dune.ts`.
+Query IDs are configured via environment variables (see `.env.example`).
 
 ---
 
-### Query 3: ETH Active Addresses
+### Query 1 — DAO Governance (Snapshot Proposals)
+
+| Field | Value |
+|-------|-------|
+| **Dune ID** | `7400718` |
+| **Environment variable** | `DUNE_DAO_GOVERNANCE_ID=7400718` |
+| **dune.ts function** | `getDAOGovernance()` |
+| **Seed rows** | 10 (Aave, Uniswap, Compound, MakerDAO, Arbitrum DAO, Optimism Collective) |
+| **Refresh** | Every 24 hours |
+| **Row limit** | 100 |
+
+**Purpose:** Daily count of governance proposals per DAO from Snapshot off‑chain voting.
+
 ```sql
+-- CBN — DAO Governance: Snapshot proposals (last 30 days)
 SELECT
-  date_trunc('day', block_time) AS day,
-  COUNT(DISTINCT "from") AS active_addresses,
-  COUNT(DISTINCT "to") AS receiving_addresses,
-  'ethereum' AS chain
-FROM ethereum.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-GROUP BY 1
-ORDER BY 1 DESC
-```
-**Columns**: `day`, `active_addresses`, `receiving_addresses`, `chain`
-
----
-
-### Query 4: ETH Daily Transactions & Gas
-```sql
-SELECT
-  date_trunc('day', block_time) AS day,
-  COUNT(*) AS tx_count,
-  AVG(gas_used) AS avg_gas_used,
-  AVG(gas_price / 1e9) AS avg_gas_price_gwei,
-  'ethereum' AS chain
-FROM ethereum.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-GROUP BY 1
-ORDER BY 1 DESC
-```
-**Columns**: `day`, `tx_count`, `avg_gas_used`, `avg_gas_price_gwei`, `chain`
-
----
-
-### Query 5: SOL Daily Transactions
-```sql
-SELECT
-  date_trunc('day', block_time) AS day,
-  COUNT(*) AS tx_count,
-  COUNT(DISTINCT signer) AS active_signers,
-  'solana' AS chain
-FROM solana.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-  AND success = true
-GROUP BY 1
-ORDER BY 1 DESC
-LIMIT 500
-```
-**Columns**: `day`, `tx_count`, `active_signers`, `chain`
-
----
-
-### Query 6: SOL Daily Fees
-```sql
-SELECT
-  date_trunc('day', block_time) AS day,
-  SUM(fee / 1e9) AS total_fees_sol,
-  AVG(fee / 1e9) AS avg_fee_sol,
-  COUNT(*) AS tx_count,
-  'solana' AS chain
-FROM solana.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-  AND success = true
-GROUP BY 1
-ORDER BY 1 DESC
-```
-**Columns**: `day`, `total_fees_sol`, `avg_fee_sol`, `tx_count`, `chain`
-
----
-
-## WHALE TRANSFERS & STABLECOINS
-
-### Query 7: Whale Transfers (Top 100 Addresses)
-```sql
-SELECT
-  block_time,
-  blockchain,
-  "from" AS whale_address,
-  "to" AS recipient,
-  contract_address,
-  amount_usd
-FROM tokens.transfers
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-  AND amount_usd > 100000
-ORDER BY block_time DESC, amount_usd DESC
-LIMIT 500
-```
-**Columns**: `block_time`, `blockchain`, `whale_address`, `recipient`, `contract_address`, `amount_usd`
-
----
-
-### Query 8: Stablecoin Supply & Dominance
-```sql
-SELECT
-  date_trunc('day', block_time) AS day,
-  contract_address,
-  SUM(amount_usd) AS daily_volume,
-  blockchain,
-  COUNT(*) AS transfer_count
-FROM tokens.transfers
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-  AND amount_usd > 0
-GROUP BY 1, 2, 4
-ORDER BY 1 DESC, 3 DESC
+  DATE_TRUNC('day', FROM_UNIXTIME(created)) AS day,
+  COUNT(*)                                  AS proposals_created,
+  LOWER(space)                              AS dao
+FROM dune.shot.dataset_proposals_view
+WHERE FROM_UNIXTIME(created) >= NOW() - INTERVAL '30' day
+GROUP BY 1, 3
+ORDER BY 1 DESC, 2 DESC
 LIMIT 100
 ```
-**Columns**: `day`, `contract_address`, `daily_volume`, `blockchain`, `transfer_count`
+
+**Expected columns:** `day` (date), `proposals_created` (integer), `dao` (string)
 
 ---
 
-### Query 9: Stablecoin Holder Distribution
+### Query 2 — NFT Top Collections by 7‑Day Volume (Cross‑Chain)
+
+| Field | Value |
+|-------|-------|
+| **Dune ID** | `7400802` |
+| **Environment variable** | `DUNE_NFT_COLLECTIONS_ID=7400802` |
+| **dune.ts function** | `getNFTTopCollectionsByVolume()` |
+| **Seed rows** | 8 (CryptoPunks, BAYC, Pudgy Penguins, Mad Lads, Chromie Squiggle, NodeMonkes, Azuki, Claynosaurz) |
+| **Refresh** | Every 24 hours |
+| **Row limit** | 50 |
+
+**Purpose:** Cross‑chain NFT collection rankings by 7‑day USD volume. Filters out wash‑trade outliers (>$1M individual sales).
+
 ```sql
-SELECT
-  "from" AS holder_address,
-  contract_address,
-  SUM(amount) AS token_balance,
-  SUM(amount_usd) AS balance_usd,
-  blockchain,
-  COUNT(*) AS transfer_count
-FROM tokens.transfers
-WHERE block_time >= NOW() - INTERVAL '90' day
-  AND amount_usd > 0
-GROUP BY 1, 2, 5
-HAVING SUM(amount_usd) > 1000000
-ORDER BY balance_usd DESC
-LIMIT 100
-```
-**Columns**: `holder_address`, `contract_address`, `token_balance`, `balance_usd`, `blockchain`, `transfer_count`
-
----
-
-## DEX & EXCHANGE DATA
-
-### Query 10: DEX Daily Volumes by Protocol
-```sql
-SELECT
-  date_trunc('day', block_time) AS day,
-  project AS dex,
-  blockchain,
-  SUM(amount_usd) AS volume_usd,
-  COUNT(*) AS trade_count
-FROM dex.trades
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-  AND amount_usd > 0
-GROUP BY 1, 2, 3
-ORDER BY 1 DESC, 4 DESC
-```
-**Columns**: `day`, `dex`, `blockchain`, `volume_usd`, `trade_count`
-
----
-
-### Query 11: DEX Top Protocols (30-Day Rolling)
-```sql
-SELECT
-  project AS dex,
-  blockchain,
-  SUM(amount_usd) AS volume_30d_usd,
-  COUNT(*) AS trade_count,
-  COUNT(DISTINCT tx_hash) AS unique_txs
-FROM dex.trades
-WHERE block_time >= NOW() - INTERVAL '30' day
-  AND amount_usd > 0
-GROUP BY 1, 2
-ORDER BY 3 DESC
-LIMIT 50
-```
-**Columns**: `dex`, `blockchain`, `volume_30d_usd`, `trade_count`, `unique_txs`
-
----
-
-### Query 12: DEX Volumes by Blockchain
-```sql
-SELECT
-  date_trunc('day', block_time) AS day,
-  blockchain AS chain,
-  SUM(amount_usd) AS volume_usd,
-  COUNT(*) AS trade_count
-FROM dex.trades
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-  AND amount_usd > 0
-GROUP BY 1, 2
-ORDER BY 1 DESC, 3 DESC
-```
-**Columns**: `day`, `chain`, `volume_usd`, `trade_count`
-
----
-
-## LAYER 2 & NFT DATA
-
-### Query 13: L2 Active Addresses Comparison
-```sql
-SELECT
-  date_trunc('day', block_time) AS day,
-  'arbitrum' AS chain,
-  COUNT(*) AS tx_count,
-  COUNT(DISTINCT "from") AS active_addresses
-FROM arbitrum.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-GROUP BY 1
-
-UNION ALL
-
-SELECT
-  date_trunc('day', block_time) AS day,
-  'optimism' AS chain,
-  COUNT(*) AS tx_count,
-  COUNT(DISTINCT "from") AS active_addresses
-FROM optimism.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-GROUP BY 1
-
-UNION ALL
-
-SELECT
-  date_trunc('day', block_time) AS day,
-  'base' AS chain,
-  COUNT(*) AS tx_count,
-  COUNT(DISTINCT "from") AS active_addresses
-FROM base.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-GROUP BY 1
-
-ORDER BY day DESC, chain
-```
-**Columns**: `day`, `chain`, `tx_count`, `active_addresses`
-
----
-
-### Query 14: L2 Gas Fees Comparison
-```sql
-SELECT
-  date_trunc('day', block_time) AS day,
-  'arbitrum' AS chain,
-  AVG(gas_price / 1e9) AS avg_gas_price_gwei
-FROM arbitrum.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-GROUP BY 1
-
-UNION ALL
-
-SELECT
-  date_trunc('day', block_time) AS day,
-  'optimism' AS chain,
-  AVG(gas_price / 1e9) AS avg_gas_price_gwei
-FROM optimism.transactions
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-GROUP BY 1
-
-ORDER BY day DESC, chain
-```
-**Columns**: `day`, `chain`, `avg_gas_price_gwei`
-
----
-
-### Query 15: NFT Top Collections by Volume
-```sql
+-- CBN — NFT Top Collections by 7d Volume (Cross‑Chain)
 SELECT
   collection,
   blockchain,
-  SUM(amount_usd) AS volume_7d_usd,
-  COUNT(*) AS trade_count,
-  COUNT(DISTINCT seller) AS unique_sellers,
-  AVG(amount_usd) AS avg_price_usd,
-  MIN(amount_usd) AS min_price_usd,
-  MAX(amount_usd) AS max_price_usd
+  SUM(amount_usd)            AS volume_7d_usd,
+  COUNT(*)                   AS trade_count,
+  COUNT(DISTINCT seller)     AS unique_sellers,
+  AVG(amount_usd)            AS avg_price_usd,
+  MIN(amount_usd)            AS min_price_usd,
+  MAX(amount_usd)            AS max_price_usd
 FROM nft.trades
 WHERE block_time >= NOW() - INTERVAL '7' day
   AND amount_usd > 0
+  AND amount_usd < 1000000   -- filter outlier wash trades
 GROUP BY 1, 2
-ORDER BY 3 DESC
+HAVING SUM(amount_usd) > 50000
+ORDER BY volume_7d_usd DESC
 LIMIT 50
 ```
-**Columns**: `collection`, `blockchain`, `volume_7d_usd`, `trade_count`, `unique_sellers`, `avg_price_usd`, `min_price_usd`, `max_price_usd`
+
+**Expected columns:** `collection` (string), `blockchain` (string), `volume_7d_usd` (numeric), `trade_count` (bigint), `unique_sellers` (bigint), `avg_price_usd` (numeric), `min_price_usd` (numeric), `max_price_usd` (numeric)
 
 ---
 
-### Query 16: NFT Daily Volumes
+### Query 3 — DEX Liquidity Pools (Top 20 by 24h Volume)
+
+| Field | Value |
+|-------|-------|
+| **Dune ID** | `7400811` |
+| **Environment variable** | `DUNE_DEX_POOLS_ID=7400811` |
+| **dune.ts function** | `getDEXLiquidityPools()` |
+| **Seed rows** | 10 (Uniswap, PancakeSwap, Orca, Curve, Aerodrome, Raydium, dYdX, Balancer, Trader Joe) |
+| **Refresh** | Every 12 hours |
+| **Row limit** | 20 |
+
+**Purpose:** Top 20 liquidity pools by 24‑hour USD volume with average swap size.
+
 ```sql
+-- CBN — DEX Liquidity Pools: Top 20 by 24h Volume & Depth
 SELECT
-  date_trunc('day', block_time) AS day,
-  collection,
+  project             AS dex,
   blockchain,
-  SUM(amount_usd) AS volume_usd,
-  COUNT(*) AS trade_count,
-  AVG(amount_usd) AS avg_price_usd,
-  COUNT(DISTINCT buyer) AS unique_buyers
-FROM nft.trades
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-  AND amount_usd > 0
-GROUP BY 1, 2, 3
-ORDER BY 1 DESC, 4 DESC
-```
-**Columns**: `day`, `collection`, `blockchain`, `volume_usd`, `trade_count`, `avg_price_usd`, `unique_buyers`
-
----
-
-### Query 17: NFT Sales by Blockchain
-```sql
-SELECT
-  date_trunc('day', block_time) AS day,
-  blockchain,
-  SUM(amount_usd) AS volume_usd,
-  COUNT(*) AS trade_count,
-  COUNT(DISTINCT collection) AS active_collections
-FROM nft.trades
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-  AND amount_usd > 0
-GROUP BY 1, 2
-ORDER BY 1 DESC, 3 DESC
-```
-**Columns**: `day`, `blockchain`, `volume_usd`, `trade_count`, `active_collections`
-
----
-
-## DEFI & GOVERNANCE
-
-### Query 18: DEX Liquidity Pools Activity
-```sql
-SELECT
-  project AS dex,
-  blockchain,
-  token_a_symbol,
-  token_b_symbol,
-  SUM(amount_usd) AS volume_usd,
-  COUNT(*) AS swap_count
+  token_bought_symbol AS token_a,
+  token_sold_symbol   AS token_b,
+  SUM(amount_usd)     AS volume_24h_usd,
+  COUNT(*)            AS swap_count,
+  AVG(amount_usd)     AS avg_swap_usd
 FROM dex.trades
-WHERE block_time >= NOW() - INTERVAL '30' day
+WHERE block_time >= NOW() - INTERVAL '24' hour
   AND amount_usd > 0
+  AND amount_usd < 500000
 GROUP BY 1, 2, 3, 4
 ORDER BY 5 DESC
-LIMIT 100
+LIMIT 20
 ```
-**Columns**: `dex`, `blockchain`, `token_a_symbol`, `token_b_symbol`, `volume_usd`, `swap_count`
+
+**Expected columns:** `dex` (string), `blockchain` (string), `token_a` (string), `token_b` (string), `volume_24h_usd` (numeric), `swap_count` (bigint), `avg_swap_usd` (numeric)
 
 ---
 
-### Query 19: DeFi Protocol Users (Active Addresses)
+### Query 4 — Stablecoin Holder Distribution (USDT + USDC)
+
+| Field | Value |
+|-------|-------|
+| **Dune ID** | `7400865` |
+| **Environment variable** | `DUNE_STABLECOIN_HOLDERS_ID=7400865` |
+| **dune.ts function** | `getStablecoinHolderDistribution()` |
+| **Seed rows** | 10 (5 buckets × 2 contracts: USDT + USDC) |
+| **Refresh** | Every 24 hours |
+| **Row limit** | 10 |
+
+**Purpose:** Distribution of USDT and USDC holders by balance bucket (0‑1K, 1K‑10K, 10K‑100K, 100K‑1M, 1M+). Ethereum only. 90‑day window for balance calculation.
+
 ```sql
+-- CBN — Stablecoin Holders: USDT & USDC balance buckets
+WITH balances AS (
+  SELECT
+    "to"         AS holder,
+    contract_address,
+    SUM(amount)  AS balance
+  FROM tokens.transfers
+  WHERE block_time >= NOW() - INTERVAL '90' day
+    AND blockchain = 'ethereum'
+    AND CAST(contract_address AS varchar) IN (
+      '0xdac17f958d2ee523a2206206994597c13d831ec7',   -- USDT
+      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'    -- USDC
+    )
+  GROUP BY 1, 2
+)
 SELECT
-  project AS protocol,
-  blockchain,
-  COUNT(DISTINCT tx_hash) AS unique_interactions,
-  COUNT(*) AS total_swaps,
-  SUM(amount_usd) AS volume_30d_usd
-FROM dex.trades
-WHERE block_time >= NOW() - INTERVAL '30' day
-  AND amount_usd > 0
+  CAST(contract_address AS varchar) AS contract_address,
+  CASE
+    WHEN balance BETWEEN 0 AND 1000         THEN '0-1K'
+    WHEN balance BETWEEN 1000 AND 10000     THEN '1K-10K'
+    WHEN balance BETWEEN 10000 AND 100000   THEN '10K-100K'
+    WHEN balance BETWEEN 100000 AND 1000000 THEN '100K-1M'
+    ELSE '1M+'
+  END                AS bucket,
+  COUNT(*)           AS holder_count,
+  SUM(balance)       AS total_balance
+FROM balances
+WHERE balance > 0
 GROUP BY 1, 2
-ORDER BY 3 DESC
-LIMIT 50
+ORDER BY 1, 2
 ```
-**Columns**: `protocol`, `blockchain`, `unique_interactions`, `total_swaps`, `volume_30d_usd`
+
+**Expected columns:** `contract_address` (string), `bucket` (string), `holder_count` (bigint), `total_balance` (numeric)
 
 ---
 
-### Query 20: Uniswap DAO Governance Votes
+### Query 5 — Cross‑Chain Whale Transfers (>$1M)
+
+| Field | Value |
+|-------|-------|
+| **Dune ID** | `7400911` |
+| **Environment variable** | `DUNE_WHALES_ID=7400911` |
+| **dune.ts function** | `getCrossChainWhaleTransfers()` |
+| **Seed rows** | 8 (across Ethereum, Arbitrum, Base, Polygon, Solana, Optimism) |
+| **Refresh** | Every 12 hours |
+| **Row limit** | 200 |
+
+**Purpose:** All token transfers exceeding $1M across 6 major blockchains in the past 7 days. Used for the `/data/defi/whale-watch` page.
+
 ```sql
+-- CBN — Whale Transfers: Cross‑Chain, All > $1M (7 days)
 SELECT
-  CURRENT_DATE AS day,
-  'uniswap' AS dao,
-  'Governance data' AS note
-```
-**Columns**: `day`, `dao`, `note`
-
----
-
-### Query 22: General DAO Activity
-```sql
-SELECT
-  CURRENT_DATE AS day,
-  'uniswap' AS dao,
-  0 AS proposal_count,
-  0 AS vote_count
-UNION ALL
-SELECT
-  CURRENT_DATE AS day,
-  'aave' AS dao,
-  0 AS proposal_count,
-  0 AS vote_count
-```
-**Columns**: `day`, `dao`, `proposal_count`, `vote_count`
-
----
-
-## MARKET DATA
-
-### Query 23: CEX-to-DEX Volume Comparison
-```sql
-SELECT
-  date_trunc('day', block_time) AS day,
+  block_time,
   blockchain,
-  SUM(amount_usd) AS volume_usd,
-  COUNT(*) AS trade_count
-FROM dex.trades
-WHERE block_time >= NOW() - INTERVAL '{{days}}' day
-  AND amount_usd > 0
+  "from"            AS whale_address,
+  "to"              AS recipient,
+  contract_address,
+  symbol,
+  amount_usd
+FROM tokens.transfers
+WHERE block_time >= NOW() - INTERVAL '7' day
+  AND amount_usd > 1000000
+  AND blockchain IN ('ethereum', 'arbitrum', 'optimism', 'base', 'polygon', 'solana')
+ORDER BY block_time DESC, amount_usd DESC
+LIMIT 200
+```
+
+**Expected columns:** `block_time` (timestamp), `blockchain` (string), `whale_address` (string), `recipient` (string), `contract_address` (string), `symbol` (string), `amount_usd` (numeric)
+
+---
+
+### Query 6 — Protocol Daily Active Users (6 DeFi Protocols, 30‑Day)
+
+| Field | Value |
+|-------|-------|
+| **Dune ID** | `7401328` |
+| **Environment variable** | `DUNE_PROTOCOL_DAU_ID=7401328` |
+| **dune.ts function** | `getProtocolDailyActiveUsers()` |
+| **Seed rows** | 15 (Uniswap, PancakeSwap, Raydium, Orca, 1inch, Aerodrome, Curve across 3 days) |
+| **Refresh** | Every 24 hours |
+| **Row limit** | 500 |
+
+**Purpose:** Daily active users for the top 6 DeFi protocols across Ethereum and Solana. Uses protocol‑specific Dune tables for accurate trader counts (not the generic `dex.trades` which can be slow on free tier).
+
+```sql
+-- CBN — Protocol DAU (Dune‑only, 6 protocols, 30‑day)
+WITH dau AS (
+  SELECT date_trunc('day', block_time) AS day, 'Uniswap V3' AS protocol, COUNT(DISTINCT tx_from) AS dau
+  FROM uniswap_v3_ethereum.trades
+  WHERE block_time >= NOW() - INTERVAL '30' day
+  GROUP BY 1
+
+  UNION ALL
+
+  SELECT date_trunc('day', block_time) AS day, 'PancakeSwap' AS protocol, COUNT(DISTINCT tx_from) AS dau
+  FROM pancakeswap.trades
+  WHERE block_time >= NOW() - INTERVAL '30' day
+  GROUP BY 1
+
+  UNION ALL
+
+  SELECT date_trunc('day', block_time) AS day, 'Raydium' AS protocol, COUNT(DISTINCT trader_id) AS dau
+  FROM dex_solana.trades
+  WHERE block_time >= NOW() - INTERVAL '30' day AND project = 'raydium'
+  GROUP BY 1
+
+  UNION ALL
+
+  SELECT date_trunc('day', block_time) AS day, 'Orca' AS protocol, COUNT(DISTINCT trader_id) AS dau
+  FROM dex_solana.trades
+  WHERE block_time >= NOW() - INTERVAL '30' day AND project = 'orca'
+  GROUP BY 1
+
+  UNION ALL
+
+  SELECT date_trunc('day', block_time) AS day, 'Aerodrome' AS protocol, COUNT(DISTINCT tx_from) AS dau
+  FROM aerodrome.trades
+  WHERE block_time >= NOW() - INTERVAL '30' day
+  GROUP BY 1
+
+  UNION ALL
+
+  SELECT date_trunc('day', block_time) AS day, 'SushiSwap' AS protocol, COUNT(DISTINCT tx_from) AS dau
+  FROM sushiswap.trades
+  WHERE block_time >= NOW() - INTERVAL '30' day
+  GROUP BY 1
+)
+SELECT day, protocol, SUM(dau) AS dau
+FROM dau
 GROUP BY 1, 2
 ORDER BY 1 DESC, 3 DESC
+LIMIT 500
 ```
-**Columns**: `day`, `blockchain`, `volume_usd`, `trade_count`
+
+**Expected columns:** `day` (date), `protocol` (string), `dau` (bigint)
 
 ---
 
-### Query 24: Token Swap Volume by Token Pair
+### Query 7 — Top Token Pairs (24h Volume, 6 DEXs)
+
+| Field | Value |
+|-------|-------|
+| **Dune ID** | `7401393` |
+| **Environment variable** | `DUNE_TOP_PAIRS_ID=7401393` |
+| **dune.ts function** | `getTopTokenPairs()` |
+| **Seed rows** | 10 (WETH/USDC, WBTC/USDC, SOL/USDC, USDC/USDT, WETH/USDT, WBNB/USDT, ARB/USDC, LINK/USDC, AVAX/USDC, PEPE/WETH) |
+| **Refresh** | Every 12 hours |
+| **Row limit** | 20 |
+
+**Purpose:** Top 20 token pairs by 24‑hour USD volume across 6 major DEXs (Uniswap V3, PancakeSwap, Raydium, Orca, Aerodrome, SushiSwap). Uses protocol‑specific tables for fast execution on free tier.
+
 ```sql
-SELECT
-  token_bought_symbol,
-  token_sold_symbol,
-  SUM(amount_usd) AS volume_usd,
-  COUNT(*) AS swap_count,
-  AVG(amount_usd) AS avg_swap_size
-FROM dex.trades
-WHERE block_time >= NOW() - INTERVAL '30' day
-  AND amount_usd > 0
-GROUP BY 1, 2
-ORDER BY 3 DESC
-LIMIT 100
+-- CBN — Top Token Pairs (Dune‑only, protocol‑specific tables, 24h)
+WITH pairs AS (
+  SELECT token_bought_symbol AS buy_token, token_sold_symbol AS sell_token, 'Uniswap V3' AS dex,
+         SUM(amount_usd) AS volume_24h_usd
+  FROM uniswap_v3_ethereum.trades
+  WHERE block_time >= NOW() - INTERVAL '24' hour AND amount_usd > 0
+  GROUP BY 1, 2
+
+  UNION ALL
+
+  SELECT token_bought_symbol, token_sold_symbol, 'PancakeSwap',
+         SUM(amount_usd)
+  FROM pancakeswap.trades
+  WHERE block_time >= NOW() - INTERVAL '24' hour AND amount_usd > 0
+  GROUP BY 1, 2
+
+  UNION ALL
+
+  SELECT token_bought_symbol, token_sold_symbol, 'Raydium',
+         SUM(amount_usd)
+  FROM dex_solana.trades
+  WHERE block_time >= NOW() - INTERVAL '24' hour AND amount_usd > 0 AND project = 'raydium'
+  GROUP BY 1, 2
+
+  UNION ALL
+
+  SELECT token_bought_symbol, token_sold_symbol, 'Orca',
+         SUM(amount_usd)
+  FROM dex_solana.trades
+  WHERE block_time >= NOW() - INTERVAL '24' hour AND amount_usd > 0 AND project = 'orca'
+  GROUP BY 1, 2
+
+  UNION ALL
+
+  SELECT token_bought_symbol, token_sold_symbol, 'Aerodrome',
+         SUM(amount_usd)
+  FROM aerodrome.trades
+  WHERE block_time >= NOW() - INTERVAL '24' hour AND amount_usd > 0
+  GROUP BY 1, 2
+
+  UNION ALL
+
+  SELECT token_bought_symbol, token_sold_symbol, 'SushiSwap',
+         SUM(amount_usd)
+  FROM sushiswap.trades
+  WHERE block_time >= NOW() - INTERVAL '24' hour AND amount_usd > 0
+  GROUP BY 1, 2
+)
+SELECT buy_token, sell_token, dex, SUM(volume_24h_usd) AS volume_24h_usd
+FROM pairs
+GROUP BY 1, 2, 3
+HAVING SUM(volume_24h_usd) > 50000
+ORDER BY 4 DESC
+LIMIT 20
 ```
-**Columns**: `token_bought_symbol`, `token_sold_symbol`, `volume_usd`, `swap_count`, `avg_swap_size`
+
+**Expected columns:** `buy_token` (string), `sell_token` (string), `dex` (string), `volume_24h_usd` (numeric)
 
 ---
 
-## PARAMETER SETUP
+### Query 8 — L2 Active Addresses Comparison (5 Chains)
 
-All queries with `{{days}}` parameter:
-- **Type**: Number
-- **Default**: 30
+| Field | Value |
+|-------|-------|
+| **Dune ID** | `7401413` |
+| **Environment variable** | `DUNE_L2_ACTIVE_ID=7401413` |
+| **dune.ts function** | `getL2ActiveAddressesComparison()` |
+| **Seed rows** | 15 (Arbitrum, Optimism, Base, zkSync, Scroll across 3 days) |
+| **Refresh** | Every 24 hours |
+| **Row limit** | 500 |
+
+**Purpose:** Daily active addresses across 5 major Layer‑2 chains: Arbitrum, Optimism, Base, zkSync, and Scroll. Uses chain‑specific transaction tables with 30‑day lookback.
+
+```sql
+-- CBN — L2 Active Addresses Comparison (30‑day, 5 chains)
+SELECT day, chain, active_addresses FROM (
+  SELECT date_trunc('day', block_time) AS day, 'arbitrum' AS chain, COUNT(DISTINCT "from") AS active_addresses
+  FROM arbitrum.transactions WHERE block_time >= NOW() - INTERVAL '30' day GROUP BY 1
+
+  UNION ALL
+
+  SELECT date_trunc('day', block_time) AS day, 'optimism' AS chain, COUNT(DISTINCT "from") AS active_addresses
+  FROM optimism.transactions WHERE block_time >= NOW() - INTERVAL '30' day GROUP BY 1
+
+  UNION ALL
+
+  SELECT date_trunc('day', block_time) AS day, 'base' AS chain, COUNT(DISTINCT "from") AS active_addresses
+  FROM base.transactions WHERE block_time >= NOW() - INTERVAL '30' day GROUP BY 1
+
+  UNION ALL
+
+  SELECT date_trunc('day', block_time) AS day, 'zksync' AS chain, COUNT(DISTINCT "from") AS active_addresses
+  FROM zksync.transactions WHERE block_time >= NOW() - INTERVAL '30' day GROUP BY 1
+
+  UNION ALL
+
+  SELECT date_trunc('day', block_time) AS day, 'scroll' AS chain, COUNT(DISTINCT "from") AS active_addresses
+  FROM scroll.transactions WHERE block_time >= NOW() - INTERVAL '30' day GROUP BY 1
+) combined
+ORDER BY 1 DESC, 2
+LIMIT 500
+```
+
+**Expected columns:** `day` (date), `chain` (string), `active_addresses` (bigint)
 
 ---
 
-## Query ID Reference
+## Functions NOT Backed by Live Dune Queries
 
-Update these in `src/lib/dune.ts`:
+These functions exist in `src/lib/dune.ts` but use **seed data only**. They are either handled by better free alternatives or awaiting query creation.
 
-| Query | ID |
-|-------|-----|
-| BTC_ACTIVE_ADDRESSES | YOUR_ID |
-| BTC_DAILY_TRANSACTIONS | YOUR_ID |
-| ETH_ACTIVE_ADDRESSES | YOUR_ID |
-| ETH_DAILY_TRANSACTIONS | YOUR_ID |
-| SOL_DAILY_TRANSACTIONS | YOUR_ID |
-| SOL_DAILY_FEES | YOUR_ID |
-| WHALE_TRANSFERS | YOUR_ID |
-| STABLECOIN_SUPPLY | YOUR_ID |
-| STABLECOIN_HOLDERS | YOUR_ID |
-| DEX_DAILY_VOLUMES | YOUR_ID |
-| DEX_TOP_PROTOCOLS | YOUR_ID |
-| DEX_BY_BLOCKCHAIN | YOUR_ID |
-| L2_ACTIVE_ADDRESSES | YOUR_ID |
-| L2_GAS_FEES | YOUR_ID |
-| NFT_TOP_COLLECTIONS | YOUR_ID |
-| NFT_DAILY_VOLUMES | YOUR_ID |
-| NFT_BY_BLOCKCHAIN | YOUR_ID |
-| DEX_LIQUIDITY_POOLS | YOUR_ID |
-| DEFI_PROTOCOL_USERS | YOUR_ID |
-| UNISWAP_GOVERNANCE | YOUR_ID |
-| DAO_ACTIVITY | YOUR_ID |
-| CEX_DEX_VOLUME | YOUR_ID |
-| TOP_TOKEN_PAIRS | YOUR_ID |
+| Function | Status | Alternative |
+|----------|--------|-------------|
+| `getCEXvsDEXVolumeRatio()` | **Seed only** | DefiLlama `/overview/dexs` is the preferred source for DEX aggregate volume. The seed array provides 8 reference rows. No Dune query ID is configured. |
+| `getNextUnlocks()` | **Re‑exported from `defi-data.ts`** | Uses DefiLlama `/unlocks` endpoint (free, no API key). No Dune dependency. |
 
+---
+
+## Removed Stub Queries
+
+The following 16 queries from the old `DUNE_QUERIES.md` have been removed from production. They were either placeholders with stub SQL (`SELECT CURRENT_DATE`) or replaced by REST APIs (blockchain.info, Etherscan, DefiLlama).
+
+| Old Query | What Replaced It |
+|-----------|-----------------|
+| BTC Active Addresses | `blockchain.info/charts/n-unique-addresses` in `src/lib/onchain-data.ts` |
+| BTC Daily Transactions | `blockchain.info/charts/n-transactions` |
+| ETH Active Addresses | `Etherscan stats API` in `src/lib/onchain-extended.ts` |
+| ETH Daily Transactions & Gas | `Etherscan` + `cloudflare-eth.com` RPC |
+| SOL Daily Transactions | `Solana RPC getRecentPerformanceSamples` |
+| SOL Daily Fees | Solana RPC (fee data unavailable on free tier) |
+| Stablecoin Supply & Dominance | `DefiLlama stablecoins.llama.fi` in `src/lib/defi-data.ts` |
+| DEX Daily Volumes by Protocol | `DefiLlama /overview/dexs` in `src/lib/defi-data.ts` |
+| DEX Volumes by Blockchain | DefiLlama |
+| L2 Gas Fees Comparison | Public L2 RPC endpoints in `src/lib/onchain-extended.ts` |
+| NFT Daily Volumes | Alchemy + Magic Eden APIs in `src/lib/nft-data.ts` |
+| NFT Sales by Blockchain | Alchemy + Magic Eden |
+| CEX‑to‑DEX Volume Comparison | DefiLlama + CoinGecko (see above) |
+| Uniswap DAO Governance (old stub) | Replaced by Query 1 (Snapshot proposals via Dune ID 7400718) |
+| General DAO Activity (old stub) | Replaced by Query 1 |
+| Token Swap Volume by Token Pair (old stub) | Replaced by Query 7 (Dune ID 7401393) |
+
+---
+
+## Dune Safety Rules (from the Blueprint)
+
+Every live query follows these rules to prevent a second ban:
+
+| Rule | Implementation |
+|------|---------------|
+| Max call rate | 1 query execution per 10 seconds (6/min) |
+| Cache duration | 24 hours minimum (`DUNE_TTL = 86400` in `dune.ts`) |
+| Testing protocol | SQL tested in Dune web editor before wiring to codebase |
+| Timeout guard | `AbortSignal.timeout(45_000)` on every fetch |
+| Fallback | Every function returns seed data when API key is missing, fetch fails, or query returns 0 rows |
+| Query complexity | All queries use `LIMIT` and daily aggregation. Max ~50K rows scanned |
+| Monitoring | Execution counts tracked in Upstash Redis: `dune:counter:{queryId}:{date}` |
+
+---
+
+## Environment Variable Reference
+
+```bash
+# .env.local or Vercel Environment Variables
+DUNE_API_KEY=your_dune_api_key_here
+
+# Individual query IDs (optional — seed fallback used when unset)
+DUNE_DAO_GOVERNANCE_ID=7400718
+DUNE_NFT_COLLECTIONS_ID=7400802
+DUNE_DEX_POOLS_ID=7400811
+DUNE_STABLECOIN_HOLDERS_ID=7400865
+DUNE_WHALES_ID=7400911
+DUNE_PROTOCOL_DAU_ID=7401328
+DUNE_TOP_PAIRS_ID=7401393
+DUNE_L2_ACTIVE_ID=7401413
+```
+
+Setting `DUNE_API_KEY` enables live execution. Each query ID env var is optional — when missing, the function serves seed data and logs a notice.
 
 --- docs/editorial-blueprint.md ---
 # CryptoBrainNews — Editorial & Business Blueprint (Updated April 2026)
@@ -42495,6 +42206,204 @@ Deliver code as ready‑to‑use TypeScript/React files.
 Start each file with // src/path/to/file.ts
 Separate files with a line containing exactly ==========
 No markdown fences, no extra commentary. Ensure every new file compiles with `npx tsc --noEmit`.
+
+--- docs/phase-e-master-prompt.md ---
+# Master Prompt – Phase E: Chart & UX Standardisation (The Block Clone)
+
+## Files Attached (read ALL of them)
+
+- gemini-context.txt (full codebase snapshot)
+- docs/metrics.txt (complete product specification)
+- docs/DUNE_QUERIES.md (Dune query IDs and SQL sketches)
+
+You are a Senior Frontend Architect for CryptoBrainNews.
+We are upgrading our Next.js 16 crypto data terminal to match
+the exact visual quality and UX of The Block's institutional dashboard.
+The following design tokens and patterns are derived from a live audit
+of https://www.theblock.co/data performed by our research partner Grok.
+
+All new code must follow these rules strictly.
+
+## Section 1 – Project Identity & Design System
+
+**Project:** CryptoBrainNews (cryptobrainnews.vercel.app), an institutional crypto data terminal.
+**Reference UX:** https://www.theblock.co/data (dark-themed, TradingView Lightweight Charts primary, Recharts only for gauges/pies).
+**Tech stack:** Next.js 16 (App Router), TypeScript strict, Tailwind CSS, tradingview-lightweight-charts v5, Recharts (limited), Upstash Redis, `cached()` utility.
+
+### Design Tokens (from Grok's exact audit – enforce strictly)
+
+**Colors:**
+  --background: #0a0a0a
+  --foreground: #f8fafc
+  --primary:       #22c55e   (green, used for up / success / active states)
+  --primary-foreground: #0a0a0a
+  --border:        #27272a
+  --card:          #161616
+  --card-foreground: #f8fafc
+  --muted:         #27272a
+  --muted-foreground: #a3a3a3
+  --secondary:     #1a1a1a
+  --success:       #22c55e
+  --error:         #ef4444
+
+**Typography:**
+  Headings: font-sans (Inter/-apple-system), font-weight 600.
+  Body labels: text-sm text-[#a3a3a3].
+  Data values: font-mono (Space Mono), tabular-nums, text-[#f8fafc].
+
+**Spacing & Effects:**
+  Card padding: 24px (p-6).
+  Border-radius: 16px (rounded-3xl) on all data cards.
+  Card shadow (hover): shadow-xl shadow-black/10.
+  Section gap: 32px (space-y-8 or gap-8).
+
+**KPI Cards:**
+  Compact horizontal layout.
+  Label: small uppercase text-[#a3a3a3].
+  Value: large bold text-[#f8fafc], 28-32px.
+  Change badge (if trend prop): rounded-full pill, green/red background with white text + arrow icon (↑/↓).
+
+**Timeframe Buttons (pill style):**
+  Inactive: text-sm text-[#a3a3a3], hover text-[#f8fafc].
+  Active: bg-[#27272a] text-white rounded-2xl px-4 py-1.5.
+  Available: 1D | 7D | 30D | 90D | 1Y | YTD | ALL.
+  Position: right-aligned above every chart.
+
+**Tables:**
+  Header: sticky (top: 0, bg #161616, z-10).
+  Rows: alternating #1a1a1a / #161616.
+  Hover: bg #27272a, smooth transition.
+  Alignment: right-align numbers, left-align names/symbols.
+  Sparkline columns: tiny inline TradingView sparkline (5-6px height, green/red).
+
+**Loading states:** Card-shaped shimmer skeleton (gradient pulse #161616 → #27272a → #161616, faint grid lines).
+**Error states:** Centered "Unable to load data" message + retry button with #22c55e accent.
+**CSV/Export (Pro only):** Top‑right of each chart card (next to timeframe selector). Lucide Download icon, #a3a3a3, turns #22c55e on hover. Tooltip "Export CSV". Free users see a locked icon + "Upgrade to Pro" tooltip.
+
+## Section 2 – Files to Modify (page by page, exact component names)
+
+**Do NOT touch** any data fetcher (`dune.ts`, `defi-data.ts`, `api.ts`) or server component that calls them. Only client components that render charts are being upgraded.
+
+**Shared components (modify):**
+  `src/app/data/_components/TimeframeSelector.tsx`
+  `src/app/data/_components/ChartSkeleton.tsx` (rename/create from existing)
+  `src/app/data/_components/DataPageError.tsx`
+  `src/app/data/_components/MetricCard.tsx`
+  `src/components/monetization/ProChartWrapper.tsx` (create if missing)
+
+**Page‑specific client components (modify):**
+  `src/app/data/markets/spot/_components/SpotClient.tsx`
+  `src/app/data/markets/futures/_components/FuturesClient.tsx`
+  `src/app/data/onchain/bitcoin/_components/BitcoinChartsClient.tsx`
+  `src/app/data/onchain/ethereum/_components/EthTvlClient.tsx`
+  `src/app/data/onchain/solana/_components/SolanaChartsClient.tsx`
+  `src/app/data/defi/tvl/_components/DeFiTvlClient.tsx`
+  `src/app/data/defi/revenue/RevenueTrendClient.tsx`
+  `src/app/data/stablecoins/usd/_components/StablecoinUsdClient.tsx`
+
+**Globals:**
+  `src/styles/globals.css` (set CSS custom properties, scrollbar, selection styles)
+
+## Section 3 – Specific Chart Configurations Per Page
+
+### 3.1 `/data/markets/spot/_components/SpotClient.tsx`
+- **Chart 1 – Price area chart (BTC + ETH):** Already using TradingView Lightweight Charts. Ensure styling matches tokens. Keep existing `usePriceHistory()` hook.
+- **Chart 2 – Top Movers bar chart:** Replace Recharts bar chart with Lightweight Histogram (vertical bars, green for positive, red for negative). Use data from the existing `sortedCoins` computed value.
+- **Chart 3 – Market Cap Dominance bar chart:** Replace Recharts bar chart with Lightweight Histogram. Token colors: BTC #F7931A, ETH #627EEA, USDT #26A17B, BNB #F3BA2F, SOL #9945FF, USDC #2775CA, XRP #00AAE4, OTHERS #555555.
+- **Chart 4 – Exchange Volume Dominance bar chart:** Replace Recharts bar chart with Lightweight Histogram. Keep gold color ramp.
+- **TimeframeSelector:** Already present at two locations; restyle as pills.
+
+### 3.2 `/data/markets/futures/_components/FuturesClient.tsx`
+- **OI History chart (BTC+ETH):** Replace Recharts ComposedChart with Lightweight dual‑axis. Left axis: bar (OI in USD). Right axis: optional line overlay for price.
+- **Funding rate area chart (BTC+ETH):** Replace Recharts AreaChart with Lightweight area chart (two series: BTC, ETH).
+- **Liquidation table:** Keep existing table structure; ensure styling matches tokens.
+- **TimeframeSelector:** Already present for OI chart.
+
+### 3.3 `/data/onchain/bitcoin/_components/BitcoinChartsClient.tsx`
+- **Replace all 6 Recharts area/bar charts** with Lightweight area charts:
+  Active Addresses (area, orange), Daily Transactions (bar, gold), Hash Rate (area, green), Fees USD (area, red), Mempool Size (area, blue), Miner Revenue (area, teal).
+- **UTXO Age Bands section:** Replace the static CSS bar visualization with a horizontal bar chart (Recharts horizontal BarChart is acceptable here since Lightweight doesn't support stacked horizontal bars easily). Use the existing UTXO_COLORS array.
+- **TimeframeSelector:** Already present (7D/30D/90D); restyle as pills.
+
+### 3.4 `/data/onchain/ethereum/_components/EthTvlClient.tsx`
+- Replace Recharts AreaChart for TVL with Lightweight area chart (blue gradient).
+- Ensure the latest TVL value and date range are displayed as per current layout.
+
+### 3.5 `/data/onchain/solana/_components/SolanaChartsClient.tsx`
+- Replace Recharts AreaChart for TPS with Lightweight area chart (purple).
+- Replace Recharts AreaChart for TVL with Lightweight area chart (purple).
+
+### 3.6 `/data/defi/tvl/_components/DeFiTvlClient.tsx`
+- Replace Recharts AreaChart for Total DeFi TVL with Lightweight area chart (gold).
+- Replace Recharts horizontal BarChart for TVL by Category with Lightweight Histogram (vertical bars, use CATEGORY_COLORS array). If vertical doesn't work for category labels, keep Recharts horizontal bar but style it consistently.
+
+### 3.7 `/data/defi/revenue/RevenueTrendClient.tsx`
+- Replace Recharts AreaChart with Lightweight dual‑area chart: Fees (gold) + Revenue (green).
+- Keep the existing 30D/90D toggle buttons (restyle as pills).
+
+### 3.8 `/data/stablecoins/usd/_components/StablecoinUsdClient.tsx`
+- Peg Deviation gauges: keep existing GaugeCard (already good, just ensure token colors).
+- Circulating supply horizontal bar chart: replace current Recharts BarChart with Lightweight Histogram (vertical bars). If horizontal is preferred, leave as Recharts but style with tokens.
+- Table: keep existing, ensure alternating rows + sticky header.
+
+**ALL client components:** Mount guard (useSyncExternalStore or useEffect + useState), isAnimationActive={false} on any remaining Recharts elements.
+
+## Section 4 – Shared Component Updates
+
+### 4.1 `src/app/data/_components/TimeframeSelector.tsx`
+- Full rewrite to match The Block pill style (horizontal inline-flex group).
+- Props keep the existing `value`, `onChange`, `available` array.
+- Buttons: "1D", "7D", "30D", "90D", "1Y", "YTD", "ALL" (or subset from available).
+- Active: bg-[#27272a] text-white rounded-2xl px-4 py-1.5 text-sm font-medium.
+- Inactive: text-[#a3a3a3] hover:text-[#f8fafc] px-4 py-1.5 text-sm.
+- Transition: transition-colors duration-200.
+
+### 4.2 `src/app/data/_components/ChartSkeleton.tsx`
+- Replace current animate-pulse rectangles with a shimmer card.
+- Card: rounded-3xl bg-[#161616] p-6.
+- Inside: faint horizontal grid lines (use a repeating-linear-gradient on a div).
+- Animation: shimmer sweep (bg-gradient from #161616 via #27272a to #161616, animate-pulse).
+- Props: `rows`, `charts`, `kpis` (keep existing API if already used; otherwise simplify to a single `height` prop).
+
+### 4.3 `src/app/data/_components/DataPageError.tsx`
+- Centered layout in a card.
+- Icon: AlertTriangle from lucide-react, text-[#ef4444].
+- Title: "Unable to load data" in text-[#f8fafc].
+- Subtitle: error.message in text-[#a3a3a3] text-sm.
+- Retry button: border border-[#27272a] text-[#a3a3a3] hover:text-[#f8fafc] hover:border-[#22c55e].
+
+### 4.4 `src/app/data/_components/MetricCard.tsx`
+- Add `trend` prop support (number).
+- When trend is present, show a rounded-full pill: arrow ↑/↓ + percentage, green/red background.
+- Layout: flex flex-col or flex-row with justify-between.
+
+### 4.5 `src/components/monetization/ProChartWrapper.tsx` (create)
+- Wraps children in a card.
+- Detects Pro status from a prop `isPro` (passed from parent) or a React Context (use a simple context if needed; we'll wire it later).
+- Top-right: if Pro, show Download icon button. If not Pro, show Lock icon.
+- Download click: call `exportCSV(data, filename)` helper (defined in the component).
+- Props: `title`, `data`, `filename`, `isPro`, `children`.
+
+## Section 5 – Strict Rules
+
+- TypeScript strict mode. No `any` types. Use `unknown` and type guards where needed.
+- All Recharts components MUST use mounted guard (useSyncExternalStore or useState(true) in useEffect) and isAnimationActive={false}.
+- Zero mock data — all numbers come from existing live data fetchers (already provided via props).
+- No premium gating on data — ProChartWrapper only controls export button, never hides chart content.
+- Do not modify any server component's data fetching logic.
+- Do not change any API route or library file except `globals.css` and the listed shared components.
+- All TradingView charts must clean up on unmount (chart.remove()) and handle resize (ResizeObserver).
+- Keep existing `TvLightweightChart` wrapper and reuse it wherever possible; extend it if needed to support histogram or dual‑axis.
+- No hardcoded colors — always reference the CSS variables or Tailwind classes.
+
+## Output Format
+
+Deliver code as ready‑to‑use TypeScript/React files.
+Start each file with `// src/path/to/file.tsx`.
+Separate files with a line containing exactly `==========`.
+Include `mkdir -p` for any new directories.
+No markdown fences, no extra commentary.
+Ensure `npx tsc --noEmit` passes with zero errors.
 
 --- docs/relocation.md ---
 # CryptoBrainNews – Founder Relocation Strategy (March 2026)

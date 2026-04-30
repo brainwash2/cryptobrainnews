@@ -1,40 +1,38 @@
-/* src/styles/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --font-heading: 'Merriweather', serif;
+    --font-heading: 'Inter', -apple-system, sans-serif;
     --font-body: 'Inter', sans-serif;
-    --font-caption: 'JetBrains Mono', monospace;
+    --font-caption: 'Space Mono', monospace;
     --font-data: 'Space Mono', monospace;
 
-    --color-background: #000000;
-    --color-foreground: #ffffff;
-    --color-primary: #FABF2C;
-    --color-primary-foreground: #000000;
-    --color-border: #1a1a1a;
-    --color-card: #0a0a0a;
-    --color-card-foreground: #ffffff;
-    --color-muted: #111111;
-    --color-muted-foreground: #888888;
-    --color-secondary: #0f0f0f;
-    --color-success: #00d672;
-    --color-error: #ff4757;
+    --color-background: #0a0a0a;
+    --color-foreground: #f8fafc;
+    --color-primary: #22c55e;
+    --color-primary-foreground: #0a0a0a;
+    --color-border: #27272a;
+    --color-card: #161616;
+    --color-card-foreground: #f8fafc;
+    --color-muted: #27272a;
+    --color-muted-foreground: #a3a3a3;
+    --color-secondary: #1a1a1a;
+    --color-success: #22c55e;
+    --color-error: #ef4444;
   }
 
   body {
-    @apply bg-[var(--color-background)] text-[var(--color-foreground)] font-body antialiased;
+    @apply bg-[#0a0a0a] text-[#f8fafc] font-body antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-bold;
+    @apply font-sans font-semibold;
   }
 
-  /* Monospace numbers everywhere for data alignment */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
@@ -43,64 +41,6 @@
 @layer utilities {
   .transition-smooth {
     @apply transition-all duration-200 ease-in-out;
-  }
-}
-
-/* ─── Price Ticker Animation ──────────────────────────────────────────── */
-@keyframes ticker-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.ticker-scroll {
-  animation: ticker-scroll 80s linear infinite;
-}
-
-.ticker-scroll:hover {
-  animation-play-state: paused;
-}
-
-/* ─── Reading progress bar animation ──────────────────────────────────── */
-@keyframes reading-bar {
-  0% { width: 0%; }
-  100% { width: 100%; }
-}
-
-.animate-reading-bar {
-  animation: reading-bar 5s ease-in-out forwards;
-}
-
-/* ─── Scrollbar styling (Bloomberg-style) ─────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #000;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #222;
-  border-radius: 0;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #333;
-}
-
-/* ─── Selection color ─────────────────────────────────────────────────── */
-::selection {
-  background: #FABF2C;
-  color: #000;
-}
-@layer base {
-  body {
-    @apply antialiased selection:bg-primary selection:text-black;
-    text-rendering: optimizeLegibility;
-  }
-  .font-heading {
-    letter-spacing: -0.02em;
   }
 }
 
@@ -118,83 +58,84 @@
 .animate-marquee:hover {
   animation-play-state: paused;
 }
-/* Institutional Typography Tweak */
-h1, h2, h3, h4 {
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-/* Custom Scrollbar for Terminal Feel */
+.animate-shimmer {
+  background: linear-gradient(90deg, #161616 25%, #27272a 50%, #161616 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
 ::-webkit-scrollbar {
-  width: 4px;
-}
-::-webkit-scrollbar-track {
-  background: #050505;
-}
-::-webkit-scrollbar-thumb {
-  background: #1a1a1a;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #FABF2C;
+  width: 6px;
+  height: 6px;
 }
 
-/* ── AI-generated article prose styles ──────────────────── */
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+::selection {
+  background: #22c55e;
+  color: #0a0a0a;
+}
+
 .prose-article {
-  color: #ccc;
-  font-size: 1.125rem;
+  color: #a3a3a3;
+  font-size: 1.0625rem;
   line-height: 1.75;
 }
 .prose-article h2 {
-  color: #fff;
-  font-size: 1.5rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  margin: 2.5rem 0 1rem;
+  color: #f8fafc;
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 2rem 0 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid #27272a;
 }
 .prose-article h3 {
-  color: #FABF2C;
-  font-size: 1.125rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 1.75rem 0 0.75rem;
+  color: #22c55e;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
 }
 .prose-article p {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 .prose-article a {
-  color: #FABF2C;
+  color: #22c55e;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.prose-article a:hover {
-  color: #fff;
-}
-.prose-article ul, .prose-article ol {
-  padding-left: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-.prose-article li {
-  margin-bottom: 0.5rem;
-}
-.prose-article strong {
-  color: #fff;
-  font-weight: 700;
-}
+.prose-article a:hover { color: #f8fafc; }
+.prose-article ul, .prose-article ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.prose-article li { margin-bottom: 0.5rem; }
+.prose-article strong { color: #f8fafc; font-weight: 600; }
 .prose-article blockquote {
-  border-left: 3px solid #FABF2C;
+  border-left: 3px solid #22c55e;
   padding-left: 1rem;
-  color: #888;
+  color: #a3a3a3;
   font-style: italic;
-  margin: 1.5rem 0;
+  margin: 1.25rem 0;
 }
 .prose-article code {
-  background: #111;
-  color: #FABF2C;
+  background: #1a1a1a;
+  color: #22c55e;
   padding: 0.1em 0.4em;
-  font-family: monospace;
+  font-family: 'Space Mono', monospace;
   font-size: 0.875em;
 }

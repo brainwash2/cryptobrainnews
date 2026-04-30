@@ -2,13 +2,12 @@
 
 import React from 'react';
 
-export type Timeframe = '1D' | '7D' | '30D' | 'YTD' | '1Y';
-export const ALL_TIMEFRAMES: Timeframe[] = ['1D', '7D', '30D', 'YTD', '1Y'];
+export type Timeframe = '1D' | '7D' | '30D' | '90D' | '1Y' | 'YTD' | 'ALL';
+export const ALL_TIMEFRAMES: Timeframe[] = ['1D', '7D', '30D', '90D', '1Y', 'YTD', 'ALL'];
 
 interface TimeframeSelectorProps {
   value: Timeframe;
   onChange: (tf: Timeframe) => void;
-  /** Which timeframes are clickable. Others render disabled. */
   available?: Timeframe[];
   className?: string;
 }
@@ -20,24 +19,22 @@ export function TimeframeSelector({
   className = '',
 }: TimeframeSelectorProps) {
   return (
-    <div className={`flex gap-1 ${className}`} role="group" aria-label="Timeframe selector">
+    <div className={`inline-flex items-center gap-1 ${className}`} role="group" aria-label="Timeframe selector">
       {ALL_TIMEFRAMES.map((tf) => {
         const enabled = available.includes(tf);
-        const active  = value === tf;
+        const active = value === tf;
+        if (!enabled) return null;
         return (
           <button
             key={tf}
             type="button"
             aria-pressed={active}
-            disabled={!enabled}
-            onClick={() => { if (enabled) onChange(tf); }}
+            onClick={() => onChange(tf)}
             className={[
-              'px-3 py-1.5 text-[10px] font-black uppercase tracking-widest border transition-all',
+              'rounded-2xl px-4 py-1.5 text-sm font-medium transition-colors duration-200',
               active
-                ? 'bg-[#FABF2C] text-black border-[#FABF2C]'
-                : enabled
-                  ? 'text-[#555] border-[#1a1a1a] bg-transparent hover:border-[#FABF2C]/60 hover:text-[#FABF2C]'
-                  : 'text-[#2a2a2a] border-[#111] bg-transparent cursor-not-allowed opacity-40',
+                ? 'bg-[#27272a] text-white'
+                : 'text-[#a3a3a3] hover:text-[#f8fafc]',
             ].join(' ')}
           >
             {tf}
