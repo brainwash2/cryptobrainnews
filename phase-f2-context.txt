@@ -1,0 +1,840 @@
+=== CRYPTOBRAINNEWS PHASE F-2 CONTEXT ===
+Generated: Fri May  1 12:06:58 AM CET 2026
+
+--- src/lib/news/telegram.ts ---
+/**
+ * lib/news/telegram.ts
+ * Telegram broadcast with:
+ *   - Rate-limit awareness (Telegram: 30 msg/s globally, 1 msg/s per chat)
+ *   - Automatic dead-letter queuing on failure
+ *   - Message chunking for articles exceeding 4096-char limit
+ *   - HTML parse mode with safe escaping
+ */
+
+import { randomUUID } from 'crypto';
+import { BroadcastQueue } from './broadcast-queue';
+import type { TelegramPayload } from './types';
+
+const TELEGRAM_API = 'https://api.telegram.org';
+const MAX_MSG_LENGTH = 4096;
+// Minimum delay between messages to the same chat (1050ms > Telegram's 1/s limit)
+const INTER_MESSAGE_DELAY_MS = 1050;
+
+export class TelegramBroadcaster {
+  private readonly botToken: string;
+  private readonly queue: BroadcastQueue;
+
+  constructor(botToken: string) {
+    if (!botToken) throw new Error('TELEGRAM_BOT_TOKEN is required');
+    this.botToken = botToken;
+    this.queue = new BroadcastQueue();
+  }
+
+  /**
+   * Send a message. On failure, enqueues for retry rather than throwing.
+   * Returns true if sent successfully, false if queued for retry.
+   */
+  async send(
+    payload: TelegramPayload,
+    runId?: string,
+  ): Promise<boolean> {
+    const id = runId ?? randomUUID();
+    const chunks = this.chunkMessage(payload.text, MAX_MSG_LENGTH);
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunkPayload: TelegramPayload = {
+        ...payload,
+        text: chunks[i],
+      };
+      try {
+        await this.sendRaw(chunkPayload);
+        if (i < chunks.length - 1) {
+          await new Promise((r) => setTimeout(r, INTER_MESSAGE_DELAY_MS));
+        }
+      } catch (err) {
+        await this.queue.enqueueFailure({
+          id: `${id}-chunk${i}`,
+          channel: 'telegram',
+          payload: chunkPayload,
+          attempts: 1,
+          firstFailedAt: new Date().toISOString(),
+          error: err instanceof Error ? err.message : String(err),
+          lastError: '',
+        });
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Drain retry queue – call from end of daily pipeline run or a separate cron. */
+  async drainRetries(): Promise<{ sent: number; requeued: number; deadLettered: number }> {
+    return this.queue.drainRetryQueue<TelegramPayload>('telegram', (payload) =>
+      this.sendRaw(payload),
+    );
+  }
+
+  /** Escape HTML special chars for Telegram HTML parse mode. */
+  static escapeHTML(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  /** Format a published article for Telegram. */
+  static formatArticleMessage(
+    title: string,
+    summary: string,
+    slug: string,
+    tags: string[],
+  ): TelegramPayload {
+    const tagLine = tags.slice(0, 5).map((t) => `#${t.replace(/\s+/g, '')}`).join(' ');
+    const url = `https://cryptobrainnews.com/news/${slug}`;
+    const text =
+      `📰 <b>${TelegramBroadcaster.escapeHTML(title)}</b>\n\n` +
+      `${TelegramBroadcaster.escapeHTML(summary)}\n\n` +
+      `${tagLine}\n\n` +
+      `<a href="${url}">Read full article →</a>`;
+
+    return { chatId: process.env.TELEGRAM_CHAT_ID ?? '', text, parseMode: 'HTML', disableWebPagePreview: false };
+  }
+
+  private async sendRaw(payload: TelegramPayload): Promise<void> {
+    const res = await fetch(`${TELEGRAM_API}/bot${this.botToken}/sendMessage`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(15_000),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: payload.chatId,
+        text: payload.text,
+        parse_mode: payload.parseMode,
+        disable_web_page_preview: payload.disableWebPagePreview ?? false,
+      }),
+    });
+
+    if (res.status === 429) {
+      // Respect Retry-After header
+      const retryAfter = Number(res.headers.get('Retry-After') ?? '5');
+      await new Promise((r) => setTimeout(r, retryAfter * 1000));
+      // One automatic retry on rate-limit
+      return this.sendRaw(payload);
+    }
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Telegram API ${res.status}: ${body}`);
+    }
+  }
+
+  /** Split text at word boundaries without breaking HTML tags. */
+  private chunkMessage(text: string, maxLen: number): string[] {
+    if (text.length <= maxLen) return [text];
+    const chunks: string[] = [];
+    let remaining = text;
+    while (remaining.length > maxLen) {
+      let cutAt = remaining.lastIndexOf('\n', maxLen);
+      if (cutAt < maxLen * 0.5) cutAt = remaining.lastIndexOf(' ', maxLen);
+      if (cutAt <= 0) cutAt = maxLen;
+      chunks.push(remaining.slice(0, cutAt).trim());
+      remaining = remaining.slice(cutAt).trim();
+    }
+    if (remaining) chunks.push(remaining);
+    return chunks;
+  }
+}
+
+--- src/lib/news/broadcast-queue.ts ---
+/**
+ * lib/news/broadcast-queue.ts
+ * Redis-backed dead-letter queue for Telegram and Newsletter broadcasts.
+ *
+ * On first failure:    item pushed to retry list with attempt count = 1
+ * On retry (cron):     up to MAX_RETRIES attempts with exponential backoff check
+ * After MAX_RETRIES:   item moved to dead-letter list (permanent, inspectable)
+ *
+ * Queue keys:
+ *   broadcast:retry:<channel>   LIST  – pending retries (LPUSH/RPOP)
+ *   broadcast:dead:<channel>    LIST  – permanent failures (LPUSH only)
+ *   broadcast:inflight:<id>     STRING – per-item lock (prevents double-send)
+ *
+ * Designed to be drained by a separate cron job or at the end of the
+ * daily pipeline run via drainRetryQueue().
+ */
+
+import { Redis } from '@upstash/redis';
+
+export type BroadcastChannel = 'telegram' | 'newsletter';
+
+export interface BroadcastJob<T = unknown> {
+  id: string;           // uuid-v4 from the original pipeline run
+  channel: BroadcastChannel;
+  payload: T;
+  attempts: number;
+  firstFailedAt: string;
+  lastFailedAt: string;
+  lastError: string;
+}
+
+const MAX_RETRIES = 4;
+const INFLIGHT_TTL_SECONDS = 120; // prevent double-send within 2 min
+
+function retryKey(channel: BroadcastChannel): string  { return `broadcast:retry:${channel}`; }
+function deadKey(channel: BroadcastChannel): string   { return `broadcast:dead:${channel}`; }
+function inflightKey(id: string): string               { return `broadcast:inflight:${id}`; }
+
+export class BroadcastQueue {
+  private readonly redis: Redis;
+
+  constructor() {
+    this.redis = Redis.fromEnv();
+  }
+
+  /**
+   * Push a failed broadcast onto the retry queue.
+   * If the job has already hit MAX_RETRIES, send straight to dead-letter.
+   */
+  async enqueueFailure<T>(
+    job: Omit<BroadcastJob<T>, 'lastFailedAt'> & { error: string },
+  ): Promise<void> {
+    const updated: BroadcastJob<T> = {
+      ...job,
+      attempts: job.attempts,
+      lastFailedAt: new Date().toISOString(),
+      lastError: job.error,
+    };
+
+    if (updated.attempts >= MAX_RETRIES) {
+      await this.redis.lpush(deadKey(job.channel), JSON.stringify(updated));
+    } else {
+      await this.redis.lpush(retryKey(job.channel), JSON.stringify(updated));
+    }
+  }
+
+  /**
+   * Drain the retry queue for a given channel.
+   * Calls sendFn for each job; on success removes from queue, on failure
+   * re-enqueues with incremented attempt count.
+   *
+   * Returns counts for observability.
+   */
+  async drainRetryQueue<T>(
+    channel: BroadcastChannel,
+    sendFn: (payload: T) => Promise<void>,
+  ): Promise<{ sent: number; requeued: number; deadLettered: number }> {
+    const counts = { sent: 0, requeued: 0, deadLettered: 0 };
+
+    // Drain entire queue in one pass (snapshot length to avoid infinite loop)
+    const length = await this.redis.llen(retryKey(channel));
+    if (length === 0) return counts;
+
+    for (let i = 0; i < length; i++) {
+      const raw = await this.redis.rpop<string>(retryKey(channel));
+      if (!raw) break;
+
+      let job: BroadcastJob<T>;
+      try {
+        job = JSON.parse(raw) as BroadcastJob<T>;
+      } catch {
+        // Malformed entry – drop it
+        continue;
+      }
+
+      // Idempotency lock: skip if another worker is processing this id
+      const locked = await this.redis.set(inflightKey(job.id), '1', {
+        nx: true,
+        ex: INFLIGHT_TTL_SECONDS,
+      });
+      if (!locked) continue;
+
+      try {
+        await sendFn(job.payload);
+        counts.sent += 1;
+        // Success – do NOT re-enqueue; inflight key expires naturally
+      } catch (err) {
+        counts.requeued += 1;
+        const nextAttempts = job.attempts + 1;
+        if (nextAttempts >= MAX_RETRIES) counts.deadLettered += 1;
+
+        await this.enqueueFailure<T>({
+          ...job,
+          attempts: nextAttempts,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        // Release inflight lock so retry can proceed after backoff
+        await this.redis.del(inflightKey(job.id));
+      }
+    }
+
+    return counts;
+  }
+
+  /** Inspect dead-letter items (for dashboard/alerting). */
+  async peekDeadLetters(channel: BroadcastChannel, count = 20): Promise<BroadcastJob[]> {
+    const items = await this.redis.lrange(deadKey(channel), 0, count - 1);
+    return items.map((raw) => JSON.parse(raw as string) as BroadcastJob);
+  }
+
+  /** Count pending retries. Useful for health-check endpoints. */
+  async pendingCount(channel: BroadcastChannel): Promise<number> {
+    return this.redis.llen(retryKey(channel));
+  }
+}
+
+--- src/lib/news/dedup.ts ---
+/**
+ * lib/news/dedup.ts
+ * Redis-backed deduplication for the RSS ingestion and daily-article pipeline.
+ *
+ * Strategy:
+ *  - Primary key:   SHA-256 of normalised article URL (stable, content-independent)
+ *  - Secondary key: SHA-256 of normalised headline (catches re-published URLs)
+ *  - TTL:           7 days (604 800 s) – long enough to prevent re-processing
+ *    within any reasonable publishing cycle, short enough to allow genuine re-runs.
+ *
+ * Usage:
+ *   const dedup = new ArticleDedup();
+ *   if (await dedup.isDuplicate(item.link, item.title)) continue;
+ *   // … process …
+ *   await dedup.markSeen(item.link, item.title, pipelineRunId);
+ */
+
+import { Redis } from '@upstash/redis';
+import { createHash } from 'crypto';
+
+const DEDUP_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
+const KEY_PREFIX_URL = 'dedup:url:';
+const KEY_PREFIX_TITLE = 'dedup:title:';
+
+export interface DedupRecord {
+  seenAt: string;         // ISO-8601
+  pipelineRunId: string;
+  sanityDocumentId?: string;
+}
+
+export interface DedupCheckResult {
+  isDuplicate: boolean;
+  matchedOn?: 'url' | 'title';
+  existingRecord?: DedupRecord;
+}
+
+function normaliseUrl(url: string): string {
+  try {
+    const u = new URL(url.trim().toLowerCase());
+    // Strip UTM and tracking params
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'ref'].forEach(
+      (p) => u.searchParams.delete(p),
+    );
+    return u.toString();
+  } catch {
+    return url.trim().toLowerCase();
+  }
+}
+
+function normaliseTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')   // strip punctuation
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function sha256(input: string): string {
+  return createHash('sha256').update(input).digest('hex');
+}
+
+export class ArticleDedup {
+  private readonly redis: Redis;
+
+  constructor() {
+    // Upstash Redis auto-reads UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+    this.redis = Redis.fromEnv();
+  }
+
+  private urlKey(url: string): string {
+    return KEY_PREFIX_URL + sha256(normaliseUrl(url));
+  }
+
+  private titleKey(title: string): string {
+    return KEY_PREFIX_TITLE + sha256(normaliseTitle(title));
+  }
+
+  /**
+   * Returns true if we have seen this URL or title before.
+   * Checks both keys; the first match wins and is returned.
+   */
+  async isDuplicate(url: string, title: string): Promise<DedupCheckResult> {
+    const [urlRecord, titleRecord] = await Promise.all([
+      this.redis.get<DedupRecord>(this.urlKey(url)),
+      this.redis.get<DedupRecord>(this.titleKey(title)),
+    ]);
+
+    if (urlRecord) {
+      return { isDuplicate: true, matchedOn: 'url', existingRecord: urlRecord };
+    }
+    if (titleRecord) {
+      return { isDuplicate: true, matchedOn: 'title', existingRecord: titleRecord };
+    }
+    return { isDuplicate: false };
+  }
+
+  /**
+   * Marks an article as seen. Writes both URL and title keys atomically via pipeline.
+   * Should be called AFTER successful Sanity write so a failed publish doesn't
+   * permanently block an article.
+   */
+  async markSeen(
+    url: string,
+    title: string,
+    pipelineRunId: string,
+    sanityDocumentId?: string,
+  ): Promise<void> {
+    const record: DedupRecord = {
+      seenAt: new Date().toISOString(),
+      pipelineRunId,
+      ...(sanityDocumentId ? { sanityDocumentId } : {}),
+    };
+
+    const pipeline = this.redis.pipeline();
+    pipeline.set(this.urlKey(url), record, { ex: DEDUP_TTL_SECONDS });
+    pipeline.set(this.titleKey(title), record, { ex: DEDUP_TTL_SECONDS });
+    await pipeline.exec();
+  }
+
+  /**
+   * Bulk check – returns a map of guid → DedupCheckResult.
+   * Use for RSS batch ingestion to avoid per-item round trips.
+   */
+  async bulkCheck(
+    items: Array<{ guid: string; url: string; title: string }>,
+  ): Promise<Map<string, DedupCheckResult>> {
+    if (items.length === 0) return new Map();
+
+    // Fetch all URL and title keys in two batched mget calls
+    const urlKeys = items.map((i) => this.urlKey(i.url));
+    const titleKeys = items.map((i) => this.titleKey(i.title));
+
+    const [urlResults, titleResults] = await Promise.all([
+      this.redis.mget<DedupRecord[]>(...urlKeys),
+      this.redis.mget<DedupRecord[]>(...titleKeys),
+    ]);
+
+    const results = new Map<string, DedupCheckResult>();
+    items.forEach((item, idx) => {
+      const urlRecord = urlResults[idx];
+      const titleRecord = titleResults[idx];
+      if (urlRecord) {
+        results.set(item.guid, { isDuplicate: true, matchedOn: 'url', existingRecord: urlRecord });
+      } else if (titleRecord) {
+        results.set(item.guid, {
+          isDuplicate: true,
+          matchedOn: 'title',
+          existingRecord: titleRecord,
+        });
+      } else {
+        results.set(item.guid, { isDuplicate: false });
+      }
+    });
+    return results;
+  }
+}
+
+
+--- src/app/sitemap.ts ---
+/**
+ * app/sitemap.ts
+ * Next.js 16 Metadata API sitemap — auto-submitted to Google Search Console.
+ */
+
+import { type MetadataRoute } from 'next';
+import { NEWS_CATEGORIES } from '@/lib/news-categories';
+import { getAllTags } from '@/lib/sanity';
+import { PageCache } from '../lib/news/page-cache';
+import { sanityFetch } from '../lib/news/sanity-client';
+
+export const revalidate = 3600;
+
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://cryptobrainnews.com';
+const cache = new PageCache();
+
+interface ArticleMeta {
+  slug:        string;
+  publishedAt: string;
+  updatedAt?:  string;
+}
+
+interface AuthorMeta {
+  slug: string;
+}
+
+async function fetchArticleMetas(): Promise<ArticleMeta[]> {
+  const { data } = await cache.getOrSet('sitemap', 'articles', () =>
+    sanityFetch<ArticleMeta[]>(
+      `*[_type == "post"] | order(publishedAt desc) {
+         "slug":        slug.current,
+         "publishedAt": publishedAt,
+         "updatedAt":   _updatedAt
+       }`,
+    ),
+  );
+  return data;
+}
+
+async function fetchAuthors(): Promise<AuthorMeta[]> {
+  const { data } = await cache.getOrSet('sitemap', 'authors', () =>
+    sanityFetch<AuthorMeta[]>(
+      `*[_type == "author" && defined(slug.current)] { "slug": slug.current }`,
+    ),
+  );
+  return data;
+}
+
+function articlePriority(publishedAt: string): number {
+  const ageMs  = Date.now() - new Date(publishedAt).getTime();
+  const ageDays = ageMs / (1000 * 60 * 60 * 24);
+  if (ageDays < 7)  return 0.9;
+  if (ageDays < 30) return 0.8;
+  return 0.6;
+}
+
+function articleChangefreq(
+  publishedAt: string,
+): MetadataRoute.Sitemap[number]['changeFrequency'] {
+  const ageDays = (Date.now() - new Date(publishedAt).getTime()) / 86_400_000;
+  if (ageDays < 7)  return 'hourly';
+  if (ageDays < 30) return 'daily';
+  return 'weekly';
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [allTags, articleMetas, authors] = await Promise.all([
+    getAllTags().catch(() => []),
+    fetchArticleMetas(),
+    fetchAuthors(),
+  ]);
+
+  // Static routes
+  const staticRoutes: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/`,              lastModified: new Date(), changeFrequency: 'hourly',  priority: 1.0 },
+    { url: `${BASE_URL}/news`,          lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.95 },
+    { url: `${BASE_URL}/news/search`,   lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.5 },
+    { url: `${BASE_URL}/tags`,          lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
+    { url: `${BASE_URL}/authors`,       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.6 },
+    { url: `${BASE_URL}/events`,        lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
+    { url: `${BASE_URL}/airdrops`,      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
+    { url: `${BASE_URL}/price-indexes`, lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.8 },
+    { url: `${BASE_URL}/bookmarks`,     lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
+  ];
+
+  // Category routes
+  const categoryRoutes: MetadataRoute.Sitemap = NEWS_CATEGORIES.map(cat => ({
+    url: `${BASE_URL}/news/category/${cat.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'hourly' as const,
+    priority: 0.85,
+  }));
+
+  // Tag routes
+  const tagRoutes: MetadataRoute.Sitemap = (allTags as string[]).map(tag => ({
+    url: `${BASE_URL}/tags/${encodeURIComponent(tag)}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.65,
+  }));
+
+  // Article routes
+  const articleEntries: MetadataRoute.Sitemap = articleMetas.map((a) => ({
+    url:            `${BASE_URL}/news/${a.slug}`,
+    lastModified:   a.updatedAt ?? a.publishedAt,
+    changeFrequency: articleChangefreq(a.publishedAt),
+    priority:       articlePriority(a.publishedAt),
+  }));
+
+  // Author routes
+  const authorEntries: MetadataRoute.Sitemap = authors.map((a) => ({
+    url:            `${BASE_URL}/authors/${a.slug}`,
+    changeFrequency: 'monthly',
+    priority:       0.5,
+  }));
+
+  return [
+    ...staticRoutes,
+    ...categoryRoutes,
+    ...tagRoutes,
+    ...articleEntries,
+    ...authorEntries,
+  ];
+}
+
+--- src/app/api/newsletter/unsubscribe/route.ts ---
+import { NextRequest, NextResponse } from 'next/server';
+import { Resend } from 'resend';
+import { neon } from '@neondatabase/serverless';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+function renderPage(message: string, isError = false) {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CryptoBrainNews — Unsubscribe</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#050505;color:#fff;font-family:'Helvetica Neue',sans-serif;
+         min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .card{max-width:440px;width:100%;border:1px solid #1a1a1a;padding:40px}
+    .logo{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+    .logo-badge{background:#FABF2C;color:#000;font-size:12px;font-weight:900;
+                padding:5px 10px;letter-spacing:2px}
+    .logo-name{font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:3px}
+    h1{font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:-0.5px;
+       margin-bottom:12px;color:${isError ? '#ff4757' : '#fff'}}
+    p{font-size:13px;color:#888;line-height:1.7;margin-bottom:24px;font-family:monospace}
+    a{display:inline-block;background:#FABF2C;color:#000;font-size:10px;font-weight:900;
+      text-transform:uppercase;letter-spacing:3px;padding:12px 24px;text-decoration:none}
+    a:hover{background:#fff}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="logo-badge">CB</div>
+      <div class="logo-name">CryptoBrain</div>
+    </div>
+    <h1>${isError ? 'Something went wrong' : 'Unsubscribed'}</h1>
+    <p>${message}</p>
+    <a href="${(process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.vercel.app').replace(/\/$/, '')}">
+      Return to CryptoBrainNews →
+    </a>
+  </div>
+</body>
+</html>`;
+}
+
+export async function GET(req: NextRequest) {
+  const email = req.nextUrl.searchParams.get('email');
+
+  if (!email || !email.includes('@')) {
+    return new NextResponse(renderPage('Invalid or missing email address.', true), {
+      status: 400,
+      headers: { 'Content-Type': 'text/html' },
+    });
+  }
+
+  const clean = decodeURIComponent(email).toLowerCase().trim();
+
+  // ── 1. Update Neon ────────────────────────────────────────────────────
+  try {
+    const sql = neon(process.env.DATABASE_URL!);
+    await sql`
+      UPDATE newsletter_subscribers
+      SET status = 'unsubscribed', updated_at = NOW()
+      WHERE email = ${clean}
+    `;
+  } catch (dbErr: any) {
+    console.error('[Unsubscribe] Neon update failed:', dbErr.message);
+  }
+
+  // ── 2. Remove from Resend audience ───────────────────────────────────
+  const audienceId = process.env.RESEND_AUDIENCE_ID;
+  if (audienceId) {
+    try {
+      // List contacts to find the contact ID by email
+      const { data } = await resend.contacts.list({ audienceId });
+      const contact = data?.data?.find((c: any) => c.email === clean);
+      if (contact?.id) {
+        await resend.contacts.remove({ audienceId, id: contact.id });
+      }
+    } catch (e: any) {
+      console.warn('[Unsubscribe] Resend remove failed:', e.message);
+      // Still show success — Neon is updated
+    }
+  }
+
+  return new NextResponse(
+    renderPage(`${clean} has been removed from all CryptoBrainNews mailings. You won't hear from us again.`),
+    { headers: { 'Content-Type': 'text/html' } }
+  );
+}
+
+--- src/lib/news/newsletter.ts ---
+/**
+ * lib/news/newsletter.ts
+ * Resend-backed newsletter broadcast with:
+ *   - Dead-letter queuing on failure (mirrors Telegram strategy)
+ *   - Subscriber batching (Resend free tier: 100 emails/day; adjust batch size for Pro)
+ *   - Idempotency key per article slug to prevent double-sends on retries
+ *   - Unsubscribe link injected automatically
+ */
+
+import { randomUUID } from 'crypto';
+import { BroadcastQueue } from './broadcast-queue';
+import type { NewsletterPayload } from './types';
+
+const RESEND_API = 'https://api.resend.com';
+const BATCH_SIZE = 90; // stay under Resend free-tier daily limit with headroom
+const FROM_ADDRESS = process.env.NEWSLETTER_FROM ?? 'news@cryptobrainnews.com';
+const UNSUBSCRIBE_BASE = 'https://cryptobrainnews.com/unsubscribe';
+
+export interface ResendSendRequest {
+  from: string;
+  to: string[];
+  subject: string;
+  html: string;
+  text: string;
+  headers?: Record<string, string>;
+  idempotency_key?: string;
+}
+
+export interface NewsletterSendJob {
+  payload: NewsletterPayload;
+  recipients: string[];
+  articleSlug: string;  // Used as idempotency key prefix
+}
+
+export class NewsletterService {
+  private readonly apiKey: string;
+  private readonly queue: BroadcastQueue;
+
+  constructor(apiKey: string) {
+    if (!apiKey) throw new Error('RESEND_API_KEY is required');
+    this.apiKey = apiKey;
+    this.queue = new BroadcastQueue();
+  }
+
+  /**
+   * Broadcast to all recipients in batches.
+   * Each batch failure is independently queued for retry.
+   * Returns { sent, queued } counts.
+   */
+  async broadcast(job: NewsletterSendJob): Promise<{ sent: number; queued: number }> {
+    const { payload, recipients, articleSlug } = job;
+    const batches = this.toBatches(recipients, BATCH_SIZE);
+    let sent = 0;
+    let queued = 0;
+
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      const idempotencyKey = `${articleSlug}-batch-${batchIndex}`;
+
+      const request: ResendSendRequest = {
+        from: FROM_ADDRESS,
+        to: batch,
+        subject: payload.subject,
+        html: this.buildHTML(payload, batch),
+        text: this.buildText(payload),
+        headers: {
+          'List-Unsubscribe': `<${UNSUBSCRIBE_BASE}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
+        idempotency_key: idempotencyKey,
+      };
+
+      try {
+        await this.sendBatch(request);
+        sent += batch.length;
+      } catch (err) {
+        queued += batch.length;
+        await this.queue.enqueueFailure<ResendSendRequest>({
+          id: `newsletter-${idempotencyKey}-${randomUUID()}`,
+          channel: 'newsletter',
+          payload: request,
+          attempts: 1,
+          firstFailedAt: new Date().toISOString(),
+          error: err instanceof Error ? err.message : String(err),
+          lastError: '',
+        });
+      }
+    }
+
+    return { sent, queued };
+  }
+
+  /** Drain the newsletter retry queue. Call from daily pipeline or separate cron. */
+  async drainRetries(): Promise<{ sent: number; requeued: number; deadLettered: number }> {
+    return this.queue.drainRetryQueue<ResendSendRequest>('newsletter', (req) =>
+      this.sendBatch(req),
+    );
+  }
+
+  private async sendBatch(request: ResendSendRequest): Promise<void> {
+    const res = await fetch(`${RESEND_API}/emails`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(20_000),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+        ...(request.idempotency_key
+          ? { 'Idempotency-Key': request.idempotency_key }
+          : {}),
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (res.status === 429) {
+      const retryAfter = Number(res.headers.get('Retry-After') ?? '10');
+      await new Promise((r) => setTimeout(r, retryAfter * 1000));
+      return this.sendBatch(request);
+    }
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Resend API ${res.status}: ${body}`);
+    }
+  }
+
+  private buildHTML(payload: NewsletterPayload, _recipients: string[]): string {
+    // Minimal plain-HTML template — swap for your React Email component in production
+    const tagPills = payload.tags
+      .slice(0, 6)
+      .map((t) => `<span style="background:#1a1a2e;color:#00d4ff;padding:2px 8px;border-radius:4px;font-size:12px;margin-right:4px">${t}</span>`)
+      .join('');
+
+    return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="background:#0d0d1a;color:#e0e0e0;font-family:system-ui,sans-serif;margin:0;padding:0">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;padding:32px 16px">
+    <tr><td>
+      <p style="color:#00d4ff;font-size:12px;letter-spacing:2px;text-transform:uppercase">CryptoBrainNews Daily</p>
+      <h1 style="font-size:24px;line-height:1.3;color:#ffffff;margin:8px 0 16px">${payload.articleTitle}</h1>
+      <p style="font-size:15px;line-height:1.6;color:#b0b0c0">${payload.summary}</p>
+      <div style="margin:20px 0">${tagPills}</div>
+      <a href="${payload.articleUrl}" style="display:inline-block;background:#00d4ff;color:#0d0d1a;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:14px">Read Full Article →</a>
+      <hr style="border:none;border-top:1px solid #1a1a2e;margin:32px 0">
+      <p style="font-size:11px;color:#555">You're receiving this because you subscribed to CryptoBrainNews.
+        <a href="${UNSUBSCRIBE_BASE}?email={{email}}" style="color:#555">Unsubscribe</a>
+      </p>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+  }
+
+  private buildText(payload: NewsletterPayload): string {
+    return [
+      `CryptoBrainNews Daily`,
+      ``,
+      payload.articleTitle,
+      ``,
+      payload.summary,
+      ``,
+      `Tags: ${payload.tags.join(', ')}`,
+      ``,
+      `Read full article: ${payload.articleUrl}`,
+      ``,
+      `Unsubscribe: ${UNSUBSCRIBE_BASE}`,
+    ].join('\n');
+  }
+
+  private toBatches<T>(arr: T[], size: number): T[][] {
+    const batches: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) {
+      batches.push(arr.slice(i, i + size));
+    }
+    return batches;
+  }
+}
+

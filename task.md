@@ -113,3 +113,7 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase B — Spot On Chain → Zerion replacement
 	•	New Status: COMPLETED
 	•	Notes: Created src/lib/zerion.ts with getZerionWhaleAlerts() fetching entity‑labelled transactions from Zerion API (free tier: 3,000 req/day). Queries known whale addresses (Binance, Coinbase, Kraken, Maker DAO). Filters >$100K and deduplicates by tx_hash. Updated whale-watch/page.tsx to merge Etherscan + Zerion sources with a new Entity column. Added ZERION_API_KEY to .env.example. Spot On Chain module kept as deprecated reference.
+[YYYY-MM-DD] STATUS UPDATE
+	•	Reference: Phase X (Task description)
+	•	New Status: COMPLETED
+	•	Notes: Brief notes on what was built.

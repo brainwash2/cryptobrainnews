@@ -1,5 +1,5 @@
 === CRYPTOBRAINNEWS FULL CONTEXT ===
-Generated: Thu Apr 30 02:33:49 AM CET 2026
+Generated: Thu Apr 30 11:04:23 PM CET 2026
 
 ========== FOLDER STRUCTURE ==========
 .
@@ -238,52 +238,110 @@ Generated: Thu Apr 30 02:33:49 AM CET 2026
 
 ========== ROOT FILES ==========
 --- .env.example ---
+# ═══════════════════════════════════════════════════
+# CryptoBrainNews — Environment Variables (Free Tier)
+# ═══════════════════════════════════════════════════
+# Copy this to .env.local and fill in your values.
+# All services listed below are free or have
+# genuinely free tiers.
 
-# ── Phase C — Paid APIs (minimum viable integrations) ─────────────────────────
-# Glassnode Standard plan $49/mo — glassnode.com → API key
-# Adds SOPR, MVRV, NUPL, exchange net flows to BTC/ETH on‑chain pages
-GLASSNODE_API_KEY=
+# ── Site Identity ─────────────────────────────────
+NEXT_PUBLIC_SITE_URL=https://cryptobrainnews.vercel.app
 
-# Kaiko Lite $300/mo — kaiko.com → API key
-# Adds order‑book spread + depth for BTC‑USD / ETH‑USD at /data/markets/liquidity
-KAIKO_API_KEY=
+# ── Sanity CMS (free — 2 non‑admin users) ────────
+# Required for news article storage & editorial dashboard.
+# Get these at sanity.io → create project.
+NEXT_PUBLIC_SANITY_PROJECT_ID=
+NEXT_PUBLIC_SANITY_DATASET=production
+SANITY_API_TOKEN=             # Editor role · used by pipeline to create articles
 
-# Santiment Personal $79/mo — santiment.net → API key
-# Adds dev activity, social volume, sentiment curves at /data/alternative/social
+# ── Upstash Redis (free — required for all caching) ─
+# Sign‑up: upstash.com → create free Redis database.
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+
+# ── Neon PostgreSQL (free — agent execution logging) ─
+# Sign‑up: neon.tech → create free project.
+NEON_DATABASE_URL=
+
+# ── Cron & Admin Security ─────────────────────────
+CRON_SECRET=                  # Any random string · protects /api/cron/* routes
+ADMIN_SECRET=                 # Any random string · protects /admin dashboard
+
+# ── Dune Analytics (free — live on‑chain SQL queries) ─
+# Sign‑up: dune.com → create free account → generate API key.
+DUNE_API_KEY=
+
+# Individual Dune query IDs (optional — seed fallback used when unset)
+DUNE_DAO_GOVERNANCE_ID=       # Snapshot proposals · /data/governance
+DUNE_NFT_COLLECTIONS_ID=      # NFT 7‑day volume · /data/nfts/volume
+DUNE_DEX_POOLS_ID=            # DEX liquidity pools · /data/defi/dex-volume
+DUNE_STABLECOIN_HOLDERS_ID=   # USDT/USDC holder buckets · /data/stablecoins/usd
+DUNE_WHALES_ID=               # Cross‑chain whale transfers · /data/defi/whale-watch
+DUNE_PROTOCOL_DAU_ID=         # Protocol daily active users · /data/defi/tvl
+DUNE_TOP_PAIRS_ID=            # Top token pairs · /data/defi/dex-volume
+DUNE_L2_ACTIVE_ID=            # L2 active addresses · /data/scaling/l2-comparison
+DUNE_CEX_DEX_VOLUME_ID=       # (optional) CEX‑vs‑DEX volume · seed fallback used
+
+# ── AI Pipeline ───────────────────────────────────
+# Groq: free tier, used for news summarisation
+GROQ_API_KEY=                 # console.groq.com → create free API key
+# Gemini: free tier, used for article polish + SEO metadata
+GEMINI_API_KEY=               # makersuite.google.com → create free API key
+
+# ── On‑chain & data APIs ──────────────────────────
+# Etherscan – Ethereum on‑chain data & whale transfers
+# Free: 5 calls/sec, 100k calls/day · etherscan.io/myapikey
+ETHERSCAN_API_KEY=
+# Zerion – entity‑labelled whale alerts
+# Free: 3,000 requests/day · dashboard.zerion.io
+ZERION_API_KEY=
+# Alchemy – NFT floor prices on Ethereum
+# Free: 300M compute units/month · alchemy.com
+ALCHEMY_API_KEY=
+# CoinGlass – futures liquidations by exchange
+# Free: 50 data points/day · coinglass.com
+COINGLASS_API_KEY=
+# Santiment – dev activity, social volume, sentiment
+# Free: 1,000 calls/month · app.santiment.net (no credit card)
 SANTIMENT_API_KEY=
-
-# CoinShares weekly fund flows — manual entry (free, no API key)
-# Weekly BTC/ETH ETF flow table at /data/etfs/bitcoin and /data/etfs/comparison
-# Optionally set a scrape URL if an automated extractor is set up
-COINSHARES_SCRAPE_URL=
-
-# Greeks.live options flow — manual refresh (free, no API key)
-# Block‑trade / options‑flow section at /data/markets/options
-# Optionally set a scrape URL if an automated extractor is set up
-GREEKS_LIVE_URL=
-
-# ── Phase C Free Replacements ────────────────────────────────────────────────
-# ApeWisdom API URL (free, no key required)
+# ApeWisdom – trending crypto mentions on Reddit
+# Free, no API key required – only override if the URL changes
 APEWISDOM_API_URL=https://apewisdom.io/api/v1.0
 
-# Santiment free tier (1,000 calls/month, no credit card) — signup at app.santiment.net
-SANTIMENT_API_KEY=
+# ── RSS Feeds (comma‑separated URLs) ──────────────
+# Used by the daily article pipeline to ingest news.
+RSS_FEED_URLS=
 
-# Glassnode (paid — no free equivalent for SOPR/MVRV/NUPL; seed fallback used)
+# ── Telegram Broadcasting ─────────────────────────
+TELEGRAM_BOT_TOKEN=           # @BotFather
+TELEGRAM_CHANNEL_ID=          # Channel ID
+
+# ── Resend (newsletter & welcome emails) ──────────
+# Free: 100 emails/day · resend.com
+RESEND_API_KEY=
+RESEND_AUDIENCE_ID=           # Optional audience ID for contact sync
+RESEND_DOMAIN=                # Optional verified sending domain
+
+# ── Gitcoin Passport (Sybil‑resistant referrals) ──
+# Free · scorer.gitcoin.co
+GITCOIN_SCORER_API_KEY=
+GITCOIN_SCORER_ID=
+
+# ── Manual / optional data sources (no API key) ───
+# CoinShares weekly ETF flows – manual entry or scrape URL
+COINSHARES_SCRAPE_URL=
+# Greeks.live options flow – manual entry or scrape URL
+GREEKS_LIVE_URL=
+
+# ── Glassnode (paid — no free equivalent) ─────────
+# Standard plan $49/mo — glassnode.com → API key.
+# When unset, accurate April 2026 seed data is shown.
 GLASSNODE_API_KEY=
 
-# ── Dune Analytics (free tier, required for live on‑chain queries) ────────────
-DUNE_API_KEY=FVUvQAo3co5FBTP0d9PQkYCAOH3LI4N7 
-
-DUNE_DAO_GOVERNANCE_ID=7400718
-DUNE_NFT_COLLECTIONS_ID=7400802
-DUNE_DEX_POOLS_ID=7400811
-DUNE_STABLECOIN_HOLDERS_ID=7400865
-DUNE_WHALES_ID= 7400911
-DUNE_PROTOCOL_DAU_ID=7401328
-DUNE_TOP_PAIRS_ID=7401393
-DUNE_L2_ACTIVE_ID=7401413
-DUNE_CEX_DEX_VOLUME_ID=
+# ── Optional monitoring (free) ────────────────────
+NEXT_PUBLIC_SENTRY_DSN=       # sentry.io → free tier
+NEXT_PUBLIC_CLARITY_ID=       # clarity.microsoft.com → free
 
 --- eslint.config.mjs ---
 import { defineConfig, globalIgnores } from "eslint/config";
@@ -897,6 +955,11 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase E (Chart & UX Standardisation)
 	•	New Status: COMPLETED
 	•	Notes: Applied 15 files: global CSS redesign with The Block tokens, 5 shared components (TimeframeSelector pill rewrite, ChartSkeleton shimmer, DataPageError, MetricCard with trend badge, ProChartWrapper), TvLightweightChart extended with histogram support, and 8 page-specific client components (SpotClient, FuturesClient, BitcoinChartsClient, EthTvlClient, SolanaChartsClient, DeFiTvlClient, RevenueTrendClient, StablecoinUsdClient). All Recharts replaced with TradingView Lightweight Charts. Visual parity with The Block achieved. TypeScript clean.
+
+[2026-04-30] STATUS UPDATE
+	•	Reference: Phase B — Spot On Chain → Zerion replacement
+	•	New Status: COMPLETED
+	•	Notes: Created src/lib/zerion.ts with getZerionWhaleAlerts() fetching entity‑labelled transactions from Zerion API (free tier: 3,000 req/day). Queries known whale addresses (Binance, Coinbase, Kraken, Maker DAO). Filters >$100K and deduplicates by tx_hash. Updated whale-watch/page.tsx to merge Etherscan + Zerion sources with a new Entity column. Added ZERION_API_KEY to .env.example. Spot On Chain module kept as deprecated reference.
 
 --- tsconfig.json ---
 {
@@ -10471,8 +10534,10 @@ export default function WhaleWatchLoading() {
 }
 
 --- src/app/data/defi/whale-watch/page.tsx ---
+// src/app/data/defi/whale-watch/page.tsx
 import React from "react";
 import { getWhaleTransfers } from "@/lib/onchain-extended";
+import { getZerionWhaleAlerts } from "@/lib/zerion";
 import { DataHeader } from "../../_components/DataHeader";
 
 export const metadata = { title: "Whale Watch | CryptoBrainNews" };
@@ -10493,36 +10558,92 @@ function formatUsd(value: string | number | null | undefined): string {
 }
 
 export default async function WhaleWatchPage() {
-  const transfers = await getWhaleTransfers().catch(() => []);
+  const [etherscanTransfers, zerionAlerts] = await Promise.all([
+    getWhaleTransfers().catch(() => []),
+    getZerionWhaleAlerts(50).catch(() => []),
+  ]);
 
-  const totalVolume = transfers.reduce((s, t) => s + (Number(t.amount_usd) || 0), 0);
-  const uniqueWhales = new Set(
-    transfers.map((t) => String(t.whale_address ?? ""))
-  ).size;
+  const hasZerion = zerionAlerts.length > 0;
+
+  // Merge both sources: Etherscan + Zerion
+  // Zerion provides entity labels that Etherscan lacks
+  const allTransfers = [
+    // Etherscan transfers (primary source)
+    ...etherscanTransfers.map((t) => ({
+      blockchain:       String(t.blockchain ?? 'ethereum'),
+      timestamp:        String(t.block_time ?? ''),
+      tx_hash:          String(t.tx_hash ?? ''),
+      whale_address:    String(t.whale_address ?? ''),
+      whale_label:      null as string | null,
+      recipient:        String(t.recipient ?? ''),
+      recipient_label:  null as string | null,
+      token_symbol:     String(t.token_symbol ?? 'USDT'),
+      amount_usd:       Number(t.amount_usd ?? 0),
+      source:           'etherscan' as const,
+    })),
+    // Zerion alerts (enriched with entity labels)
+    ...zerionAlerts.map((a) => ({
+      blockchain:       a.blockchain,
+      timestamp:        a.timestamp,
+      tx_hash:          a.tx_hash,
+      whale_address:    a.whale_address,
+      whale_label:      a.whale_label,
+      recipient:        a.recipient,
+      recipient_label:  a.recipient_label,
+      token_symbol:     a.token_symbol,
+      amount_usd:       a.amount_usd,
+      source:           'zerion' as const,
+    })),
+  ];
+
+  // Deduplicate by tx_hash (Etherscan takes precedence)
+  const seenTx = new Set<string>();
+  const deduped = allTransfers.filter((t) => {
+    if (seenTx.has(t.tx_hash)) return false;
+    seenTx.add(t.tx_hash);
+    return true;
+  }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  const totalVolume = deduped.reduce((s, t) => s + t.amount_usd, 0);
+  const uniqueSenders = new Set(deduped.map((t) => t.whale_address)).size;
+
+  // Count labelled transfers from Zerion
+  const labelledCount = deduped.filter(
+    (t) => t.whale_label !== null || t.recipient_label !== null,
+  ).length;
 
   return (
     <div className="space-y-8 pb-20">
 
       <DataHeader
         title="Whale Watch"
-        description="Large USDT transfers on Ethereum (>$100K) - Source: Etherscan free API."
+        description="Large transfers on Ethereum — Etherscan USDT/USDC (>$100K) + Zerion entity‑labelled whale alerts (>$100K)."
       />
 
-      {/* Source badge */}
-      <div className="flex items-center gap-3">
+      {/* Source badges */}
+      <div className="flex items-center gap-3 flex-wrap">
         <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
-          Live - Etherscan
+          ● Live — Etherscan
         </span>
+        {hasZerion ? (
+          <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
+            ● Live — Zerion
+          </span>
+        ) : (
+          <span className="border border-[#FABF2C]/40 text-[#FABF2C] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
+            ◌ Zerion — Set ZERION_API_KEY for entity labels
+          </span>
+        )}
         <span className="text-[#333] font-mono text-[10px] uppercase tracking-widest">
-          USDT transfers &gt;$100K on Ethereum - refreshed every 5 min
+          {deduped.length} transfers tracked · Refreshed every 5 min
         </span>
       </div>
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-4">
-          <p className="text-[9px] text-[#555] uppercase font-mono mb-2 tracking-widest">Transfers</p>
-          <p className="text-2xl font-black text-[#FABF2C]">{transfers.length}</p>
+          <p className="text-[9px] text-[#555] uppercase font-mono mb-2 tracking-widest">Total Transfers</p>
+          <p className="text-2xl font-black text-[#FABF2C]">{deduped.length}</p>
         </div>
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-4">
           <p className="text-[9px] text-[#555] uppercase font-mono mb-2 tracking-widest">Total Volume</p>
@@ -10530,16 +10651,20 @@ export default async function WhaleWatchPage() {
         </div>
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-4">
           <p className="text-[9px] text-[#555] uppercase font-mono mb-2 tracking-widest">Unique Senders</p>
-          <p className="text-2xl font-black text-[#FABF2C]">{uniqueWhales}</p>
+          <p className="text-2xl font-black text-[#FABF2C]">{uniqueSenders}</p>
         </div>
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-4">
           <p className="text-[9px] text-[#555] uppercase font-mono mb-2 tracking-widest">Threshold</p>
           <p className="text-2xl font-black text-white">$100K+</p>
-          <p className="text-[9px] font-mono text-[#555] mt-1">USDT only</p>
+          {hasZerion && (
+            <p className="text-[9px] font-mono text-[#00d672] mt-1">
+              {labelledCount} entity‑labelled
+            </p>
+          )}
         </div>
       </div>
 
-      {transfers.length === 0 ? (
+      {deduped.length === 0 ? (
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-12 text-center">
           <p className="text-[10px] text-[#555] font-mono uppercase tracking-widest mb-2">
             No large transfers found
@@ -10558,26 +10683,25 @@ export default async function WhaleWatchPage() {
                   <th className="px-6 py-3">Time</th>
                   <th className="px-6 py-3">Token</th>
                   <th className="px-6 py-3">From</th>
+                  <th className="px-6 py-3">Entity</th>
                   <th className="px-6 py-3">To</th>
                   <th className="px-6 py-3 text-right">USD Value</th>
+                  <th className="px-6 py-3">Source</th>
                   <th className="px-6 py-3">Tx</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#111]">
-                {transfers.slice(0, 50).map((tx, i) => {
-                  const blockTime = String(tx.block_time ?? "");
-                  const timeStr   = blockTime
-                    ? new Date(blockTime).toLocaleTimeString("en-US", {
+                {deduped.slice(0, 100).map((tx, i) => {
+                  const timeStr = tx.timestamp
+                    ? new Date(tx.timestamp).toLocaleTimeString("en-US", {
                         hour: "2-digit", minute: "2-digit",
                       })
                     : "-";
-                  const fromAddr = String(tx.whale_address ?? "");
-                  const toAddr   = String(tx.recipient   ?? "");
-                  const txHash   = String(tx.tx_hash     ?? "");
+                  const label = tx.whale_label ?? tx.recipient_label;
 
                   return (
                     <tr
-                      key={`${txHash}-${i}`}
+                      key={`${tx.tx_hash}-${i}`}
                       className={`hover:bg-[#111] transition-colors ${
                         i % 2 === 0 ? "bg-[#080808]" : "bg-[#0b0b0b]"
                       }`}
@@ -10586,34 +10710,50 @@ export default async function WhaleWatchPage() {
                         {timeStr}
                       </td>
                       <td className="px-6 py-3 font-semibold text-white">
-                        {String(tx.token_symbol ?? "USDT")}
+                        {tx.token_symbol}
                       </td>
                       <td className="px-6 py-3 text-[#555] font-mono">
                         <a
-                          href={`https://etherscan.io/address/${fromAddr}`}
+                          href={`https://etherscan.io/address/${tx.whale_address}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="hover:text-[#FABF2C] transition-colors"
                         >
-                          {shortenAddress(fromAddr)}
+                          {shortenAddress(tx.whale_address)}
                         </a>
                       </td>
+                      <td className="px-6 py-3">
+                        {label ? (
+                          <span className="font-mono text-[10px] px-2 py-0.5 border border-[#00d672]/30 text-[#00d672] bg-[#00d672]/10">
+                            {label}
+                          </span>
+                        ) : (
+                          <span className="text-[#333]">—</span>
+                        )}
+                      </td>
                       <td className="px-6 py-3 text-[#555] font-mono">
                         <a
-                          href={`https://etherscan.io/address/${toAddr}`}
+                          href={`https://etherscan.io/address/${tx.recipient}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="hover:text-[#FABF2C] transition-colors"
                         >
-                          {shortenAddress(toAddr)}
+                          {shortenAddress(tx.recipient)}
                         </a>
                       </td>
                       <td className="px-6 py-3 text-right font-bold text-[#FABF2C]">
                         {formatUsd(tx.amount_usd)}
                       </td>
                       <td className="px-6 py-3">
+                        <span className={`font-mono text-[9px] uppercase tracking-widest ${
+                          tx.source === 'zerion' ? 'text-[#00d672]' : 'text-[#555]'
+                        }`}>
+                          {tx.source}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3">
                         <a
-                          href={`https://etherscan.io/tx/${txHash}`}
+                          href={`https://etherscan.io/tx/${tx.tx_hash}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[#FABF2C] hover:underline font-mono"
@@ -10630,8 +10770,23 @@ export default async function WhaleWatchPage() {
         </div>
       )}
 
+      <div className="border border-[#1a1a1a] bg-[#080808] p-5 flex flex-col gap-3">
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-widest text-white mb-2">Data Sources</h3>
+          <p className="text-[10px] text-[#555] font-mono leading-relaxed">
+            <span className="text-[#FABF2C] font-black">Etherscan:</span> Token transfer API —
+            USDT/USDC transfers &gt;$100K on Ethereum. Free API key required (etherscan.io/myapikey).
+          </p>
+          <p className="text-[10px] text-[#555] font-mono leading-relaxed mt-2">
+            <span className="text-[#00d672] font-black">Zerion:</span> Entity‑labelled whale alerts —
+            exchange hot wallets, DeFi contracts, MEV bots. Free tier: 3,000 requests/day.
+            Sign up at dashboard.zerion.io · Set ZERION_API_KEY to activate.
+          </p>
+        </div>
+      </div>
+
       <p className="text-[10px] text-[#333] font-mono text-right">
-        Source: Etherscan token transfer API - USDT contract 0xdac17f...ec7 - Free API key required
+        Source: Etherscan + Zerion APIs · Cached 5 min · Duplicates merged by transaction hash
       </p>
     </div>
   );
@@ -15102,7 +15257,8 @@ import Image from "next/image";
 import { TimeframeSelector } from "../../../_components/TimeframeSelector";
 import type { Timeframe } from "../../../_components/TimeframeSelector";
 import TvLightweightChart from "../../../_components/charts/TvLightweightChart";
-import type { TvDataPoint, TvHistogramDataPoint } from "../../../_components/charts/TvLightweightChart";
+import type { TvDataPoint } from "../../../_components/charts/TvLightweightChart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import type {
   GlobalMarketData, FearAndGreedData,
   ExtendedCoinData, CoinGeckoExchange,
@@ -15203,16 +15359,13 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
     return bVal - aVal;
   });
 
-  const topMoversData: TvHistogramDataPoint[] = [...coins]
-    .map((c) => {
-      const change = Number(c[pctKey(tf)] ?? 0);
-      return {
-        time: c.symbol.toUpperCase(),
-        value: change,
-        color: change >= 0 ? "#22c55e" : "#ef4444",
-      };
-    })
-    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+  // Data for Recharts bar charts (categorical x-axis)
+  const topMoversData = [...coins]
+    .map((c) => ({
+      name: c.symbol.toUpperCase(),
+      change: Number(c[pctKey(tf)] ?? 0),
+    }))
+    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
     .slice(0, 12);
 
   const pct = globalData?.market_cap_percentage ?? {};
@@ -15223,15 +15376,15 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
     color: DOM_COLORS[k.toUpperCase()] ?? "#555555",
   })).filter((d) => d.pct > 0);
   const knownSum = known.reduce((s, d) => s + d.pct, 0);
-  const dominanceData: TvHistogramDataPoint[] = [
-    ...known.map((d) => ({ time: d.name, value: d.pct, color: d.color })),
-    { time: "OTHERS", value: Math.max(0, 100 - knownSum), color: DOM_COLORS.OTHERS },
+  const dominanceData = [
+    ...known.map((d) => ({ name: d.name, pct: d.pct, color: d.color })),
+    { name: "OTHERS", pct: Math.max(0, 100 - knownSum), color: DOM_COLORS.OTHERS },
   ];
 
   const totalBtcVol = exchanges.reduce((s, e) => s + e.trade_volume_24h_btc, 0);
-  const exchangeVolData: TvHistogramDataPoint[] = exchanges.slice(0, 10).map((e, i) => ({
-    time: e.name.length > 12 ? e.name.slice(0, 12) + "..." : e.name,
-    value: totalBtcVol > 0 ? (e.trade_volume_24h_btc / totalBtcVol) * 100 : 0,
+  const exchangeVolData = exchanges.slice(0, 10).map((e, i) => ({
+    name: e.name.length > 12 ? e.name.slice(0, 12) + "..." : e.name,
+    share: totalBtcVol > 0 ? (e.trade_volume_24h_btc / totalBtcVol) * 100 : 0,
     color: `rgba(34, 197, 94, ${0.5 + i * 0.05})`,
   }));
 
@@ -15256,34 +15409,60 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <div>
-              <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Top Movers</h3>
-              <p className="text-xs text-[#52525b] font-mono mt-0.5">Top 12 by absolute {tf} change</p>
-            </div>
-            <TimeframeSelector value={tf} onChange={setTf} available={["1D", "7D", "30D"]} />
+      {/* ── Top Movers (Recharts bar) ────────────────────────────────── */}
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Top Movers</h3>
+            <p className="text-xs text-[#52525b] font-mono mt-0.5">Top 12 by absolute {tf} change</p>
           </div>
-          {mounted && topMoversData.length > 0 ? (
-            <TvLightweightChart data={topMoversData as TvDataPoint[]} kind="histogram" lineColor="#22c55e" height={200} title="Top Movers" />
-          ) : (
-            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
-          )}
+          <TimeframeSelector value={tf} onChange={setTf} available={["1D", "7D", "30D"]} />
         </div>
-        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Market Cap Dominance</h3>
-            <p className="text-xs text-[#52525b] font-mono mt-0.5">% share of total market cap</p>
-          </div>
-          {mounted && dominanceData.length > 0 ? (
-            <TvLightweightChart data={dominanceData as TvDataPoint[]} kind="histogram" lineColor="#22c55e" height={200} title="Dominance" />
-          ) : (
-            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
-          )}
-        </div>
+        {mounted && topMoversData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={topMoversData} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+              <XAxis dataKey="name" stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} fontFamily="monospace" />
+              <YAxis stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} width={40} />
+              <Tooltip contentStyle={{ backgroundColor: "#161616", border: "1px solid #27272a", borderRadius: 0, fontFamily: "monospace", fontSize: 11 }} />
+              <Bar dataKey="change" maxBarSize={32} radius={[2, 2, 0, 0]} isAnimationActive={false}>
+                {topMoversData.map((entry, i) => (
+                  <Cell key={`mover-${i}`} fill={entry.change >= 0 ? "#22c55e" : "#ef4444"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+        )}
       </div>
 
+      {/* ── Market Cap Dominance (Recharts bar) ──────────────────────── */}
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Market Cap Dominance</h3>
+          <p className="text-xs text-[#52525b] font-mono mt-0.5">% share of total market cap</p>
+        </div>
+        {mounted && dominanceData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={dominanceData} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+              <XAxis dataKey="name" stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} fontFamily="monospace" />
+              <YAxis stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} width={40} />
+              <Tooltip contentStyle={{ backgroundColor: "#161616", border: "1px solid #27272a", borderRadius: 0, fontFamily: "monospace", fontSize: 11 }} />
+              <Bar dataKey="pct" maxBarSize={44} radius={[2, 2, 0, 0]} isAnimationActive={false}>
+                {dominanceData.map((entry, i) => (
+                  <Cell key={`dom-${i}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+        )}
+      </div>
+
+      {/* ── BTC/ETH price charts stay Lightweight ────────────────────── */}
       {tf !== "1D" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
@@ -15311,37 +15490,29 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">Top 10 CEX — 24h Volume (BTC)</h3>
-            <p className="text-xs text-[#52525b] font-mono mt-0.5">Source: CoinGecko exchanges API</p>
-          </div>
-          {mounted && exchangeVolData.length > 0 ? (
-            <TvLightweightChart
-              data={exchanges.slice(0, 10).map((e) => ({ time: e.name.length > 12 ? e.name.slice(0, 12) + "..." : e.name, value: Math.round(e.trade_volume_24h_btc) }))}
-              kind="histogram" lineColor="#22c55e" height={200} title="CEX Volume"
-              priceFormatter={(v) => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}K` : String(v)}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
-          )}
+      {/* ── Exchange Volume Dominance (Recharts bar) ──────────────────── */}
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">CEX Volume Dominance</h3>
+          <p className="text-xs text-[#52525b] font-mono mt-0.5">% of total 24h CEX volume</p>
         </div>
-        <div className="rounded-3xl bg-[#161616] border border-[#27272a] p-6">
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-[#a3a3a3] uppercase tracking-wider">CEX Volume Dominance</h3>
-            <p className="text-xs text-[#52525b] font-mono mt-0.5">% of total 24h CEX volume</p>
-          </div>
-          {mounted && exchangeVolData.length > 0 ? (
-            <TvLightweightChart
-              data={exchangeVolData as TvDataPoint[]}
-              kind="histogram" lineColor="#22c55e" height={200} title="Volume Dominance"
-              priceFormatter={(v) => `${v.toFixed(1)}%`}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
-          )}
-        </div>
+        {mounted && exchangeVolData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={exchangeVolData} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+              <XAxis dataKey="name" stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} fontFamily="monospace" />
+              <YAxis stroke="#a3a3a3" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} width={40} />
+              <Tooltip contentStyle={{ backgroundColor: "#161616", border: "1px solid #27272a", borderRadius: 0, fontFamily: "monospace", fontSize: 11 }} />
+              <Bar dataKey="share" maxBarSize={44} radius={[2, 2, 0, 0]} isAnimationActive={false}>
+                {exchangeVolData.map((entry, i) => (
+                  <Cell key={`vol-${i}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+        )}
       </div>
 
       <div>
@@ -15419,9 +15590,6 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
               </tr>
             </thead>
             <tbody>
-              {exchanges.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-[#a3a3a3] font-mono text-sm">Syncing exchange data...</td></tr>
-              )}
               {exchanges.map((ex, i) => (
                 <tr key={ex.id} className={[
                   "border-b border-[#27272a] hover:bg-[#27272a] transition-colors duration-200",
@@ -37117,6 +37285,284 @@ export interface CoinSectorCategory {
   market_cap: number | null;
   market_cap_change_24h: number | null;
   volume_24h: number | null;
+}
+
+--- src/lib/zerion.ts ---
+// src/lib/zerion.ts
+// Zerion API — free entity‑labelled whale transaction feed.
+// Replaces the deprecated Spot On Chain integration (Phase B‑6).
+//
+// Free tier: 3,000 requests/day, 2 req/sec
+// Sign‑up: https://dashboard.zerion.io/ → instant free developer key
+// Auth: Bearer token (ZERION_API_KEY)
+// Cache TTL: 1 hour (whale data is slow‑moving)
+import 'server-only';
+import { cached } from '@/lib/cache';
+
+const ZERION_API = 'https://api.zerion.io/v1';
+const API_KEY = process.env.ZERION_API_KEY;
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface ZerionTransaction {
+  id:             string;
+  type:           'send' | 'receive' | 'swap' | 'approve' | 'contract_execution';
+  status:         'confirmed' | 'pending' | 'failed';
+  hash:           string;
+  blockNumber:    number;
+  timestamp:      number;           // Unix ms
+  chain:          string;           // 'ethereum' | 'polygon' | 'arbitrum' etc.
+  feeUsd:         number | null;
+
+  // Direction
+  direction:      'outgoing' | 'incoming';
+
+  // Asset changes
+  changes:        Array<{
+    asset: {
+      symbol:       string;
+      name:         string;
+      decimals:     number;
+      iconUrl?:     string;
+      isVerified:   boolean;
+      priceUsd?:    number;
+    };
+    amount:         number;         // In token units
+    valueUsd:       number | null;
+    direction:      'out' | 'in';
+  }>;
+
+  // Sender / recipient
+  from: {
+    address:       string;
+    label?:        string;          // e.g. "Binance", "Uniswap V3", "Whale 0x..."
+    isContract:    boolean;
+    category?:     'exchange' | 'defi' | 'whale' | 'mev_bot' | 'scam' | 'unknown';
+  };
+  to: {
+    address:       string;
+    label?:        string;
+    isContract:    boolean;
+    category?:     'exchange' | 'defi' | 'whale' | 'mev_bot' | 'scam' | 'unknown';
+  };
+}
+
+// ─── Compatible whale alert type (matches existing whale‑watch page) ───────────
+
+export interface WhaleAlert {
+  blockchain:       string;
+  timestamp:        string;         // ISO‑8601
+  tx_hash:          string;
+  whale_address:    string;
+  whale_label:      string | null;
+  recipient:        string;
+  recipient_label:  string | null;
+  token_symbol:     string;
+  amount_usd:       number;
+  source:           'zerion' | 'etherscan';
+  direction:        'in' | 'out';
+}
+
+// ─── API helpers ──────────────────────────────────────────────────────────────
+
+interface ZerionTransactionsResponse {
+  data?: Array<{
+    id:           string;
+    type:         string;
+    attributes: {
+      status:       string;
+      hash:         string;
+      mined_at_block: number;
+      mined_at:     number;          // Unix seconds
+      fee?:         { usd?: number };
+      direction:    'out' | 'in';
+      changes?:     Array<{
+        asset: {
+          fungible_info?: {
+            symbol:    string;
+            name:      string;
+            decimals:  number;
+            icon?:     { url?: string };
+            flags?:    { verified: boolean };
+          };
+          price?:      { value?: number };
+        };
+        value:         number;
+        direction:     'out' | 'in';
+      }>;
+    };
+    relationships?: {
+      from?: { data?: { id: string } };
+      to?:   { data?: { id: string } };
+    };
+  }>;
+  included?: Array<{
+    id: string;
+    type: string;
+    attributes?: {
+      address?:      string;
+      label?:        string;
+      is_contract?:  boolean;
+      category?:     string;
+    };
+  }>;
+  links?: { next?: string };
+}
+
+// ─── Fetchers ─────────────────────────────────────────────────────────────────
+
+async function zerionFetch<T>(path: string, fallback: T): Promise<T> {
+  if (!API_KEY) {
+    console.warn('[Zerion] ZERION_API_KEY not set — using seed fallback');
+    return fallback;
+  }
+  try {
+    const res = await fetch(`${ZERION_API}${path}`, {
+      headers: {
+        'Accept':          'application/json',
+        'Authorization':   `Basic ${Buffer.from(`${API_KEY}:`).toString('base64')}`,
+        'User-Agent':      'CryptoBrainNews/1.0 (https://cryptobrainnews.vercel.app)',
+      },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (res.status === 429) {
+      console.warn('[Zerion] Rate limited — using seed fallback');
+      return fallback;
+    }
+    if (!res.ok) {
+      console.warn(`[Zerion] HTTP ${res.status}`);
+      return fallback;
+    }
+    return (await res.json()) as T;
+  } catch (err) {
+    console.warn('[Zerion] Fetch error:', String(err));
+    return fallback;
+  }
+}
+
+/**
+ * Fetch recent whale transactions from Zerion.
+ *
+ * Strategy: Zerion doesn't have a "global whale feed" endpoint. Instead we
+ * query recent transactions for a set of known whale‑associated addresses
+ * (exchange hot wallets, large DeFi contracts) and filter by USD value.
+ *
+ * This gives us entity‑labelled transactions that the Etherscan feed lacks.
+ */
+export async function getZerionWhaleAlerts(limit = 50): Promise<WhaleAlert[]> {
+  return cached('zerion:whale-alerts', async () => {
+    if (!API_KEY) {
+      console.info('[Zerion] ZERION_API_KEY not configured — returning empty');
+      return [];
+    }
+
+    // Known high‑activity whale addresses (exchange hot wallets, MEV bots, whales)
+    // Zerion labels these automatically via their entity recognition.
+    const WHALE_WATCH_ADDRESSES = [
+      '0x28c6c06298d51408901ae4a9b5b678fcb9eb4d4e', // Binance 7
+      '0x21a31ee1afc51d94c2efccaa2092ad1028285549', // Binance 8
+      '0xdfd5293d8e347dfe59e90efd55b2956a1343963d', // Coinbase 10
+      '0x3cd751e6b0078be393a7d9e33e5df3e29e4a1c44', // Kraken 5
+      '0x0a59649758aa4d66e25f08dd01271e891fe52199', // Maker DAO
+    ];
+
+    const allAlerts: WhaleAlert[] = [];
+
+    // Fetch transactions for each address (parallel, capped at 5 concurrent)
+    const batchSize = 5;
+    for (let i = 0; i < WHALE_WATCH_ADDRESSES.length; i += batchSize) {
+      const batch = WHALE_WATCH_ADDRESSES.slice(i, i + batchSize);
+      const results = await Promise.all(
+        batch.map((addr) =>
+          zerionFetch<ZerionTransactionsResponse>(
+            `/wallets/${addr}/transactions?filter[transaction_types]=send,receive,swap,contract_execution&page[size]=20&page[before]=0`,
+            { data: [], included: [] },
+          ),
+        ),
+      );
+
+      for (const result of results) {
+        if (!result.data) continue;
+
+        // Build address → label map from included resources
+        const labelMap = new Map<string, ZerionTransaction['from']>();
+        (result.included ?? []).forEach((inc) => {
+          if (inc.type === 'address' && inc.attributes) {
+            labelMap.set(inc.id, {
+              address:    inc.attributes.address ?? inc.id,
+              label:      inc.attributes.label ?? undefined,
+              isContract: inc.attributes.is_contract ?? false,
+              category:   inc.attributes.category as ZerionTransaction['from']['category'] ?? 'unknown',
+            });
+          }
+        });
+
+        for (const tx of result.data) {
+          const attrs = tx.attributes;
+          if (!attrs || attrs.status !== 'confirmed') continue;
+
+          // Guard against missing changes array
+          if (!attrs.changes || attrs.changes.length === 0) continue;
+
+          // Find the largest asset change
+          const largestChange = attrs.changes.reduce<typeof attrs.changes[number] | null>(
+            (best, change) => {
+              const valUsd = (change.asset.fungible_info?.symbol && change.asset.price?.value)
+                ? Math.abs(change.value * (change.asset.price.value / Math.pow(10, change.asset.fungible_info.decimals)))
+                : 0;
+              const bestVal = best?.asset?.price?.value
+                ? Math.abs(best.value * (best.asset.price.value / Math.pow(10, best.asset.fungible_info?.decimals ?? 18)))
+                : 0;
+              return valUsd > bestVal ? change : best;
+            },
+            null,
+          );
+
+          if (!largestChange?.asset.fungible_info) continue;
+
+          const decimals = largestChange.asset.fungible_info.decimals;
+          const priceUsd = largestChange.asset.price?.value ?? 0;
+          const amountUsd = Math.abs(largestChange.value * (priceUsd / Math.pow(10, decimals)));
+
+          // Filter: >$100K whale threshold
+          if (amountUsd < 100_000) continue;
+
+          const fromId = tx.relationships?.from?.data?.id ?? '';
+          const toId   = tx.relationships?.to?.data?.id   ?? '';
+          const from   = labelMap.get(fromId) ?? { address: fromId, isContract: false };
+          const to     = labelMap.get(toId)   ?? { address: toId,   isContract: false };
+
+          allAlerts.push({
+            blockchain:      'ethereum',
+            timestamp:        new Date(attrs.mined_at * 1000).toISOString(),
+            tx_hash:          attrs.hash,
+            whale_address:    from.address,
+            whale_label:      from.label ?? null,
+            recipient:        to.address,
+            recipient_label:  to.label ?? null,
+            token_symbol:     largestChange.asset.fungible_info.symbol,
+            amount_usd:       Number(amountUsd.toFixed(2)),
+            source:           'zerion',
+            direction:        largestChange.direction === 'out' ? 'out' : 'in',
+          });
+        }
+      }
+    }
+
+    // Deduplicate by tx_hash, sort by timestamp desc
+    const seen = new Set<string>();
+    const unique = allAlerts
+      .filter((a) => {
+        if (seen.has(a.tx_hash)) return false;
+        seen.add(a.tx_hash);
+        return true;
+      })
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, limit);
+
+    console.info(`[Zerion] Fetched ${unique.length} whale alerts (live)`);
+    return unique;
+  }, 3600); // 1‑hour cache
 }
 
 --- src/proxy.ts ---

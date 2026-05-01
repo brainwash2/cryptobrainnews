@@ -1,0 +1,1775 @@
+=== CRYPTOBRAINNEWS PHASE F-1 CONTEXT ===
+Generated: Thu Apr 30 11:59:17 PM CET 2026
+
+--- scripts/daily-article.ts ---
+/**
+ * scripts/daily-article.ts
+ * Daily automated article pipeline: RSS → Groq → DeepSeek → Gemini → Sanity
+ *
+ * Vercel-compatible: dead-letter files go to /tmp (only writable directory).
+ */
+
+import { randomUUID } from 'crypto';
+import { writeFileSync, mkdirSync } from 'fs';
+import { join } from 'path';
+import { ArticleDedup } from '../src/lib/news/dedup';
+import { PipelineLogger } from '../src/lib/news/pipeline-logger';
+import { RSSCache } from '../src/lib/news/rss-cache';
+import { TelegramBroadcaster } from '../src/lib/news/telegram';
+import type {
+  RSSItem,
+  GrokSummary,
+  DeepSeekEnrichment,
+  GeminiPolish,
+  SanityArticlePayload,
+  SanityWriteResult,
+  PipelineRun,
+} from '../src/lib/news/types';
+import {
+  isGrokSummary,
+  isDeepSeekEnrichment,
+  isGeminiPolish,
+} from '../src/lib/news/types';
+
+const RSS_FEEDS: string[] = (process.env.RSS_FEED_URLS ?? '').split(',').filter(Boolean);
+const MAX_ARTICLES_PER_RUN = Number(process.env.MAX_ARTICLES_PER_RUN ?? '5');
+
+// Vercel serverless has a read-only filesystem except for /tmp.
+const DEAD_LETTER_DIR = '/tmp/dead-letter';
+
+// ── API keys ──────────────────────────────────────────────────────────────
+const GROQ_API_KEY       = process.env.GROQ_API_KEY       ?? '';
+const DEEPSEEK_API_KEY   = process.env.DEEPSEEK_API_KEY   ?? '';
+const GEMINI_API_KEY     = process.env.GEMINI_API_KEY     ?? '';
+const SANITY_PROJECT_ID  = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '';
+const SANITY_DATASET     = process.env.NEXT_PUBLIC_SANITY_DATASET     ?? 'production';
+const SANITY_API_TOKEN   = process.env.SANITY_API_TOKEN   ?? '';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? '';
+
+// ── Retry helper ──────────────────────────────────────────────────────────
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts: number,
+  baseDelayMs: number,
+  label: string,
+): Promise<{ result: T; attempts: number }> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await fn();
+      return { result, attempts: attempt };
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxAttempts)
+        await new Promise(r => setTimeout(r, baseDelayMs * Math.pow(2, attempt - 1)));
+    }
+  }
+  throw new Error(`${label} failed after ${maxAttempts} attempts: ${String(lastError)}`);
+}
+
+// ── Dead‑letter writer (never crashes the pipeline) ──────────────────────
+function writeDeadLetter(runId: string, item: RSSItem, reason: string, partial: unknown): string {
+  try {
+    mkdirSync(DEAD_LETTER_DIR, { recursive: true });
+    const filename = `${runId}-${Date.now()}-${item.guid.replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.json`;
+    const path = join(DEAD_LETTER_DIR, filename);
+    writeFileSync(
+      path,
+      JSON.stringify({ runId, failedAt: new Date().toISOString(), reason, item, partial }, null, 2),
+      'utf-8',
+    );
+    return path;
+  } catch {
+    console.warn('[pipeline] Unable to write dead-letter file (filesystem read-only?)');
+    return '';
+  }
+}
+
+// ─── AI Stage 1: Groq (free tier, fast) ─────────────────────────────────
+async function runGroq(item: RSSItem): Promise<GrokSummary> {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    signal: AbortSignal.timeout(30_000),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a crypto news analyst. Respond ONLY with valid JSON matching the GrokSummary schema. No markdown fences.',
+        },
+        {
+          role: 'user',
+          content: `Summarise this article. Schema: { headline, summary, keyPoints, rawArticleUrl, sourceTitle }\nTitle: ${item.title}\nURL: ${item.link}\nContent: ${(item.content ?? item.description).slice(0, 4000)}`,
+        },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`Groq API ${res.status}: ${await res.text()}`);
+  const data = (await res.json()) as { choices: Array<{ message: { content: string } }> };
+  const raw: unknown = JSON.parse(data.choices[0].message.content);
+  if (!isGrokSummary(raw)) throw new Error('Groq response failed type guard');
+  return raw;
+}
+
+// ─── AI Stage 2: DeepSeek (optional, degraded if missing) ────────────────
+async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEnrichment> {
+  const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    signal: AbortSignal.timeout(45_000),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a senior crypto journalist. Respond ONLY with valid JSON. No markdown fences.',
+        },
+        {
+          role: 'user',
+          content: `Expand this summary into a full article body. Schema: { expandedBody, tags, category, sentiment, relatedTickers }\nSummary: ${grok.summary}\nKey points: ${grok.keyPoints.join('; ')}\nSource: ${item.link}`,
+        },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`DeepSeek API ${res.status}: ${await res.text()}`);
+  const data = (await res.json()) as { choices: Array<{ message: { content: string } }> };
+  const raw: unknown = JSON.parse(data.choices[0].message.content);
+  if (!isDeepSeekEnrichment(raw)) throw new Error('DeepSeek response failed type guard');
+  return raw;
+}
+
+// ─── AI Stage 3: Gemini (optional, degraded if missing) ──────────────────
+async function runGemini(grok: GrokSummary, deepSeek: DeepSeekEnrichment): Promise<GeminiPolish> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      signal: AbortSignal.timeout(45_000),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `Polish this crypto article for SEO. Return JSON with: title, metaDescription, body, slug.\nDraft title: ${grok.headline}\nDraft body: ${deepSeek.expandedBody.slice(0, 6000)}\nTags: ${deepSeek.tags.join(', ')}`,
+              },
+            ],
+          },
+        ],
+      }),
+    },
+  );
+  if (!res.ok) throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
+  const data = (await res.json()) as {
+    candidates: Array<{ content: { parts: Array<{ text: string }> } }>;
+  };
+  const raw: unknown = JSON.parse(data.candidates[0].content.parts[0].text);
+  if (!isGeminiPolish(raw)) throw new Error('Gemini response failed type guard');
+  return raw;
+}
+
+// ── Fallback when later stages are missing ───────────────────────────────
+function buildFallbackPolish(grok: GrokSummary, deepSeek?: DeepSeekEnrichment): GeminiPolish {
+  const headline = grok.headline;
+  const slug = headline
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .slice(0, 80);
+  return {
+    title: headline,
+    metaDescription: grok.summary.slice(0, 160),
+    body:
+      deepSeek?.expandedBody ??
+      `${grok.summary}\n\n${grok.keyPoints.map(p => `- ${p}`).join('\n')}`,
+    slug,
+  };
+}
+
+// ── Sanity helpers ───────────────────────────────────────────────────────
+async function slugExistsInSanity(slug: string): Promise<boolean> {
+  const query = encodeURIComponent(
+    `*[_type == "post" && slug.current == "${slug}"][0]._id`,
+  );
+  const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2024-01-01/data/query/${SANITY_DATASET}?query=${query}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${SANITY_API_TOKEN}` },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) throw new Error(`Sanity slug check ${res.status}`);
+  const { result } = (await res.json()) as { result: string | null };
+  return result != null;
+}
+
+async function writeToSanity(payload: SanityArticlePayload): Promise<SanityWriteResult> {
+  const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2024-01-01/data/mutate/${SANITY_DATASET}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    signal: AbortSignal.timeout(20_000),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${SANITY_API_TOKEN}`,
+    },
+    body: JSON.stringify({ mutations: [{ create: payload }] }),
+  });
+  if (!res.ok) throw new Error(`Sanity write ${res.status}: ${await res.text()}`);
+
+  // The mutation succeeded; we don't strictly need the document ID because
+  // dedup is done via slug. Grab the ID if available, otherwise use a placeholder.
+  const json = (await res.json()) as { results?: Array<{ id: string }> };
+  const documentId = json.results?.[0]?.id ?? `san-${payload.slug.current}`;
+
+  return { documentId, slug: payload.slug.current, publishedAt: payload.publishedAt };
+}
+
+// ── Article processor ────────────────────────────────────────────────────
+async function processArticle(
+  item: RSSItem,
+  runId: string,
+  dedup: ArticleDedup,
+  logger: PipelineLogger,
+): Promise<{ published: boolean; deadLetterPath?: string }> {
+  logger.setStage('dedup-check');
+  const { isDuplicate } = await dedup.isDuplicate(item.link, item.title);
+  if (isDuplicate) {
+    logger.info('Skipping duplicate', { url: item.link });
+    return { published: false };
+  }
+
+  // ── Groq (fatal if missing) ──────────────────────────────────────
+  logger.setStage('grok-summarise');
+  let grok: GrokSummary;
+  try {
+    const { result, attempts } = await withRetry(() => runGroq(item), 3, 1000, 'Groq');
+    grok = result;
+    logger.info('Groq succeeded', { attempts });
+  } catch (err) {
+    const path = writeDeadLetter(runId, item, 'Groq failed', null);
+    logger.error('Groq fatal – dead-lettered', 'fatal', err, 3);
+    return { published: false, deadLetterPath: path || undefined };
+  }
+
+  // ── DeepSeek (optional) ──────────────────────────────────────────
+  logger.setStage('deepseek-enrich');
+  let deepSeek: DeepSeekEnrichment | undefined;
+  try {
+    const { result, attempts } = await withRetry(
+      () => runDeepSeek(item, grok),
+      2,
+      2000,
+      'DeepSeek',
+    );
+    deepSeek = result;
+    logger.info('DeepSeek succeeded', { attempts });
+  } catch (err) {
+    logger.error('DeepSeek failed – degraded to Groq output only', 'degraded', err, 2);
+  }
+
+  // ── Gemini (optional) ────────────────────────────────────────────
+  logger.setStage('gemini-polish');
+  let gemini: GeminiPolish | undefined;
+  if (deepSeek) {
+    try {
+      const { result, attempts } = await withRetry(
+        () => runGemini(grok, deepSeek!),
+        2,
+        2000,
+        'Gemini',
+      );
+      gemini = result;
+      logger.info('Gemini succeeded', { attempts });
+    } catch (err) {
+      logger.error('Gemini failed – degraded to DeepSeek output', 'degraded', err, 2);
+    }
+  }
+
+  const finalPolish = gemini ?? buildFallbackPolish(grok, deepSeek);
+
+  // ── Sanity write ─────────────────────────────────────────────────
+  logger.setStage('sanity-write');
+  try {
+    const exists = await slugExistsInSanity(finalPolish.slug);
+    if (exists) {
+      logger.info('Slug already exists – skipping write', { slug: finalPolish.slug });
+      await dedup.markSeen(item.link, item.title, runId);
+      return { published: false };
+    }
+  } catch (err) {
+    logger.warn('Slug check failed – proceeding with write', { cause: String(err) });
+  }
+
+  // Convert the plain‑text body into a valid Portable Text block (required by Sanity)
+  const bodyBlock = {
+    _key: randomUUID(),
+    _type: 'block',
+    style: 'normal',
+    markDefs: [],
+    children: [
+      {
+        _type: 'span',
+        _key: randomUUID(),
+        text: finalPolish.body,
+        marks: [],
+      },
+    ],
+  };
+
+  // Only fields defined in the Sanity "post" schema are sent.
+  const payload = {
+    _type: 'post',
+    title: finalPolish.title,
+    slug: { _type: 'slug', current: finalPolish.slug },
+    body: [bodyBlock],
+    excerpt: grok.summary.slice(0, 180),
+    category: deepSeek?.category ?? 'News',
+    tags: deepSeek?.tags ?? [],
+    publishedAt: new Date().toISOString(),
+    status: 'published',
+    seo: {
+      metaTitle: finalPolish.title.slice(0, 70),
+      metaDescription: finalPolish.metaDescription.slice(0, 160),
+      noIndex: false,
+    },
+  } as SanityArticlePayload;
+
+  let sanityResult: SanityWriteResult;
+  try {
+    const { result, attempts } = await withRetry(
+      () => writeToSanity(payload),
+      3,
+      2000,
+      'Sanity',
+    );
+    sanityResult = result;
+    logger.info('Sanity write succeeded', {
+      documentId: sanityResult.documentId,
+      attempts,
+    });
+  } catch (err) {
+    const path = writeDeadLetter(runId, item, 'Sanity write failed', payload);
+    logger.error('Sanity write fatal – dead-lettered', 'fatal', err, 3);
+    return { published: false, deadLetterPath: path || undefined };
+  }
+
+  await dedup.markSeen(item.link, item.title, runId, sanityResult.documentId);
+
+  const telegram = new TelegramBroadcaster(TELEGRAM_BOT_TOKEN);
+  await telegram.send(
+    TelegramBroadcaster.formatArticleMessage(
+      finalPolish.title,
+      grok.summary,
+      finalPolish.slug,
+      deepSeek?.tags ?? [],
+    ),
+    runId,
+  );
+
+  return { published: true };
+}
+
+// ── Main pipeline entrypoint ─────────────────────────────────────────────
+export async function runPipeline(): Promise<PipelineRun> {
+  const runId = randomUUID();
+  const startedAt = new Date().toISOString();
+  const logger = new PipelineLogger(runId);
+  const dedup = new ArticleDedup();
+  const rssCache = new RSSCache();
+
+  logger.info('Pipeline run starting', { runId, maxArticles: MAX_ARTICLES_PER_RUN });
+  const run: PipelineRun = {
+    runId,
+    startedAt,
+    stage: 'idle',
+    articlesAttempted: 0,
+    articlesPublished: 0,
+    errors: [],
+    deadLetterPaths: [],
+  };
+
+  let items: RSSItem[];
+  try {
+    const feedConfig = RSS_FEEDS.map((url, i) => ({ url, name: `Feed-${i + 1}` }));
+    const result = await rssCache.getAllItems(feedConfig);
+    items = result.items;
+    if (items.length === 0) throw new Error('All RSS feeds returned zero items.');
+    logger.info(`Fetched ${items.length} total items from ${feedConfig.length} feeds`);
+  } catch (err) {
+    run.stage = 'failed';
+    run.errors.push(logger.error('RSS fetch fatal', 'fatal', err, 0));
+    run.completedAt = new Date().toISOString();
+    return run;
+  }
+
+  logger.setStage('dedup-check');
+  const dedupMap = await dedup.bulkCheck(
+    items.map(i => ({ guid: i.guid, url: i.link, title: i.title })),
+  );
+  const fresh = items.filter(i => !dedupMap.get(i.guid)?.isDuplicate);
+  logger.info(`Dedup: ${items.length} total → ${fresh.length} fresh`);
+
+  const toProcess = fresh.slice(0, MAX_ARTICLES_PER_RUN);
+  for (const item of toProcess) {
+    run.articlesAttempted += 1;
+    try {
+      const { published, deadLetterPath } = await processArticle(item, runId, dedup, logger);
+      if (published) run.articlesPublished += 1;
+      if (deadLetterPath) run.deadLetterPaths.push(deadLetterPath);
+    } catch (err) {
+      logger.error(`Unhandled error processing ${item.link}`, 'fatal', err);
+    }
+  }
+
+  const tg = new TelegramBroadcaster(TELEGRAM_BOT_TOKEN);
+  const tgDrain = await tg.drainRetries();
+  logger.info('Telegram retry drain', tgDrain);
+
+  if (process.env.RESEND_API_KEY) {
+    const { NewsletterService } = await import('../src/lib/news/newsletter');
+    const nl = new NewsletterService(process.env.RESEND_API_KEY);
+    const nlDrain = await nl.drainRetries();
+    logger.info('Newsletter retry drain', nlDrain);
+  }
+
+  run.stage = logger.hasFatal() ? 'failed' : 'complete';
+  run.errors = [...logger.getErrors()];
+  run.completedAt = new Date().toISOString();
+  logger.info('Pipeline run complete', {
+    articlesAttempted: run.articlesAttempted,
+    articlesPublished: run.articlesPublished,
+    deadLetterCount: run.deadLetterPaths.length,
+    fatalErrors: run.errors.filter(e => e.severity === 'fatal').length,
+  });
+  return run;
+}
+
+// CLI entrypoint
+if (require.main === module) {
+  runPipeline()
+    .then(run => {
+      process.exitCode = run.stage === 'failed' ? 1 : 0;
+    })
+    .catch(err => {
+      console.error('Unhandled pipeline crash:', err);
+      process.exitCode = 1;
+    });
+}
+--- src/app/api/cron/daily-article/route.ts ---
+/**
+ * app/api/cron/daily-article/route.ts
+ * Vercel Cron entrypoint for the daily article pipeline.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { runPipeline }                    from '../../../../../scripts/daily-article';
+import { OpsAlerter }                     from '../../../../lib/ops/alerts';
+import type { StageError }                from '../../../../lib/news/types';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (req.headers.get('authorization') !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  }
+
+  const run = await runPipeline();
+
+  if (run.stage === 'failed' || run.articlesPublished === 0) {
+    const alerter = new OpsAlerter();
+    await alerter.pipelineAlert({
+      stage:             run.stage,
+      runId:             run.runId,
+      articlesPublished: run.articlesPublished,
+      fatalErrors:       run.errors.filter((e: StageError) => e.severity === 'fatal').length,
+      deadLetterCount:   run.deadLetterPaths.length,
+    });
+  }
+
+  return NextResponse.json({
+    ok:                run.stage !== 'failed',
+    runId:             run.runId,
+    articlesPublished: run.articlesPublished,
+    articlesAttempted: run.articlesAttempted,
+    fatalErrors:       run.errors.filter((e: StageError) => e.severity === 'fatal').length,
+    deadLetterCount:   run.deadLetterPaths.length,
+    duration:          run.completedAt && run.startedAt
+      ? `${((new Date(run.completedAt).getTime() - new Date(run.startedAt).getTime()) / 1000).toFixed(1)}s`
+      : null,
+  });
+}
+
+--- src/app/api/cron/health/route.ts ---
+/**
+ * app/api/cron/health/route.ts
+ * Runs every 5 minutes. Self-calls /api/health and alerts ops on failures.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { Redis }                           from '@upstash/redis';
+import { OpsAlerter }                      from '../../../../lib/ops/alerts';
+import { BroadcastQueue }                  from '../../../../lib/news/broadcast-queue';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+const BASE_URL    = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cryptobrainnews.com';
+const PREV_DOWN_KEY = 'health:prev-down';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (req.headers.get('authorization') !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  }
+
+  const alerter = new OpsAlerter();
+  const redis   = Redis.fromEnv();
+
+  const healthRes = await fetch(`${BASE_URL}/api/health?detail=true`, {
+    headers: {
+      'x-cron-secret': CRON_SECRET,
+      'Cache-Control':  'no-store',
+    },
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  const report = (await healthRes.json()) as {
+    status:  string;
+    systems: Record<string, { status: string; latencyMs: number; message?: string }>;
+  };
+
+  const prevDownRaw = await redis.get<string>(PREV_DOWN_KEY).catch(() => null);
+  const prevDown    = new Set<string>(prevDownRaw ? JSON.parse(prevDownRaw) : []);
+  const currentDown = new Set<string>();
+
+  for (const [system, check] of Object.entries(report.systems)) {
+    if (check.status === 'down' || check.status === 'degraded') {
+      currentDown.add(system);
+
+      if (!prevDown.has(system)) {
+        await alerter.healthAlert({
+          system,
+          message: check.message ?? `${system} is ${check.status}`,
+          latency: check.latencyMs,
+        });
+      }
+    }
+
+    if (prevDown.has(system) && !currentDown.has(system)) {
+      await alerter.recoveryNotice(system);
+    }
+  }
+
+  const bq = new BroadcastQueue();
+  const [tgDepth, nlDepth] = await Promise.all([
+    bq.pendingCount('telegram'),
+    bq.pendingCount('newsletter'),
+  ]);
+
+  if (tgDepth > 20) await alerter.deadLetterAlert({ count: tgDepth,  channel: 'telegram' });
+  if (nlDepth > 20) await alerter.deadLetterAlert({ count: nlDepth, channel: 'newsletter' });
+
+  await redis.set(PREV_DOWN_KEY, JSON.stringify([...currentDown]), { ex: 60 * 60 });
+
+  return NextResponse.json({
+    ok:          report.status !== 'down',
+    status:      report.status,
+    downSystems: [...currentDown],
+    checkedAt:   new Date().toISOString(),
+  });
+}
+
+--- src/app/api/cron/sitemap-warm/route.ts ---
+/**
+ * app/api/cron/sitemap-warm/route.ts
+ * Warms the sitemap Redis cache every hour so /sitemap.xml is always fast.
+ * Also pre-warms the most recent 5 article OG images via self-fetch.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { PageCache }                      from '../../../../lib/news/page-cache';
+import { getSitemapArticles }             from '../../../../lib/news/sanity-queries';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+const BASE_URL    = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cryptobrainnews.com';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (req.headers.get('authorization') !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  }
+
+  const cache = new PageCache();
+
+  // Re-warm sitemap data
+  const articles = await cache.getOrSet('sitemap', 'articles', () => getSitemapArticles());
+
+  // Pre-warm OG images for the 5 most recent articles (fire-and-forget)
+  const recent = articles.data.slice(0, 5);
+  void Promise.allSettled(
+    recent.map(({ slug }: { slug: string }) =>
+      fetch(`${BASE_URL}/api/og?slug=${encodeURIComponent(slug)}`, { method: 'GET' }),
+    ),
+  );
+
+  return NextResponse.json({
+    ok:             true,
+    articlesCached: articles.data.length,
+    ogPrewarmed:    recent.length,
+    at:             new Date().toISOString(),
+  });
+}
+
+--- src/app/api/cron/social/route.ts ---
+/**
+ * app/api/cron/social/route.ts
+ * Vercel Cron handler — runs every minute to process due social posts.
+ *
+ * vercel.json entry:
+ *   { "path": "/api/cron/social", "schedule": "* * * * *" }
+ *
+ * Auth: Vercel automatically sets Authorization: Bearer <CRON_SECRET>
+ * on cron-invoked routes. We verify this.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { SocialScheduler }                from '../../../../lib/social/scheduler';
+import { TwitterThreadPublisher }          from '../../../../lib/social/twitter-thread';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const auth = req.headers.get('authorization');
+  if (auth !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  }
+
+  const scheduler = new SocialScheduler();
+  const creds = {
+    apiKey:            process.env.TWITTER_API_KEY             ?? '',
+    apiSecret:         process.env.TWITTER_API_SECRET          ?? '',
+    accessToken:       process.env.TWITTER_ACCESS_TOKEN        ?? '',
+    accessTokenSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET ?? '',
+    bearerToken:       process.env.TWITTER_BEARER_TOKEN        ?? '',
+  };
+
+  const publisher = creds.apiKey ? new TwitterThreadPublisher(creds) : null;
+
+  const result = await scheduler.processDueJobs({
+    twitter_thread: publisher
+      ? async (job) => {
+          if (job.channel !== 'twitter_thread') return;
+          await publisher.publish({
+            article:       job.payload,
+            pipelineRunId: job.pipelineRunId,
+          });
+        }
+      : undefined,
+  });
+
+  return NextResponse.json({ ok: true, ...result });
+}
+
+--- src/app/api/cron/broadcast-drain/route.ts ---
+/**
+ * app/api/cron/broadcast-drain/route.ts
+ * Drains Telegram + Newsletter retry queues every 15 minutes.
+ * Handles transient failures from the daily pipeline run.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { TelegramBroadcaster }            from '../../../../lib/news/telegram';
+import { NewsletterService }              from '../../../../lib/news/newsletter';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (req.headers.get('authorization') !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  }
+
+  const results: Record<string, unknown> = {};
+
+  // Telegram drain
+  if (process.env.TELEGRAM_BOT_TOKEN) {
+    const tg         = new TelegramBroadcaster(process.env.TELEGRAM_BOT_TOKEN);
+    results['telegram'] = await tg.drainRetries();
+  }
+
+  // Newsletter drain
+  if (process.env.RESEND_API_KEY) {
+    const nl            = new NewsletterService(process.env.RESEND_API_KEY);
+    results['newsletter'] = await nl.drainRetries();
+  }
+
+  return NextResponse.json({ ok: true, drains: results, at: new Date().toISOString() });
+}
+
+--- src/app/api/webhooks/stripe/route.ts ---
+/**
+ * app/api/webhooks/stripe/route.ts
+ * Stripe webhook endpoint.
+ *
+ * CRITICAL: Must use the raw request body for signature verification.
+ * Next.js App Router returns ReadableStream — we must buffer it manually.
+ * Do NOT parse with req.json() before verifying the signature.
+ *
+ * Idempotency: Stripe may retry webhooks. handleWebhookEvent() uses
+ * Redis to persist subscription state (last-write-wins is safe for
+ * subscription events since Stripe sends them in order).
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { handleWebhookEvent }             from '../../../../lib/monetisation/stripe';
+
+// Disable Next.js body parsing — required for Stripe signature verification
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const signature = req.headers.get('stripe-signature');
+  if (!signature) {
+    return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+  }
+
+  // Buffer the raw body as a string
+  let rawBody: string;
+  try {
+    const buffer = await req.arrayBuffer();
+    rawBody = new TextDecoder('utf-8').decode(buffer);
+  } catch {
+    return NextResponse.json({ error: 'Failed to read request body' }, { status: 400 });
+  }
+
+  try {
+    const { handled, event } = await handleWebhookEvent(rawBody, signature);
+    return NextResponse.json({ received: true, handled, event });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+
+    // 400 on invalid signature (tells Stripe to stop retrying this exact payload)
+    if (message.includes('signature')) {
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+
+    // 500 on processing errors (tells Stripe to retry)
+    console.error('[stripe-webhook] processing error', { message });
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
+}
+
+--- src/lib/monetisation/stripe.ts ---
+/**
+ * lib/monetisation/stripe.ts
+ * Stripe Pro subscription integration – dynamic import to survive missing modules.
+ */
+import { Redis }   from '@upstash/redis';
+
+// ─── Config ───────────────────────────────────────────────────────────────────
+const STRIPE_SECRET_KEY     = process.env.STRIPE_SECRET_KEY ?? '';
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? '';
+const BASE_URL              = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cryptobrainnews.com';
+
+export const PRICE_IDS = {
+  pro_monthly:  process.env.STRIPE_PRO_MONTHLY_PRICE_ID  ?? '',
+  pro_yearly:   process.env.STRIPE_PRO_YEARLY_PRICE_ID   ?? '',
+} as const;
+
+export type PricePlan = keyof typeof PRICE_IDS;
+export type SubscriptionTier   = 'free' | 'pro' | 'team';
+export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete';
+
+export interface UserSubscription {
+  userId:         string;
+  tier:           SubscriptionTier;
+  status:         SubscriptionStatus;
+  customerId:     string;
+  subscriptionId: string;
+  priceId:        string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd:boolean;
+}
+
+export interface CheckoutSessionResult {
+  sessionId: string;
+  url:       string;
+}
+
+export interface PortalSessionResult {
+  url: string;
+}
+
+// ─── Redis helpers ────────────────────────────────────────────────────────────
+const SUB_KEY_PREFIX   = 'sub:';
+const SUB_TTL_SECONDS  = 60 * 60 * 24;
+
+function subKey(userId: string): string {
+  return SUB_KEY_PREFIX + userId;
+}
+
+// ─── Stripe client (lazy dynamic import – survives missing package at build) ──
+let _Stripe: any = null;   // eslint-disable-line @typescript-eslint/no-explicit-any
+
+async function getStripe(): Promise<any> {  // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (_Stripe) return _Stripe;
+    try {
+    const mod = await import('stripe');
+    const Stripe = mod.default ?? mod;
+    _Stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2026-03-25.dahlia' });
+    return _Stripe;
+  } catch (err: unknown) {
+    
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Stripe is not available: ${message}. Please run 'npm install stripe' and ensure it's in your deployment.`);
+  }
+}
+
+// ─── Subscription state store ─────────────────────────────────────────────────
+export class SubscriptionStore {
+  private readonly redis: Redis;
+
+  constructor() {
+    this.redis = Redis.fromEnv();
+  }
+
+  async get(userId: string): Promise<UserSubscription | null> {
+    return this.redis.get<UserSubscription>(subKey(userId));
+  }
+
+  async set(sub: UserSubscription): Promise<void> {
+    await this.redis.set(subKey(sub.userId), sub, { ex: SUB_TTL_SECONDS });
+  }
+
+  async isProOrAbove(userId: string): Promise<boolean> {
+    const sub = await this.get(userId);
+    if (!sub) return false;
+    return (
+      (sub.tier === 'pro' || sub.tier === 'team') &&
+      (sub.status === 'active' || sub.status === 'trialing')
+    );
+  }
+
+  async findByCustomerId(customerId: string): Promise<UserSubscription | null> {
+    const keys = await this.redis.keys(`${SUB_KEY_PREFIX}*`);
+    for (const key of keys) {
+      const sub = await this.redis.get<UserSubscription>(key);
+      if (sub?.customerId === customerId) return sub;
+    }
+    return null;
+  }
+}
+
+// ─── Checkout ─────────────────────────────────────────────────────────────────
+export async function createCheckoutSession(
+  userId:    string,
+  userEmail: string,
+  plan:      PricePlan,
+): Promise<CheckoutSessionResult> {
+  const stripe  = await getStripe();
+  const priceId = PRICE_IDS[plan];
+  if (!priceId) throw new Error(`Price ID not configured for plan: ${plan}`);
+
+  const session = await stripe.checkout.sessions.create({
+    mode:                'subscription',
+    customer_email:      userEmail,
+    line_items:          [{ price: priceId, quantity: 1 }],
+    success_url:         `${BASE_URL}/pro/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url:          `${BASE_URL}/pro?cancelled=true`,
+    allow_promotion_codes: true,
+    subscription_data: {
+      trial_period_days: 7,
+      metadata:          { userId },
+    },
+    metadata: { userId, plan },
+    client_reference_id: userId,
+  });
+
+  return { sessionId: session.id, url: session.url ?? '' };
+}
+
+// ─── Customer Portal ──────────────────────────────────────────────────────────
+export async function createPortalSession(
+  userId: string,
+): Promise<PortalSessionResult> {
+  const stripe = await getStripe();
+  const store  = new SubscriptionStore();
+  const sub    = await store.get(userId);
+
+  if (!sub?.customerId) {
+    throw new Error(`No Stripe customer found for user ${userId}`);
+  }
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer:   sub.customerId,
+    return_url: `${BASE_URL}/pro`,
+  });
+
+  return { url: session.url };
+}
+
+// ─── Webhook event handler ────────────────────────────────────────────────────
+function tierFromPriceId(priceId: string): SubscriptionTier {
+  if (priceId === PRICE_IDS.pro_monthly || priceId === PRICE_IDS.pro_yearly) return 'pro';
+  return 'free';
+}
+
+function mapStripeStatus(status: string): SubscriptionStatus {
+  const map: Record<string, SubscriptionStatus> = {
+    active:             'active',
+    trialing:           'trialing',
+    past_due:           'past_due',
+    canceled:           'canceled',
+    incomplete:         'incomplete',
+    incomplete_expired: 'canceled',
+    unpaid:             'past_due',
+    paused:             'canceled',
+  };
+  return map[status] ?? 'canceled';
+}
+
+export async function handleWebhookEvent(
+  rawBody:   string,
+  signature: string,
+): Promise<{ handled: boolean; event: string }> {
+  const stripe = await getStripe();
+  const store  = new SubscriptionStore();
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET);
+  } catch {
+    throw new Error('Invalid Stripe webhook signature');
+  }
+
+  const HANDLED_EVENTS = new Set([
+    'customer.subscription.created',
+    'customer.subscription.updated',
+    'customer.subscription.deleted',
+    'checkout.session.completed',
+  ]);
+
+  if (!HANDLED_EVENTS.has(event.type)) {
+    return { handled: false, event: event.type };
+  }
+
+  if (
+    event.type === 'customer.subscription.created' ||
+    event.type === 'customer.subscription.updated' ||
+    event.type === 'customer.subscription.deleted'
+  ) {
+    const subscription = event.data.object;
+    const userId       = subscription.metadata['userId'] ?? '';
+    if (!userId) return { handled: false, event: event.type };
+
+    const priceId = subscription.items.data[0]?.price.id ?? '';
+    const periodEnd = subscription.current_period_end;
+    
+    await store.set({
+      userId,
+      tier:             event.type === 'customer.subscription.deleted' ? 'free' : tierFromPriceId(priceId),
+      status:           mapStripeStatus(subscription.status),
+      customerId:       subscription.customer as string,
+      subscriptionId:   subscription.id,
+      priceId,
+      currentPeriodEnd: new Date(periodEnd * 1000).toISOString(),
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    });
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const userId     = session.metadata?.['userId'] ?? session.client_reference_id ?? '';
+    const customerId = session.customer as string;
+    if (userId && customerId) {
+      const existing = await store.get(userId);
+      if (!existing) {
+        await store.set({
+          userId,
+          tier:             'free',
+          status:           'incomplete',
+          customerId,
+          subscriptionId:   '',
+          priceId:          '',
+          currentPeriodEnd: new Date().toISOString(),
+          cancelAtPeriodEnd: false,
+        });
+      }
+    }
+  }
+
+  return { handled: true, event: event.type };
+}
+
+export const subscriptionStore = new SubscriptionStore();
+
+--- src/lib/ops/env-audit.ts ---
+/**
+ * lib/ops/env-audit.ts
+ * Environment variable validator.
+ *
+ * Run at module initialisation in any server entrypoint (cron routes,
+ * daily-article.ts) to catch misconfiguration early — before a silent
+ * failure surfaces at 6 AM in production.
+ *
+ * Usage:
+ *   import { auditEnv } from '../lib/ops/env-audit';
+ *   auditEnv('pipeline');   // throws if any REQUIRED var is missing
+ *
+ * Severity levels:
+ *   REQUIRED — missing = throw (hard stop)
+ *   WARN     — missing = console.warn (degraded but runnable)
+ *   INFO     — missing = note in audit report only
+ *
+ * The complete env var reference is embedded below as the
+ * authoritative source of truth for .env.local and Vercel dashboard.
+ */
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type EnvSeverity = 'REQUIRED' | 'WARN' | 'INFO';
+type EnvContext  =
+  | 'all'
+  | 'pipeline'
+  | 'social'
+  | 'monetisation'
+  | 'newsletter'
+  | 'health';
+
+interface EnvSpec {
+  key:         string;
+  severity:    EnvSeverity;
+  contexts:    EnvContext[];
+  description: string;
+  example:     string;
+  secret:      boolean;   // true = never log the value
+}
+
+// ─── Complete environment variable manifest ───────────────────────────────────
+
+export const ENV_MANIFEST: EnvSpec[] = [
+  // ── Sanity ─────────────────────────────────────────────────────────────────
+  {
+    key: 'NEXT_PUBLIC_SANITY_PROJECT_ID', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Sanity project ID (public)',
+    example: 'abc123de', secret: false,
+  },
+  {
+    key: 'NEXT_PUBLIC_SANITY_DATASET', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Sanity dataset name',
+    example: 'production', secret: false,
+  },
+  {
+    key: 'SANITY_API_TOKEN', severity: 'REQUIRED', contexts: ['pipeline'],
+    description: 'Sanity write token — Editor role minimum',
+    example: 'sk...', secret: true,
+  },
+
+  // ── Upstash Redis ──────────────────────────────────────────────────────────
+  {
+    key: 'UPSTASH_REDIS_REST_URL', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Upstash Redis REST endpoint',
+    example: 'https://xxx.upstash.io', secret: false,
+  },
+  {
+    key: 'UPSTASH_REDIS_REST_TOKEN', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Upstash Redis REST token',
+    example: 'AX...', secret: true,
+  },
+
+  // ── AI Pipeline ────────────────────────────────────────────────────────────
+  {
+    key: 'GROK_API_KEY', severity: 'REQUIRED', contexts: ['pipeline'],
+    description: 'xAI Grok API key for summarisation stage',
+    example: 'xai-...', secret: true,
+  },
+  {
+    key: 'DEEPSEEK_API_KEY', severity: 'WARN', contexts: ['pipeline'],
+    description: 'DeepSeek API key — pipeline degrades without it',
+    example: 'sk-...', secret: true,
+  },
+  {
+    key: 'GEMINI_API_KEY', severity: 'WARN', contexts: ['pipeline'],
+    description: 'Google Gemini API key — GEO enhancer + polish stage',
+    example: 'AIza...', secret: true,
+  },
+
+  // ── RSS Feeds ──────────────────────────────────────────────────────────────
+  {
+    key: 'RSS_FEED_URLS', severity: 'REQUIRED', contexts: ['pipeline'],
+    description: 'Comma-separated list of RSS feed URLs to ingest',
+    example: 'https://cointelegraph.com/rss,https://decrypt.co/feed', secret: false,
+  },
+  {
+    key: 'MAX_ARTICLES_PER_RUN', severity: 'INFO', contexts: ['pipeline'],
+    description: 'Max articles to process per daily run (default: 5)',
+    example: '5', secret: false,
+  },
+
+  // ── Site ───────────────────────────────────────────────────────────────────
+  {
+    key: 'NEXT_PUBLIC_SITE_URL', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Canonical site URL (no trailing slash)',
+    example: 'https://cryptobrainnews.com', secret: false,
+  },
+  {
+    key: 'NEXT_PUBLIC_TWITTER_URL', severity: 'INFO', contexts: ['all'],
+    description: 'Twitter/X profile URL for schema sameAs',
+    example: 'https://x.com/CryptoBrainNews', secret: false,
+  },
+  {
+    key: 'NEXT_PUBLIC_TWITTER_HANDLE', severity: 'INFO', contexts: ['all'],
+    description: 'Twitter/X handle for Twitter Card meta tag',
+    example: '@CryptoBrainNews', secret: false,
+  },
+  {
+    key: 'NEXT_PUBLIC_TELEGRAM_URL', severity: 'INFO', contexts: ['all'],
+    description: 'Telegram channel URL for schema sameAs',
+    example: 'https://t.me/cryptobrainnews', secret: false,
+  },
+
+  // ── Telegram ───────────────────────────────────────────────────────────────
+  {
+    key: 'TELEGRAM_BOT_TOKEN', severity: 'WARN', contexts: ['pipeline', 'social', 'health'],
+    description: 'Telegram Bot API token for broadcasting + ops alerts',
+    example: '123456:ABC-...', secret: true,
+  },
+  {
+    key: 'TELEGRAM_CHAT_ID', severity: 'WARN', contexts: ['pipeline', 'social'],
+    description: 'Telegram channel/chat ID for article broadcasts',
+    example: '-1001234567890', secret: false,
+  },
+  {
+    key: 'TELEGRAM_OPS_CHAT_ID', severity: 'WARN', contexts: ['health'],
+    description: 'Separate Telegram chat for ops/health alerts (can equal TELEGRAM_CHAT_ID)',
+    example: '-1009876543210', secret: false,
+  },
+
+  // ── Twitter / X ────────────────────────────────────────────────────────────
+  {
+    key: 'TWITTER_API_KEY', severity: 'WARN', contexts: ['social'],
+    description: 'Twitter API v2 consumer key (OAuth 1.0a)',
+    example: 'abc...', secret: true,
+  },
+  {
+    key: 'TWITTER_API_SECRET', severity: 'WARN', contexts: ['social'],
+    description: 'Twitter API v2 consumer secret',
+    example: 'xyz...', secret: true,
+  },
+  {
+    key: 'TWITTER_ACCESS_TOKEN', severity: 'WARN', contexts: ['social'],
+    description: 'Twitter OAuth 1.0a access token (user context)',
+    example: '123456-abc...', secret: true,
+  },
+  {
+    key: 'TWITTER_ACCESS_TOKEN_SECRET', severity: 'WARN', contexts: ['social'],
+    description: 'Twitter OAuth 1.0a access token secret',
+    example: 'xyz...', secret: true,
+  },
+  {
+    key: 'TWITTER_BEARER_TOKEN', severity: 'INFO', contexts: ['social'],
+    description: 'Twitter Bearer token (app-only read access)',
+    example: 'AAAA...', secret: true,
+  },
+
+  // ── Stripe ─────────────────────────────────────────────────────────────────
+  {
+    key: 'STRIPE_SECRET_KEY', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Stripe secret key — server-only, never expose to browser',
+    example: 'sk_live_...', secret: true,
+  },
+  {
+    key: 'STRIPE_WEBHOOK_SECRET', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Stripe webhook signing secret from dashboard → Webhooks',
+    example: 'whsec_...', secret: true,
+  },
+  {
+    key: 'STRIPE_PRO_MONTHLY_PRICE_ID', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Stripe Price ID for Pro monthly ($19/mo)',
+    example: 'price_1...', secret: false,
+  },
+  {
+    key: 'STRIPE_PRO_YEARLY_PRICE_ID', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Stripe Price ID for Pro yearly ($190/yr)',
+    example: 'price_1...', secret: false,
+  },
+
+  // ── Newsletter (Resend) ────────────────────────────────────────────────────
+  {
+    key: 'RESEND_API_KEY', severity: 'WARN', contexts: ['newsletter'],
+    description: 'Resend API key for transactional + newsletter sends',
+    example: 're_...', secret: true,
+  },
+  {
+    key: 'NEWSLETTER_FROM', severity: 'INFO', contexts: ['newsletter'],
+    description: 'From address for newsletter sends',
+    example: 'news@cryptobrainnews.com', secret: false,
+  },
+
+  // ── Affiliate ──────────────────────────────────────────────────────────────
+  {
+    key: 'AFFILIATE_LEDGER_REF', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Ledger affiliate referral code',
+    example: 'CBN2024', secret: false,
+  },
+  {
+    key: 'AFFILIATE_BINANCE_REF', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Binance referral code',
+    example: 'XXXXXXXX', secret: false,
+  },
+  {
+    key: 'AFFILIATE_BYBIT_REF', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Bybit affiliate ID',
+    example: '12345', secret: false,
+  },
+
+  // ── Auth / Security ────────────────────────────────────────────────────────
+  {
+    key: 'JWT_SECRET', severity: 'REQUIRED', contexts: ['all'],
+    description: 'HS256 secret for session JWT signing (min 32 bytes)',
+    example: '<random 64-char hex>', secret: true,
+  },
+  {
+    key: 'CRON_SECRET', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Shared secret for Vercel Cron route auth',
+    example: '<random 32-char hex>', secret: true,
+  },
+  {
+    key: 'SESSION_COOKIE_NAME', severity: 'INFO', contexts: ['all'],
+    description: 'Name of the session cookie (default: cbn_session)',
+    example: 'cbn_session', secret: false,
+  },
+  {
+    key: 'IP_HASH_SALT', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Salt for GDPR-compliant IP hashing in affiliate analytics',
+    example: '<random 32-char hex>', secret: true,
+  },
+
+  // ── Dead letter ────────────────────────────────────────────────────────────
+  {
+    key: 'DEAD_LETTER_DIR', severity: 'INFO', contexts: ['pipeline'],
+    description: 'Directory for dead-letter JSON files (default: scripts/dead-letter)',
+    example: 'scripts/dead-letter', secret: false,
+  },
+];
+
+// ─── Auditor ──────────────────────────────────────────────────────────────────
+
+export interface AuditResult {
+  context:  EnvContext;
+  missing:  Array<{ key: string; severity: EnvSeverity; description: string }>;
+  present:  string[];
+  warnings: string[];
+  errors:   string[];
+  passed:   boolean;
+}
+
+export function auditEnv(context: EnvContext = 'all'): AuditResult {
+  const relevant = ENV_MANIFEST.filter(
+    (s) => s.contexts.includes('all') || s.contexts.includes(context),
+  );
+
+  const result: AuditResult = {
+    context,
+    missing:  [],
+    present:  [],
+    warnings: [],
+    errors:   [],
+    passed:   true,
+  };
+
+  for (const spec of relevant) {
+    const val = process.env[spec.key];
+
+    if (!val) {
+      result.missing.push({ key: spec.key, severity: spec.severity, description: spec.description });
+
+      if (spec.severity === 'REQUIRED') {
+        result.errors.push(`REQUIRED env var missing: ${spec.key} — ${spec.description}`);
+        result.passed = false;
+      } else if (spec.severity === 'WARN') {
+        result.warnings.push(`WARN env var missing: ${spec.key} — ${spec.description}`);
+      }
+    } else {
+      // Never log secret values
+      result.present.push(spec.secret ? `${spec.key}=<redacted>` : `${spec.key}=${val}`);
+    }
+  }
+
+  // Throw on any REQUIRED miss — hard fail at startup
+  if (!result.passed) {
+    throw new Error(
+      `[env-audit] ${context} context failed:\n` +
+      result.errors.map((e) => `  ✗ ${e}`).join('\n'),
+    );
+  }
+
+  // Emit warnings to stdout (captured by Vercel logs)
+  for (const w of result.warnings) {
+    process.stdout.write(JSON.stringify({ level: 'warn', msg: w }) + '\n');
+  }
+
+  return result;
+}
+
+/**
+ * Generate a .env.example file content from the manifest.
+ * Run: npx ts-node -e "require('./lib/ops/env-audit').printEnvExample()"
+ */
+export function printEnvExample(): void {
+  const lines: string[] = [
+    '# CryptoBrainNews — environment variables',
+    '# Generated from lib/ops/env-audit.ts — do not edit manually',
+    '# Copy to .env.local and fill in values',
+    '',
+  ];
+
+  let lastContext = '';
+  for (const spec of ENV_MANIFEST) {
+    const ctx = spec.contexts.filter((c) => c !== 'all')[0] ?? 'all';
+    if (ctx !== lastContext) {
+      lines.push(`# ── ${ctx.toUpperCase()} ` + '─'.repeat(60 - ctx.length));
+      lastContext = ctx;
+    }
+    lines.push(`# ${spec.description}`);
+    lines.push(`# Severity: ${spec.severity}  |  Example: ${spec.example}`);
+    lines.push(`${spec.key}=`);
+    lines.push('');
+  }
+
+  process.stdout.write(lines.join('\n'));
+}
+
+--- src/lib/news/sanity-client.ts ---
+/**
+ * lib/news/sanity-client.ts
+ * Two purposefully-separated Sanity clients:
+ *
+ *   readClient  — useCdn: true, no token
+ *                 Hits Sanity's global CDN edge cache.
+ *                 Use for ALL read queries (category pages, search, article fetch).
+ *                 Latency: ~20–50 ms globally vs ~200–400 ms for API.
+ *
+ *   writeClient — useCdn: false, SANITY_API_TOKEN required
+ *                 Bypasses CDN, talks directly to Sanity API.
+ *                 Use ONLY in pipeline scripts (daily-article.ts) and
+ *                 server-side mutations. Never ship to the browser.
+ *
+ * Separation prevents the common mistake of accidentally using an
+ * authenticated token on CDN requests (which disables CDN caching).
+ */
+
+import { createClient, type SanityClient, type QueryParams } from '@sanity/client';
+
+const PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '';
+const DATASET    = process.env.NEXT_PUBLIC_SANITY_DATASET    ?? 'production';
+const API_TOKEN  = process.env.SANITY_API_TOKEN              ?? '';
+const API_VERSION = '2024-01-01';
+
+if (!PROJECT_ID) {
+  throw new Error('NEXT_PUBLIC_SANITY_PROJECT_ID is not set');
+}
+
+// ─── CDN read client (public, no token) ──────────────────────────────────────
+export const readClient: SanityClient = createClient({
+  projectId:  PROJECT_ID,
+  dataset:    DATASET,
+  apiVersion: API_VERSION,
+  useCdn:     true,       // ← critical: enables Sanity CDN edge caching
+  token:      undefined,  // ← critical: token disables CDN – never pass here
+  perspective: 'published',
+});
+
+// ─── Direct API write client (server-only, never import on client) ───────────
+export const writeClient: SanityClient = createClient({
+  projectId:  PROJECT_ID,
+  dataset:    DATASET,
+  apiVersion: API_VERSION,
+  useCdn:     false,      // ← must be false for mutations
+  token:      API_TOKEN,
+});
+
+// ─── Query helper with timeout ────────────────────────────────────────────────
+const QUERY_TIMEOUT_MS = 10_000;
+
+export async function sanityFetch<T>(
+  query: string,
+  params: QueryParams = {},
+  client: SanityClient = readClient,
+): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
+  try {
+    return await client.fetch<T>(query, params, {
+      signal: controller.signal as AbortSignal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// ─── Health check (used by /api/health route) ─────────────────────────────────
+export async function sanityHealthCheck(): Promise<boolean> {
+  try {
+    await sanityFetch<unknown>('*[_type == "article"][0]._id');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+--- src/lib/supabase-server.ts ---
+// src/lib/supabase-server.ts
+// ─── Server-only Supabase client ─────────────────────────────────────────
+import 'server-only';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+
+let _client: SupabaseClient | null = null;
+
+export function getServerSupabase(): SupabaseClient {
+  if (_client) return _client;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error('[Supabase] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  }
+
+  _client = createClient(url, key, {
+    auth: { persistSession: false },
+  });
+  return _client;
+}
+
+--- src/lib/news/broadcast-queue.ts ---
+/**
+ * lib/news/broadcast-queue.ts
+ * Redis-backed dead-letter queue for Telegram and Newsletter broadcasts.
+ *
+ * On first failure:    item pushed to retry list with attempt count = 1
+ * On retry (cron):     up to MAX_RETRIES attempts with exponential backoff check
+ * After MAX_RETRIES:   item moved to dead-letter list (permanent, inspectable)
+ *
+ * Queue keys:
+ *   broadcast:retry:<channel>   LIST  – pending retries (LPUSH/RPOP)
+ *   broadcast:dead:<channel>    LIST  – permanent failures (LPUSH only)
+ *   broadcast:inflight:<id>     STRING – per-item lock (prevents double-send)
+ *
+ * Designed to be drained by a separate cron job or at the end of the
+ * daily pipeline run via drainRetryQueue().
+ */
+
+import { Redis } from '@upstash/redis';
+
+export type BroadcastChannel = 'telegram' | 'newsletter';
+
+export interface BroadcastJob<T = unknown> {
+  id: string;           // uuid-v4 from the original pipeline run
+  channel: BroadcastChannel;
+  payload: T;
+  attempts: number;
+  firstFailedAt: string;
+  lastFailedAt: string;
+  lastError: string;
+}
+
+const MAX_RETRIES = 4;
+const INFLIGHT_TTL_SECONDS = 120; // prevent double-send within 2 min
+
+function retryKey(channel: BroadcastChannel): string  { return `broadcast:retry:${channel}`; }
+function deadKey(channel: BroadcastChannel): string   { return `broadcast:dead:${channel}`; }
+function inflightKey(id: string): string               { return `broadcast:inflight:${id}`; }
+
+export class BroadcastQueue {
+  private readonly redis: Redis;
+
+  constructor() {
+    this.redis = Redis.fromEnv();
+  }
+
+  /**
+   * Push a failed broadcast onto the retry queue.
+   * If the job has already hit MAX_RETRIES, send straight to dead-letter.
+   */
+  async enqueueFailure<T>(
+    job: Omit<BroadcastJob<T>, 'lastFailedAt'> & { error: string },
+  ): Promise<void> {
+    const updated: BroadcastJob<T> = {
+      ...job,
+      attempts: job.attempts,
+      lastFailedAt: new Date().toISOString(),
+      lastError: job.error,
+    };
+
+    if (updated.attempts >= MAX_RETRIES) {
+      await this.redis.lpush(deadKey(job.channel), JSON.stringify(updated));
+    } else {
+      await this.redis.lpush(retryKey(job.channel), JSON.stringify(updated));
+    }
+  }
+
+  /**
+   * Drain the retry queue for a given channel.
+   * Calls sendFn for each job; on success removes from queue, on failure
+   * re-enqueues with incremented attempt count.
+   *
+   * Returns counts for observability.
+   */
+  async drainRetryQueue<T>(
+    channel: BroadcastChannel,
+    sendFn: (payload: T) => Promise<void>,
+  ): Promise<{ sent: number; requeued: number; deadLettered: number }> {
+    const counts = { sent: 0, requeued: 0, deadLettered: 0 };
+
+    // Drain entire queue in one pass (snapshot length to avoid infinite loop)
+    const length = await this.redis.llen(retryKey(channel));
+    if (length === 0) return counts;
+
+    for (let i = 0; i < length; i++) {
+      const raw = await this.redis.rpop<string>(retryKey(channel));
+      if (!raw) break;
+
+      let job: BroadcastJob<T>;
+      try {
+        job = JSON.parse(raw) as BroadcastJob<T>;
+      } catch {
+        // Malformed entry – drop it
+        continue;
+      }
+
+      // Idempotency lock: skip if another worker is processing this id
+      const locked = await this.redis.set(inflightKey(job.id), '1', {
+        nx: true,
+        ex: INFLIGHT_TTL_SECONDS,
+      });
+      if (!locked) continue;
+
+      try {
+        await sendFn(job.payload);
+        counts.sent += 1;
+        // Success – do NOT re-enqueue; inflight key expires naturally
+      } catch (err) {
+        counts.requeued += 1;
+        const nextAttempts = job.attempts + 1;
+        if (nextAttempts >= MAX_RETRIES) counts.deadLettered += 1;
+
+        await this.enqueueFailure<T>({
+          ...job,
+          attempts: nextAttempts,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        // Release inflight lock so retry can proceed after backoff
+        await this.redis.del(inflightKey(job.id));
+      }
+    }
+
+    return counts;
+  }
+
+  /** Inspect dead-letter items (for dashboard/alerting). */
+  async peekDeadLetters(channel: BroadcastChannel, count = 20): Promise<BroadcastJob[]> {
+    const items = await this.redis.lrange(deadKey(channel), 0, count - 1);
+    return items.map((raw) => JSON.parse(raw as string) as BroadcastJob);
+  }
+
+  /** Count pending retries. Useful for health-check endpoints. */
+  async pendingCount(channel: BroadcastChannel): Promise<number> {
+    return this.redis.llen(retryKey(channel));
+  }
+}
+
+--- src/lib/news/telegram.ts ---
+/**
+ * lib/news/telegram.ts
+ * Telegram broadcast with:
+ *   - Rate-limit awareness (Telegram: 30 msg/s globally, 1 msg/s per chat)
+ *   - Automatic dead-letter queuing on failure
+ *   - Message chunking for articles exceeding 4096-char limit
+ *   - HTML parse mode with safe escaping
+ */
+
+import { randomUUID } from 'crypto';
+import { BroadcastQueue } from './broadcast-queue';
+import type { TelegramPayload } from './types';
+
+const TELEGRAM_API = 'https://api.telegram.org';
+const MAX_MSG_LENGTH = 4096;
+// Minimum delay between messages to the same chat (1050ms > Telegram's 1/s limit)
+const INTER_MESSAGE_DELAY_MS = 1050;
+
+export class TelegramBroadcaster {
+  private readonly botToken: string;
+  private readonly queue: BroadcastQueue;
+
+  constructor(botToken: string) {
+    if (!botToken) throw new Error('TELEGRAM_BOT_TOKEN is required');
+    this.botToken = botToken;
+    this.queue = new BroadcastQueue();
+  }
+
+  /**
+   * Send a message. On failure, enqueues for retry rather than throwing.
+   * Returns true if sent successfully, false if queued for retry.
+   */
+  async send(
+    payload: TelegramPayload,
+    runId?: string,
+  ): Promise<boolean> {
+    const id = runId ?? randomUUID();
+    const chunks = this.chunkMessage(payload.text, MAX_MSG_LENGTH);
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunkPayload: TelegramPayload = {
+        ...payload,
+        text: chunks[i],
+      };
+      try {
+        await this.sendRaw(chunkPayload);
+        if (i < chunks.length - 1) {
+          await new Promise((r) => setTimeout(r, INTER_MESSAGE_DELAY_MS));
+        }
+      } catch (err) {
+        await this.queue.enqueueFailure({
+          id: `${id}-chunk${i}`,
+          channel: 'telegram',
+          payload: chunkPayload,
+          attempts: 1,
+          firstFailedAt: new Date().toISOString(),
+          error: err instanceof Error ? err.message : String(err),
+          lastError: '',
+        });
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Drain retry queue – call from end of daily pipeline run or a separate cron. */
+  async drainRetries(): Promise<{ sent: number; requeued: number; deadLettered: number }> {
+    return this.queue.drainRetryQueue<TelegramPayload>('telegram', (payload) =>
+      this.sendRaw(payload),
+    );
+  }
+
+  /** Escape HTML special chars for Telegram HTML parse mode. */
+  static escapeHTML(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  /** Format a published article for Telegram. */
+  static formatArticleMessage(
+    title: string,
+    summary: string,
+    slug: string,
+    tags: string[],
+  ): TelegramPayload {
+    const tagLine = tags.slice(0, 5).map((t) => `#${t.replace(/\s+/g, '')}`).join(' ');
+    const url = `https://cryptobrainnews.com/news/${slug}`;
+    const text =
+      `📰 <b>${TelegramBroadcaster.escapeHTML(title)}</b>\n\n` +
+      `${TelegramBroadcaster.escapeHTML(summary)}\n\n` +
+      `${tagLine}\n\n` +
+      `<a href="${url}">Read full article →</a>`;
+
+    return { chatId: process.env.TELEGRAM_CHAT_ID ?? '', text, parseMode: 'HTML', disableWebPagePreview: false };
+  }
+
+  private async sendRaw(payload: TelegramPayload): Promise<void> {
+    const res = await fetch(`${TELEGRAM_API}/bot${this.botToken}/sendMessage`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(15_000),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: payload.chatId,
+        text: payload.text,
+        parse_mode: payload.parseMode,
+        disable_web_page_preview: payload.disableWebPagePreview ?? false,
+      }),
+    });
+
+    if (res.status === 429) {
+      // Respect Retry-After header
+      const retryAfter = Number(res.headers.get('Retry-After') ?? '5');
+      await new Promise((r) => setTimeout(r, retryAfter * 1000));
+      // One automatic retry on rate-limit
+      return this.sendRaw(payload);
+    }
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Telegram API ${res.status}: ${body}`);
+    }
+  }
+
+  /** Split text at word boundaries without breaking HTML tags. */
+  private chunkMessage(text: string, maxLen: number): string[] {
+    if (text.length <= maxLen) return [text];
+    const chunks: string[] = [];
+    let remaining = text;
+    while (remaining.length > maxLen) {
+      let cutAt = remaining.lastIndexOf('\n', maxLen);
+      if (cutAt < maxLen * 0.5) cutAt = remaining.lastIndexOf(' ', maxLen);
+      if (cutAt <= 0) cutAt = maxLen;
+      chunks.push(remaining.slice(0, cutAt).trim());
+      remaining = remaining.slice(cutAt).trim();
+    }
+    if (remaining) chunks.push(remaining);
+    return chunks;
+  }
+}
+
+--- .gitignore ---
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+# CryptoBrainNews Final
+.env.local
+.next/
+node_modules/
+.vercel/
+.DS_Store
+*.tsbuildinfo
+
