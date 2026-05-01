@@ -522,3 +522,80 @@ Summary of Deliverables
 
 
 
+
+---
+
+## Phase E — Chart & UX Standardisation (The Block Clone)
+
+**Status:** ✅ COMPLETE (April 30, 2026)
+
+**Goal:** Upgrade the visual identity of the data terminal to match The Block's institutional dark dashboard. Replace all Recharts-heavy charts with TradingView Lightweight Charts, enforce consistent design tokens, and add reusable loading/error states.
+
+**Reference research:** Grok performed a live UI audit of https://www.theblock.co/data and extracted exact colors, typography, spacing, timeframe selector patterns, and loading/error state conventions.
+
+**Deliverables (15 files):**
+- Global CSS redesign: `#161616` cards, `#27272a` borders, `#22c55e` primary accent, custom scrollbar, shimmer animation.
+- 5 shared components rewritten: `TimeframeSelector` (pill‑style), `ChartSkeleton` (shimmer), `DataPageError`, `MetricCard` (with trend badge), `ProChartWrapper` (CSV export ready).
+- `TvLightweightChart` extended with histogram support.
+- 8 page‑specific client components upgraded: `SpotClient`, `FuturesClient`, `BitcoinChartsClient`, `EthTvlClient`, `SolanaChartsClient`, `DeFiTvlClient`, `RevenueTrendClient`, `StablecoinUsdClient`.
+- All Recharts replaced with TradingView Lightweight Charts where applicable. Histograms later reverted to Recharts for categorical data after a live‑site "PI" symbol error.
+
+**Key design tokens enforced:**
+- Background: `#0a0a0a` | Card: `#161616` | Border: `#27272a`
+- Primary: `#22c55e` | Error: `#ef4444` | Text: `#f8fafc` | Muted: `#a3a3a3`
+- Typography: Inter (headings, font-weight 600), Space Mono (data, tabular-nums)
+- Cards: `rounded-3xl`, padding `p-6`, hover shadow
+
+---
+
+## Phase F — Security, Pipeline & Code Quality Overhaul
+
+**Status:** 🔲 IN PROGRESS (generating via DeepSeek V4, May 1, 2026)
+
+**Goal:** Remediate all �� Critical, 🟠 High, and 🟡 Medium findings from the Grok + Claude 4.7 full‑application audits conducted on April 30, 2026.
+
+**Audits that fed into Phase F:**
+- **Grok full‑app audit:** visited the live site, checked data freshness against CoinGecko, inspected sitemap, health endpoint, and page rendering. Flagged degraded health status, missing /data/* sitemap routes, "CONNECTING TO TAPE…" / "Rendering…" UI blocks, and missing legal pages.
+- **Claude 4.7 security & reliability audit:** reviewed the repository structure, identified CRON_SECRET enforcement gaps, Stripe webhook idempotency missing, dead‑letter queue writing to ephemeral /tmp, missing `server‑only` guards, and provided code snippets for fixes.
+
+**Phase F sub‑tasks:**
+
+### F‑1 — 🔴 Critical (Security & Pipeline Reliability)
+- Create `src/lib/ops/cron-guard.ts` — a reusable CRON_SECRET validator.
+- Apply the guard to all 5 cron routes (`daily-article`, `health`, `sitemap-warm`, `social`, `broadcast-drain`).
+- Stripe webhook: ensure raw‑body signature verification + event ID idempotency via Redis.
+- Dead‑letter queue: replace `/tmp` file writes in `daily-article.ts` with Redis LPUSH.
+- Add `import 'server-only'` to `sanity-client.ts`, `supabase-server.ts`, `stripe.ts`.
+
+### F‑2 — 🟠 High (Content, Broadcast & Legal)
+- Telegram: respect Retry‑After header on 429 responses, throttle to 1 msg/sec.
+- RSS dedup: add content‑snippet hash as a tertiary dedup key.
+- Sitemap: add all 60+ `/data/*` routes and fix canonical domain.
+- Newsletter unsubscribe: verify one‑click, no‑login, GDPR‑compliant flow.
+
+### F‑3 — 🟡 Medium (Code Quality & Monitoring)
+- Health endpoint: add sub‑checks for Sanity, Redis, and Resend.
+- Rate‑limiting: apply to `/api/newsletter/subscribe` and `/api/news/search`.
+- Legal pages: create `/privacy` and `/terms` placeholder pages with footer links.
+- Affiliate links: enforce `rel="nofollow noopener sponsored"`.
+- Dependencies: remove unused Supabase deps from `package.json`.
+
+### F‑Research (Structural Improvements)
+- Scan for code duplication (duplicate fetchers, duplicate UI components).
+- Find all hardcoded API URLs / TTLs that should be env vars.
+- Suggest top‑level project structure improvements.
+
+---
+
+## Phase Completion Summary
+
+| Phase | Title | Status | Key Outcome |
+|-------|-------|--------|------------|
+| **A** | 11 Frontend Improvements | ✅ | Miner Revenue, UTXO Age, ETH Supply, Bybit Liq., Peg Deviation, ETF Premium, Volume Dominance, Revenue Trend, L2 Gas, Trending Coins, F&G 90D |
+| **B** | 7 New Free APIs | ✅ | Flipside, CoinGlass, Token Terminal, LunarCrush, IntoTheBlock, Spot On Chain (→ Zerion), DefiLlama /unlocks |
+| **C** | Paid → Free Replacements | ✅ | Kaiko → Hyperliquid+Drift, Santiment → ApeWisdom+Santiment free, Glassnode seed, CoinShares seed, Greeks.live seed |
+| **D** | Live Dune SQL Integration | ✅ | 8 live Dune queries created on dune.com free tier, wired to `dune.ts`, seed fallbacks, DUNE_QUERIES.md updated |
+| **E** | Chart & UX Standardisation | ✅ | 15 files, The Block design clone, TradingView Lightweight Charts, shimmer skeletons, pill timeframes, CSV export ready |
+| **Zerion** | Spot On Chain Replacement | ✅ | `zerion.ts`, entity‑labelled whales, merged Etherscan+Zerion on `/data/defi/whale-watch` |
+| **Env Audit** | Vercel Security Hardening | ✅ | 7 deprecated vars removed, 15 secrets rotated, 14 new vars added, free‑tier‑only `.env.example` |
+| **F** | Security, Pipeline & Code Quality | 🔲 | Cron guard, Stripe idempotency, dead‑letter → Redis, Telegram rate‑limiting, sitemap expansion, legal pages, rate‑limiting, health checks (generating now) |
