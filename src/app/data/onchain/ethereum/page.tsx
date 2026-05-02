@@ -88,6 +88,54 @@ async function fetchEthSupplyGrowth(): Promise<EthSupplyRow[]> {
   }
 }
 
+// ── Unit 2 (Batch 8): ETH Burn Rate Tracker ───────────────────────────────────
+
+interface EthBurnStats {
+  totalBurned:    number;  // ETH
+  dailyAvgBurn:   number;  // ETH/day
+  source:         "live" | "estimate";
+}
+
+// EIP-1559 launch: Aug 5 2021 00:00:00 UTC (Unix: 1628121600)
+const EIP1559_TIMESTAMP = 1_628_121_600_000;
+
+async function fetchEthBurnStats(): Promise<EthBurnStats> {
+  return cached("eth:burn:stats:v1", async () => {
+    const key = process.env.ETHERSCAN_API_KEY;
+    const daysSinceEIP1559 = Math.floor((Date.now() - EIP1559_TIMESTAMP) / 86_400_000);
+
+    if (key) {
+      try {
+        const res = await fetch(
+          `https://api.etherscan.io/api?module=stats&action=ethburned&apikey=${key}`,
+          { next: { revalidate: 3600 } }
+        );
+        if (res.ok) {
+          const json = await res.json() as { status: string; result?: string };
+          if (json.status === "1" && json.result) {
+            const totalBurned = parseFloat(json.result) / 1e18;
+            if (totalBurned > 0) {
+              return {
+                totalBurned,
+                dailyAvgBurn: totalBurned / daysSinceEIP1559,
+                source: "live",
+              };
+            }
+          }
+        }
+      } catch { /* fall through */ }
+    }
+
+    // Seed fallback: ~4.4M ETH burned total as of mid-2026
+    const seedTotal = 4_420_000;
+    return {
+      totalBurned:  seedTotal,
+      dailyAvgBurn: seedTotal / daysSinceEIP1559,
+      source:       "estimate",
+    };
+  }, 3600);
+}
+
 async function EthData() {
   const priceR = await ft("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd");
   const tvlR   = await ft("https://api.llama.fi/v2/historicalChainTvl/Ethereum");
@@ -96,12 +144,13 @@ async function EthData() {
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_gasPrice", params: [] }),
   });
 
-  const [priceJ, tvlJ, gasJ, supplyRows, stakingData] = await Promise.allSettled([
+  const [priceJ, tvlJ, gasJ, supplyRows, stakingData, burnStats] = await Promise.allSettled([
     priceR?.ok ? priceR.json() : Promise.resolve(null),
     tvlR?.ok   ? tvlR.json()   : Promise.resolve(null),
     gasR?.ok   ? gasR.json()   : Promise.resolve(null),
     fetchEthSupplyGrowth(),
     getEthStakingStats(),
+    fetchEthBurnStats(),
   ]);
 
   const priceValue   = priceJ.status    === "fulfilled" ? (priceJ.value    as Record<string, { usd: number }> | null) : null;
@@ -121,6 +170,7 @@ async function EthData() {
   const latestTvl      = Array.isArray(tvlRaw) && tvlRaw.length ? tvlRaw[tvlRaw.length - 1]?.tvl ?? 0 : 0;
   const currentSupply  = supplyData[0]?.supply ?? 0;
   const burnedEth      = supplyData[0]?.burned ?? 0;
+  const ethBurn        = burnStats.status === "fulfilled" ? burnStats.value : null;
 
   const fmtN = (n: number) => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : n.toFixed(0);
 
@@ -231,6 +281,44 @@ async function EthData() {
           </div>
           <p className="text-[9px] text-[#333] font-mono mt-4">
             Source: Etherscan stats/ethsupply + stats/ethburned · Requires ETHERSCAN_API_KEY
+          </p>
+        </div>
+      )}
+
+      {/* ── Unit 2 (Batch 8): ETH Burn Rate Tracker ──────────────────────────── */}
+      {ethBurn && (
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#ff4757] pl-3 mb-5">
+            ETH Burn Rate Tracker
+          </h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card
+              label="Total ETH Burned"
+              value={`${(ethBurn.totalBurned / 1e6).toFixed(2)}M ETH`}
+              sub="cumulative since EIP-1559"
+              color="#ff4757"
+            />
+            <Card
+              label="Daily Burn Rate"
+              value={`${ethBurn.dailyAvgBurn.toFixed(0)} ETH/day`}
+              sub="lifetime average since EIP-1559"
+              color="#FABF2C"
+            />
+            <Card
+              label="USD Value Burned"
+              value={price > 0 ? `$${((ethBurn.totalBurned * price) / 1e9).toFixed(1)}B` : "—"}
+              sub="at current ETH price"
+              color="#888"
+            />
+            <Card
+              label="Data Source"
+              value={ethBurn.source === "live" ? "Etherscan" : "Estimate"}
+              sub={ethBurn.source === "live" ? "stats/ethburned · live" : "seed fallback · ~4.4M ETH"}
+              color={ethBurn.source === "live" ? "#00d672" : "#555"}
+            />
+          </div>
+          <p className="text-[9px] text-[#333] font-mono mt-4">
+            Source: Etherscan stats/ethburned · EIP-1559 Aug 5 2021 · Cached 1 h
           </p>
         </div>
       )}

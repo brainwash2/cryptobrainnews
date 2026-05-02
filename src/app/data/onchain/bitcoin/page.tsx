@@ -93,6 +93,10 @@ async function fetchLightningStats(): Promise<LightningStats | null> {
   }, 300);
 }
 
+// ── Unit 1 (Batch 8): BTC Miner Revenue Breakdown — derived, no new fetch ────
+// Fee/Subsidy Ratio is derived from existing feeData + minerRevData arrays.
+// Computed in JSX via IIFE over last-30 data points.
+
 // ── Unit 5: BTC 30-Day Annualized Realized Volatility ───────────────────────
 async function fetchBtcVolatility(): Promise<number | null> {
   try {
@@ -221,6 +225,47 @@ async function BitcoinData() {
           );
         })()}
       </div>
+
+      {/* Unit 1 (Batch 8) — BTC Miner Revenue Breakdown ─────────────────────── */}
+      {(() => {
+        const last30Fee = [...feeData].sort((a, b) => a.date.localeCompare(b.date)).slice(-30);
+        const last30Rev = [...minerRevData].sort((a, b) => a.date.localeCompare(b.date)).slice(-30);
+        const totalFees = last30Fee.reduce((s, p) => s + p.value, 0);
+        const totalRev  = last30Rev.reduce((s, p) => s + p.value, 0);
+        const feePct    = totalRev > 0 ? (totalFees / totalRev) * 100 : 0;
+        const subPct    = 100 - feePct;
+        if (totalRev === 0) return null;
+        return (
+          <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3 mb-5">
+              BTC Miner Revenue Breakdown — 30 Day Average
+            </h3>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              <StatCard
+                label="Fee/Subsidy Ratio"
+                value={`${feePct.toFixed(1)}% / ${subPct.toFixed(1)}%`}
+                sub="fees vs block subsidy · 30D avg"
+                color="#FABF2C"
+              />
+              <StatCard
+                label="Fee Revenue (30D Avg)"
+                value={`$${fmtNum(totalFees / 30)}/day`}
+                sub="transaction fees only"
+                color={feePct > 10 ? "#00d672" : "#888"}
+              />
+              <StatCard
+                label="Subsidy Revenue (30D Avg)"
+                value={`$${fmtNum((totalRev - totalFees) / 30)}/day`}
+                sub="block subsidy only"
+                color="#fff"
+              />
+            </div>
+            <p className="text-[9px] text-[#333] font-mono mt-4">
+              Source: blockchain.info/charts/transaction-fees-usd + miners-revenue · Cached 30 min
+            </p>
+          </div>
+        );
+      })()}
 
       {/* Unit 2 — Lightning Network Capacity ────────────────────────────────── */}
       {lnStats && (

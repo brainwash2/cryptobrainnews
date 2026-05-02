@@ -4,11 +4,76 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 7 – Full Metric Parity (continued)
+Batch 8 – Full Metric Parity (final push) ✅
 
 ## Current Goal
 
 Implement the next 5 high-impact metrics using only free APIs
+
+### Batch 8 — Unit 1: BTC Miner Revenue Breakdown ✅
+- `src/app/data/onchain/bitcoin/page.tsx` updated:
+  - No new fetch — derives from existing `feeData` (transaction-fees-usd) + `minerRevData` (miners-revenue) arrays
+  - IIFE in JSX: last-30 data points sorted and sliced; `totalFees / totalRev * 100` → `feePct`; `100 - feePct` → `subPct`
+  - New `"BTC Miner Revenue Breakdown — 30 Day Average"` section (conditional on `totalRev > 0`) with 3 KPI cards:
+    - Fee/Subsidy Ratio (fees% / subsidy%)
+    - Fee Revenue (30D Avg daily in USD)
+    - Subsidy Revenue (30D Avg daily in USD)
+  - Source note: blockchain.info/charts/transaction-fees-usd + miners-revenue · Cached 30 min
+
+### Batch 8 — Unit 2: ETH Burn Rate Tracker ✅
+- `src/app/data/onchain/ethereum/page.tsx` updated:
+  - `EthBurnStats` interface added (`totalBurned`, `dailyAvgBurn`, `source`)
+  - `EIP1559_TIMESTAMP` constant (Aug 5 2021 = 1628121600000ms)
+  - `fetchEthBurnStats()` — `cached('eth:burn:stats:v1', ..., 3600)`:
+    - If `ETHERSCAN_API_KEY` present: fetches `stats/ethburned`, computes `totalBurned / daysSinceEIP1559`
+    - Seed fallback: 4,420,000 ETH total at avg / days since EIP-1559
+  - `burnStats` added as 6th element in `Promise.allSettled`
+  - `ethBurn` derived from settled result
+  - New `"ETH Burn Rate Tracker"` section (conditional on `ethBurn`) with 4 KPI cards:
+    - Total ETH Burned (M ETH cumulative)
+    - Daily Burn Rate (ETH/day, lifetime avg)
+    - USD Value Burned (at current ETH price)
+    - Data Source (live Etherscan or estimate badge)
+
+### Batch 8 — Unit 3: Solana Validator Count & Nakamoto Coefficient ✅
+- `src/app/data/onchain/solana/page.tsx` updated:
+  - `import { cached } from '@/lib/cache'` added
+  - `SolVoteAccount` and `SolValidatorStats` interfaces added
+  - `fetchSolValidators()` — `cached('sol:validators:v1', ..., 300)`:
+    - Calls Solana mainnet RPC `getVoteAccounts`
+    - `activeCount` = `current.length` (non-delinquent)
+    - Nakamoto coefficient = min validators to exceed 33.3% of total activated stake (sorted desc)
+  - `validatorStats` added as 4th element in `Promise.allSettled`
+  - `valStats` derived; new `"Validator Decentralization"` section (conditional) with 4 KPI cards:
+    - Active Validators (non-delinquent)
+    - Nakamoto Coefficient (color-coded: ≥30 green, ≥15 amber, <15 red)
+    - Total Stake (in lamports / 1e9)
+    - Decentralization label (High/Medium/Low)
+
+### Batch 8 — Unit 4: Global Crypto Fear & Greed Historical Chart ✅
+- `src/app/data/markets/prices/page.tsx` updated:
+  - `fetchFngHistory()` limit changed from `90` → `365` (fetches full 365D from alternative.me)
+- `src/app/data/markets/prices/_components/PricesClient.tsx` updated:
+  - `fngRange: 90 | 365` state added (default 90)
+  - 90D/365D toggle button strip added to F&G section header (amber active style)
+  - Section title updated dynamically: `"Fear & Greed Index — {fngRange}D History"`
+  - IIFE computes `sliced = fngRange === 365 ? fngHistory : fngHistory.slice(-90)` and passes to `AreaChart`
+  - Date footer updated to use `sliced[0]` / `sliced[sliced.length-1]`
+
+### Batch 8 — Unit 5: DeFi TVL by Chain Leaderboard ✅
+- `src/app/data/defi/tvl/page.tsx` updated:
+  - `import { cached } from '@/lib/cache'` added
+  - `ChainTvlRow` interface added (`name`, `tvl`, `change_1d`, `change_7d`, `protocols`, `tokenSymbol?`)
+  - `fetchChainTvlLeaderboard()` — `cached('defi:chain:tvl:leaderboard:v1', ..., 3600)`:
+    - Fetches `api.llama.fi/v2/chains`
+    - Filters `tvl > 0`, sorts desc by TVL, slices top 10
+  - `chainLeaderboard` added as 5th element in `Promise.all`
+  - New `"TVL by Chain — Top 10 Leaderboard"` section (conditional) with full table:
+    - Columns: Rank, Chain, TVL (amber), 7D % (green/red), 1D %, Protocols count
+
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 7 ✅ — Full Metric Parity (continued)
 
 ### Batch 7 — Unit 1: CME BTC Futures OI (CFTC) ✅
 - `src/app/data/markets/futures/page.tsx` updated:

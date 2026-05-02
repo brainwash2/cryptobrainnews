@@ -74,10 +74,11 @@ function FngChartTooltip({ active, payload, label }: any) {
 }
 
 export default function PricesClient({ globalData, fearAndGreed, coins, trending, fngHistory }: Props) {
-  const [tf, setTf]       = useState<Timeframe>("1D");
-  const [sort, setSort]   = useState<SortField>("rank");
-  const [dir, setDir]     = useState<1 | -1>(1);
-  const mounted           = useSyncExternalStore(() => () => {}, () => true, () => false);
+  const [tf, setTf]         = useState<Timeframe>("1D");
+  const [sort, setSort]     = useState<SortField>("rank");
+  const [dir, setDir]       = useState<1 | -1>(1);
+  const [fngRange, setFngRange] = useState<90 | 365>(90);
+  const mounted             = useSyncExternalStore(() => () => {}, () => true, () => false);
 
   const totalMcap   = globalData?.total_market_cap?.usd ?? 0;
   const totalVol    = globalData?.total_volume?.usd ?? 0;
@@ -175,46 +176,70 @@ export default function PricesClient({ globalData, fearAndGreed, coins, trending
 
       {fngHistory.length > 0 && (
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-          <div className="mb-4">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3">
-              Fear & Greed Index — 90 Day History
-            </h3>
-            <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
-              Source: alternative.me/fng · Values 0–100
-            </p>
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3">
+                Fear & Greed Index — {fngRange}D History
+              </h3>
+              <p className="text-[10px] text-[#555] font-mono mt-1 pl-3">
+                Source: alternative.me/fng · Values 0–100 · Global crypto sentiment
+              </p>
+            </div>
+            <div className="flex gap-1">
+              {([90, 365] as const).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setFngRange(r)}
+                  className={`px-2 py-1 text-[9px] font-black uppercase tracking-widest border transition-colors ${
+                    fngRange === r
+                      ? "border-[#FABF2C] text-[#FABF2C] bg-[#FABF2C]/10"
+                      : "border-[#1a1a1a] text-[#555] hover:border-[#333] hover:text-[#888]"
+                  }`}
+                >
+                  {r}D
+                </button>
+              ))}
+            </div>
           </div>
-          <div style={{ height: 240 }}>
-            {mounted ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={fngHistory} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="fngGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#FABF2C" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#FABF2C" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                  <XAxis dataKey="date" stroke="#444" fontSize={9} fontFamily="monospace"
-                    tickLine={false} axisLine={false} minTickGap={30} />
-                  <YAxis stroke="#444" fontSize={9} fontFamily="monospace"
-                    tickLine={false} axisLine={false} domain={[0, 100]} width={30} />
-                  <ReferenceLine y={50} stroke="#2a2a2a" strokeWidth={1} strokeDasharray="3 3" />
-                  <ReferenceLine y={25} stroke="#ff4757" strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
-                  <ReferenceLine y={75} stroke="#00d672" strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
-                  <Tooltip content={<FngChartTooltip />} />
-                  <Area type="monotone" dataKey="value" stroke="#FABF2C" fill="url(#fngGrad)"
-                    strokeWidth={1.5} dot={false} isAnimationActive={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <ChartSkeleton kpis={0} rows={0} charts={1} height={240} />
-            )}
-          </div>
-          <div className="flex justify-between text-[9px] font-mono text-[#333] mt-2">
-            <span>{fngHistory[0]?.date ?? ""}</span>
-            <span className="text-[#FABF2C]">{fngHistory[fngHistory.length - 1]?.value ?? ""}</span>
-            <span>{fngHistory[fngHistory.length - 1]?.date ?? ""}</span>
-          </div>
+          {(() => {
+            const sliced = fngRange === 365 ? fngHistory : fngHistory.slice(-90);
+            return (
+              <>
+                <div style={{ height: 240 }}>
+                  {mounted ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={sliced} margin={{ top: 5, right: 0, left: -15, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="fngGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#FABF2C" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#FABF2C" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
+                        <XAxis dataKey="date" stroke="#444" fontSize={9} fontFamily="monospace"
+                          tickLine={false} axisLine={false} minTickGap={30} />
+                        <YAxis stroke="#444" fontSize={9} fontFamily="monospace"
+                          tickLine={false} axisLine={false} domain={[0, 100]} width={30} />
+                        <ReferenceLine y={50} stroke="#2a2a2a" strokeWidth={1} strokeDasharray="3 3" />
+                        <ReferenceLine y={25} stroke="#ff4757" strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
+                        <ReferenceLine y={75} stroke="#00d672" strokeWidth={0.5} strokeDasharray="2 2" opacity={0.4} />
+                        <Tooltip content={<FngChartTooltip />} />
+                        <Area type="monotone" dataKey="value" stroke="#FABF2C" fill="url(#fngGrad)"
+                          strokeWidth={1.5} dot={false} isAnimationActive={false} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <ChartSkeleton kpis={0} rows={0} charts={1} height={240} />
+                  )}
+                </div>
+                <div className="flex justify-between text-[9px] font-mono text-[#333] mt-2">
+                  <span>{sliced[0]?.date ?? ""}</span>
+                  <span className="text-[#FABF2C]">{sliced[sliced.length - 1]?.value ?? ""}</span>
+                  <span>{sliced[sliced.length - 1]?.date ?? ""}</span>
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 

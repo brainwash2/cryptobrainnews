@@ -7,6 +7,7 @@ import {
   getTvlByCategory,
   getDefiTotalFees24h,
 } from "@/lib/defi-data";
+import { cached }             from "@/lib/cache";
 import type { ProtocolRow } from "@/lib/defi-data";
 import DeFiTvlClient           from "./_components/DeFiTvlClient";
 import DefiCategoryPieChart    from "./_components/DefiCategoryPieChart";
@@ -22,6 +23,50 @@ export const revalidate = 3600;
 export interface TvlHistoryPoint {
   date:  string;  // "YYYY-MM-DD"
   tvl:   number;
+}
+
+// -- Unit 5 (Batch 8): DeFi TVL by Chain Leaderboard -------------------------
+
+interface ChainTvlRow {
+  name:       string;
+  tvl:        number;
+  change_1d:  number | null;
+  change_7d:  number | null;
+  protocols:  number | null;
+  tokenSymbol?: string;
+}
+
+async function fetchChainTvlLeaderboard(): Promise<ChainTvlRow[]> {
+  return cached("defi:chain:tvl:leaderboard:v1", async () => {
+    try {
+      const res = await fetch("https://api.llama.fi/v2/chains", {
+        next: { revalidate: 3600 },
+      });
+      if (!res.ok) return [];
+      const data = await res.json() as Array<{
+        name?: string;
+        tvl?: number;
+        change_1d?: number;
+        change_7d?: number;
+        protocols?: number;
+        tokenSymbol?: string;
+      }>;
+      return data
+        .filter((c) => (c.tvl ?? 0) > 0 && c.name)
+        .sort((a, b) => (b.tvl ?? 0) - (a.tvl ?? 0))
+        .slice(0, 10)
+        .map((c) => ({
+          name:       c.name ?? "",
+          tvl:        c.tvl ?? 0,
+          change_1d:  c.change_1d ?? null,
+          change_7d:  c.change_7d ?? null,
+          protocols:  c.protocols ?? null,
+          tokenSymbol: c.tokenSymbol,
+        }));
+    } catch {
+      return [];
+    }
+  }, 3600);
 }
 
 // -- Fetch total DeFi TVL history -------------------------------------------
@@ -47,11 +92,12 @@ async function getTotalDefiTvlHistory(): Promise<TvlHistoryPoint[]> {
 // -- Server data component ---------------------------------------------------
 
 async function TvlData() {
-  const [protocols, categories, totalHistory, fees24h] = await Promise.all([
+  const [protocols, categories, totalHistory, fees24h, chainLeaderboard] = await Promise.all([
     getTopProtocolsByTvl(60),
     getTvlByCategory(),
     getTotalDefiTvlHistory(),
     getDefiTotalFees24h().catch(() => 0),
+    fetchChainTvlLeaderboard(),
   ]);
 
   const totalTvl       = protocols.reduce((s, p) => s + p.tvl, 0);
@@ -106,6 +152,55 @@ async function TvlData() {
 
       {/* Interactive charts - client component */}
       <DeFiTvlClient categories={categories} totalHistory={totalHistory} />
+
+      {/* Unit 5 (Batch 8) — TVL by Chain Leaderboard ─────────────────────────── */}
+      {chainLeaderboard.length > 0 && (
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3 mb-1">
+            TVL by Chain — Top 10 Leaderboard
+          </h3>
+          <p className="text-[10px] font-mono text-[#555] mb-5 ml-5">
+            Total value locked per blockchain · Source: DefiLlama /v2/chains · Cached 1 h
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs font-mono">
+              <thead>
+                <tr className="text-[#555] uppercase tracking-widest text-[9px]">
+                  <th className="text-left py-2 pr-4 font-black">Rank</th>
+                  <th className="text-left py-2 pr-4 font-black">Chain</th>
+                  <th className="text-right py-2 pr-4 font-black">TVL</th>
+                  <th className="text-right py-2 pr-4 font-black">7D %</th>
+                  <th className="text-right py-2 pr-4 font-black">1D %</th>
+                  <th className="text-right py-2 font-black">Protocols</th>
+                </tr>
+              </thead>
+              <tbody>
+                {chainLeaderboard.map((chain, i) => {
+                  const chg7 = chain.change_7d;
+                  const chg1 = chain.change_1d;
+                  const pct  = (v: number | null) =>
+                    v === null ? <span className="text-[#333]">—</span> :
+                    <span className={v >= 0 ? "text-[#00d672]" : "text-[#ff4757]"}>
+                      {v >= 0 ? "+" : ""}{v.toFixed(2)}%
+                    </span>;
+                  return (
+                    <tr key={chain.name} className="border-t border-[#111] hover:bg-[#0f0f0f] transition-colors">
+                      <td className="py-3 pr-4 text-[#555] font-black">#{i + 1}</td>
+                      <td className="py-3 pr-4 font-bold text-white">{chain.name}</td>
+                      <td className="py-3 pr-4 text-right text-[#FABF2C] font-black tabular-nums">{fmtUsd(chain.tvl)}</td>
+                      <td className="py-3 pr-4 text-right tabular-nums">{pct(chg7)}</td>
+                      <td className="py-3 pr-4 text-right tabular-nums">{pct(chg1)}</td>
+                      <td className="py-3 text-right text-[#888]">
+                        {chain.protocols !== null ? chain.protocols.toLocaleString() : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Protocol table */}
       <div>

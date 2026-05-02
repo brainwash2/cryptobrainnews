@@ -1,0 +1,57 @@
+You are the CryptoBrainNews Replit Agent. You MUST strictly follow the development workflow defined in the workspace files.
+
+FIRST STEP – READ THESE FILES IN EXACT ORDER (do not skip):
+1. AGENTS.md
+2. context/project-overview.md
+3. context/architecture-context.md
+4. context/ui-context.md
+5. context/code-standards.md
+6. context/ai-workflow-rules.md
+7. context/progress-tracker.md
+
+Then immediately update context/progress-tracker.md:
+- Current Phase → Batch 8 – Full Metric Parity (final push)
+- Current Goal → Implement the next 5 high‑impact metrics using only free APIs
+
+NOW EXECUTE BATCH 8 – ONE SMALL VERIFIABLE UNIT AT A TIME
+
+Proceed straight through all 5 units without waiting for my approval.
+
+Unit 1: BTC Miner Revenue Breakdown (blockchain.info)
+- Free API: https://api.blockchain.info/charts/miners-revenue?timespan=30days&format=json (already used in the project for miner revenue chart)
+- Add a KPI card showing what % of miner revenue comes from fees vs block subsidy
+- Target page: src/app/data/onchain/bitcoin/page.tsx
+- Deliverables: KPI card – "Fee/Subsidy Ratio" with 30‑day average
+- Use cached({ revalidate: 1800 }), strict TypeScript
+
+Unit 2: ETH Burn Rate Tracker (Etherscan)
+- Free API: Use existing Etherscan stats API (etherscan.io/api?module=stats&action=ethsupply + ethburned)
+- Add a KPI card showing total ETH burned + daily burn rate
+- Target page: src/app/data/onchain/ethereum/page.tsx
+- Deliverables: 2 KPI cards – Total ETH Burned (cumulative) + Daily Burn Rate (ETH/day)
+- Use cached({ revalidate: 3600 }), strict TypeScript
+
+Unit 3: Solana Validator Count & Nakamoto Coefficient
+- Free API: Solana public RPC getVoteAccounts (already used in the project)
+- Add KPI cards showing active validator count + Nakamoto coefficient (validators needed for 51%)
+- Target page: src/app/data/onchain/solana/page.tsx
+- Deliverables: 2 KPI cards – Active Validators + Nakamoto Coefficient
+- Use cached({ revalidate: 300 })
+
+Unit 4: Global Crypto Fear & Greed Historical Chart
+- Free API: https://api.alternative.me/fng/?limit=365 (already used for Bitcoin F&G)
+- Create a standalone page or section showing 90‑day/365‑day F&G trend for the overall market
+- Target page: src/app/data/markets/prices/page.tsx (add below existing Bitcoin F&G section)
+- Deliverables: 90D/365D AreaChart + current value gauge (reuse FearGreedWidget pattern)
+- Use cached({ revalidate: 300 })
+
+Unit 5: DeFi TVL by Chain Leaderboard
+- Free API: https://api.llama.fi/v2/chains (already used)
+- Create a ranked leaderboard showing TVL by blockchain with 7‑day change
+- Target page: src/app/data/defi/tvl/page.tsx
+- Deliverables: Top‑10 chains ranked leaderboard (chain name, TVL, 7d change, protocols count)
+- Use cached({ revalidate: 3600 })
+
+At the end, update progress-tracker.md, run npx tsc --noEmit, and reply with exactly:
+"BATCH 8 COMPLETE – All 5 metrics added. Current status of progress-tracker.md:"
+followed by the full updated progress-tracker.md.

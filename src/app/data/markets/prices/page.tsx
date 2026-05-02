@@ -50,7 +50,7 @@ export interface FngHistoryPoint {
 
 async function fetchFngHistory(): Promise<FngHistoryPoint[]> {
   try {
-    const res = await fetch("https://api.alternative.me/fng/?limit=90",
+    const res = await fetch("https://api.alternative.me/fng/?limit=365",
       { next: { revalidate: 3600 } });
     if (!res.ok) return [];
     const json = await res.json() as {
