@@ -8,6 +8,16 @@ Batch 4 – Metric Expansion 🔄 IN PROGRESS
 
 ## Completed Batch 4
 
+### Unit 2 — Layer 2 TVL + Top 5 L2s KPI Cards
+- `Layer2TVLEntry` + `Layer2TVLSummary` interfaces added to `src/lib/scaling-data.ts`
+- `getLayer2TVL()` added to `src/lib/scaling-data.ts` — calls `https://api.llama.fi/v2/chains` directly (bypasses `getAllChainsMap()` 3600s cache), filters OPTIMISTIC_CHAINS + ZK_CHAINS, returns `{ totalTvl, optTvl, zkTvl, top5, all }`, cached 300s (`scaling:layer2:tvl:300`)
+- `src/app/data/scaling/l2-comparison/page.tsx` updated:
+  - Imports `getLayer2TVL`, `Layer2TVLEntry`
+  - `revalidate` changed from 3600 → 300
+  - `getLayer2TVL()` added to `Promise.all`
+  - New "Top Layer 2s — Live TVL" section added between Summary KPIs and TVL bars: 5-column grid of KPI cards, each showing rank badge, chain name + color dot, OPT/ZK type badge, TVL (chain-colored), 24h change (green/red), L2 market-share progress bar, protocol count
+- TypeScript: 0 errors
+
 ### Unit 1 — Bitcoin Fear & Greed Index Widget
 - `FearGreedPoint` interface + `getFearGreedHistory()` added to `src/lib/market-data.ts` — calls `https://api.alternative.me/fng/?limit=90`, returns 90-day `{date, value, classification}[]`, cached 300s (5 min) via `cached()`
 - New `src/app/data/onchain/bitcoin/_components/FearGreedWidget.tsx` — gauge (semicircle + needle, 5-zone colour coding) + Recharts AreaChart, 30D/90D TimeframeSelector, `useSyncExternalStore` mount guard, `ChartSkeleton` fallback, `isAnimationActive={false}`, zone legend, custom FngTooltip

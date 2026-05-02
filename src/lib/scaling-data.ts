@@ -268,6 +268,84 @@ export async function getL2FeeData(): Promise<L2FeeRow[]> {
   }, 3600);
 }
 
+// ─── Layer 2 TVL summary — fast 300 s refresh ────────────────────────────────
+//
+// Calls /v2/chains directly so the 300 s cache is genuine (getAllChainsMap uses
+// a separate 3600 s cache key and cannot drive sub-minute freshness).
+
+export interface Layer2TVLEntry {
+  name:      string;
+  tvl:       number;
+  change1d:  number | null;
+  change7d:  number | null;
+  color:     string;
+  type:      'optimistic' | 'zk';
+  protocols: number | null;
+}
+
+export interface Layer2TVLSummary {
+  totalTvl: number;
+  optTvl:   number;
+  zkTvl:    number;
+  top5:     Layer2TVLEntry[];
+  all:      Layer2TVLEntry[];
+}
+
+export async function getLayer2TVL(): Promise<Layer2TVLSummary> {
+  return cached('scaling:layer2:tvl:300', async () => {
+    interface LlamaChain {
+      name:      string;
+      tvl:       number;
+      change_1d: number | null;
+      change_7d: number | null;
+      protocols: number | null;
+    }
+
+    const EMPTY: Layer2TVLSummary = { totalTvl: 0, optTvl: 0, zkTvl: 0, top5: [], all: [] };
+
+    const res = await fetch('https://api.llama.fi/v2/chains').catch(() => null);
+    if (!res?.ok) return EMPTY;
+
+    const chains = await res.json() as LlamaChain[];
+    if (!Array.isArray(chains)) return EMPTY;
+
+    // Build lookup map with aliases
+    const chainMap = new Map<string, LlamaChain>(chains.map((c) => [c.name.toLowerCase(), c]));
+    for (const [slug, llamaName] of Object.entries(SLUG_ALIASES)) {
+      if (!chainMap.has(slug) && chainMap.has(llamaName)) {
+        chainMap.set(slug, chainMap.get(llamaName)!);
+      }
+    }
+
+    const l2Catalogue: Array<{ name: string; slug: string; color: string; type: 'optimistic' | 'zk' }> = [
+      ...OPTIMISTIC_CHAINS.map((c) => ({ ...c, type: 'optimistic' as const })),
+      ...ZK_CHAINS.map((c)         => ({ ...c, type: 'zk'         as const })),
+    ];
+
+    const all: Layer2TVLEntry[] = l2Catalogue
+      .map((c) => {
+        const live = chainMap.get(c.slug.toLowerCase());
+        return {
+          name:      c.name,
+          tvl:       live?.tvl       ?? 0,
+          change1d:  live?.change_1d ?? null,
+          change7d:  live?.change_7d ?? null,
+          color:     c.color,
+          type:      c.type,
+          protocols: live?.protocols ?? null,
+        };
+      })
+      .filter((c) => c.tvl > 0)
+      .sort((a, b) => b.tvl - a.tvl);
+
+    const totalTvl = all.reduce((s, c) => s + c.tvl, 0);
+    const optTvl   = all.filter((c) => c.type === 'optimistic').reduce((s, c) => s + c.tvl, 0);
+    const zkTvl    = all.filter((c) => c.type === 'zk').reduce((s, c) => s + c.tvl, 0);
+
+    return { totalTvl, optTvl, zkTvl, top5: all.slice(0, 5), all };
+  }, 300);
+}
+
 // ─── Combined L2 overview (optimistic + ZK merged, sorted by TVL) ─────────────
 
 export async function getAllL2s(): Promise<ScalingChain[]> {

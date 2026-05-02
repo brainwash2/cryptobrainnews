@@ -8,13 +8,15 @@ import {
   getOptimisticRollups,
   getZkRollups,
   getL2FeeData,
+  getLayer2TVL,
 } from '@/lib/scaling-data';
+import type { Layer2TVLEntry } from '@/lib/scaling-data';
 
 export const metadata = {
   title: 'L2 Comparison | CryptoBrainNews',
   description: 'Side-by-side comparison of all Ethereum Layer 2 solutions by TVL, fees, and ecosystem size.',
 };
-export const revalidate = 3600;
+export const revalidate = 300;
 
 function fmtUsd(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
@@ -23,11 +25,12 @@ function fmtUsd(n: number): string {
 }
 
 async function L2ComparisonData() {
-  const [allL2s, optimistic, zk, fees] = await Promise.all([
+  const [allL2s, optimistic, zk, fees, l2tvl] = await Promise.all([
     getAllL2s(),
     getOptimisticRollups(),
     getZkRollups(),
     getL2FeeData(),
+    getLayer2TVL(),
   ]);
 
   const totalTvl = allL2s.reduce((s, c) => s + c.tvl, 0);
@@ -60,6 +63,80 @@ async function L2ComparisonData() {
           </div>
         ))}
       </div>
+
+      {/* ── Top 5 Layer 2s – Live TVL ──────────────────────────────── */}
+      {l2tvl.top5.length > 0 && (
+        <div>
+          <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-1 flex items-center gap-3">
+            <span className="w-2 h-2 bg-[#FABF2C] rounded-full" />
+            Top Layer 2s — Live TVL
+          </h3>
+          <p className="text-[10px] font-mono text-[#555] mb-5 ml-5">Ranked by TVL · Refreshed every 5 min · Source: DefiLlama</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {l2tvl.top5.map((chain: Layer2TVLEntry, i: number) => {
+              const share      = l2tvl.totalTvl > 0 ? (chain.tvl / l2tvl.totalTvl) * 100 : 0;
+              const typeLabel  = chain.type === 'optimistic' ? 'OPT' : 'ZK';
+              const typeColor  = chain.type === 'optimistic' ? '#3b82f6' : '#8b5cf6';
+              const chg        = chain.change1d;
+              const chgColor   = chg == null ? '#555' : chg >= 0 ? '#00d672' : '#ff4757';
+              const chgText    = chg == null ? '—' : `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`;
+              return (
+                <div
+                  key={chain.name}
+                  className="bg-[#0a0a0a] border border-[#1a1a1a] p-5 flex flex-col gap-3 relative overflow-hidden"
+                >
+                  {/* rank badge */}
+                  <span className="absolute top-3 right-4 text-[10px] font-black text-[#333] tabular-nums">#{i + 1}</span>
+
+                  {/* name + type */}
+                  <div className="flex items-center gap-2 pr-6">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: chain.color }} />
+                    <span className="font-black text-white text-sm leading-tight">{chain.name}</span>
+                  </div>
+                  <span
+                    className="self-start font-mono text-[9px] px-2 py-0.5 border tracking-widest"
+                    style={{ color: typeColor, borderColor: `${typeColor}40`, background: `${typeColor}15` }}
+                  >
+                    {typeLabel}
+                  </span>
+
+                  {/* TVL */}
+                  <p
+                    className="text-2xl font-black tabular-nums leading-none"
+                    style={{ color: chain.color }}
+                  >
+                    {fmtUsd(chain.tvl)}
+                  </p>
+
+                  {/* 24h change */}
+                  <p className="text-xs font-mono font-bold tabular-nums" style={{ color: chgColor }}>
+                    {chgText} <span className="text-[#555] font-normal">24h</span>
+                  </p>
+
+                  {/* market share progress bar */}
+                  <div>
+                    <div className="flex justify-between text-[9px] font-mono text-[#555] mb-1">
+                      <span>L2 share</span>
+                      <span>{share.toFixed(1)}%</span>
+                    </div>
+                    <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${Math.min(share, 100)}%`, background: chain.color }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* protocols */}
+                  {chain.protocols != null && (
+                    <p className="text-[10px] font-mono text-[#555]">{chain.protocols} protocols</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Side-by-side bars ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
