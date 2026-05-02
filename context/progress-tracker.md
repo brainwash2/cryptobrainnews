@@ -4,11 +4,32 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 12 – Stock‑to‑Flow Model ✅
+Batch 13 – Realized Price ✅
 
 ## Current Goal
 
-Add Bitcoin Stock‑to‑Flow model tracker with price overlay
+Add Bitcoin Realized Price tracker (cycle floor indicator)
+
+### Batch 13 — Unit 1: Bitcoin Realized Price Tracker ✅
+- `src/app/data/onchain/bitcoin/_components/RealizedPriceChart.tsx` **created** (`"use client"`):
+  - Props: `{ points: { date: string; price: number; realized: number }[]; currentPrice: number; currentRealized: number; source: "live" | "seed" }`
+  - `useSyncExternalStore` SSR hydration guard (`mounted`)
+  - `fmtUsd()` helper ($K/$M); custom `RealizedTooltip` for dual lines
+  - 3-KPI card: BTC Price / Realized Price / % vs Realized (green if above, red if below)
+  - Recharts `ComposedChart` single Y-axis (auto-range covering both lines); amber solid (BTC price) + #888 dashed (Realized Price); `isAnimationActive={false}`; `Legend` with color-coded labels
+  - Footnote explaining bear-market accumulation signal
+- `src/app/data/onchain/bitcoin/page.tsx` updated (zero new API calls):
+  - `import RealizedPriceChart` added
+  - `mvrvByDate` Map built from existing `mvrvPoints` (date → mvrv value)
+  - `realizedPricePoints` = `s2fPriceHistory.flatMap()` joining on date, computing `realized = Math.round(price / mvrv)`
+  - `currentRealized = Math.round(s2fCurrentPrice / currentMvrv)` (seed fallback `/2.20`)
+  - `realizedPoints` — uses joined array if non-empty, else falls back to applying constant `currentMvrv` across all price history points
+  - `realizedSource` = `"live"` if either `s2fPriceSource` or `mvrvSource` is live, else `"seed"`
+  - `<RealizedPriceChart points={realizedPoints} currentPrice={s2fCurrentPrice} currentRealized={currentRealized} source={realizedSource} />` rendered below `<S2fChart />`, above `<HashRateTrendChart />`
+  - Glossary entry added for Realized Price
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 12 ✅ — Stock‑to‑Flow Model
 
 ### Batch 12 — Unit 1: Bitcoin Stock‑to‑Flow (S2F) Model Tracker ✅
 - `src/app/data/onchain/bitcoin/_components/S2fChart.tsx` **created** (`"use client"`):

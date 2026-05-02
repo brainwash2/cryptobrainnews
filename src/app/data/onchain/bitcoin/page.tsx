@@ -12,6 +12,7 @@ import MvrvGauge                   from "./_components/MvrvGauge";
 import NuplGauge                   from "./_components/NuplGauge";
 import PuellGauge                  from "./_components/PuellGauge";
 import S2fChart                    from "./_components/S2fChart";
+import RealizedPriceChart          from "./_components/RealizedPriceChart";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
@@ -258,6 +259,28 @@ async function BitcoinData() {
     : 96_000;
   const s2fPriceSource   = s2fPriceData.source;
 
+  // ── Batch 13: Realized Price — derived from mvrvPoints × s2fPriceHistory ─────
+  // Realized Price = BTC Price ÷ MVRV (supply cancels; gives average on-chain cost basis)
+  const mvrvByDate = new Map(mvrvPoints.map((p) => [p.date, p.value]));
+  const realizedPricePoints = s2fPriceHistory.flatMap((p) => {
+    const mvrv = mvrvByDate.get(p.date);
+    if (mvrv === undefined || mvrv <= 0) return [];
+    return [{ date: p.date, price: p.price, realized: Math.round(p.price / mvrv) }];
+  });
+  // Seed fallback: use currentMvrv (may be 2.20 seed value)
+  const currentRealized = currentMvrv > 0
+    ? Math.round(s2fCurrentPrice / currentMvrv)
+    : Math.round(s2fCurrentPrice / 2.20);
+  // If no overlapping dates (e.g. seed mvrv has different date range), generate seed realized points
+  const realizedPoints = realizedPricePoints.length > 0
+    ? realizedPricePoints
+    : s2fPriceHistory.map((p) => ({
+        date:     p.date,
+        price:    p.price,
+        realized: Math.round(p.price / (currentMvrv > 0 ? currentMvrv : 2.20)),
+      }));
+  const realizedSource = (s2fPriceSource === "live" || mvrvSource === "live") ? "live" as const : "seed" as const;
+
   // ── Unit 2: hash rate 30d change (computed from hashData) ──────────────────
   const sortedHash    = [...hashData].sort((a, b) => a.date.localeCompare(b.date));
   const lastHashVal   = sortedHash[sortedHash.length - 1]?.value ?? 0;
@@ -461,6 +484,14 @@ async function BitcoinData() {
         source={s2fPriceSource}
       />
 
+      {/* Batch 13 — Realized Price */}
+      <RealizedPriceChart
+        points={realizedPoints}
+        currentPrice={s2fCurrentPrice}
+        currentRealized={currentRealized}
+        source={realizedSource}
+      />
+
       {/* Unit 2 — Hash Rate Trend Chart */}
       {hashData.length > 0 && (
         <HashRateTrendChart
@@ -494,6 +525,7 @@ async function BitcoinData() {
             ["NUPL",                   "Net Unrealized Profit/Loss = (Market Cap − Realized Cap) ÷ Market Cap. <0 Capitulation; 0–0.25 Hope; 0.25–0.5 Optimism; 0.5–0.75 Belief; >0.75 Euphoria."],
             ["Puell Multiple",         "Daily miner revenue ÷ 365-day SMA. <0.5 historically strong buy; 0.5–1.0 fair; 1.0–2.0 caution; >2.0 extreme overvaluation. Source: blockchain.info."],
             ["Stock‑to‑Flow (S2F)",    "Circulating supply ÷ annual new issuance. Model price = S2F³ × $0.40 (PlanB). Constant between halvings; next update at 2028 halving. Current S2F ≈ 120."],
+            ["Realized Price",         "Average on-chain cost basis of all BTC weighted by last movement. Derived as BTC Price ÷ MVRV. Trading below Realized Price = deep bear accumulation zone."],
           ].map(([k, v]) => (
             <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>
           ))}
