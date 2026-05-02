@@ -4,11 +4,30 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 15 – Exchange Reserve ✅
+Batch 16 – LTH Supply ✅
 
 ## Current Goal
 
-Add Bitcoin Exchange Reserve tracker (ninth cycle indicator)
+Add Bitcoin Long‑Term Holder Supply tracker (tenth cycle indicator)
+
+### Batch 16 — Unit 1: Bitcoin LTH Supply Tracker ✅
+- `src/app/data/onchain/bitcoin/_components/LthSupplyChart.tsx` **created** (`"use client"`):
+  - Props: `{ points: { date: string; value: number }[]; source: "live" | "seed" }`
+  - `useSyncExternalStore` SSR hydration guard (`mounted`)
+  - 3-KPI grid: LTH Supply % / 30-Day Trend (▲ Accumulation green / ▼ Distribution red) / 30-Day Change in percentage points
+  - Recharts `AreaChart` 90-day % trend; area + stroke color dynamically green (rising) or red (falling); `ReferenceLine` at 30-day-ago level; `isAnimationActive={false}`
+  - YAxis `tickFormatter` in `%`; interpretation key strip (rising = supply contraction; falling = late-cycle signal)
+  - Custom `LthTooltip` with per-point `% of supply` label
+- `src/app/data/onchain/bitcoin/page.tsx` updated (zero new API calls):
+  - `interface LthSupplyData` added
+  - `generateLthSupplySeed()` — 90-point rising seed: 72.0% → 74.5% (+2.5 pp linear trend + ±0.4 pp sine noise); reflects late-cycle accumulation profile; `Math.round(...* 100) / 100` for clean 2-dp values
+  - `import LthSupplyChart` added
+  - `lthSupplyData = generateLthSupplySeed()` called inline in `BitcoinData` (sync, no new Promise.all slot)
+  - `<LthSupplyChart points={lthSupplyData.points} source={lthSupplyData.source} />` rendered below `<ExchangeReserveChart />`, above `<HashRateTrendChart />`
+  - Glossary entry added for LTH Supply
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 15 ✅ — Exchange Reserve
 
 ### Batch 15 — Unit 1: Bitcoin Exchange Reserve Tracker ✅
 - `src/app/data/onchain/bitcoin/_components/ExchangeReserveChart.tsx` **created** (`"use client"`):
