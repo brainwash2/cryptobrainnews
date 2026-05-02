@@ -1,0 +1,57 @@
+You are the CryptoBrainNews Replit Agent. You MUST strictly follow the development workflow defined in the workspace files.
+
+FIRST STEP – READ THESE FILES IN EXACT ORDER (do not skip):
+1. AGENTS.md
+2. context/project-overview.md
+3. context/architecture-context.md
+4. context/ui-context.md
+5. context/code-standards.md
+6. context/ai-workflow-rules.md
+7. context/progress-tracker.md
+
+Then immediately update context/progress-tracker.md:
+- Current Phase → Batch 7 – Full Metric Parity (continued)
+- Current Goal → Implement the next 5 high‑impact metrics using only free APIs
+
+NOW EXECUTE BATCH 7 – ONE SMALL VERIFIABLE UNIT AT A TIME
+
+Proceed straight through all 5 units without waiting for my approval.
+
+Unit 1: CME BTC Futures Open Interest (CFTC data)
+- Use the already-existing CFTC fetch logic in src/app/data/markets/cme-cots/page.tsx as reference
+- Extract BTC futures open interest from the CFTC data
+- Target page: src/app/data/markets/futures/page.tsx
+- Deliverables: KPI card – CME BTC Futures OI (current + 7-day trend arrow)
+- Use cached({ revalidate: 86400 }), strict TypeScript
+
+Unit 2: ETH Gas Tracker Historical Trend Chart
+- Use public RPC eth_gasPrice (already available via existing code in src/lib/onchain-extended.ts)
+- Fetch 30-day historical data from Etherscan Stats API (daily average gas price)
+- Target page: src/app/data/onchain/gas/page.tsx
+- Deliverables: 30-day Recharts AreaChart of average gas price in Gwei + 7D/30D timeframe selector
+- Use cached({ revalidate: 3600 }), isAnimationActive={false}, useSyncExternalStore
+
+Unit 3: Cross-Chain Bridge Volume (DefiLlama)
+- Free API: https://api.llama.fi/overview/dexs?excludeTotalDataChartBreakdown=true (already used)
+- Also fetch bridge volume from https://api.llama.fi/bridges (free, no key)
+- Target page: src/app/data/onchain/flows/page.tsx
+- Deliverables: KPI card – 24h Cross-Chain Bridge Volume + top 5 bridges table
+- Use cached({ revalidate: 3600 })
+
+Unit 4: BTC Address Cohort Growth (blockchain.info)
+- Free API: Use the existing blockchain.info chart fetch pattern
+- Add a "New Addresses (30D)" KPI card
+- Target page: src/app/data/onchain/bitcoin/page.tsx
+- Deliverables: KPI card – New BTC addresses (30-day sum) + 7-day trend arrow
+- Use cached({ revalidate: 1800 })
+
+Unit 5: NFT Market Volume (Alchemy + Magic Eden, already in project)
+- Use existing src/lib/nft-data.ts getTopCollections()
+- Extract aggregate NFT 24h volume from the collection data
+- Target page: src/app/data/nfts/volume/page.tsx
+- Deliverables: KPI card – Total NFT 24h Volume (all tracked chains) + trend vs yesterday
+- Use cached({ revalidate: 3600 })
+
+At the end, update progress-tracker.md, run npx tsc --noEmit, and reply with exactly:
+"BATCH 7 COMPLETE – All 5 metrics added. Current status of progress-tracker.md:"
+followed by the full updated progress-tracker.md.

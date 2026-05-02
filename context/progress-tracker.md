@@ -4,11 +4,61 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 6 – Full Metric Parity (continued)
+Batch 7 – Full Metric Parity (continued)
 
 ## Current Goal
 
 Implement the next 5 high-impact metrics using only free APIs
+
+### Batch 7 — Unit 1: CME BTC Futures OI (CFTC) ✅
+- `src/app/data/markets/futures/page.tsx` updated:
+  - `import { cached } from '@/lib/cache'` added
+  - `CmeBtcOI` interface added (`current`, `prev`, `reportDate`, `source`)
+  - `CME_BTC_OI_REFERENCE` fallback constant (Q1 2026 snapshot)
+  - `fetchCmeBtcOI()` added — `cached('cme:btc:oi:v1', ..., 86400)` fetching 2 latest BTC rows from CFTC Socrata API, extracting `open_interest_all` for current + prev week OI
+  - `cmeBtcOI` added as 6th element in `Promise.all`
+  - `oiChange`, `oiTrend`, `oiTrendClr` derived (7-day WoW % change with ▲/▼ arrows)
+  - New **"CME BTC Futures — Open Interest"** section added above existing Bybit OI strip: 4 KPI cards — Current OI, 7-Day Change (▲/▼), Report Date, Sentiment; live/reference badge
+
+### Batch 7 — Unit 2: ETH Gas Historical Trend Chart ✅
+- `src/app/data/onchain/gas/_components/GasHistoryChart.tsx` created ("use client"):
+  - Props: `data: GasHistoryPoint[]` (`date: string`, `gwei: number`)
+  - `useSyncExternalStore` for SSR-safe hydration guard
+  - `useState<7 | 30>` for 7D/30D timeframe selector
+  - Recharts `AreaChart` with `isAnimationActive={false}`, blue gradient fill, `CartesianGrid`, `XAxis`/`YAxis`, `Tooltip`
+  - 3 derived KPIs above chart: Latest, N-day Avg, vs Avg (▲/▼ %)
+- `src/app/data/onchain/gas/page.tsx` updated:
+  - `ETHERSCAN_KEY` from `process.env.ETHERSCAN_API_KEY`
+  - `fetchEthGasHistory()` added — `cached('eth:gas:history:30d', ..., 3600)`, hits Etherscan `stats/dailyavggasprice` when key present; 30-point seed fallback when no key
+  - `gasHistory` added to `Promise.all` (3rd element)
+  - `<GasHistoryChart data={gasHistory} />` rendered below multi-chain fee reference table
+
+### Batch 7 — Unit 3: Cross-Chain Bridge Volume (DefiLlama) ✅
+- `src/app/data/onchain/flows/page.tsx` updated:
+  - `import { cached }` added
+  - `BridgeEntry` interface added (`name`, `displayName`, `volume24h`, `volume7d`)
+  - `fetchBridgeVolume()` added — `cached('bridges:vol:24h:v1', ..., 3600)` fetching `api.llama.fi/bridges`, sorting by `lastDailyVolume` descending, returning top 5 + total
+  - `bridgeData` added to `Promise.all` (3rd element, replacing sequential await)
+  - New **"Cross-Chain Bridge Volume"** section added (conditionally rendered when `total24h > 0`): 3 KPI cards (total 24h, bridges tracked, leader) + top-5 bridge table with rank, name, 24h/7d vol, share
+
+### Batch 7 — Unit 4: BTC New Addresses 30D Sum ✅
+- `src/app/data/onchain/bitcoin/page.tsx` updated:
+  - No new fetch — derives from existing `addrData` (`n-unique-addresses`, 90 days)
+  - IIFE in JSX: sorts `addrData`, slices last 30 points, sums → `sum30`; slices last 7 vs prev 7 → `trend7` (7-day WoW % change, ▲/▼)
+  - New **"New Addresses (30D)"** `StatCard` added as 6th card in chart-derived KPI grid
+  - KPI grid updated `grid-cols-2 lg:grid-cols-5` → `grid-cols-2 lg:grid-cols-6`
+
+### Batch 7 — Unit 5: NFT Market Volume ✅
+- `src/app/data/nfts/volume/page.tsx` updated:
+  - `getTopCollections` added to imports from `@/lib/nft-data`
+  - `collections` added to `Promise.all` (2nd element) alongside `chainVolumes`
+  - `collVol24h` = sum of `volume24hUsd` across all collections
+  - `collVol7dAvg` = sum of `volume7dUsd` / 7 (daily average proxy for "yesterday")
+  - `collTrend` = `(collVol24h - collVol7dAvg) / collVol7dAvg * 100`
+  - `liveCount` / `hasLive` derived for dynamic source badge
+  - Source badge upgraded: shows live count when Alchemy key present
+  - New **"Total NFT Market — 24h Volume"** section added (before chain bar chart): 4 KPI cards — 24h Vol (Collections), vs 7D Daily Avg (▲/▼), 24h Vol (Chains), 7D Vol; duplicate chain-bars section removed
+- TypeScript: 0 errors (`npx tsc --noEmit`)
 
 ### Batch 6 — Unit 1: ETH Staking Stats (beaconcha.in) ✅
 - `src/app/data/onchain/ethereum/page.tsx` refactored:

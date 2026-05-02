@@ -1,7 +1,7 @@
-import React, { Suspense }   from "react";
-import { DataHeader }          from "../../_components/DataHeader";
-import { ChartSkeleton }       from "../../_components/ChartSkeleton";
-import { getNftChainVolumes }  from "@/lib/nft-data";
+import React, { Suspense }                        from "react";
+import { DataHeader }                               from "../../_components/DataHeader";
+import { ChartSkeleton }                            from "../../_components/ChartSkeleton";
+import { getNftChainVolumes, getTopCollections }    from "@/lib/nft-data";
 
 export const metadata = {
   title: "NFT Trade Volume | CryptoBrainNews",
@@ -17,11 +17,21 @@ function fmtUsd(n: number): string {
 }
 
 async function NftVolumeData() {
-  const chainVolumes = await getNftChainVolumes().catch(() => []);
+  const [chainVolumes, collections] = await Promise.all([
+    getNftChainVolumes().catch(() => []),
+    getTopCollections().catch(() => []),
+  ]);
 
   const total24h = chainVolumes.reduce((s, c) => s + c.volume24h, 0);
   const total7d  = chainVolumes.reduce((s, c) => s + c.volume7d,  0);
   const maxVol   = chainVolumes[0]?.volume24h ?? 1;
+
+  // Unit 5: aggregate 24h volume from live collection data
+  const collVol24h   = collections.reduce((s, c) => s + (c.volume24hUsd ?? 0), 0);
+  const collVol7dAvg = collections.reduce((s, c) => s + (c.volume7dUsd  ?? 0), 0) / 7;
+  const collTrend    = collVol7dAvg > 0 ? ((collVol24h - collVol7dAvg) / collVol7dAvg) * 100 : null;
+  const liveCount    = collections.filter((c) => c.source === "live").length;
+  const hasLive      = liveCount > 0;
 
   return (
     <div className="space-y-10 pb-20">
@@ -31,36 +41,55 @@ async function NftVolumeData() {
       />
 
       {/* Source badge */}
-      <div className="flex items-center gap-3">
-        <span className="border border-[#FABF2C]/40 text-[#FABF2C] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
-          Reference - Mar 2026 Snapshot
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className={`border font-mono text-[10px] px-3 py-1 uppercase tracking-widest ${
+          hasLive
+            ? "border-[#00d672]/40 text-[#00d672]"
+            : "border-[#FABF2C]/40 text-[#FABF2C]"
+        }`}>
+          {hasLive ? `● ${liveCount} Live Collections` : "◌ Seed Data — Mar 2026"}
         </span>
-        <span className="text-[#333] font-mono text-[10px] uppercase tracking-widest">
-          Set RESERVOIR_API_KEY for live collection data
-        </span>
+        {!hasLive && (
+          <span className="text-[#333] font-mono text-[10px] uppercase tracking-widest">
+            Set ALCHEMY_API_KEY for live floor prices
+          </span>
+        )}
       </div>
 
-      {/* KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Total Volume (24h)", value: fmtUsd(total24h), color: "#FABF2C" },
-          { label: "Total Volume (7d)",  value: fmtUsd(total7d),  color: "#FABF2C" },
-          { label: "Chains Tracked",     value: String(chainVolumes.length), color: "#888" },
-          { label: "Source",             value: "Seed Data",      color: "#555",
-            sub: "Reservoir API key activates live data" },
-        ].map((s) => (
-          <div key={s.label} className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
-            <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">
-              {s.label}
-            </p>
-            <p className="text-2xl font-black tabular-nums" style={{ color: s.color }}>
-              {s.value}
-            </p>
-            {"sub" in s && s.sub && (
-              <p className="text-[10px] font-mono text-[#555] mt-1">{s.sub}</p>
-            )}
+      {/* Unit 5 — Aggregate NFT 24h Volume KPI */}
+      <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+        <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3 mb-5">
+          Total NFT Market — 24h Volume
+        </h3>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-[#080808] border border-[#1a1a1a] p-4">
+            <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">24h Volume (Collections)</p>
+            <p className="text-2xl font-black text-[#FABF2C] tabular-nums">{fmtUsd(collVol24h)}</p>
+            <p className="text-[10px] font-mono text-[#555] mt-1">{collections.length} collections tracked</p>
           </div>
-        ))}
+          <div className="bg-[#080808] border border-[#1a1a1a] p-4">
+            <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">vs 7D Daily Avg</p>
+            <p className="text-2xl font-black tabular-nums" style={{
+              color: collTrend === null ? "#888" : collTrend >= 0 ? "#00d672" : "#ff4d4f"
+            }}>
+              {collTrend === null ? "—" : `${collTrend >= 0 ? "▲" : "▼"} ${Math.abs(collTrend).toFixed(1)}%`}
+            </p>
+            <p className="text-[10px] font-mono text-[#555] mt-1">vs 7-day daily average</p>
+          </div>
+          <div className="bg-[#080808] border border-[#1a1a1a] p-4">
+            <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">24h Volume (Chains)</p>
+            <p className="text-2xl font-black text-[#888] tabular-nums">{fmtUsd(total24h)}</p>
+            <p className="text-[10px] font-mono text-[#555] mt-1">by blockchain</p>
+          </div>
+          <div className="bg-[#080808] border border-[#1a1a1a] p-4">
+            <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">7D Volume</p>
+            <p className="text-2xl font-black text-[#888] tabular-nums">{fmtUsd(total7d)}</p>
+            <p className="text-[10px] font-mono text-[#555] mt-1">all chains</p>
+          </div>
+        </div>
+        <p className="text-[9px] text-[#333] font-mono mt-4">
+          Source: Alchemy + Magic Eden public APIs · Cached 1 h
+        </p>
       </div>
 
       {/* Chain Volume Bars */}

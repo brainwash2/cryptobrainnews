@@ -3,12 +3,54 @@ import { DataHeader }       from '../../_components/DataHeader';
 import { ChartSkeleton }    from '../../_components/ChartSkeleton';
 import { getDexFlowsByChain } from '@/lib/onchain-data';
 import { getNetExchangeFlows } from '@/lib/glassnode';
+import { cached }             from '@/lib/cache';
 
 export const metadata = {
   title: 'CEX / DEX Flows | CryptoBrainNews',
   description: 'Exchange inflows and outflows – DEX volume by protocol as a proxy for on-chain flow activity.',
 };
 export const revalidate = 1800;
+
+// ── Unit 3: Cross-Chain Bridge Volume (DefiLlama) ─────────────────────────────
+
+interface BridgeEntry {
+  name:          string;
+  displayName:   string;
+  volume24h:     number;
+  volume7d:      number;
+}
+
+async function fetchBridgeVolume(): Promise<{ total24h: number; bridges: BridgeEntry[] }> {
+  return cached("bridges:vol:24h:v1", async () => {
+    try {
+      const res = await fetch("https://api.llama.fi/bridges", {
+        next: { revalidate: 3600 },
+      });
+      if (!res.ok) return { total24h: 0, bridges: [] };
+      const json = await res.json() as {
+        bridges?: Array<{
+          name?:          string;
+          displayName?:   string;
+          lastDailyVolume?: number;
+          lastWeeklyVolume?: number;
+        }>;
+      };
+      const raw = (json.bridges ?? [])
+        .map((b) => ({
+          name:        b.name        ?? "",
+          displayName: b.displayName ?? b.name ?? "",
+          volume24h:   b.lastDailyVolume   ?? 0,
+          volume7d:    b.lastWeeklyVolume  ?? 0,
+        }))
+        .filter((b) => b.volume24h > 0)
+        .sort((a, b) => b.volume24h - a.volume24h);
+      const total24h = raw.reduce((s, b) => s + b.volume24h, 0);
+      return { total24h, bridges: raw.slice(0, 5) };
+    } catch {
+      return { total24h: 0, bridges: [] };
+    }
+  }, 3600);
+}
 
 function fmtUsd(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
@@ -17,12 +59,13 @@ function fmtUsd(n: number): string {
 }
 
 async function FlowsData() {
-  const dexFlows = await getDexFlowsByChain();
+  const [dexFlows, netFlows, bridgeData] = await Promise.all([
+    getDexFlowsByChain(),
+    getNetExchangeFlows().catch(() => []),
+    fetchBridgeVolume(),
+  ]);
   const total24h = dexFlows.reduce((s, d) => s + d.total24h, 0);
   const total7d  = dexFlows.reduce((s, d) => s + d.total7d, 0);
-
-  // Glassnode exchange net flows
-  const netFlows = await getNetExchangeFlows().catch(() => []);
   const isGlassnodeLive = netFlows.some(f => f.source === 'live');
 
   return (
@@ -105,6 +148,86 @@ async function FlowsData() {
           exchange activity. Whale transfer data (Dune Query 7) will be integrated once query IDs are configured.
         </p>
       </div>
+
+      {/* Unit 3 — Cross-Chain Bridge Volume ──────────────────────────────────── */}
+      {bridgeData.total24h > 0 && (
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#00d672] pl-3">
+              Cross-Chain Bridge Volume
+            </h3>
+            <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
+              ● Live — DefiLlama
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div className="bg-[#080808] border border-[#1a1a1a] p-4">
+              <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">24h Bridge Volume</p>
+              <p className="text-2xl font-black text-[#00d672] tabular-nums">{fmtUsd(bridgeData.total24h)}</p>
+              <p className="text-[10px] font-mono text-[#555] mt-1">all tracked bridges</p>
+            </div>
+            <div className="bg-[#080808] border border-[#1a1a1a] p-4">
+              <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Bridges Tracked</p>
+              <p className="text-2xl font-black text-[#888] tabular-nums">
+                {bridgeData.bridges.length}
+              </p>
+              <p className="text-[10px] font-mono text-[#555] mt-1">top 5 shown</p>
+            </div>
+            <div className="bg-[#080808] border border-[#1a1a1a] p-4">
+              <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Leader 24h</p>
+              <p className="text-xl font-black text-[#FABF2C] tabular-nums truncate">
+                {bridgeData.bridges[0]?.displayName ?? "—"}
+              </p>
+              <p className="text-[10px] font-mono text-[#555] mt-1">
+                {bridgeData.bridges[0] ? fmtUsd(bridgeData.bridges[0].volume24h) : "—"}
+              </p>
+            </div>
+          </div>
+
+          <div className="border border-[#1a1a1a] overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-[#1a1a1a] bg-[#080808]">
+                  {['#', 'Bridge', '24h Volume', '7d Volume', 'Share (24h)'].map((h) => (
+                    <th key={h}
+                      className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest ${
+                        h === '#' || h === 'Bridge' ? 'text-left' : 'text-right'
+                      }`}
+                    >{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {bridgeData.bridges.map((b, i) => {
+                  const share = bridgeData.total24h > 0 ? (b.volume24h / bridgeData.total24h) * 100 : 0;
+                  return (
+                    <tr key={b.name}
+                      className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${
+                        i % 2 === 0 ? 'bg-[#080808]' : 'bg-[#050505]'
+                      }`}>
+                      <td className="px-4 py-3 text-[#555] tabular-nums">{i + 1}</td>
+                      <td className="px-4 py-3 font-bold text-white">{b.displayName}</td>
+                      <td className="px-4 py-3 text-right font-mono font-black tabular-nums text-[#00d672]">
+                        {fmtUsd(b.volume24h)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">
+                        {fmtUsd(b.volume7d)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono tabular-nums text-[#555]">
+                        {share.toFixed(1)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[9px] text-[#333] font-mono mt-3">
+            Source: api.llama.fi/bridges · Cached 1 h
+          </p>
+        </div>
+      )}
 
       {/* ── KPI Strip ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

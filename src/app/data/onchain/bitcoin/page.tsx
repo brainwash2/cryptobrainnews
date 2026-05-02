@@ -164,7 +164,7 @@ async function BitcoinData() {
       )}
 
       {/* ── Chart-derived metric KPIs ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <StatCard
           label="Active Addresses (24h)"
           value={addrData.length > 0 ? fmtNum(addrData[addrData.length - 1]?.value ?? 0) : "—"}
@@ -201,6 +201,25 @@ async function BitcoinData() {
             "#00d672"
           }
         />
+        {/* Unit 4 — BTC New Addresses 30D Sum */}
+        {(() => {
+          const sorted30 = [...addrData].sort((a, b) => a.date.localeCompare(b.date)).slice(-30);
+          const sum30    = sorted30.reduce((s, p) => s + p.value, 0);
+          const last7    = sorted30.slice(-7).reduce((s, p) => s + p.value, 0);
+          const prev7    = sorted30.slice(-14, -7).reduce((s, p) => s + p.value, 0);
+          const trend7   = prev7 > 0 ? ((last7 - prev7) / prev7) * 100 : 0;
+          const trendClr = trend7 > 0 ? "#00d672" : trend7 < 0 ? "#ff4d4f" : "#888";
+          return (
+            <StatCard
+              label="New Addresses (30D)"
+              value={sum30 > 0 ? fmtNum(sum30) : "—"}
+              sub={sum30 > 0
+                ? `7d trend: ${trend7 >= 0 ? "▲" : "▼"} ${Math.abs(trend7).toFixed(1)}%`
+                : "blockchain.info"}
+              color={trendClr}
+            />
+          );
+        })()}
       </div>
 
       {/* Unit 2 — Lightning Network Capacity ────────────────────────────────── */}
