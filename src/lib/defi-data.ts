@@ -32,12 +32,14 @@ export interface ProtocolRow {
 }
 
 export interface FeeProtocol {
-  name:       string;
-  category:   string;
-  total24h:   number | null;
-  total7d:    number | null;
+  name:         string;
+  category:     string;
+  total24h:     number | null;
+  total7d:      number | null;
+  total30d:     number | null;
   totalAllTime: number | null;
-  change_1d:  number | null;
+  change_1d:    number | null;
+  chains:       string[];
 }
 
 export interface StablecoinData {
@@ -145,8 +147,8 @@ export async function getProtocolFees(limit = 40): Promise<FeeProtocol[]> {
   return cached(`defi:fees:top:${limit}`, async () => {
     const data = await safeFetch<{
       protocols?: Array<{
-        name: string; category: string;
-        total24h: number | null; total7d: number | null;
+        name: string; category: string; chains?: string[];
+        total24h: number | null; total7d: number | null; total30d?: number | null;
         totalAllTime: number | null; change_1d: number | null;
       }>;
     }>('https://api.llama.fi/overview/fees?excludeTotalDataChartBreakdown=true&excludeTotalDataChart=true', {});
@@ -160,8 +162,10 @@ export async function getProtocolFees(limit = 40): Promise<FeeProtocol[]> {
         category:     p.category ?? '—',
         total24h:     p.total24h ?? null,
         total7d:      p.total7d ?? null,
+        total30d:     p.total30d ?? null,
         totalAllTime: p.totalAllTime ?? null,
         change_1d:    p.change_1d ?? null,
+        chains:       p.chains ?? [],
       }));
   }, 3600);
 }
@@ -170,8 +174,8 @@ export async function getProtocolRevenue(limit = 40): Promise<FeeProtocol[]> {
   return cached(`defi:revenue:top:${limit}`, async () => {
     const data = await safeFetch<{
       protocols?: Array<{
-        name: string; category: string;
-        total24h: number | null; total7d: number | null;
+        name: string; category: string; chains?: string[];
+        total24h: number | null; total7d: number | null; total30d?: number | null;
         totalAllTime: number | null; change_1d: number | null;
       }>;
     }>('https://api.llama.fi/overview/revenue?excludeTotalDataChartBreakdown=true&excludeTotalDataChart=true', {});
@@ -185,8 +189,10 @@ export async function getProtocolRevenue(limit = 40): Promise<FeeProtocol[]> {
         category:     p.category ?? '—',
         total24h:     p.total24h ?? null,
         total7d:      p.total7d ?? null,
+        total30d:     p.total30d ?? null,
         totalAllTime: p.totalAllTime ?? null,
         change_1d:    p.change_1d ?? null,
+        chains:       p.chains ?? [],
       }));
   }, 3600);
 }

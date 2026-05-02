@@ -19,13 +19,12 @@ export interface RevenueTrendPoint {
 
 async function getRevenueTrend(): Promise<RevenueTrendPoint[]> {
   try {
-    const [feeRes] = await Promise.all([
-      fetch("https://api.llama.fi/overview/fees?excludeTotalDataChartBreakdown=false&excludeTotalDataChart=true"),
-    ]);
+    const feeRes = await fetch(
+      "https://api.llama.fi/overview/fees?excludeTotalDataChartBreakdown=false&excludeTotalDataChart=true",
+    );
     if (!feeRes.ok) return [];
     const feeJson = await feeRes.json() as {
       totalDataChart?: Array<[number, number]>;
-      totalDataChartBreakdown?: Array<{ timestamp: number; total24h: number }>;
     };
     const chart = feeJson.totalDataChart ?? [];
     return chart.slice(-90).map(([ts, val]) => ({
@@ -36,6 +35,33 @@ async function getRevenueTrend(): Promise<RevenueTrendPoint[]> {
   } catch {
     return [];
   }
+}
+
+// ── Unit 6: chain badge colour map ──────────────────────────────────────────
+const CHAIN_COLOR: Record<string, string> = {
+  Ethereum:  "#627EEA",
+  Solana:    "#9945FF",
+  BSC:       "#F3BA2F",
+  Arbitrum:  "#28A0F0",
+  Optimism:  "#FF0420",
+  Avalanche: "#E84142",
+  Polygon:   "#8247E5",
+  Tron:      "#FF0013",
+  Base:      "#0052FF",
+};
+
+function ChainBadge({ chains }: { chains: string[] }) {
+  const chain = chains[0];
+  if (!chain) return <span className="text-[#555] font-mono text-[10px]">—</span>;
+  const color = CHAIN_COLOR[chain] ?? "#888";
+  return (
+    <span
+      className="font-mono text-[10px] px-2 py-0.5 rounded"
+      style={{ color, backgroundColor: `${color}18` }}
+    >
+      {chain}
+    </span>
+  );
 }
 
 async function RevenueData() {
@@ -51,17 +77,48 @@ async function RevenueData() {
   const revenueRows = revenues.map((p) => ({ ...p })) as Record<string, unknown>[];
   const feeRows     = fees.map((p) => ({ ...p })) as Record<string, unknown>[];
 
+  // Unit 6 — leaderboard columns with chain badge + 30d fees
   const cols = [
-    { key: "name", label: "Protocol", render: (v: unknown) => <span className="font-bold text-white">{String(v)}</span> },
-    { key: "category", label: "Category", render: (v: unknown) => <span className="text-[#888] font-mono text-[10px]">{String(v)}</span> },
-    { key: "total24h", label: "24h", align: "right" as const,
-      render: (v: unknown) => <span className="font-mono font-black text-[#00d672] tabular-nums">{fmtUsd(v)}</span> },
-    { key: "total7d", label: "7d", align: "right" as const,
-      render: (v: unknown) => <span className="font-mono tabular-nums text-[#888]">{fmtUsd(v)}</span> },
-    { key: "totalAllTime", label: "All Time", align: "right" as const,
-      render: (v: unknown) => <span className="font-mono tabular-nums text-[#555]">{fmtUsd(v)}</span> },
-    { key: "change_1d", label: "24h %", align: "right" as const,
-      render: (v: unknown) => <PctBadge v={v as number | null} /> },
+    {
+      key: "name",
+      label: "Protocol",
+      render: (v: unknown) => <span className="font-bold text-white">{String(v)}</span>,
+    },
+    {
+      key: "chains",
+      label: "Chain",
+      render: (v: unknown) => <ChainBadge chains={v as string[]} />,
+    },
+    {
+      key: "total24h",
+      label: "24h",
+      align: "right" as const,
+      render: (v: unknown) => (
+        <span className="font-mono font-black text-[#00d672] tabular-nums">{fmtUsd(v)}</span>
+      ),
+    },
+    {
+      key: "total7d",
+      label: "7d",
+      align: "right" as const,
+      render: (v: unknown) => (
+        <span className="font-mono tabular-nums text-[#888]">{fmtUsd(v)}</span>
+      ),
+    },
+    {
+      key: "total30d",
+      label: "30d",
+      align: "right" as const,
+      render: (v: unknown) => (
+        <span className="font-mono tabular-nums text-[#555]">{fmtUsd(v)}</span>
+      ),
+    },
+    {
+      key: "change_1d",
+      label: "24h %",
+      align: "right" as const,
+      render: (v: unknown) => <PctBadge v={v as number | null} />,
+    },
   ];
 
   return (
@@ -97,7 +154,11 @@ async function RevenueData() {
             Revenue = fees kept by protocol
           </span>
         </h3>
-        <DefiTable columns={cols} data={revenueRows} source="Source: DefiLlama revenue API · Cached 1 hour" />
+        <DefiTable
+          columns={cols}
+          data={revenueRows}
+          source="Source: DefiLlama revenue API · Cached 1 hour"
+        />
       </div>
 
       <div>
@@ -107,7 +168,11 @@ async function RevenueData() {
             Fees = all fees paid by users
           </span>
         </h3>
-        <DefiTable columns={cols} data={feeRows} source="Source: DefiLlama fees API · Cached 1 hour" />
+        <DefiTable
+          columns={cols}
+          data={feeRows}
+          source="Source: DefiLlama fees API · Cached 1 hour"
+        />
       </div>
     </div>
   );

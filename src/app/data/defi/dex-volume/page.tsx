@@ -3,6 +3,7 @@ import { DataHeader }                   from '../../_components/DataHeader';
 import { ChartSkeleton }                from '../../_components/ChartSkeleton';
 import { DefiTable, fmtUsd, PctBadge } from '../_components/DefiTable';
 import { getDexVolumes }                from '@/lib/defi-data';
+import { getGlobalMarketData }          from '@/lib/market-data';
 
 export const metadata = {
   title: 'DEX Volume | CryptoBrainNews',
@@ -11,10 +12,20 @@ export const metadata = {
 export const revalidate = 1800;
 
 async function DexVolumeData() {
-  const dexes      = await getDexVolumes(30);
-  const total24h   = dexes.reduce((s, d) => s + (d.total24h ?? 0), 0);
-  const total7d    = dexes.reduce((s, d) => s + (d.total7d  ?? 0), 0);
-  const rows       = dexes.map((d) => ({ ...d })) as Record<string, unknown>[];
+  const [dexes, globalData] = await Promise.all([
+    getDexVolumes(30),
+    getGlobalMarketData(),
+  ]);
+
+  const total24h     = dexes.reduce((s, d) => s + (d.total24h ?? 0), 0);
+  const total7d      = dexes.reduce((s, d) => s + (d.total7d  ?? 0), 0);
+  const rows         = dexes.map((d) => ({ ...d })) as Record<string, unknown>[];
+
+  // Unit 3 — DEX-to-CEX ratio
+  // CoinGecko /global total_volume.usd = total 24h crypto market volume (best free proxy for CEX+DEX)
+  const totalMarket24h = globalData?.total_volume?.usd ?? 0;
+  const cex24h         = totalMarket24h > total24h ? totalMarket24h - total24h : 0;
+  const dexSharePct    = totalMarket24h > 0 ? (total24h / totalMarket24h) * 100 : null;
 
   return (
     <div className="space-y-10 pb-20">
@@ -22,6 +33,53 @@ async function DexVolumeData() {
         title="DEX Volume"
         description="Decentralized exchange trading activity – all protocols ranked by 24h volume."
       />
+
+      {/* ── Unit 3: DEX vs CEX Market Share ────────────────────────────────── */}
+      {totalMarket24h > 0 && (
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3 mb-5">
+            DEX vs. Centralised Exchange Market Share
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+            <div className="bg-[#080808] border border-[#1a1a1a] p-5">
+              <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">DEX Volume (24h)</p>
+              <p className="text-2xl font-black tabular-nums" style={{ color: "#FABF2C" }}>{fmtUsd(total24h)}</p>
+              <p className="text-[10px] font-mono text-[#555] mt-1">DefiLlama · all protocols</p>
+            </div>
+            <div className="bg-[#080808] border border-[#1a1a1a] p-5">
+              <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">CEX Volume (24h)</p>
+              <p className="text-2xl font-black tabular-nums text-white">{fmtUsd(cex24h)}</p>
+              <p className="text-[10px] font-mono text-[#555] mt-1">CoinGecko global − DEX</p>
+            </div>
+            <div className="bg-[#080808] border border-[#1a1a1a] p-5">
+              <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">DEX Market Share</p>
+              <p
+                className="text-2xl font-black tabular-nums"
+                style={{ color: dexSharePct !== null && dexSharePct > 20 ? "#00d672" : "#FABF2C" }}
+              >
+                {dexSharePct !== null ? `${dexSharePct.toFixed(1)}%` : "—"}
+              </p>
+              <p className="text-[10px] font-mono text-[#555] mt-1">DEX ÷ total crypto market</p>
+            </div>
+          </div>
+
+          {/* Ratio bar */}
+          {dexSharePct !== null && (
+            <div>
+              <div className="flex justify-between text-[9px] font-mono text-[#555] mb-1">
+                <span>DEX {dexSharePct.toFixed(1)}%</span>
+                <span>CEX {(100 - dexSharePct).toFixed(1)}%</span>
+              </div>
+              <div className="h-3 bg-[#1a1a1a] rounded-full overflow-hidden flex">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${dexSharePct}%`, background: "#FABF2C" }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
@@ -75,7 +133,7 @@ async function DexVolumeData() {
             { key: 'chains',    label: 'Chains',     render: (v) => <span className="text-[#555] font-mono text-[10px]">{(v as string[]).slice(0, 3).join(', ')}</span> },
           ]}
           data={rows}
-          source="Source: DefiLlama DEX overview · Cached 30 min"
+          source="Source: DefiLlama DEX overview · CoinGecko global · Cached 30 min"
         />
       </div>
     </div>

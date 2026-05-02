@@ -19,9 +19,11 @@ const nextConfig = {
     ],
     dangerouslyAllowSVG: true,
   },
-  // Allow Firebase Studio cloudworkstations preview + local dev
+  // Allow Firebase Studio cloudworkstations preview + Replit preview + local dev
   allowedDevOrigins: [
     '*.cloudworkstations.dev',
+    '*.riker.replit.dev',
+    '*.replit.dev',
     'localhost:3000',
     'localhost:3001',
     'localhost:3002',

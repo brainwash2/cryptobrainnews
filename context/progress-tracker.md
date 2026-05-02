@@ -10,8 +10,41 @@ Batch 5 – Full Metric Parity (The Block comparison)
 
 Read docs/metrics.txt, identify up to 10 high-impact missing metrics that can be added using ONLY free APIs (CoinGecko, DefiLlama, blockchain.info, Etherscan, etc.), and implement them one by one.
 
-### Batch 5 — Unit 1: Metric Analysis ✅ (awaiting approval)
-Proposed 5 metrics below — awaiting user approval before implementation begins.
+### Batch 5 — Unit 1: Metric Analysis ✅
+5 metrics proposed and approved.
+
+### Batch 5 — Unit 2: BTC Hash Rate Trend Chart ✅
+- New `src/app/data/onchain/bitcoin/_components/HashRateTrendChart.tsx` — `"use client"` Recharts `AreaChart`, `isAnimationActive={false}`, `useSyncExternalStore` mount guard, `ChartSkeleton` fallback, gradient fill, custom `HashRateTooltip`
+- `src/app/data/onchain/bitcoin/page.tsx` updated:
+  - `fetchBtcVolatility()` added (CoinGecko 35-day price history → 30-day annualized realized vol)
+  - `btcVol` added to `Promise.all`
+  - Chart-derived KPI strip expanded from 4 → 5 cards (`grid-cols-2 lg:grid-cols-5`): "30D Realized Vol" card added (Unit 5)
+  - `hashChange30d` + `currentEh` computed server-side from `hashData` array
+  - New "Hash Rate Trend (30-Day)" section renders `<HashRateTrendChart>` after FearGreedWidget
+
+### Batch 5 — Unit 3: DEX-to-CEX Volume Ratio ✅
+- `src/app/data/defi/dex-volume/page.tsx` updated:
+  - `getGlobalMarketData()` imported and added to `Promise.all`
+  - CEX 24h vol computed as `globalData.total_volume.usd − total24h_dex`
+  - New "DEX vs. Centralised Exchange Market Share" section: 3 KPI cards (DEX 24h / CEX 24h / DEX%) + visual ratio bar
+
+### Batch 5 — Unit 4: Stablecoin Supply by Blockchain ✅
+- `getStablecoinsByChain()` already existed in `src/lib/defi-data.ts` (cached 3600s, returns top 8 chains)
+- New `src/app/data/defi/stablecoins/_components/StablecoinChainChart.tsx` — `"use client"` Recharts horizontal `BarChart`, chain-specific colour map (Ethereum/Tron/BSC/Solana/etc.), `LabelList` share %, `isAnimationActive={false}`, `useSyncExternalStore` mount guard
+- `src/app/data/defi/stablecoins/page.tsx` updated: converted to async, fetches `getStablecoinsByChain()`, renders `<StablecoinChainChart>` between KPI cards and the full table
+
+### Batch 5 — Unit 5: BTC Annualized 30D Realized Volatility ✅
+- Implemented inside Unit 2 (same page). `fetchBtcVolatility()` fetches CoinGecko 35-day daily prices, computes σ_daily × √365 × 100. Result shown as 5th KPI card with colour-coded risk level (green/amber/red).
+
+### Batch 5 — Unit 6: Protocol Revenue Leaderboard with Chain Badges + 30d Column ✅
+- `src/lib/defi-data.ts` updated:
+  - `FeeProtocol` interface gains `chains: string[]` and `total30d: number | null`
+  - `getProtocolFees()` and `getProtocolRevenue()` updated to parse `chains` and `total30d` from the DefiLlama API response
+- `src/app/data/defi/revenue/page.tsx` updated:
+  - `ChainBadge` component added with per-chain colour map (Ethereum/Solana/BSC/Arbitrum/Optimism/etc.)
+  - Leaderboard columns updated: Protocol | Chain | 24h | 7d | **30d** | 24h % (replaces Category + All Time)
+  - Both Revenue and Fee leaderboards use the new columns
+- TypeScript: 0 errors (`npx tsc --noEmit`)
 
 ## Completed Batch 4 ✅ — Metric Expansion (ALL 4 UNITS DONE)
 

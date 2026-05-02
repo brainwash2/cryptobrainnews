@@ -1,10 +1,11 @@
-import React, { Suspense } from "react";
-import { DataHeader }           from "../../_components/DataHeader";
-import { ChartSkeleton }        from "../../_components/ChartSkeleton";
-import { getBitcoinStats }      from "@/lib/onchain-data";
-import { getFearGreedHistory }  from "@/lib/market-data";
-import BitcoinChartsClient      from "./_components/BitcoinChartsClient";
-import FearGreedWidget          from "./_components/FearGreedWidget";
+import React, { Suspense }          from "react";
+import { DataHeader }               from "../../_components/DataHeader";
+import { ChartSkeleton }            from "../../_components/ChartSkeleton";
+import { getBitcoinStats }          from "@/lib/onchain-data";
+import { getFearGreedHistory }      from "@/lib/market-data";
+import BitcoinChartsClient          from "./_components/BitcoinChartsClient";
+import FearGreedWidget              from "./_components/FearGreedWidget";
+import HashRateTrendChart           from "./_components/HashRateTrendChart";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
@@ -68,8 +69,29 @@ async function fetchUtxoAgeBands(): Promise<UtxoAgeBand[]> {
   } catch { return []; }
 }
 
+// ── Unit 5: BTC 30-Day Annualized Realized Volatility ───────────────────────
+async function fetchBtcVolatility(): Promise<number | null> {
+  try {
+    const res = await fetch(
+      "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=35&interval=daily",
+      { next: { revalidate: 3600 } },
+    );
+    if (!res.ok) return null;
+    const json = await res.json() as { prices?: Array<[number, number]> };
+    const prices = (json.prices ?? []).map(([, p]) => p);
+    if (prices.length < 31) return null;
+    const last31  = prices.slice(-31);
+    const returns = last31.slice(1).map((p, i) => Math.log(p / (last31[i] ?? 1)));
+    const mean    = returns.reduce((s, r) => s + r, 0) / returns.length;
+    const variance = returns.reduce((s, r) => s + (r - mean) ** 2, 0) / returns.length;
+    return Math.sqrt(variance) * Math.sqrt(365) * 100;
+  } catch {
+    return null;
+  }
+}
+
 async function BitcoinData() {
-  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData] =
+  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData, btcVol] =
     await Promise.all([
       getBitcoinStats().catch(() => null),
       fetchBtcChart("n-unique-addresses",    90),
@@ -80,7 +102,15 @@ async function BitcoinData() {
       fetchBtcChart("miners-revenue",        90),
       fetchUtxoAgeBands(),
       getFearGreedHistory().catch(() => []),
+      fetchBtcVolatility(),
     ]);
+
+  // ── Unit 2: hash rate 30d change (computed from hashData) ──────────────────
+  const sortedHash    = [...hashData].sort((a, b) => a.date.localeCompare(b.date));
+  const lastHashVal   = sortedHash[sortedHash.length - 1]?.value ?? 0;
+  const hash30dAgo    = sortedHash[Math.max(0, sortedHash.length - 31)]?.value ?? 1;
+  const hashChange30d = hash30dAgo > 0 ? ((lastHashVal - hash30dAgo) / hash30dAgo) * 100 : 0;
+  const currentEh     = lastHashVal > 0 ? lastHashVal : (btcStats?.hashRate ?? 0);
 
   return (
     <div className="space-y-10 pb-20">
@@ -109,7 +139,7 @@ async function BitcoinData() {
       )}
 
       {/* ── Chart-derived metric KPIs ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           label="Active Addresses (24h)"
           value={addrData.length > 0 ? fmtNum(addrData[addrData.length - 1]?.value ?? 0) : "—"}
@@ -134,9 +164,30 @@ async function BitcoinData() {
           sub="blockchain.info · USD"
           color="#888"
         />
+        {/* Unit 5 — BTC Annualized 30D Realized Volatility */}
+        <StatCard
+          label="30D Realized Vol"
+          value={btcVol !== null ? `${btcVol.toFixed(1)}%` : "—"}
+          sub="annualized · 30-day window"
+          color={
+            btcVol === null ? "#888" :
+            btcVol > 80 ? "#ff4d4f" :
+            btcVol > 50 ? "#FABF2C" :
+            "#00d672"
+          }
+        />
       </div>
 
       {fngData.length > 0 && <FearGreedWidget data={fngData} />}
+
+      {/* Unit 2 — Hash Rate Trend Chart */}
+      {hashData.length > 0 && (
+        <HashRateTrendChart
+          data={hashData}
+          currentEh={currentEh}
+          change30d={hashChange30d}
+        />
+      )}
 
       <BitcoinChartsClient
         addrData={addrData}
@@ -152,11 +203,12 @@ async function BitcoinData() {
         <h3 className="text-xs font-black uppercase tracking-widest text-white mb-4">About These Metrics</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[10px] font-mono text-[#555] leading-relaxed">
           {[
-            ["Hash Rate (EH/s)", "Total computational power securing the Bitcoin network. Higher = more secure."],
-            ["Mempool Tx Count",  "Transactions waiting to be confirmed. Spike = network congestion."],
-            ["Miner Revenue",     "Total USD value earned by miners per day (block subsidy + fees)."],
-            ["UTXO Age Bands",    "Distribution of when coins last moved. Rising old coins = HODLing, falling = distribution."],
-            ["Difficulty",        "Auto-adjusts every 2016 blocks (~2 weeks) to maintain 10-min block times."],
+            ["Hash Rate (EH/s)",       "Total computational power securing the Bitcoin network. Higher = more secure."],
+            ["Mempool Tx Count",       "Transactions waiting to be confirmed. Spike = network congestion."],
+            ["Miner Revenue",          "Total USD value earned by miners per day (block subsidy + fees)."],
+            ["30D Realized Volatility","Annualized standard deviation of daily log-returns over 30 days. Higher = riskier."],
+            ["UTXO Age Bands",         "Distribution of when coins last moved. Rising old coins = HODLing, falling = distribution."],
+            ["Difficulty",             "Auto-adjusts every 2016 blocks (~2 weeks) to maintain 10-min block times."],
           ].map(([k, v]) => (
             <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>
           ))}
