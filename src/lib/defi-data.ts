@@ -223,6 +223,49 @@ export async function getStablecoinsOverview(): Promise<StablecoinData[]> {
   }, 3600);
 }
 
+// ─── 3a. Stablecoin 90-day Supply History (USDT + USDC) ──────────────────────
+
+export interface StablecoinHistoryPoint {
+  date:  string; // "YYYY-MM-DD"
+  usdt:  number; // circulating supply in $B
+  usdc:  number; // circulating supply in $B
+}
+
+export async function getStablecoinTrendData(): Promise<StablecoinHistoryPoint[]> {
+  return cached('defi:stablecoins:trend:90d', async () => {
+    interface LlamaStablecoinHistory {
+      tokens?: Array<{ date: number; totalCirculating: { peggedUSD?: number } }>;
+    }
+
+    const [usdtRes, usdcRes] = await Promise.all([
+      safeFetch<LlamaStablecoinHistory>('https://stablecoins.llama.fi/stablecoin/1', {}),
+      safeFetch<LlamaStablecoinHistory>('https://stablecoins.llama.fi/stablecoin/3', {}),
+    ]);
+
+    const toMap = (tokens: Array<{ date: number; totalCirculating: { peggedUSD?: number } }>) =>
+      new Map(
+        tokens.map((t) => [
+          new Date(t.date * 1000).toISOString().slice(0, 10),
+          (t.totalCirculating.peggedUSD ?? 0) / 1e9,
+        ])
+      );
+
+    const usdtMap = toMap(usdtRes.tokens ?? []);
+    const usdcMap = toMap(usdcRes.tokens ?? []);
+
+    // 90 days so the client-side timeframe selector can slice to 7D / 30D / 90D
+    const points: StablecoinHistoryPoint[] = [];
+    const now = Date.now();
+    for (let i = 89; i >= 0; i--) {
+      const d = new Date(now - i * 86_400_000).toISOString().slice(0, 10);
+      const usdt = usdtMap.get(d) ?? 0;
+      const usdc = usdcMap.get(d) ?? 0;
+      if (usdt > 0 || usdc > 0) points.push({ date: d, usdt, usdc });
+    }
+    return points;
+  }, 3600);
+}
+
 // ─── 3b. Stablecoins by Chain ─────────────────────────────────────────────────
 
 export interface StablecoinChainRow {
@@ -246,6 +289,18 @@ export async function getStablecoinsByChain(): Promise<StablecoinChainRow[]> {
       .filter((c) => c.totalCirculatingUsd > 0)
       .sort((a, b) => b.totalCirculatingUsd - a.totalCirculatingUsd)
       .slice(0, 8);
+  }, 3600);
+}
+
+// ─── 3c. DeFi Protocol Fees (24h aggregate) ──────────────────────────────────
+
+export async function getDefiTotalFees24h(): Promise<number> {
+  return cached('defi:fees:24h', async () => {
+    const data = await safeFetch<{ total24h?: number }>(
+      'https://api.llama.fi/overview/fees?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true',
+      {},
+    );
+    return data.total24h ?? 0;
   }, 3600);
 }
 

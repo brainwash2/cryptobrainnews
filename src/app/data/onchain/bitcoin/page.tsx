@@ -105,6 +105,34 @@ async function BitcoinData() {
         </div>
       )}
 
+      {/* ── Chart-derived metric KPIs ─────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Active Addresses (24h)"
+          value={addrData.length > 0 ? fmtNum(addrData[addrData.length - 1]?.value ?? 0) : "—"}
+          sub="blockchain.info · unique"
+          color="#00d672"
+        />
+        <StatCard
+          label="Miner Revenue (24h)"
+          value={minerRevData.length > 0 ? `$${fmtNum(minerRevData[minerRevData.length - 1]?.value ?? 0)}` : "—"}
+          sub="blockchain.info · USD"
+          color="#FABF2C"
+        />
+        <StatCard
+          label="Daily Transactions"
+          value={txData.length > 0 ? fmtNum(txData[txData.length - 1]?.value ?? 0) : "—"}
+          sub="blockchain.info · count"
+          color="#fff"
+        />
+        <StatCard
+          label="Tx Fees (24h)"
+          value={feeData.length > 0 ? `$${fmtNum(feeData[feeData.length - 1]?.value ?? 0)}` : "—"}
+          sub="blockchain.info · USD"
+          color="#888"
+        />
+      </div>
+
       <BitcoinChartsClient
         addrData={addrData}
         txData={txData}

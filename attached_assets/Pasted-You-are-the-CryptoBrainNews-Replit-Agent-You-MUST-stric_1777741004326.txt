@@ -1,0 +1,60 @@
+You are the CryptoBrainNews Replit Agent. You MUST strictly follow the development workflow defined in the workspace files.FIRST STEP – READ THESE FILES IN EXACT ORDER (do not skip):AGENTS.md
+context/project-overview.md
+context/architecture-context.md
+context/ui-context.md
+context/code-standards.md
+context/ai-workflow-rules.md
+context/progress-tracker.md
+
+Then immediately update context/progress-tracker.md:Current Phase → Batch 3 – Polish & Metric Expansion
+Current Goal → Add 30-day stablecoin trend chart + timeframe selectors + more high-impact metrics from docs/metrics.txt + final visual parity
+
+NOW EXECUTE BATCH 3 – ONE SMALL VERIFIABLE UNIT AT A TIMEUnit 1: Add 30-day stablecoin supply trend chart (exactly as you offered)Files to edit:src/lib/data-fetchers/defi-data.ts (or wherever getStablecoinsByChain lives)
+src/app/data/stablecoins/usd/page.tsx
+
+Exact changes required:Add a new function getStablecoinHistoricalSupply(chainId?: string) that calls https://stablecoins.llama.fi/stablecoin/{id} (free endpoint).
+In the USD stablecoins page, add a Recharts dual-line chart (USDT + USDC) showing 30-day circulating supply trend.
+Use existing ChartSkeleton for loading, isAnimationActive={false}, and mount guard (useSyncExternalStore if needed).
+Place the chart directly under the "Supply by Blockchain" grid.
+Strict TypeScript interfaces only, import 'server-only', cached({ revalidate: 3600 }).
+
+Test the page in preview — chart must render with real data and no errors.Update context/progress-tracker.md after this unit.Unit 2: Add timeframe selectors to key charts (visual parity with The Block)Files to edit:src/app/data/markets/futures/page.tsx
+src/app/data/stablecoins/usd/page.tsx
+Any other chart-heavy data pages that already exist
+
+Exact changes required:Add a small segmented control or tabs (1D / 7D / 30D / 90D) above each major chart using existing shadcn/ui patterns (do not modify foundation components).
+Wire the selector to filter the data shown in the chart (use React state + server component re-render where possible).
+Use only custom tokens from globals.css (bg-base, text-copy-primary, rounded-2xl, etc.).
+
+Test both pages — selector must work and update the chart.Update context/progress-tracker.md.Unit 3: Wire 3 more high-impact metrics from docs/metrics.txt (free APIs only)Files to edit:src/lib/data-fetchers/ (add/extend as needed)
+At least two data pages (e.g. /data/etfs and /data/onchain/bitcoin)
+
+Exact changes required:Add:Bitcoin ETF daily/weekly flows (CoinGecko or public ETF data source)
+Bitcoin on-chain active addresses + hash rate (free blockchain.info or similar)
+One more from the top-10 list (your choice, e.g. Layer 2 TVL)
+Display as KPI cards or simple tables using existing patterns.
+cached({ revalidate: 300 }), strict TS, server components.
+
+Test the pages — new metrics must appear with fresh data.Update context/progress-tracker.md.Unit 4: Final CSS polish for The Block visual parityFiles to edit:src/app/data/layout.tsx or global styles
+Any data page components that need tightening
+
+Exact changes required:Increase KPI card density (smaller padding, tighter grid) using existing Tailwind + custom tokens only.
+Ensure tables have overflow-x-auto on mobile.
+Make charts slightly more compact (matching The Block density).
+No raw colors — only bg-base, border-surface-border, etc.
+
+Test on desktop + mobile (375px).Update context/progress-tracker.md.After completing all 4 units in Batch 3:Run npm run build and confirm 0 TypeScript or build errors.
+Update context/progress-tracker.md with:Completed: Batch 3 – Polish & Metric Expansion
+Next Up: Continue expanding metrics from docs/metrics.txt (Batch 4 if needed)
+Reply with exactly this message:
+"BATCH 3 COMPLETE – All polish and metric expansion done. Ready for next phase. Current status of progress-tracker.md:"
+and then paste the full content of the updated context/progress-tracker.md.
+
+Rules you MUST obey (no exceptions):One small verifiable unit at a time (ai-workflow-rules.md)
+Never modify protected shadcn/ui components
+Strict TypeScript, no any, server components first (code-standards.md)
+Update progress-tracker.md after every meaningful change
+Use only free APIs for new metrics
+
+Do not start any further work until I explicitly say “Start Batch 4”.Begin now with Unit 1.
+

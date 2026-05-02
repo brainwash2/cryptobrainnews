@@ -1,9 +1,10 @@
 import React, { Suspense } from "react";
-import { getStablecoinsOverview, getStablecoinsByChain } from "@/lib/defi-data";
-import { DataHeader }       from "../../_components/DataHeader";
-import { ChartSkeleton }    from "../../_components/ChartSkeleton";
-import { FreshnessBadge }   from "@/components/common/FreshnessBadge";
-import StablecoinUsdClient from "./_components/StablecoinUsdClient";
+import { getStablecoinsOverview, getStablecoinsByChain, getStablecoinTrendData } from "@/lib/defi-data";
+import { DataHeader }          from "../../_components/DataHeader";
+import { ChartSkeleton }       from "../../_components/ChartSkeleton";
+import { FreshnessBadge }      from "@/components/common/FreshnessBadge";
+import StablecoinUsdClient     from "./_components/StablecoinUsdClient";
+import StablecoinTrendChart    from "./_components/StablecoinTrendChart";
 
 export const metadata = {
   title: "USD Stablecoins | CryptoBrainNews",
@@ -12,9 +13,10 @@ export const metadata = {
 export const revalidate = 3600;
 
 async function StablecoinData() {
-  const [all, chainRows] = await Promise.all([
+  const [all, chainRows, trendData] = await Promise.all([
     getStablecoinsOverview().catch(() => []),
     getStablecoinsByChain().catch(() => []),
+    getStablecoinTrendData().catch(() => []),
   ]);
   const usd = all.filter((s) => s.pegType === "peggedUSD");
 
@@ -87,6 +89,8 @@ async function StablecoinData() {
           </div>
         </div>
       )}
+
+      {trendData.length > 0 && <StablecoinTrendChart data={trendData} />}
 
       <StablecoinUsdClient stablecoins={usd} totalSupply={totalSupply} />
     </div>

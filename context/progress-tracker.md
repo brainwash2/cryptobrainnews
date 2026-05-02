@@ -4,11 +4,26 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 2 – High/Medium Improvements ✅ COMPLETE
+Batch 3 – Polish & Metric Expansion ✅ COMPLETE
 
-## Current Goal
+## Completed Batch 3
 
-Batch 3 – Next round of improvements (awaiting instruction)
+### Unit 1 — Stablecoin USDT/USDC 90-day Supply Trend Chart
+- `getStablecoinTrendData()` in `src/lib/defi-data.ts` — fetches DefiLlama USDT (id=1) + USDC (id=3), returns 90-day `{date,usdt,usdc}[]` cached 1h
+- `src/app/data/stablecoins/usd/_components/StablecoinTrendChart.tsx` — Recharts dual-line chart, USDT=#26A17B, USDC=#2775CA, `isAnimationActive={false}`, `useSyncExternalStore` mount guard
+- `stablecoins/usd/page.tsx` wired: `getStablecoinTrendData()` in Promise.all, `<StablecoinTrendChart>` rendered above StablecoinUsdClient
+
+### Unit 2 — Timeframe Selectors
+- `StablecoinTrendChart` has built-in 7D/30D/90D TimeframeSelector (client-side slice)
+- FuturesClient already had working 7D/30D TimeframeSelector (pre-existing)
+
+### Unit 3 — High-Impact Metric Expansion
+- `onchain/bitcoin/page.tsx`: Added 4 new KPI cards — Active Addresses (24h), Miner Revenue (24h), Daily Transactions, Tx Fees (24h) — derived from already-fetched blockchain.info chart arrays
+- `defi-data.ts`: Added `getDefiTotalFees24h()` — calls DefiLlama `/overview/fees`, returns total24h, cached 1h
+- `defi/tvl/page.tsx`: Replaced "Source" KPI with "DeFi Fees (24h)" from `getDefiTotalFees24h()`
+
+### Unit 4 — CSS / Density
+- `StablecoinUsdClient.tsx`: Added `overflow-x-auto` + `min-w-[720px]` to stablecoin table for mobile horizontal scroll
 
 ## Completed
 

@@ -149,8 +149,8 @@ export default function StablecoinUsdClient({ stablecoins, totalSupply: _totalSu
         )}
       </div>
 
-      <div className="rounded-3xl bg-[#161616] border border-[#27272a] overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-3xl bg-[#161616] border border-[#27272a] overflow-x-auto overflow-hidden">
+        <table className="w-full text-sm min-w-[720px]">
           <thead>
             <tr className="sticky top-0 z-10 bg-[#161616] border-b border-[#27272a]">
               <th className="px-4 py-3 text-left font-semibold text-[#a3a3a3] uppercase tracking-wider w-8">#</th>

@@ -5,6 +5,7 @@ import { DefiTable, fmtUsd, PctBadge } from "../_components/DefiTable";
 import {
   getTopProtocolsByTvl,
   getTvlByCategory,
+  getDefiTotalFees24h,
 } from "@/lib/defi-data";
 import type { ProtocolRow } from "@/lib/defi-data";
 import DeFiTvlClient from "./_components/DeFiTvlClient";
@@ -45,10 +46,11 @@ async function getTotalDefiTvlHistory(): Promise<TvlHistoryPoint[]> {
 // -- Server data component ---------------------------------------------------
 
 async function TvlData() {
-  const [protocols, categories, totalHistory] = await Promise.all([
+  const [protocols, categories, totalHistory, fees24h] = await Promise.all([
     getTopProtocolsByTvl(60),
     getTvlByCategory(),
     getTotalDefiTvlHistory(),
+    getDefiTotalFees24h().catch(() => 0),
   ]);
 
   const totalTvl       = protocols.reduce((s, p) => s + p.tvl, 0);
@@ -76,7 +78,7 @@ async function TvlData() {
           { label: "Total DeFi TVL",   value: fmtUsd(totalTvl),      color: "#FABF2C" },
           { label: "Protocols Ranked", value: String(totalProtocols), color: "#FABF2C" },
           { label: "Largest Protocol", value: top1?.name ?? "-",      color: "#fff",   sub: fmtUsd(top1?.tvl ?? 0) },
-          { label: "Source",           value: "DefiLlama",            color: "#888",   sub: "Cached 1 hour" },
+          { label: "DeFi Fees (24h)",  value: fees24h > 0 ? fmtUsd(fees24h) : "—", color: "#00d672", sub: "All protocols" },
         ].map((s) => (
           <div key={s.label} className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
             <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{s.label}</p>
