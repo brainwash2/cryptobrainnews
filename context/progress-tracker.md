@@ -4,11 +4,32 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 9 – Advanced Metrics ✅
+Batch 10 – NUPL Cycle Indicator ✅
 
 ## Current Goal
 
-Add Bitcoin MVRV Ratio tracker with zone gauge
+Add Bitcoin NUPL tracker with zone gauge
+
+### Batch 10 — Unit 1: Bitcoin NUPL Cycle Indicator ✅
+- `src/app/data/onchain/bitcoin/_components/NuplGauge.tsx` **created** (`"use client"`):
+  - Props: `{ nupl: number; points: { date: string; value: number }[]; source: "live" | "seed" }`
+  - `useSyncExternalStore` SSR hydration guard (`mounted`)
+  - `nuplColor(v)` / `nuplZoneLabel(v)` — 5 zones by threshold: Capitulation (<0) red, Hope (0–0.25) orange, Optimism (0.25–0.50) amber, Belief (0.50–0.75) light green, Euphoria (≥0.75) green
+  - CSS semi-circular gauge — display range `[-0.5, 1.0]`; needle = `((nupl + 0.5) / 1.5) * 180 − 90`; 5 zone labels (CAP/HOPE/OPT/BLF/EUP) positioned around arc; pivot dot
+  - Recharts `AreaChart` 90-day NUPL history; `isAnimationActive={false}`; amber gradient fill; 4 `ReferenceLine` zone boundaries at 0 / 0.25 / 0.50 / 0.75 (color-coded)
+  - YAxis domain `[-0.5, 1.0]`; tick formatter `v.toFixed(2)`
+  - Zone legend strip (5 items); Live vs Seed source badge
+- `src/app/data/onchain/bitcoin/page.tsx` updated:
+  - `import NuplGauge from "./_components/NuplGauge"` added
+  - `getGlassnodeMetric("nupl", "BTC", "24h", 90)` added as 13th element in `Promise.all` (with `.catch(() => null)`)
+  - `nuplPoints` mapped from `GlassnodePoint[]` (`.t` → ISO date, `.v` → value)
+  - `currentNupl` = last point value, fallback `0.55` (seed — Belief zone)
+  - `nuplSource` = `nuplTs?.source ?? "seed"`
+  - `<NuplGauge nupl={currentNupl} points={nuplPoints} source={nuplSource} />` rendered immediately below `<MvrvGauge />`, above `<HashRateTrendChart />`
+  - "About These Metrics" glossary updated with NUPL entry
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 9 ✅ — Advanced Metrics (MVRV Ratio)
 
 ### Batch 9 — Unit 1: Bitcoin MVRV Ratio + Zone Gauge ✅
 - `src/app/data/onchain/bitcoin/_components/MvrvGauge.tsx` **created** (`"use client"`):

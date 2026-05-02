@@ -9,6 +9,7 @@ import BitcoinChartsClient          from "./_components/BitcoinChartsClient";
 import FearGreedWidget              from "./_components/FearGreedWidget";
 import HashRateTrendChart           from "./_components/HashRateTrendChart";
 import MvrvGauge                   from "./_components/MvrvGauge";
+import NuplGauge                   from "./_components/NuplGauge";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
@@ -121,7 +122,7 @@ async function fetchBtcVolatility(): Promise<number | null> {
 }
 
 async function BitcoinData() {
-  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData, btcVol, lnStats, mvrvTs] =
+  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData, btcVol, lnStats, mvrvTs, nuplTs] =
     await Promise.all([
       getBitcoinStats().catch(() => null),
       fetchBtcChart("n-unique-addresses",    90),
@@ -135,6 +136,7 @@ async function BitcoinData() {
       fetchBtcVolatility(),
       fetchLightningStats().catch(() => null),
       getGlassnodeMetric("mvrv", "BTC", "24h", 90).catch(() => null),
+      getGlassnodeMetric("nupl", "BTC", "24h", 90).catch(() => null),
     ]);
 
   // ── Batch 9: MVRV ratio — derive current value + chart points ───────────────
@@ -146,6 +148,16 @@ async function BitcoinData() {
     ? (mvrvPoints[mvrvPoints.length - 1]?.value ?? 2.20)
     : 2.20;                               // seed fallback
   const mvrvSource  = mvrvTs?.source ?? "seed";
+
+  // ── Batch 10: NUPL — derive current value + chart points ─────────────────────
+  const nuplPoints  = (nuplTs?.points ?? []).map((p) => ({
+    date:  new Date(p.t * 1000).toISOString().slice(0, 10),
+    value: p.v,
+  }));
+  const currentNupl = nuplPoints.length > 0
+    ? (nuplPoints[nuplPoints.length - 1]?.value ?? 0.55)
+    : 0.55;                               // seed fallback (Belief zone)
+  const nuplSource  = nuplTs?.source ?? "seed";
 
   // ── Unit 2: hash rate 30d change (computed from hashData) ──────────────────
   const sortedHash    = [...hashData].sort((a, b) => a.date.localeCompare(b.date));
@@ -329,6 +341,13 @@ async function BitcoinData() {
         source={mvrvSource}
       />
 
+      {/* Batch 10 — NUPL Cycle Indicator */}
+      <NuplGauge
+        nupl={currentNupl}
+        points={nuplPoints}
+        source={nuplSource}
+      />
+
       {/* Unit 2 — Hash Rate Trend Chart */}
       {hashData.length > 0 && (
         <HashRateTrendChart
@@ -359,6 +378,7 @@ async function BitcoinData() {
             ["UTXO Age Bands",         "Distribution of when coins last moved. Rising old coins = HODLing, falling = distribution."],
             ["Difficulty",             "Auto-adjusts every 2016 blocks (~2 weeks) to maintain 10-min block times."],
             ["MVRV Ratio",             "Market Value ÷ Realized Value. <1 = undervalued; 1–3 = fair; >3 = overvalued; >4.5 = extreme. Source: Glassnode."],
+            ["NUPL",                   "Net Unrealized Profit/Loss = (Market Cap − Realized Cap) ÷ Market Cap. <0 Capitulation; 0–0.25 Hope; 0.25–0.5 Optimism; 0.5–0.75 Belief; >0.75 Euphoria."],
           ].map(([k, v]) => (
             <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>
           ))}
