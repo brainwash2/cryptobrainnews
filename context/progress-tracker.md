@@ -4,11 +4,26 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 19 – DeFi Lending Rates ✅
+Batch 20 – DeFi Yield Opportunities ✅
 
 ## Current Goal
 
-Add DeFi lending rates leaderboard (supply/borrow APY) for top protocols
+Enhance the Yields page with a Stablecoin Yield Scanner
+
+### Batch 20 — Unit 1: DeFi Stablecoin Yield Scanner ✅
+- `src/app/data/defi/yields/page.tsx` updated:
+  - `getTopYieldPools(200)` imported from `@/lib/defi-data`; `DefiTable`, `fmtUsd` imported from `../_components/DefiTable`
+  - `Promise.all([getTopYields(), getTopYieldPools(200)])` — both run in parallel; zero new API calls
+  - `apyColor(v)` — `≥15%` green, `≥5%` amber, `<5%` grey
+  - `riskTier(tvl)` — `>$10M` Established (green), `$1M–$10M` New (amber), `<$1M` Unverified (grey); returns `{ label, color, border }`
+  - `StablecoinScanner` server component: filters `stablecoin === true`, sorts by APY desc, slices top 25
+  - 3-KPI grid: Top Stablecoin APY (with protocol/asset/chain attribution) / Stable Pools Count / Median Pool TVL (middle element of TVL-sorted array)
+  - `DefiTable` ranked table: Protocol / Chain / Asset / APY (color-coded) / TVL / Risk Tier badge (inline `border` span colored by tier)
+  - Risk tier key legend strip (three swatches with TVL descriptions)
+  - Section placed between existing MetricCard KPI strip and existing full yields table; existing table wrapped in a heading for visual separation
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 19 ✅ — DeFi Lending Rates
 
 ### Batch 19 — Unit 1: DeFi Lending Rates Leaderboard ✅
 - `src/lib/defi-data.ts` updated:
