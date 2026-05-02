@@ -8,6 +8,16 @@ Batch 4 – Metric Expansion 🔄 IN PROGRESS
 
 ## Completed Batch 4
 
+### Unit 3 — 7-day TVL Sparklines in Top 5 L2 Cards
+- `slug` + `llamaSlug` fields added to `Layer2TVLEntry` interface in `src/lib/scaling-data.ts` — `slug` is the catalogue identifier, `llamaSlug` is the actual DefiLlama chain name (e.g. `'OP Mainnet'`) for use with the historicalChainTvl API
+- `getLayer2TVL()` updated to populate both fields from the chainMap (`live?.name ?? c.slug`)
+- New `src/app/data/scaling/_components/L2Sparkline.tsx` — `"use client"` Recharts `LineChart`, `ResponsiveContainer`, h-12, no axes/grid/dots, `isAnimationActive={false}`, `activeDot={false}`, `useSyncExternalStore` mount guard, fallback `<div className="h-12 bg-[#0d0d0d] rounded" />`
+- `src/app/data/scaling/l2-comparison/page.tsx` updated:
+  - Imports `L2Sparkline`, `getChainTvlSeries`, `TvlPoint`
+  - After initial `Promise.all`, fetches 7-day sparkline data for each top-5 chain via `Promise.all(l2tvl.top5.map(c => getChainTvlSeries(c.llamaSlug, 7).catch(() => [])))`
+  - `<L2Sparkline data={spark} color={chain.color} />` rendered inside each Top 5 card, between 24h change and market-share bar
+- TypeScript: 0 errors
+
 ### Unit 2 — Layer 2 TVL + Top 5 L2s KPI Cards
 - `Layer2TVLEntry` + `Layer2TVLSummary` interfaces added to `src/lib/scaling-data.ts`
 - `getLayer2TVL()` added to `src/lib/scaling-data.ts` — calls `https://api.llama.fi/v2/chains` directly (bypasses `getAllChainsMap()` 3600s cache), filters OPTIMISTIC_CHAINS + ZK_CHAINS, returns `{ totalTvl, optTvl, zkTvl, top5, all }`, cached 300s (`scaling:layer2:tvl:300`)

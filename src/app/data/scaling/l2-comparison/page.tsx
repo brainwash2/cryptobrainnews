@@ -3,14 +3,16 @@ import { DataHeader }             from '../../_components/DataHeader';
 import { ChartSkeleton }          from '../../_components/ChartSkeleton';
 import ScalingTable               from '../_components/ScalingTable';
 import TvlBars                    from '../_components/TvlBars';
+import L2Sparkline                from '../_components/L2Sparkline';
 import {
   getAllL2s,
   getOptimisticRollups,
   getZkRollups,
   getL2FeeData,
   getLayer2TVL,
+  getChainTvlSeries,
 } from '@/lib/scaling-data';
-import type { Layer2TVLEntry } from '@/lib/scaling-data';
+import type { Layer2TVLEntry, TvlPoint } from '@/lib/scaling-data';
 
 export const metadata = {
   title: 'L2 Comparison | CryptoBrainNews',
@@ -32,6 +34,13 @@ async function L2ComparisonData() {
     getL2FeeData(),
     getLayer2TVL(),
   ]);
+
+  // Fetch 7-day TVL sparkline for each top-5 L2 (1 h cache via getChainTvlSeries)
+  const sparklines: TvlPoint[][] = await Promise.all(
+    l2tvl.top5.map((chain) =>
+      getChainTvlSeries(chain.llamaSlug, 7).catch(() => [] as TvlPoint[])
+    )
+  );
 
   const totalTvl = allL2s.reduce((s, c) => s + c.tvl, 0);
   const optTvl   = optimistic.reduce((s, c) => s + c.tvl, 0);
@@ -80,6 +89,7 @@ async function L2ComparisonData() {
               const chg        = chain.change1d;
               const chgColor   = chg == null ? '#555' : chg >= 0 ? '#00d672' : '#ff4757';
               const chgText    = chg == null ? '—' : `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`;
+              const spark      = sparklines[i] ?? [];
               return (
                 <div
                   key={chain.name}
@@ -112,6 +122,9 @@ async function L2ComparisonData() {
                   <p className="text-xs font-mono font-bold tabular-nums" style={{ color: chgColor }}>
                     {chgText} <span className="text-[#555] font-normal">24h</span>
                   </p>
+
+                  {/* 7-day TVL sparkline */}
+                  <L2Sparkline data={spark} color={chain.color} />
 
                   {/* market share progress bar */}
                   <div>

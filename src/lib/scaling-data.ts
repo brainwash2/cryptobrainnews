@@ -275,6 +275,8 @@ export async function getL2FeeData(): Promise<L2FeeRow[]> {
 
 export interface Layer2TVLEntry {
   name:      string;
+  slug:      string;        // catalogue slug (our identifier)
+  llamaSlug: string;        // DefiLlama chain name — use for historicalChainTvl API calls
   tvl:       number;
   change1d:  number | null;
   change7d:  number | null;
@@ -327,6 +329,8 @@ export async function getLayer2TVL(): Promise<Layer2TVLSummary> {
         const live = chainMap.get(c.slug.toLowerCase());
         return {
           name:      c.name,
+          slug:      c.slug,
+          llamaSlug: live?.name ?? c.slug,   // actual DefiLlama chain name for history API
           tvl:       live?.tvl       ?? 0,
           change1d:  live?.change_1d ?? null,
           change7d:  live?.change_7d ?? null,
