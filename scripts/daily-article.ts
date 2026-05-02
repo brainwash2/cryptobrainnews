@@ -230,7 +230,7 @@ async function processArticle(
   logger: PipelineLogger,
 ): Promise<{ published: boolean; deadLetterPath?: string }> {
   logger.setStage('dedup-check');
-  const { isDuplicate } = await dedup.isDuplicate(item.link, item.title);
+  const { isDuplicate } = await dedup.isDuplicate(item.link, item.title, item.description);
   if (isDuplicate) {
     logger.info('Skipping duplicate', { url: item.link });
     return { published: false };
@@ -287,7 +287,7 @@ async function processArticle(
     const exists = await slugExistsInSanity(finalPolish.slug);
     if (exists) {
       logger.info('Slug already exists – skipping write', { slug: finalPolish.slug });
-      await dedup.markSeen(item.link, item.title, runId);
+      await dedup.markSeen(item.link, item.title, runId, undefined, item.description);
       return { published: false };
     }
   } catch (err) {
@@ -345,7 +345,7 @@ async function processArticle(
     return { published: false, deadLetterPath: path || undefined };
   }
 
-  await dedup.markSeen(item.link, item.title, runId, sanityResult.documentId);
+  await dedup.markSeen(item.link, item.title, runId, sanityResult.documentId, item.description);
 
   const telegram = new TelegramBroadcaster(TELEGRAM_BOT_TOKEN);
   await telegram.send(
@@ -395,7 +395,7 @@ export async function runPipeline(): Promise<PipelineRun> {
 
   logger.setStage('dedup-check');
   const dedupMap = await dedup.bulkCheck(
-    items.map(i => ({ guid: i.guid, url: i.link, title: i.title })),
+    items.map(i => ({ guid: i.guid, url: i.link, title: i.title, description: i.description })),
   );
   const fresh = items.filter(i => !dedupMap.get(i.guid)?.isDuplicate);
   logger.info(`Dedup: ${items.length} total → ${fresh.length} fresh`);
