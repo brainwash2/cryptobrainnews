@@ -3,7 +3,6 @@ import { getDerivativesExchanges, getFundingRates } from "@/lib/derivatives";
 import { getOIHistory, getFundingRateHistory }      from "@/lib/market-data";
 import { ChartSkeleton }                             from "../../_components/ChartSkeleton";
 import { DataHeader }                                from "../../_components/DataHeader";
-import { FreshnessBadge }                            from "@/components/common/FreshnessBadge";
 import FuturesClient                                 from "./_components/FuturesClient";
 import type { DerivativeMarketData, FundingRateData } from "@/lib/types";
 
@@ -42,6 +41,12 @@ async function fetchBybitLiquidations(): Promise<LiquidationRecord[]> {
   }
 }
 
+function fmtOI(v: number): string {
+  if (v >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
+  if (v >= 1e6) return `$${(v / 1e6).toFixed(0)}M`;
+  return `$${v.toLocaleString()}`;
+}
+
 async function FuturesData() {
   const [exchanges, fundingRates, oiHistory, fundingHistory, liquidations]: [
     DerivativeMarketData[],
@@ -57,15 +62,31 @@ async function FuturesData() {
     fetchBybitLiquidations(),
   ]);
 
+  const latestOI = oiHistory.length > 0 ? oiHistory[oiHistory.length - 1] : null;
+
   return (
     <div className="space-y-10 pb-20">
       <DataHeader
         title="Futures & Perpetuals"
         description="Live derivatives volumes, open interest history, perpetual funding rates, and liquidations."
       />
-      <div className="flex items-center gap-3">
-        <FreshnessBadge ttlSeconds={300} />
-      </div>
+
+      {latestOI && (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { label: "BTC Open Interest",   value: fmtOI(latestOI.btc),                    color: "#FABF2C", sub: "Bybit BTCUSDT" },
+            { label: "ETH Open Interest",   value: fmtOI(latestOI.eth),                    color: "#3b82f6", sub: "Bybit ETHUSDT" },
+            { label: "BTC + ETH Combined",  value: fmtOI(latestOI.btc + latestOI.eth),     color: "#fff",   sub: `As of ${latestOI.date}` },
+          ].map((s) => (
+            <div key={s.label} className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
+              <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{s.label}</p>
+              <p className="text-2xl font-black tabular-nums" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-[10px] font-mono text-[#555] mt-1">{s.sub}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       <FuturesClient
         exchanges={exchanges}
         fundingRates={fundingRates}

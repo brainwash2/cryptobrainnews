@@ -1,26 +1,25 @@
 // src/lib/news/telegram.ts
 import 'server-only';
 import { randomUUID } from 'crypto';
+import { Redis } from '@upstash/redis';
 import { BroadcastQueue } from './broadcast-queue';
 import type { TelegramPayload } from './types';
 
 const TELEGRAM_API = 'https://api.telegram.org';
 const MAX_MSG_LENGTH = 4096;
 const INTER_MESSAGE_DELAY_MS = 1050;
-
-// Per‑chat throttle: track last send timestamp in memory.
-// In production this would be Redis; memory is acceptable for Vercel
-// serverless because each instance handles one cron invocation at a time.
-const lastSendTime = new Map<string, number>();
+const RATE_KEY_PREFIX = 'tg:ratelimit:';
 
 export class TelegramBroadcaster {
   private readonly botToken: string;
   private readonly queue: BroadcastQueue;
+  private readonly redis: Redis;
 
   constructor(botToken: string) {
     if (!botToken) throw new Error('TELEGRAM_BOT_TOKEN is required');
     this.botToken = botToken;
     this.queue = new BroadcastQueue();
+    this.redis = Redis.fromEnv();
   }
 
   async send(
@@ -87,24 +86,28 @@ export class TelegramBroadcaster {
   }
 
   /**
-   * Rate‑limited send: enforces ≤1 msg/sec per chat.
-   * On 429, reads Retry‑After header and waits before retrying.
+   * Rate‑limited send: enforces ≤1 msg/sec per chat via Redis NX key.
+   * Key `tg:ratelimit:<chatId>` acts as a sliding window mutex with a
+   * 1050 ms TTL. Concurrent callers (e.g. across serverless instances)
+   * wait for the remaining PTTL before acquiring their own slot.
    */
   private async throttledSend(payload: TelegramPayload): Promise<void> {
-    const chatId = payload.chatId;
+    const rateKey = RATE_KEY_PREFIX + payload.chatId;
 
-    // ── Per‑chat throttle ──────────────────────────────────────────────
-    const prev = lastSendTime.get(chatId) ?? 0;
-    const elapsed = Date.now() - prev;
-    if (elapsed < INTER_MESSAGE_DELAY_MS) {
-      await new Promise((r) => setTimeout(r, INTER_MESSAGE_DELAY_MS - elapsed));
+    // Try to atomically acquire the rate-limit slot
+    const acquired = await this.redis.set(rateKey, '1', {
+      nx: true,
+      px: INTER_MESSAGE_DELAY_MS,
+    });
+
+    if (!acquired) {
+      // Slot is taken — wait for the remaining TTL then refresh the window
+      const pttl = await this.redis.pttl(rateKey);
+      await new Promise((r) => setTimeout(r, Math.max(pttl, 0)));
+      await this.redis.set(rateKey, '1', { px: INTER_MESSAGE_DELAY_MS });
     }
 
-    try {
-      await this.sendRaw(payload);
-    } finally {
-      lastSendTime.set(chatId, Date.now());
-    }
+    await this.sendRaw(payload);
   }
 
   private async sendRaw(payload: TelegramPayload): Promise<void> {

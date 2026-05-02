@@ -1,6 +1,7 @@
 // scripts/daily-article.ts
 import 'server-only';
 import { randomUUID } from 'crypto';
+import { Redis } from '@upstash/redis';
 import { ArticleDedup } from '../src/lib/news/dedup';
 import { PipelineLogger } from '../src/lib/news/pipeline-logger';
 import { RSSCache } from '../src/lib/news/rss-cache';
@@ -426,6 +427,16 @@ export async function runPipeline(): Promise<PipelineRun> {
   run.stage = logger.hasFatal() ? 'failed' : 'complete';
   run.errors = [...logger.getErrors()];
   run.completedAt = new Date().toISOString();
+
+  if (run.stage === 'complete') {
+    try {
+      const redis = Redis.fromEnv();
+      await redis.set('pipeline:last-success', run.completedAt, { ex: 90000 });
+    } catch (e) {
+      logger.warn('pipeline:last-success write failed', { error: String(e) });
+    }
+  }
+
   logger.info('Pipeline run complete', {
     articlesAttempted: run.articlesAttempted,
     articlesPublished: run.articlesPublished,

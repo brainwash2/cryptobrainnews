@@ -1,7 +1,8 @@
 import React, { Suspense } from "react";
-import { getStablecoinsOverview } from "@/lib/defi-data";
-import { DataHeader }    from "../../_components/DataHeader";
-import { ChartSkeleton } from "../../_components/ChartSkeleton";
+import { getStablecoinsOverview, getStablecoinsByChain } from "@/lib/defi-data";
+import { DataHeader }       from "../../_components/DataHeader";
+import { ChartSkeleton }    from "../../_components/ChartSkeleton";
+import { FreshnessBadge }   from "@/components/common/FreshnessBadge";
 import StablecoinUsdClient from "./_components/StablecoinUsdClient";
 
 export const metadata = {
@@ -11,7 +12,10 @@ export const metadata = {
 export const revalidate = 3600;
 
 async function StablecoinData() {
-  const all = await getStablecoinsOverview().catch(() => []);
+  const [all, chainRows] = await Promise.all([
+    getStablecoinsOverview().catch(() => []),
+    getStablecoinsByChain().catch(() => []),
+  ]);
   const usd = all.filter((s) => s.pegType === "peggedUSD");
 
   const totalSupply  = usd.reduce((s, c) => s + c.circulatingUsd, 0);
@@ -28,9 +32,7 @@ async function StablecoinData() {
       />
 
       <div className="flex items-center gap-3">
-        <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
-          Live — DefiLlama
-        </span>
+        <FreshnessBadge ttlSeconds={3600} />
         <span className="text-[#333] font-mono text-[10px] uppercase tracking-widest">
           {usd.length} USD-pegged assets tracked
         </span>
@@ -63,6 +65,28 @@ async function StablecoinData() {
           <p className="text-[10px] font-mono text-[#555] mt-1">USD-pegged only</p>
         </div>
       </div>
+
+      {chainRows.length > 0 && (
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3 mb-4">
+            Supply by Blockchain
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {chainRows.map((chain) => {
+              const pct = totalSupply > 0 ? (chain.totalCirculatingUsd / totalSupply) * 100 : 0;
+              return (
+                <div key={chain.name} className="bg-[#0a0a0a] border border-[#1a1a1a] p-4">
+                  <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-1">{chain.name}</p>
+                  <p className="text-lg font-black text-[#00d672] tabular-nums">
+                    ${(chain.totalCirculatingUsd / 1e9).toFixed(1)}B
+                  </p>
+                  <p className="text-[10px] font-mono text-[#555] mt-1">{pct.toFixed(1)}% of total</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <StablecoinUsdClient stablecoins={usd} totalSupply={totalSupply} />
     </div>

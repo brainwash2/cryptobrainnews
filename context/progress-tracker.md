@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 1 – Critical Fixes ✅ COMPLETE
+Batch 2 – High/Medium Improvements ✅ COMPLETE
 
 ## Current Goal
 
-Batch 2 – High/Medium priority improvements (not yet started — awaiting explicit instruction)
+Batch 3 – Next round of improvements (awaiting instruction)
 
 ## Completed
 
@@ -57,23 +57,54 @@ Batch 2 – High/Medium priority improvements (not yet started — awaiting expl
 - `context/ai-workflow-rules.md` — development workflow and scoping rules
 - `context/progress-tracker.md` — this file
 
+### Batch 2 – Unit 1: Remove duplicate FreshnessBadge from 5 data pages
+- Removed per-page `<FreshnessBadge>` + wrapper `<div>` from:
+  - `src/app/data/defi/tvl/page.tsx` (was ttlSeconds={3600})
+  - `src/app/data/etfs/bitcoin/page.tsx` (was ttlSeconds={300})
+  - `src/app/data/markets/futures/page.tsx` (was ttlSeconds={300})
+  - `src/app/data/markets/spot/page.tsx` (was ttlSeconds={300})
+  - `src/app/data/onchain/bitcoin/page.tsx` (was ttlSeconds={1800}, custom label)
+- Removed now-unused `FreshnessBadge` import from each file.
+- All 80+ data pages now show exactly one badge — from `src/app/data/layout.tsx`.
+
+### Batch 2 – Unit 2: Telegram Redis-backed rate limiter
+- Replaced `const lastSendTime = new Map<string, number>()` (module-level in-memory map) with
+  Redis `SET NX PX` atomic slot acquisition in `src/lib/news/telegram.ts`.
+- Key pattern: `tg:ratelimit:<chatId>`, TTL = 1050 ms (INTER_MESSAGE_DELAY_MS).
+- If slot is taken: reads `PTTL`, waits, then refreshes the key before calling `sendRaw`.
+- Now safe across multiple concurrent Vercel serverless instances.
+
+### Batch 2 – Unit 3: `pipeline:last-success` Redis write
+- Added `Redis` import to `scripts/daily-article.ts`.
+- After `run.stage = 'complete'`: writes `pipeline:last-success → run.completedAt`
+  with `ex: 90000` (25 h TTL) using `Redis.fromEnv()`.
+- Write failure is caught and logged via `logger.warn` — never fatal to the pipeline.
+- `/api/health` `checkPipelineLastRun` now always has a key to read after a clean run.
+
+### Batch 2 – Unit 4: Stablecoin/OI metric improvements
+- `src/lib/defi-data.ts`: Added `getStablecoinsByChain()` fetching
+  `https://stablecoins.llama.fi/chains` — returns top 8 chains by USD stablecoin supply,
+  cached 1 hour. Exported new `StablecoinChainRow` interface.
+- `src/app/data/stablecoins/usd/page.tsx`:
+  - Replaced green `<span>` badge with `<FreshnessBadge ttlSeconds={3600} />`.
+  - Added "Supply by Blockchain" grid section (top 8 chains, each showing $B supply + % of total).
+  - Fetches chain data in parallel with stablecoin overview via `Promise.all`.
+- `src/app/data/markets/futures/page.tsx`:
+  - Added `fmtOI()` formatter.
+  - Added current BTC, ETH, and combined OI KPI cards derived from the most recent point
+    in the already-fetched `oiHistory` (Bybit BTCUSDT / ETHUSDT, 30-day window).
+
 ## In Progress
 
 - None.
 
 ## Next Up
 
-Batch 2 – High/Medium priorities (to be defined when user says "Start Batch 2"):
-- Candidate items: Redis-backed per-chat rate limiter for Telegram (replace in-memory map),
-  social scheduler improvements, additional data page FreshnessBadge TTL accuracy,
-  pipeline `pipeline:last-success` key write after successful run.
+Batch 3 – (awaiting instruction)
 
 ## Open Questions
 
-- Should individual data pages override the layout's default `FreshnessBadge ttlSeconds={300}`
-  with their own page-specific TTL? (Currently: pages that already had their own badge will show
-  two badges — the layout one and their own. Consider removing per-page badges in favour of
-  the layout-level one, or removing the layout-level one for pages that define their own.)
+- None.
 
 ## Architecture Decisions
 

@@ -1,7 +1,6 @@
 import React, { Suspense } from "react";
 import { DataHeader }       from "../../_components/DataHeader";
 import { ChartSkeleton }    from "../../_components/ChartSkeleton";
-import { FreshnessBadge }   from "@/components/common/FreshnessBadge";
 import { getBitcoinStats }  from "@/lib/onchain-data";
 import BitcoinChartsClient  from "./_components/BitcoinChartsClient";
 
@@ -86,10 +85,6 @@ async function BitcoinData() {
         title="Bitcoin On-Chain"
         description="Real-time Bitcoin network health — hash rate, mempool, fees, miner revenue, transaction activity, and UTXO age bands."
       />
-
-      <div className="flex items-center gap-3">
-        <FreshnessBadge ttlSeconds={1800} label="Live — blockchain.info + mempool.space" />
-      </div>
 
       {btcStats ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

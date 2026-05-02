@@ -223,6 +223,32 @@ export async function getStablecoinsOverview(): Promise<StablecoinData[]> {
   }, 3600);
 }
 
+// ─── 3b. Stablecoins by Chain ─────────────────────────────────────────────────
+
+export interface StablecoinChainRow {
+  name:                string;
+  totalCirculatingUsd: number;
+}
+
+export async function getStablecoinsByChain(): Promise<StablecoinChainRow[]> {
+  return cached('defi:stablecoins:chains', async () => {
+    const data = await safeFetch<Array<{
+      name: string;
+      totalCirculatingUSD?: { peggedUSD?: number };
+    }>>('https://stablecoins.llama.fi/chains', []);
+
+    if (!Array.isArray(data)) return [];
+    return data
+      .map((c) => ({
+        name:                c.name,
+        totalCirculatingUsd: c.totalCirculatingUSD?.peggedUSD ?? 0,
+      }))
+      .filter((c) => c.totalCirculatingUsd > 0)
+      .sort((a, b) => b.totalCirculatingUsd - a.totalCirculatingUsd)
+      .slice(0, 8);
+  }, 3600);
+}
+
 // ─── 4. Lending ───────────────────────────────────────────────────────────────
 
 export async function getLendingProtocols(): Promise<LendingProtocol[]> {

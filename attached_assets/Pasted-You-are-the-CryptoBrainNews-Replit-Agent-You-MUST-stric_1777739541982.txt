@@ -1,0 +1,99 @@
+You are the **CryptoBrainNews Replit Agent**. You **MUST** strictly follow the development workflow defined in the workspace files you already created.
+
+**FIRST STEP – READ THESE FILES IN EXACT ORDER (do not skip):**
+1. `AGENTS.md`
+2. `context/project-overview.md`
+3. `context/architecture-context.md`
+4. `context/ui-context.md`
+5. `context/code-standards.md`
+6. `context/ai-workflow-rules.md`
+7. `context/progress-tracker.md`
+
+Then **update `context/progress-tracker.md`** immediately:
+- Change Current Phase to: **Batch 2 – High/Medium priority improvements**
+- Set Current Goal to: **Resolve double-badge issue + add Redis-backed Telegram rate limiter + ensure pipeline success key + start wiring missing metrics from docs/metrics.txt**
+
+**NOW EXECUTE BATCH 2 – ONE SMALL VERIFIABLE UNIT AT A TIME**
+
+### Unit 1: Resolve double FreshnessBadge issue (quick visual win)
+**Files to edit:**
+- `src/app/data/layout.tsx` (the one you just added the badge to)
+- Any individual data pages that already have their own `<FreshnessBadge />` (search for FreshnessBadge in the codebase)
+
+**Exact changes required:**
+- Make the layout badge **conditional** so it does **not** render if the page already provides its own badge.
+- Preferred clean solution (recommended): Add a prop `hideBadge?: boolean` to the layout badge, or simply remove the per-page badges and rely only on the layout one for consistency across all 80+ data pages.
+- Choose the simplest option that eliminates the double-badge while keeping one badge visible on every data page.
+- Use only existing custom tokens (`bg-base`, etc.).
+
+After the change, test at least 2 data pages (`/data/markets` and `/data/etfs`) in preview mode and confirm **only one** FreshnessBadge appears.
+
+Update `context/progress-tracker.md` with what was completed.
+
+### Unit 2: Ensure pipeline writes `pipeline:last-success` key
+**Files to edit:**
+- The file that runs the daily article/news pipeline (most likely `scripts/daily-article.ts` or the cron handler that calls it)
+
+**Exact changes required:**
+- After a **successful** pipeline run (all AI stages completed without fatal error), add:
+  ```ts
+  await redis.set('pipeline:last-success', new Date().toISOString(), { ex: 86400 }); // 24h TTL
+  ```
+- Use the existing Redis client (already imported elsewhere).
+- This will make the health endpoint stop showing "degraded".
+
+Test by manually triggering the pipeline (or checking Redis in the Replit shell) and then hitting `/api/health` — it must show healthy for pipeline.
+
+Update `context/progress-tracker.md`.
+
+### Unit 3: Implement Redis-backed per-chat Telegram rate limiter
+**Files to edit:**
+- `src/lib/news/telegram.ts`
+
+**Exact changes required:**
+- Replace the current in-memory Map with a Redis-backed rate limiter.
+- Use keys like `telegram:rate:chat:${chatId}` with proper sliding window or token bucket logic (simple EX + INCR is acceptable).
+- Respect `Retry-After` header as before.
+- Keep the same public API (rate-limited send function).
+
+Test the rate limiter logic in the shell if possible.
+
+Update `context/progress-tracker.md`.
+
+### Unit 4: Start wiring top missing metrics from docs/metrics.txt (using free APIs)
+**Files to edit:**
+- `src/lib/api.ts` (or create `src/lib/data-fetchers/market-data.ts` / `etf-data.ts` if it follows the existing pattern)
+- At least one data page (e.g. `/data/markets` or `/data/etfs`)
+
+**Exact changes required:**
+- Add **at least 2 high-impact missing metrics** using **free** APIs only (CoinGecko + DefiLlama).
+  Example priorities:
+  1. Aggregated Futures Open Interest (BTC/ETH)
+  2. Total Stablecoin Supply + on-chain volume
+- Use `cached({ revalidate: 300 })` + `import 'server-only';`
+- Strict TypeScript interfaces, no `any`.
+- Display them in the appropriate section using existing components (KPI cards or tables).
+
+Test the page in preview — data must load without errors.
+
+Update `context/progress-tracker.md`.
+
+**After completing all 4 units in Batch 2:**
+1. Run `npm run build` and confirm 0 TypeScript/build errors.
+2. Update `context/progress-tracker.md` with:
+   - Completed: Batch 2 – High/Medium
+   - Next Up: Batch 3 – Polish & more metrics
+3. Reply with exactly this message:  
+   **"BATCH 2 COMPLETE – All High/Medium fixes done. Ready for Batch 3. Current status of progress-tracker.md:"**  
+   and then paste the **full content** of the updated `context/progress-tracker.md`.
+
+**Rules you MUST obey (no exceptions):**
+- One small verifiable unit at a time (`ai-workflow-rules.md`)
+- Never modify protected shadcn/ui components
+- Strict TypeScript, no `any`, server components first (`code-standards.md`)
+- Thin route handlers, `import 'server-only'` where required (`architecture-context.md`)
+- Update progress-tracker.md after every meaningful change
+
+Do **not** start Batch 3 until I explicitly say "Start Batch 3".
+
+Begin now with **Unit 1**.
