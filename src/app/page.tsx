@@ -6,6 +6,7 @@ import Link from 'next/link';
 import AINewsFeed from '@/components/news/AINewsFeed';
 import AppImage from '@/components/ui/AppImage';
 import CointelegraphCard from '@/components/news/CointelegraphCard';
+import { FreshnessBadge } from '@/components/common/FreshnessBadge';
  
 export const metadata = {
   title: 'CryptoBrainNews | Institutional Terminal',
@@ -66,9 +67,12 @@ export default async function HomePage() {
             </section>
  
             <section className="pt-16 border-t border-[#1a1a1a]">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#555] mb-10">
-                Proprietary Research
-              </h2>
+              <div className="flex items-center justify-between mb-10">
+                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#555]">
+                  Proprietary Research
+                </h2>
+                <FreshnessBadge ttlSeconds={300} />
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {analysis.length > 0 ? (
                   analysis.slice(0, 3).map((a) => (
@@ -89,9 +93,16 @@ export default async function HomePage() {
                     </Link>
                   ))
                 ) : (
-                  <div className="col-span-3 py-10 border border-dashed border-[#1a1a1a] text-center text-[#555] text-xs uppercase font-mono tracking-widest">
-                    Archive Synchronizing...
-                  </div>
+                  <>
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} className="animate-pulse space-y-4">
+                        <div className="relative aspect-video bg-[#0a0a0a] border border-[#1a1a1a]" />
+                        <div className="h-3 w-3/4 bg-[#111] rounded" />
+                        <div className="h-3 w-1/2 bg-[#0f0f0f] rounded" />
+                        <div className="h-2 w-1/3 bg-[#0a0a0a] rounded" />
+                      </div>
+                    ))}
+                  </>
                 )}
               </div>
             </section>

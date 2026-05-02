@@ -1,0 +1,87 @@
+
+
+You are the **CryptoBrainNews Replit Agent**. You **MUST** strictly follow the development workflow defined in the workspace files.
+
+**FIRST STEP – READ THESE FILES IN EXACT ORDER (do not skip):**
+1. `AGENTS.md`
+2. `context/project-overview.md`
+3. `context/architecture-context.md`
+4. `context/ui-context.md`
+5. `context/code-standards.md`
+6. `context/ai-workflow-rules.md`
+7. `context/progress-tracker.md` (if it does not exist, create it with the exact structure from the Ghost AI template but adapted for CryptoBrainNews)
+
+After reading them, **update `context/progress-tracker.md`** to reflect:
+- Current Phase: Batch 1 – Critical Fixes
+- Current Goal: Fix all Critical issues from the audit
+
+**NOW EXECUTE BATCH 1 – CRITICAL FIXES**  
+(Work **one small verifiable unit at a time**. After each unit is complete and tested, update `context/progress-tracker.md` before moving to the next unit. Never combine unrelated changes.)
+
+### Unit 1: Fix `/api/health` endpoint (highest priority – currently degraded)
+**Files to edit:**
+- `src/app/api/health/route.ts`
+
+**Exact changes required:**
+- The function `checkPipelineLastRun` is truncated/incomplete in the current code.
+- Complete it so it properly checks the Redis key `pipeline:last-success` and returns a correct SystemCheck.
+- Make sure **every** check (Redis, Sanity, Resend, Telegram, Stripe, RSS, Pipeline) uses the existing `checkWithTimeout` helper.
+- Keep `import 'server-only';` at the top.
+- Return a clean HealthReport.
+
+After editing, run the health endpoint in the Replit shell or preview and confirm it no longer returns "degraded" for pipeline/telegram.
+
+Update `context/progress-tracker.md` with what was completed.
+
+### Unit 2: Ensure ALL cron routes use the cron guard
+**Files to edit (find all of them):**
+- All files under `src/app/api/cron/*/route.ts` (there should be 5 of them)
+
+**Exact changes required:**
+- In **every** GET handler, the **very first lines** after imports must be:
+  ```ts
+  const unauthorised = validateCronSecret(req);
+  if (unauthorised) return unauthorised;
+  ```
+- Use the function from `src/lib/ops/cron-guard.ts` (it already exists and exports `validateCronSecret` and `validateVercelCronAuth`).
+- Do **not** modify `cron-guard.ts` unless it is broken.
+
+After each route is fixed, confirm in the terminal that the guard is called.
+
+Update `context/progress-tracker.md`.
+
+### Unit 3: Remove "Archive Synchronizing..." placeholder + add FreshnessBadge
+**Files to edit:**
+- Homepage (likely `src/app/page.tsx` or the main dashboard component)
+- All `/data/*` pages (markets, etfs, etc.)
+
+**Exact changes:**
+- Replace any "Archive Synchronizing..." or static placeholder text with the proper `PageSkeleton` / `ChartSkeleton` components.
+- Add `<FreshnessBadge />` (import from the correct location) to every data page.
+- Use only custom Tailwind tokens from `globals.css` (bg-base, text-copy-primary, etc.) — no raw colors.
+
+Test the homepage and at least 3 data pages in preview mode.
+
+Update `context/progress-tracker.md`.
+
+**After completing all 3 units in Batch 1:**
+1. Run a full build (`npm run build`) and confirm no TypeScript or build errors.
+2. Update `context/progress-tracker.md` with:
+   - Completed: Batch 1 – Critical Fixes
+   - Next Up: Batch 2 – High/Medium
+3. Reply with:  
+   **"BATCH 1 COMPLETE – All critical issues fixed. Ready for Batch 2. Current status of progress-tracker.md:"**  
+   and paste the full content of the updated `context/progress-tracker.md`.
+
+**Rules you MUST obey:**
+- One small verifiable unit at a time (ai-workflow-rules.md)
+- Never modify protected shadcn/ui components
+- Strict TypeScript, no `any`, server components first (code-standards.md)
+- Thin route handlers, `import 'server-only'` where required (architecture-context.md)
+- Update progress-tracker.md after every meaningful change
+
+Do **not** start Batch 2 until I explicitly say "Start Batch 2".
+
+Begin now with Unit 1.
+
+ 
