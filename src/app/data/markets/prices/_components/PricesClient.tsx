@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useSyncExternalStore } from "react";
+import { ChartSkeleton } from "../../../_components/ChartSkeleton";
 import {
   ResponsiveContainer, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
@@ -206,9 +207,7 @@ export default function PricesClient({ globalData, fearAndGreed, coins, trending
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-full text-[#333] font-mono text-xs uppercase animate-pulse">
-                Rendering...
-              </div>
+              <ChartSkeleton kpis={0} rows={0} charts={1} height={240} />
             )}
           </div>
           <div className="flex justify-between text-[9px] font-mono text-[#333] mt-2">

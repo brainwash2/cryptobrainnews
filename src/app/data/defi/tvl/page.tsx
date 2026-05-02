@@ -1,6 +1,7 @@
 import React, { Suspense }              from "react";
 import { DataHeader }                   from "../../_components/DataHeader";
 import { ChartSkeleton }                from "../../_components/ChartSkeleton";
+import { FreshnessBadge }               from "@/components/common/FreshnessBadge";
 import { DefiTable, fmtUsd, PctBadge } from "../_components/DefiTable";
 import {
   getTopProtocolsByTvl,
@@ -70,6 +71,9 @@ async function TvlData() {
         title="DeFi Value Locked"
         description="Total value locked (TVL) by protocol and category - all blockchains, live from DefiLlama."
       />
+      <div className="flex items-center gap-3">
+        <FreshnessBadge ttlSeconds={3600} />
+      </div>
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

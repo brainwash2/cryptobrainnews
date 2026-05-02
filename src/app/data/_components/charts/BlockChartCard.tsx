@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useSyncExternalStore } from 'react';
+import { ChartSkeleton } from '../ChartSkeleton';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, AreaChart, Area, LineChart, Line, ComposedChart 
@@ -25,11 +26,9 @@ interface TooltipPayloadItem {
 export default function BlockChartCard({ 
   title, data, type, colors, description = "Market data provided via live public APIs.", yAxisFormat = 'number' 
 }: BlockChartCardProps) {
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const [zoom, setZoom] = useState<'ALL' | 'YTD' | '12M' | '3M' | '1M'>('ALL');
   const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => { setIsMounted(true); },[]);
 
   const slicedData = useMemo(() => {
     if (!data?.length) return[];
@@ -94,7 +93,7 @@ export default function BlockChartCard({
 
       <div className="w-full flex-1 min-h-[260px] px-4 mt-2">
         {!isMounted ? (
-          <div className="w-full h-full flex items-center justify-center text-[#555] font-mono text-xs uppercase animate-pulse">Rendering...</div>
+          <ChartSkeleton kpis={0} rows={0} charts={1} height={260} />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             {type === 'composed' ? (

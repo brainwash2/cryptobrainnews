@@ -4,6 +4,7 @@
  * Source: CoinGecko /companies/public_treasury/{coin}
  * No API key required. Cache 6 hours (data updates slowly).
  */
+import 'server-only';
 import { cached } from '@/lib/cache';
 
 // ─── Types ───────────────────────────────────────────────────────────────────

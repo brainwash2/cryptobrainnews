@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useSyncExternalStore } from "react";
+import { ChartSkeleton } from "../../../_components/ChartSkeleton";
 import Image from "next/image";
 import { TimeframeSelector } from "../../../_components/TimeframeSelector";
 import type { Timeframe } from "../../../_components/TimeframeSelector";
@@ -181,7 +182,7 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+          <ChartSkeleton kpis={0} rows={0} charts={1} height={200} />
         )}
       </div>
 
@@ -206,7 +207,7 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+          <ChartSkeleton kpis={0} rows={0} charts={1} height={200} />
         )}
       </div>
 
@@ -259,7 +260,7 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-[200px] text-[#52525b] font-mono text-sm">Rendering...</div>
+          <ChartSkeleton kpis={0} rows={0} charts={1} height={200} />
         )}
       </div>
 

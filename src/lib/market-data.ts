@@ -4,6 +4,7 @@
  * Sources: CoinGecko (free tier), alternative.me, Binance Futures.
  * All functions use the `cached` utility with appropriate TTLs.
  */
+import 'server-only';
 import { cached } from '@/lib/cache';
 
 // ─── Global Market Data (CoinGecko) ─────────────────────────────────────────

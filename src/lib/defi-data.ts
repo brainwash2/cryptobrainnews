@@ -3,6 +3,7 @@
  * Phase 42: DeFi subsection data from DefiLlama public APIs.
  * All endpoints are free, no API key required.
  */
+import 'server-only';
 import { cached } from '@/lib/cache';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

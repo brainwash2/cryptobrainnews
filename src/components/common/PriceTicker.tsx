@@ -33,11 +33,7 @@ export default function PriceTicker() {
 
   if (prices.length === 0) {
     return (
-      <div className="fixed top-14 left-0 right-0 z-[998] bg-black border-b border-[#1a1a1a] h-10 flex items-center px-4">
-        <span className="text-[10px] font-mono text-[#FABF2C] animate-pulse tracking-[0.2em]">
-          CONNECTING TO TAPE...
-        </span>
-      </div>
+      <div className="fixed top-14 left-0 right-0 z-[998] bg-black border-b border-[#1a1a1a] h-10" />
     );
   }
 

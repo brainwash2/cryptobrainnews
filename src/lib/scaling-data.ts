@@ -9,6 +9,7 @@
  * All chains summary:    /v2/chains
  * Protocol fees:         /overview/fees
  */
+import 'server-only';
 import { cached } from '@/lib/cache';
 
 // ─── Types ───────────────────────────────────────────────────────────────────

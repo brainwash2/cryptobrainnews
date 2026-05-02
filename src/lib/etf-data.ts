@@ -8,8 +8,8 @@
  *   - This is more accurate than hardcoded USD figures that go stale
  *
  * Flow data: Farside Investors does not expose a public API.
- *   Daily flow integration is planned when a reliable free source is confirmed.
  */
+import 'server-only';
 import { cached } from '@/lib/cache';
 
 // ─── Types ───────────────────────────────────────────────────────────────────

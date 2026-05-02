@@ -1,5 +1,6 @@
 import React, { Suspense }   from 'react';
 import { ChartSkeleton }      from '../../_components/ChartSkeleton';
+import { FreshnessBadge }     from '@/components/common/FreshnessBadge';
 import EtfPageLayout          from '../_components/EtfPageLayout';
 import { getBtcEtfOverview }  from '@/lib/etf-data';
 import { getWeeklyFlows }     from '@/lib/coinshares';
@@ -25,6 +26,9 @@ async function BtcEtfData() {
 
   return (
     <>
+      <div className="flex items-center gap-3 pb-2">
+        <FreshnessBadge ttlSeconds={300} />
+      </div>
       <EtfPageLayout coin="BTC" overview={overview} />
 
       {flows && flows.latestWeek && (

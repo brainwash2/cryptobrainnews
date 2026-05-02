@@ -3,6 +3,7 @@ import { getDerivativesExchanges, getFundingRates } from "@/lib/derivatives";
 import { getOIHistory, getFundingRateHistory }      from "@/lib/market-data";
 import { ChartSkeleton }                             from "../../_components/ChartSkeleton";
 import { DataHeader }                                from "../../_components/DataHeader";
+import { FreshnessBadge }                            from "@/components/common/FreshnessBadge";
 import FuturesClient                                 from "./_components/FuturesClient";
 import type { DerivativeMarketData, FundingRateData } from "@/lib/types";
 
@@ -62,6 +63,9 @@ async function FuturesData() {
         title="Futures & Perpetuals"
         description="Live derivatives volumes, open interest history, perpetual funding rates, and liquidations."
       />
+      <div className="flex items-center gap-3">
+        <FreshnessBadge ttlSeconds={300} />
+      </div>
       <FuturesClient
         exchanges={exchanges}
         fundingRates={fundingRates}

@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useSyncExternalStore } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from 'recharts';
 import type { RechartsFormatter } from '../../_lib/recharts-utils';
+import { ChartSkeleton } from '../../_components/ChartSkeleton';
 
 interface Props<T extends Record<string, any>> {
   title:       string;
@@ -22,8 +23,7 @@ export function OnchainAreaChart<T extends Record<string, any>>({
   yFormatter = (v) => `$${(v / 1e9).toFixed(1)}B`,
   height = 240,
 }: Props<T>) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
   const tooltipFormatter: RechartsFormatter = (value, name) => {
     const n = Number(value ?? 0);
@@ -88,16 +88,12 @@ export function OnchainAreaChart<T extends Record<string, any>>({
                 strokeWidth={1.5}
                 dot={false}
                 activeDot={{ r: 3, fill: color }}
+                isAnimationActive={false}
               />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <div
-            className="flex items-center justify-center text-[#333] font-mono text-xs uppercase"
-            style={{ height }}
-          >
-            {data.length === 0 ? 'No data available' : 'Loading...'}
-          </div>
+          <ChartSkeleton kpis={0} rows={0} charts={1} height={height} />
         )}
       </div>
     </div>

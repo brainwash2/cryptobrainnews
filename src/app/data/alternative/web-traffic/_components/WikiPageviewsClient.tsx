@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from 'recharts';
 import type { RechartsFormatter } from '@/app/data/_lib/recharts-utils';
+import { ChartSkeleton } from '@/app/data/_components/ChartSkeleton';
 
 interface ArticleData {
   id:     string;
@@ -24,9 +25,8 @@ const tooltipFmt: RechartsFormatter = (value, name) => {
 };
 
 export default function WikiPageviewsClient({ articles }: Props) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const [selected, setSelected] = useState(0);
-  useEffect(() => { setMounted(true); }, []);
 
   const article = articles[selected];
   if (!article) return null;
@@ -82,13 +82,19 @@ export default function WikiPageviewsClient({ articles }: Props) {
                   contentStyle={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: 0, fontFamily: 'monospace', fontSize: 11 }}
                   formatter={tooltipFmt}
                 />
-                <Area type="monotone" dataKey="views" stroke={article.color} fill="url(#wikiGrad)" strokeWidth={1.5} dot={false} />
+                <Area
+                  type="monotone"
+                  dataKey="views"
+                  stroke={article.color}
+                  fill="url(#wikiGrad)"
+                  strokeWidth={1.5}
+                  dot={false}
+                  isAnimationActive={false}
+                />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-[#333] font-mono text-xs uppercase">
-              {article.points.length === 0 ? 'No pageview data available' : 'Loading...'}
-            </div>
+            <ChartSkeleton kpis={0} rows={0} charts={1} height={240} />
           )}
         </div>
       </div>

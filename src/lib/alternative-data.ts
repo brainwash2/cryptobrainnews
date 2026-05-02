@@ -8,6 +8,7 @@
  *   App store rankings: curated reference data
  *   Crypto PAC: curated FEC public data reference
  */
+import 'server-only';
 import { cached } from '@/lib/cache';
 
 // ─── Types ───────────────────────────────────────────────────────────────────

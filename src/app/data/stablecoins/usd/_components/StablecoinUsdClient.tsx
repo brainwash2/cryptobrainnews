@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useSyncExternalStore, useRef, useEffect } from "react";
+import { ChartSkeleton } from "../../../_components/ChartSkeleton";
 import {
   createChart, HistogramSeries, ColorType,
 } from "lightweight-charts";
@@ -144,9 +145,7 @@ export default function StablecoinUsdClient({ stablecoins, totalSupply: _totalSu
         {mounted && supplyData.length > 0 ? (
           <SupplyHistogram data={supplyData} height={260} />
         ) : (
-          <div className="flex items-center justify-center h-[260px] text-[#52525b] font-mono text-sm">
-            {mounted ? "No data available" : "Rendering..."}
-          </div>
+          <ChartSkeleton kpis={0} rows={0} charts={1} height={260} />
         )}
       </div>
 

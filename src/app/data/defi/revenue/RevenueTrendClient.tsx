@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useSyncExternalStore, useRef, useEffect } from "react";
+import { ChartSkeleton } from "../../_components/ChartSkeleton";
 import {
   createChart, AreaSeries, ColorType,
 } from "lightweight-charts";
@@ -93,9 +94,7 @@ export default function RevenueTrendClient({ trend }: Props) {
       {mounted && sliced.length > 0 ? (
         <DualAreaChart data={sliced} height={280} />
       ) : (
-        <div className="flex items-center justify-center h-[280px] text-[#52525b] font-mono text-sm">
-          {mounted ? "No trend data available" : "Rendering..."}
-        </div>
+        <ChartSkeleton kpis={0} rows={0} charts={1} height={280} />
       )}
     </div>
   );

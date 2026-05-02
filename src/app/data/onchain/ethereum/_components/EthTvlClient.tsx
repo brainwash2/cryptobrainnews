@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useSyncExternalStore } from "react";
+import { ChartSkeleton } from "../../../_components/ChartSkeleton";
 import TvLightweightChart from "../../../_components/charts/TvLightweightChart";
 import type { TvDataPoint } from "../../../_components/charts/TvLightweightChart";
 
@@ -56,7 +57,7 @@ export default function EthTvlClient({ tvlChart, latestTvl }: Props) {
           title="ETH TVL"
         />
       ) : (
-        <div className="flex items-center justify-center h-[240px] text-[#52525b] font-mono text-sm">Rendering...</div>
+        <ChartSkeleton kpis={0} rows={0} charts={1} height={240} />
       )}
     </div>
   );

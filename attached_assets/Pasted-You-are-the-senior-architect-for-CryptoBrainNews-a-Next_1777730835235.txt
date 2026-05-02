@@ -1,0 +1,35 @@
+You are the senior architect for CryptoBrainNews, a Next.js 16 project already imported into this workspace.
+
+MISSION: Audit the entire codebase and fix every critical problem you find. You have permission to read, edit, and commit code without waiting for my approval. Work incrementally, tackling one issue family at a time.
+
+RULES:
+- Always run `npx tsc --noEmit` after each batch of edits. Fix any new TypeScript errors before moving forward.
+- Commit after every logical group with a descriptive message.
+- If a fix might break something, explain why and wait for my ok.
+
+WHAT TO DO:
+
+1. Fix the following visual / UX issues immediately:
+   a. PriceTicker flicker: hide the "CONNECTING TO TAPE…" flash, show empty space instead.
+   b. Replace any plain "Rendering…" or "Loading…" text in chart components with ChartSkeleton/PageSkeleton imports.
+   c. Ensure every data route group has loading.tsx and error.tsx using PageSkeleton and DataPageError.
+   d. Add mount guards (useSyncExternalStore) + isAnimationActive={false} to all Recharts components.
+   e. Make the top 10 /data/* pages mobile‑responsive (responsive grids, overflow‑x‑auto, proper padding).
+
+2. Audit the data terminal:
+   - Verify all data fetchers (`src/lib/api.ts`, `defi-data.ts`, `market-data.ts`, etc.) have `import 'server-only'` and use `cached()`.
+   - Add a `FreshnessBadge` component and place it on 5 key pages (spot, defi/tvl, onchain/bitcoin, etfs/bitcoin, futures).
+
+3. Audit the news pipeline:
+   - Check `scripts/daily-article.ts` for error handling gaps (AI stages, dead‑letter queue).
+   - Verify `src/lib/news/dedup.ts` has 3‑layer dedup (URL, title, content snippet).
+   - Verify `src/lib/news/telegram.ts` has rate‑limit + Retry‑After.
+   - Verify `src/app/api/newsletter/unsubscribe/route.ts` is GDPR compliant (no login, email check, timestamp, Resend removal).
+   - Verify all cron routes call the CRON_SECRET guard from `src/lib/ops/cron-guard.ts`.
+   - Verify `src/app/api/health/route.ts` checks Redis, Sanity, and Resend with timeouts.
+
+4. Security & cleanup:
+   - Verify Stripe webhook idempotency exists in `src/lib/monetisation/stripe.ts`.
+   - Remove any remaining Supabase imports and dependencies.
+
+Start immediately. Output a brief list of what you fixed after you are done.

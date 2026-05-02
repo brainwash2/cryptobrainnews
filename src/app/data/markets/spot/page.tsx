@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { DataHeader }           from '../../_components/DataHeader';
 import { ChartSkeleton }        from '../../_components/ChartSkeleton';
+import { FreshnessBadge }       from '@/components/common/FreshnessBadge';
 import SpotClient               from './_components/SpotClient';
 import {
   getGlobalMarketData,
@@ -29,6 +30,9 @@ async function SpotData() {
         title="Spot Markets"
         description="Real-time global cryptocurrency market data – prices, dominance, volumes, and exchange rankings."
       />
+      <div className="flex items-center gap-3">
+        <FreshnessBadge ttlSeconds={300} />
+      </div>
       <SpotClient
         globalData={globalData}
         fearAndGreed={fearAndGreed}

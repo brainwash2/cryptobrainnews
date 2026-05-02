@@ -8,11 +8,8 @@
  *   Ethereum → DefiLlama /v2/historicalChainTvl/Ethereum
  *              + beaconcha.in public API (no key for basic stats)
  *   Solana   → DefiLlama /v2/historicalChainTvl/Solana
- *              + StepN/SolanaBeach (fallback to DefiLlama summary)
- *   Avalanche/Aptos → DefiLlama /v2/chains summary
- *   Comparison → DefiLlama /v2/chains (TVL + fees per chain)
- *   Flows    → DefiLlama /api/v2/overview/dexs (exchange inflow proxy)
  */
+import 'server-only';
 import { cached } from '@/lib/cache';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────

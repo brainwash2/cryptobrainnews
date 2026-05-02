@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useSyncExternalStore, useRef, useEffect } from "react";
+import { ChartSkeleton } from "../../../_components/ChartSkeleton";
 import {
   createChart, AreaSeries, HistogramSeries, ColorType,
 } from "lightweight-charts";
@@ -131,9 +132,7 @@ export default function DeFiTvlClient({ categories, totalHistory }: Props) {
         {mounted && tvlData.length > 0 ? (
           <TvlAreaChart data={tvlData} height={240} />
         ) : (
-          <div className="flex items-center justify-center h-[240px] text-[#52525b] font-mono text-sm">
-            {mounted ? "No TVL history data" : "Rendering..."}
-          </div>
+          <ChartSkeleton kpis={0} rows={0} charts={1} height={240} />
         )}
       </div>
 
@@ -145,9 +144,7 @@ export default function DeFiTvlClient({ categories, totalHistory }: Props) {
         {mounted && categories.length > 0 ? (
           <CategoryHistogram categories={categories} height={Math.max(40 + categories.length * 32, 260)} />
         ) : (
-          <div className="flex items-center justify-center h-[260px] text-[#52525b] font-mono text-sm">
-            {mounted ? "No category data" : "Rendering..."}
-          </div>
+          <ChartSkeleton kpis={0} rows={0} charts={1} height={260} />
         )}
       </div>
     </div>

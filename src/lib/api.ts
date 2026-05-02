@@ -25,6 +25,7 @@
  *   getDexVolumes() returns [{name, total24h}] — a protocol ranking snapshot.
  *   Different shapes, different consumers, both kept.
  */
+import 'server-only';
 import type { StablecoinData, ProtocolRevenueData } from "./types";
 import { fetchWithTimeout } from "./fetch-with-timeout";
 import { cached }           from "./cache";
