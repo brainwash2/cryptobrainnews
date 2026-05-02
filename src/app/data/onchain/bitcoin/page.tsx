@@ -14,6 +14,7 @@ import PuellGauge                  from "./_components/PuellGauge";
 import S2fChart                    from "./_components/S2fChart";
 import RealizedPriceChart          from "./_components/RealizedPriceChart";
 import ThermocapGauge              from "./_components/ThermocapGauge";
+import ExchangeReserveChart        from "./_components/ExchangeReserveChart";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
@@ -144,6 +145,28 @@ async function fetchPuellMultiple(): Promise<PuellResult> {
   } catch {
     return generatePuellSeed();
   }
+}
+
+// ── Batch 15: Exchange Reserve — seed dataset (no free API exists) ────────────
+// No direct free endpoint for exchange-reserve data (requires CryptoQuant/Glassnode key).
+// Generates a realistic 90-day declining seed consistent with late-cycle accumulation.
+interface ExchangeReserveData {
+  points: { date: string; value: number }[];
+  source: "live" | "seed";
+}
+
+function generateExchangeReserveSeed(): ExchangeReserveData {
+  const pts: { date: string; value: number }[] = [];
+  const now = Date.now();
+  // Start ~2,350,000 BTC; linear decline -700 BTC/day + sine noise ±9,000 BTC
+  for (let i = 89; i >= 0; i--) {
+    const d     = new Date(now - i * 86_400_000);
+    const date  = d.toISOString().slice(0, 10);
+    const trend = 2_350_000 - (89 - i) * 700;
+    const noise = Math.round(9_000 * Math.sin((i / 18) * Math.PI));
+    pts.push({ date, value: trend + noise });
+  }
+  return { points: pts, source: "seed" };
 }
 
 // ── Batch 12: BTC 90-Day Price History for S2F overlay ───────────────────────
@@ -318,6 +341,9 @@ async function BitcoinData() {
         value: currentTcMultiple,
       }));
   const tcSource = s2fPriceSource;
+
+  // ── Batch 15: Exchange Reserve — pure seed, no API ───────────────────────────
+  const exchReserveData = generateExchangeReserveSeed();
 
   // ── Unit 2: hash rate 30d change (computed from hashData) ──────────────────
   const sortedHash    = [...hashData].sort((a, b) => a.date.localeCompare(b.date));
@@ -537,6 +563,12 @@ async function BitcoinData() {
         source={tcSource}
       />
 
+      {/* Batch 15 — Exchange Reserve */}
+      <ExchangeReserveChart
+        points={exchReserveData.points}
+        source={exchReserveData.source}
+      />
+
       {/* Unit 2 — Hash Rate Trend Chart */}
       {hashData.length > 0 && (
         <HashRateTrendChart
@@ -572,6 +604,7 @@ async function BitcoinData() {
             ["Stock‑to‑Flow (S2F)",    "Circulating supply ÷ annual new issuance. Model price = S2F³ × $0.40 (PlanB). Constant between halvings; next update at 2028 halving. Current S2F ≈ 120."],
             ["Realized Price",         "Average on-chain cost basis of all BTC weighted by last movement. Derived as BTC Price ÷ MVRV. Trading below Realized Price = deep bear accumulation zone."],
             ["Thermocap Multiple",     "Market Cap ÷ cumulative all-time miner revenue. <5× historically undervalued; 5–15× fair; 15–30× overvalued; >30× cycle top territory. Derived from blockchain.info."],
+            ["Exchange Reserve",       "Total BTC held in known exchange wallets. Falling = coins withdrawn to self-custody (accumulation, bullish). Rising = inflow to exchanges (sell pressure, bearish)."],
           ].map(([k, v]) => (
             <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>
           ))}

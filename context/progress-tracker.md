@@ -4,11 +4,30 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 14 – Thermocap Multiple ✅
+Batch 15 – Exchange Reserve ✅
 
 ## Current Goal
 
-Add Bitcoin Thermocap Multiple tracker (8th cycle indicator)
+Add Bitcoin Exchange Reserve tracker (ninth cycle indicator)
+
+### Batch 15 — Unit 1: Bitcoin Exchange Reserve Tracker ✅
+- `src/app/data/onchain/bitcoin/_components/ExchangeReserveChart.tsx` **created** (`"use client"`):
+  - Props: `{ points: { date: string; value: number }[]; source: "live" | "seed" }`
+  - `useSyncExternalStore` SSR hydration guard (`mounted`)
+  - `fmtBtc()` / `fmtChange()` helpers (K/M suffixes with sign)
+  - 3-KPI grid: Current Reserve / 30-Day Change (green for outflow, red for inflow) / 30-Day % Change
+  - Recharts `AreaChart` 90-day reserve trend; area color flips green (declining/accumulation) or red (rising/sell pressure) based on 30d direction; `ReferenceLine` at 30-day-ago level; `isAnimationActive={false}`
+  - YAxis `tickFormatter` in K BTC; interpretation key strip (falling = bullish, rising = bearish)
+- `src/app/data/onchain/bitcoin/page.tsx` updated (zero new API calls — no free exchange reserve endpoint exists):
+  - `interface ExchangeReserveData` added
+  - `generateExchangeReserveSeed()` — 90-point declining seed: base 2,350,000 BTC with −700 BTC/day linear trend + ±9,000 BTC sine noise; ends ~2,287,000 BTC (late-cycle accumulation profile)
+  - `import ExchangeReserveChart` added
+  - `exchReserveData = generateExchangeReserveSeed()` called inline in `BitcoinData` (sync, no Promise.all slot needed)
+  - `<ExchangeReserveChart points={exchReserveData.points} source={exchReserveData.source} />` rendered below `<ThermocapGauge />`, above `<HashRateTrendChart />`
+  - Glossary entry added for Exchange Reserve
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 14 ✅ — Thermocap Multiple
 
 ### Batch 14 — Unit 1: Bitcoin Thermocap Multiple Tracker ✅
 - `src/app/data/onchain/bitcoin/_components/ThermocapGauge.tsx` **created** (`"use client"`):
