@@ -17,6 +17,7 @@ import ThermocapGauge              from "./_components/ThermocapGauge";
 import ExchangeReserveChart        from "./_components/ExchangeReserveChart";
 import LthSupplyChart              from "./_components/LthSupplyChart";
 import MinerCapitulationChart      from "./_components/MinerCapitulationChart";
+import MempoolCongestionGauge      from "./_components/MempoolCongestionGauge";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
@@ -608,6 +609,12 @@ async function BitcoinData() {
         <MinerCapitulationChart data={hashData} />
       )}
 
+      {/* Batch 18 — Mempool Congestion */}
+      <MempoolCongestionGauge
+        mempoolData={mempoolData}
+        feeData={feeData}
+      />
+
       {/* Unit 2 — Hash Rate Trend Chart */}
       {hashData.length > 0 && (
         <HashRateTrendChart
@@ -646,6 +653,7 @@ async function BitcoinData() {
             ["Exchange Reserve",       "Total BTC held in known exchange wallets. Falling = coins withdrawn to self-custody (accumulation, bullish). Rising = inflow to exchanges (sell pressure, bearish)."],
             ["LTH Supply",             "% of circulating supply unmoved 155+ days (Long-Term Holder threshold). Rising = strong-hand accumulation (supply contraction, bullish). Falling = LTH distribution (late-cycle signal)."],
             ["Miner Capitulation",     "Hash Ribbon: 30-day EMA vs 60-day EMA of network hash rate. 30d crossing below 60d = miner capitulation (stress, historically near cycle lows). Cross back above = recovery signal (profitability restored, bullish)."],
+            ["Mempool Congestion",     "Unconfirmed transaction backlog: Low <50 MB, Moderate 50–150 MB, High 150–300 MB, Critical >300 MB. Extreme congestion + rising fees historically coincides with bull market peaks."],
           ].map(([k, v]) => (
             <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>
           ))}

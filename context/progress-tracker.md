@@ -4,11 +4,30 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 17 – Miner Capitulation ✅
+Batch 18 – Mempool Congestion ✅
 
 ## Current Goal
 
-Add Bitcoin Miner Capitulation / Hash Ribbon signal (11th cycle indicator)
+Add Bitcoin Mempool Congestion indicator (12th cycle indicator)
+
+### Batch 18 — Unit 1: Bitcoin Mempool Congestion Gauge ✅
+- `src/app/data/onchain/bitcoin/_components/MempoolCongestionGauge.tsx` **created** (`"use client"`):
+  - Props: `{ mempoolData: RawPoint[]; feeData: RawPoint[] }` — both arrays already fetched in page, zero new API calls
+  - `useMemo` for all derivations; `useSyncExternalStore` SSR hydration guard
+  - `zoneFromMb(mb)` → `"Low" | "Moderate" | "High" | "Critical"`; `zoneColor()` / `zoneSub()` helpers
+  - `GAUGE_MAX_MB = 400`; `needleDeg = (clamp(mb, 0, 400) / 400) * 180 - 90` — matches established gauge pattern
+  - 4-zone CSS semicircular gauge: `rounded-t-full border-[12px] border-[#1a1a1a]` ring; 4 zone labels (L/M/H/Cr); needle `origin-bottom rotate(needleDeg)` with pivot dot; dynamic color from `zoneColor(zone)`
+  - 3-KPI grid (inside right panel): Level / Mempool Size (MB) / Daily Fees (USD with 30d % change)
+  - Recharts `AreaChart` 90-day mempool bytes; `tickFormatter` converts to MB; dynamic `stopColor` from `zoneColor`; three `ReferenceLine`s at 50/150/300 MB with matching zone colors
+  - Zone legend strip + interpretation footnote (fees in USD total, not sat/vB — data limitation noted)
+  - 5 min cache already satisfied by `fetchBtcChart("mempool-size", 90)` and `fetchBtcChart("transaction-fees-usd", 90)` which use `{ next: { revalidate: 300 } }`
+- `src/app/data/onchain/bitcoin/page.tsx` updated:
+  - `import MempoolCongestionGauge` added
+  - `<MempoolCongestionGauge mempoolData={mempoolData} feeData={feeData} />` rendered below `<MinerCapitulationChart />`, above `<HashRateTrendChart />`
+  - Glossary entry added for Mempool Congestion
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 17 ✅ — Miner Capitulation
 
 ### Batch 17 — Unit 1: Bitcoin Miner Capitulation / Hash Ribbon Tracker ✅
 - `src/app/data/onchain/bitcoin/_components/MinerCapitulationChart.tsx` **created** (`"use client"`):
