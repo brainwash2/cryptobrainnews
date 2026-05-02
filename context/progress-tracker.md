@@ -4,7 +4,15 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 3 – Polish & Metric Expansion ✅ COMPLETE
+Batch 4 – Metric Expansion 🔄 IN PROGRESS
+
+## Completed Batch 4
+
+### Unit 1 — Bitcoin Fear & Greed Index Widget
+- `FearGreedPoint` interface + `getFearGreedHistory()` added to `src/lib/market-data.ts` — calls `https://api.alternative.me/fng/?limit=90`, returns 90-day `{date, value, classification}[]`, cached 300s (5 min) via `cached()`
+- New `src/app/data/onchain/bitcoin/_components/FearGreedWidget.tsx` — gauge (semicircle + needle, 5-zone colour coding) + Recharts AreaChart, 30D/90D TimeframeSelector, `useSyncExternalStore` mount guard, `ChartSkeleton` fallback, `isAnimationActive={false}`, zone legend, custom FngTooltip
+- `src/app/data/onchain/bitcoin/page.tsx` updated — `getFearGreedHistory()` added to Promise.all (`.catch(() => [])`), `<FearGreedWidget data={fngData} />` rendered between chart-derived KPI row and BitcoinChartsClient
+- TypeScript: 0 errors
 
 ## Completed Batch 3
 

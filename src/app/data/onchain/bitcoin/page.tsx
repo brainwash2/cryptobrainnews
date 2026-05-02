@@ -1,8 +1,10 @@
 import React, { Suspense } from "react";
-import { DataHeader }       from "../../_components/DataHeader";
-import { ChartSkeleton }    from "../../_components/ChartSkeleton";
-import { getBitcoinStats }  from "@/lib/onchain-data";
-import BitcoinChartsClient  from "./_components/BitcoinChartsClient";
+import { DataHeader }           from "../../_components/DataHeader";
+import { ChartSkeleton }        from "../../_components/ChartSkeleton";
+import { getBitcoinStats }      from "@/lib/onchain-data";
+import { getFearGreedHistory }  from "@/lib/market-data";
+import BitcoinChartsClient      from "./_components/BitcoinChartsClient";
+import FearGreedWidget          from "./_components/FearGreedWidget";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
@@ -67,7 +69,7 @@ async function fetchUtxoAgeBands(): Promise<UtxoAgeBand[]> {
 }
 
 async function BitcoinData() {
-  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData] =
+  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData] =
     await Promise.all([
       getBitcoinStats().catch(() => null),
       fetchBtcChart("n-unique-addresses",    90),
@@ -77,6 +79,7 @@ async function BitcoinData() {
       fetchBtcChart("mempool-size",          90),
       fetchBtcChart("miners-revenue",        90),
       fetchUtxoAgeBands(),
+      getFearGreedHistory().catch(() => []),
     ]);
 
   return (
@@ -132,6 +135,8 @@ async function BitcoinData() {
           color="#888"
         />
       </div>
+
+      {fngData.length > 0 && <FearGreedWidget data={fngData} />}
 
       <BitcoinChartsClient
         addrData={addrData}

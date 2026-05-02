@@ -52,6 +52,35 @@ export async function getFearAndGreedIndex(): Promise<FearAndGreedData | null> {
   }, 3600);
 }
 
+// ─── Fear & Greed History — 90 days (alternative.me) ────────────────────────
+
+export interface FearGreedPoint {
+  date:           string; // "YYYY-MM-DD"
+  value:          number; // 0–100
+  classification: string; // e.g. "Extreme Fear"
+}
+
+export async function getFearGreedHistory(): Promise<FearGreedPoint[]> {
+  return cached('alternative:fng:history:90', async () => {
+    try {
+      const res = await fetch('https://api.alternative.me/fng/?limit=90');
+      if (!res.ok) return [];
+      const json = await res.json() as {
+        data?: Array<{ value: string; value_classification: string; timestamp: string }>;
+      };
+      return (json.data ?? [])
+        .map((d) => ({
+          date:           new Date(parseInt(d.timestamp, 10) * 1000).toISOString().slice(0, 10),
+          value:          parseInt(d.value, 10),
+          classification: d.value_classification,
+        }))
+        .reverse(); // oldest → newest
+    } catch {
+      return [];
+    }
+  }, 300); // 5-minute cache — API updates once per day but requests should be fresh
+}
+
 // ─── Extended Coin Data (CoinGecko) ─────────────────────────────────────────
 
 export interface ExtendedCoinData {
