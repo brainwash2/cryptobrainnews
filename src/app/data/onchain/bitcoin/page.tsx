@@ -4,9 +4,11 @@ import { ChartSkeleton }            from "../../_components/ChartSkeleton";
 import { getBitcoinStats }          from "@/lib/onchain-data";
 import { getFearGreedHistory }      from "@/lib/market-data";
 import { cached }                   from "@/lib/cache";
+import { getGlassnodeMetric }       from "@/lib/glassnode";
 import BitcoinChartsClient          from "./_components/BitcoinChartsClient";
 import FearGreedWidget              from "./_components/FearGreedWidget";
 import HashRateTrendChart           from "./_components/HashRateTrendChart";
+import MvrvGauge                   from "./_components/MvrvGauge";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
@@ -119,7 +121,7 @@ async function fetchBtcVolatility(): Promise<number | null> {
 }
 
 async function BitcoinData() {
-  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData, btcVol, lnStats] =
+  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData, btcVol, lnStats, mvrvTs] =
     await Promise.all([
       getBitcoinStats().catch(() => null),
       fetchBtcChart("n-unique-addresses",    90),
@@ -132,7 +134,18 @@ async function BitcoinData() {
       getFearGreedHistory().catch(() => []),
       fetchBtcVolatility(),
       fetchLightningStats().catch(() => null),
+      getGlassnodeMetric("mvrv", "BTC", "24h", 90).catch(() => null),
     ]);
+
+  // ── Batch 9: MVRV ratio — derive current value + chart points ───────────────
+  const mvrvPoints  = (mvrvTs?.points ?? []).map((p) => ({
+    date:  new Date(p.t * 1000).toISOString().slice(0, 10),
+    value: p.v,
+  }));
+  const currentMvrv = mvrvPoints.length > 0
+    ? (mvrvPoints[mvrvPoints.length - 1]?.value ?? 2.20)
+    : 2.20;                               // seed fallback
+  const mvrvSource  = mvrvTs?.source ?? "seed";
 
   // ── Unit 2: hash rate 30d change (computed from hashData) ──────────────────
   const sortedHash    = [...hashData].sort((a, b) => a.date.localeCompare(b.date));
@@ -309,6 +322,13 @@ async function BitcoinData() {
 
       {fngData.length > 0 && <FearGreedWidget data={fngData} />}
 
+      {/* Batch 9 — MVRV Ratio + Zone Gauge */}
+      <MvrvGauge
+        mvrv={currentMvrv}
+        points={mvrvPoints}
+        source={mvrvSource}
+      />
+
       {/* Unit 2 — Hash Rate Trend Chart */}
       {hashData.length > 0 && (
         <HashRateTrendChart
@@ -338,6 +358,7 @@ async function BitcoinData() {
             ["30D Realized Volatility","Annualized standard deviation of daily log-returns over 30 days. Higher = riskier."],
             ["UTXO Age Bands",         "Distribution of when coins last moved. Rising old coins = HODLing, falling = distribution."],
             ["Difficulty",             "Auto-adjusts every 2016 blocks (~2 weeks) to maintain 10-min block times."],
+            ["MVRV Ratio",             "Market Value ÷ Realized Value. <1 = undervalued; 1–3 = fair; >3 = overvalued; >4.5 = extreme. Source: Glassnode."],
           ].map(([k, v]) => (
             <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>
           ))}

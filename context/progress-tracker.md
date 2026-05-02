@@ -4,9 +4,35 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 8 – Full Metric Parity (final push) ✅
+Batch 9 – Advanced Metrics ✅
 
 ## Current Goal
+
+Add Bitcoin MVRV Ratio tracker with zone gauge
+
+### Batch 9 — Unit 1: Bitcoin MVRV Ratio + Zone Gauge ✅
+- `src/app/data/onchain/bitcoin/_components/MvrvGauge.tsx` **created** (`"use client"`):
+  - Props: `{ mvrv: number; points: { date: string; value: number }[]; source: "live" | "seed" }`
+  - `useSyncExternalStore` SSR hydration guard (`mounted`)
+  - `mvrvColor(v)` / `mvrvZoneLabel(v)` pure fns mapping 5 zones by thresholds
+  - CSS semi-circular gauge (mirrors FearGreedWidget pattern): `rounded-t-full border-[12px]`, 5 zone labels (EU/U/FV/OV/EO), color needle at `(mvrv / 6) * 180 - 90` degrees, pivot dot
+  - Recharts `AreaChart` 90-day MVRV history with `isAnimationActive={false}`, 4 `ReferenceLine` zone boundaries (1.0/1.5/3.0/4.5), amber gradient fill
+  - Zone legend strip (5 items: color dot + range + label)
+  - Live vs Seed source badge
+- `src/app/data/onchain/bitcoin/page.tsx` updated:
+  - `import { getGlassnodeMetric } from "@/lib/glassnode"` added
+  - `import MvrvGauge from "./_components/MvrvGauge"` added
+  - `getGlassnodeMetric("mvrv", "BTC", "24h", 90)` added as 12th element in `Promise.all` (with `.catch(() => null)`)
+  - `mvrvPoints` mapped from `GlassnodePoint[]` (`.t` → ISO date, `.v` → value)
+  - `currentMvrv` = last point value, fallback `2.20` (seed midpoint)
+  - `mvrvSource` = `mvrvTs?.source ?? "seed"`
+  - `<MvrvGauge mvrv={currentMvrv} points={mvrvPoints} source={mvrvSource} />` rendered immediately after `<FearGreedWidget />`
+  - "About These Metrics" glossary updated with MVRV Ratio entry
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 8 ✅ — Full Metric Parity (final push)
+
+## Current Goal (Previous)
 
 Implement the next 5 high-impact metrics using only free APIs
 
