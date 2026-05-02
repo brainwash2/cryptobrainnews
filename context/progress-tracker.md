@@ -4,7 +4,14 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Awaiting instruction for next batch.
+Batch 5 – Full Metric Parity (The Block comparison)
+
+## Current Goal
+
+Read docs/metrics.txt, identify up to 10 high-impact missing metrics that can be added using ONLY free APIs (CoinGecko, DefiLlama, blockchain.info, Etherscan, etc.), and implement them one by one.
+
+### Batch 5 — Unit 1: Metric Analysis ✅ (awaiting approval)
+Proposed 5 metrics below — awaiting user approval before implementation begins.
 
 ## Completed Batch 4 ✅ — Metric Expansion (ALL 4 UNITS DONE)
 
