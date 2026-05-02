@@ -47,7 +47,7 @@ async function BtcEtfData() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {[
               { label: 'BTC Flow',     value: flows.latestWeek.btcFlowUsd,   color: '#FABF2C' },
               { label: 'ETH Flow',     value: flows.latestWeek.ethFlowUsd,   color: '#3b82f6' },

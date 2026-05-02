@@ -139,7 +139,7 @@ export default function SpotClient({ globalData, fearAndGreed, coins, exchanges 
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {[
           { label: "Total Market Cap", value: fmtUsd(totalMcap),
             sub: `${mcapChange24h >= 0 ? "+" : ""}${mcapChange24h.toFixed(2)}% (24h)`,

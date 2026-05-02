@@ -121,7 +121,7 @@ export default function PricesClient({ globalData, fearAndGreed, coins, trending
   return (
     <div className="space-y-10">
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
           <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Total Market Cap</p>
           <p className="text-2xl font-black text-[#FABF2C] tabular-nums">{fmtUsd(totalMcap)}</p>
