@@ -10,6 +10,7 @@ import FearGreedWidget              from "./_components/FearGreedWidget";
 import HashRateTrendChart           from "./_components/HashRateTrendChart";
 import MvrvGauge                   from "./_components/MvrvGauge";
 import NuplGauge                   from "./_components/NuplGauge";
+import PuellGauge                  from "./_components/PuellGauge";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
@@ -100,6 +101,48 @@ async function fetchLightningStats(): Promise<LightningStats | null> {
 // Fee/Subsidy Ratio is derived from existing feeData + minerRevData arrays.
 // Computed in JSX via IIFE over last-30 data points.
 
+// ── Batch 11: Puell Multiple — miner revenue ÷ 365-day SMA ──────────────────
+interface PuellResult {
+  points: { date: string; value: number }[];
+  source: "live" | "seed";
+}
+
+function generatePuellSeed(): PuellResult {
+  const pts: { date: string; value: number }[] = [];
+  const now = Date.now();
+  for (let i = 89; i >= 0; i--) {
+    const d     = new Date(now - i * 86_400_000);
+    const date  = d.toISOString().slice(0, 10);
+    // Sine-wave variation around 0.85 (Fair Value zone), range ≈ 0.55–1.15
+    const value = Math.round((0.85 + 0.30 * Math.sin((i / 30) * Math.PI)) * 1000) / 1000;
+    pts.push({ date, value });
+  }
+  return { points: pts, source: "seed" };
+}
+
+async function fetchPuellMultiple(): Promise<PuellResult> {
+  try {
+    const url = "https://blockchain.info/charts/miners-revenue?timespan=365days&format=json&sampled=false&cors=true";
+    const res = await fetch(url, { next: { revalidate: 86_400 } });
+    if (!res.ok) return generatePuellSeed();
+    const d = await res.json() as { values?: Array<{ x: number; y: number }> };
+    const values = d.values ?? [];
+    if (values.length < 30) return generatePuellSeed();
+    // 365-day SMA = average of all fetched points
+    const sma365 = values.reduce((sum, p) => sum + p.y, 0) / values.length;
+    if (sma365 === 0) return generatePuellSeed();
+    // Return last 90 data points with Puell = daily / SMA
+    const last90 = values.slice(-90);
+    const points = last90.map((p) => ({
+      date:  new Date(p.x * 1000).toISOString().slice(0, 10),
+      value: Math.round((p.y / sma365) * 1000) / 1000,
+    }));
+    return { points, source: "live" };
+  } catch {
+    return generatePuellSeed();
+  }
+}
+
 // ── Unit 5: BTC 30-Day Annualized Realized Volatility ───────────────────────
 async function fetchBtcVolatility(): Promise<number | null> {
   try {
@@ -122,7 +165,7 @@ async function fetchBtcVolatility(): Promise<number | null> {
 }
 
 async function BitcoinData() {
-  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData, btcVol, lnStats, mvrvTs, nuplTs] =
+  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData, btcVol, lnStats, mvrvTs, nuplTs, puellData] =
     await Promise.all([
       getBitcoinStats().catch(() => null),
       fetchBtcChart("n-unique-addresses",    90),
@@ -137,6 +180,7 @@ async function BitcoinData() {
       fetchLightningStats().catch(() => null),
       getGlassnodeMetric("mvrv", "BTC", "24h", 90).catch(() => null),
       getGlassnodeMetric("nupl", "BTC", "24h", 90).catch(() => null),
+      fetchPuellMultiple().catch(() => generatePuellSeed()),
     ]);
 
   // ── Batch 9: MVRV ratio — derive current value + chart points ───────────────
@@ -158,6 +202,13 @@ async function BitcoinData() {
     ? (nuplPoints[nuplPoints.length - 1]?.value ?? 0.55)
     : 0.55;                               // seed fallback (Belief zone)
   const nuplSource  = nuplTs?.source ?? "seed";
+
+  // ── Batch 11: Puell Multiple ──────────────────────────────────────────────────
+  const puellPoints  = puellData.points;
+  const currentPuell = puellPoints.length > 0
+    ? (puellPoints[puellPoints.length - 1]?.value ?? 0.85)
+    : 0.85;                               // seed fallback (Fair Value zone)
+  const puellSource  = puellData.source;
 
   // ── Unit 2: hash rate 30d change (computed from hashData) ──────────────────
   const sortedHash    = [...hashData].sort((a, b) => a.date.localeCompare(b.date));
@@ -348,6 +399,13 @@ async function BitcoinData() {
         source={nuplSource}
       />
 
+      {/* Batch 11 — Puell Multiple */}
+      <PuellGauge
+        puell={currentPuell}
+        points={puellPoints}
+        source={puellSource}
+      />
+
       {/* Unit 2 — Hash Rate Trend Chart */}
       {hashData.length > 0 && (
         <HashRateTrendChart
@@ -379,6 +437,7 @@ async function BitcoinData() {
             ["Difficulty",             "Auto-adjusts every 2016 blocks (~2 weeks) to maintain 10-min block times."],
             ["MVRV Ratio",             "Market Value ÷ Realized Value. <1 = undervalued; 1–3 = fair; >3 = overvalued; >4.5 = extreme. Source: Glassnode."],
             ["NUPL",                   "Net Unrealized Profit/Loss = (Market Cap − Realized Cap) ÷ Market Cap. <0 Capitulation; 0–0.25 Hope; 0.25–0.5 Optimism; 0.5–0.75 Belief; >0.75 Euphoria."],
+            ["Puell Multiple",         "Daily miner revenue ÷ 365-day SMA. <0.5 historically strong buy; 0.5–1.0 fair; 1.0–2.0 caution; >2.0 extreme overvaluation. Source: blockchain.info."],
           ].map(([k, v]) => (
             <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>
           ))}

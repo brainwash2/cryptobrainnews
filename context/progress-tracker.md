@@ -4,11 +4,32 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 10 – NUPL Cycle Indicator ✅
+Batch 11 – Puell Multiple ✅
 
 ## Current Goal
 
-Add Bitcoin NUPL tracker with zone gauge
+Add Bitcoin Puell Multiple tracker with zone gauge
+
+### Batch 11 — Unit 1: Bitcoin Puell Multiple Tracker ✅
+- `src/app/data/onchain/bitcoin/_components/PuellGauge.tsx` **created** (`"use client"`):
+  - Props: `{ puell: number; points: { date: string; value: number }[]; source: "live" | "seed" }`
+  - `useSyncExternalStore` SSR hydration guard (`mounted`)
+  - `puellColor(v)` / `puellZoneLabel(v)` — 4 zones: Undervalued (<0.5) green, Fair Value (0.5–1.0) amber, Overvalued (1.0–2.0) orange, Extreme (>2.0) red
+  - CSS semi-circular gauge — display range `[0, 4]`; needle = `(puell / 4) * 180 − 90`; 4 zone labels (UV/FV/OV/EX) around arc; pivot dot
+  - Recharts `AreaChart` 90-day history; `isAnimationActive={false}`; amber gradient fill; 3 `ReferenceLine` zone boundaries at 0.5 / 1.0 / 2.0 (color-coded)
+  - YAxis domain `[0, 3]`; Zone legend strip (4 items); Live vs Seed badge
+- `src/app/data/onchain/bitcoin/page.tsx` updated:
+  - `interface PuellResult` added: `{ points: { date: string; value: number }[]; source: "live" | "seed" }`
+  - `generatePuellSeed()` — 90-point sine-wave series centered on 0.85 (range 0.55–1.15) as deterministic fallback
+  - `fetchPuellMultiple()` — fetches `blockchain.info/charts/miners-revenue?timespan=365days`; computes SMA365 over all returned points; maps last-90 to Puell = `daily / SMA365`; gracefully returns seed on any error; `next: { revalidate: 86_400 }`
+  - `import PuellGauge from "./_components/PuellGauge"` added
+  - `fetchPuellMultiple()` added as 14th element in `Promise.all` (with `.catch(() => generatePuellSeed())`)
+  - `puellPoints` / `currentPuell` (fallback `0.85`) / `puellSource` derived
+  - `<PuellGauge puell={currentPuell} points={puellPoints} source={puellSource} />` rendered below `<NuplGauge />`, above `<HashRateTrendChart />`
+  - "About These Metrics" glossary updated with Puell Multiple entry
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 10 ✅ — NUPL Cycle Indicator
 
 ### Batch 10 — Unit 1: Bitcoin NUPL Cycle Indicator ✅
 - `src/app/data/onchain/bitcoin/_components/NuplGauge.tsx` **created** (`"use client"`):
