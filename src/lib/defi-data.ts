@@ -427,6 +427,58 @@ export async function getDerivativesProtocols(limit = 25): Promise<DerivativePro
   }, 1800);
 }
 
+// ─── 9a. Lending Rates — supply/borrow APY per asset per protocol ─────────────
+
+export interface LendingRate {
+  protocol:  string;
+  chain:     string;
+  asset:     string;
+  supplyApy: number;       // total supply APY (base + reward)
+  borrowApy: number | null; // total borrow APY (null = no borrow market)
+  tvlUsd:    number;
+}
+
+export async function getLendingRates(limit = 20): Promise<LendingRate[]> {
+  return cached(`defi:lending-rates:${limit}`, async () => {
+    // yields.llama.fi/pools includes lending pools with apyBorrow when a borrow
+    // market exists. Filter to lending-only rows (apyBorrow non-null) and rank by TVL.
+    const data = await safeFetch<{
+      data?: Array<{
+        pool:           string;
+        project:        string;
+        chain:          string;
+        symbol:         string;
+        tvlUsd:         number;
+        apy:            number | null;
+        apyBase:        number | null;
+        apyReward:      number | null;
+        apyBorrow:      number | null;
+        apyBaseBorrow:  number | null;
+        apyRewardBorrow: number | null;
+        stablecoin:     boolean;
+      }>;
+    }>('https://yields.llama.fi/pools', { data: [] });
+
+    return (data.data ?? [])
+      .filter(
+        (p) =>
+          p.apyBorrow !== null &&
+          p.apyBorrow !== undefined &&
+          (p.tvlUsd ?? 0) > 1_000_000,
+      )
+      .sort((a, b) => (b.tvlUsd ?? 0) - (a.tvlUsd ?? 0))
+      .slice(0, limit)
+      .map((p) => ({
+        protocol:  p.project,
+        chain:     p.chain,
+        asset:     p.symbol,
+        supplyApy: p.apy ?? 0,
+        borrowApy: p.apyBorrow ?? null,
+        tvlUsd:    p.tvlUsd ?? 0,
+      }));
+  }, 3600);
+}
+
 // ─── 9. Yields ────────────────────────────────────────────────────────────────
 
 export async function getTopYieldPools(limit = 50): Promise<YieldPool[]> {

@@ -4,11 +4,27 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 18 – Mempool Congestion ✅
+Batch 19 – DeFi Lending Rates ✅
 
 ## Current Goal
 
-Add Bitcoin Mempool Congestion indicator (12th cycle indicator)
+Add DeFi lending rates leaderboard (supply/borrow APY) for top protocols
+
+### Batch 19 — Unit 1: DeFi Lending Rates Leaderboard ✅
+- `src/lib/defi-data.ts` updated:
+  - `interface LendingRate` added: `{ protocol; chain; asset; supplyApy; borrowApy: number | null; tvlUsd }`
+  - `getLendingRates(limit = 20)` — `cached('defi:lending-rates:${limit}', ..., 3600)`; fetches `https://yields.llama.fi/pools` (existing known-good endpoint); filters to rows with `apyBorrow !== null && tvlUsd > 1_000_000`; sorts by TVL descending; maps to `LendingRate[]`
+  - Reuses existing `safeFetch` helper; `import 'server-only'` already at top of file
+- `src/app/data/defi/lending/page.tsx` updated:
+  - `getLendingRates` imported alongside `getLendingProtocols`; both fetched via `Promise.all`
+  - `fmtApy(v)` helper — formats APY to 2 dp with `%` or `—` for null
+  - `supplyApyColor(v)` — green tiers at 3/8/15%; `borrowApyColor(v)` — amber/orange/red tiers at 5/10/20%
+  - `LendingRatesTable` server component: 3-KPI grid (Top Supply APY / Highest Borrow APY / Markets Tracked, with protocol+asset+chain attribution); `DefiTable` ranked leaderboard with columns: Protocol / Chain / Asset / Supply APY (green) / Borrow APY (red gradient) / TVL (blue)
+  - Section placed between existing KPI strip and TVL protocols table
+  - Glossary extended with Supply APY and Borrow APY entries
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 18 ✅ — Mempool Congestion
 
 ### Batch 18 — Unit 1: Bitcoin Mempool Congestion Gauge ✅
 - `src/app/data/onchain/bitcoin/_components/MempoolCongestionGauge.tsx` **created** (`"use client"`):
