@@ -1,3 +1,4 @@
+import 'server-only';
 /**
  * lib/news/sanity-client.ts
  * Two purposefully-separated Sanity clients:

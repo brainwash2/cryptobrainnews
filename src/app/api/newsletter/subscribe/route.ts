@@ -1,10 +1,23 @@
+// src/app/api/newsletter/subscribe/route.ts
+import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { neon } from '@neondatabase/serverless';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
+  // ── Rate limit: 3 requests/hour/IP ───────────────────────────────────
+  const forwarded = req.headers.get('x-forwarded-for');
+  const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
+  if (await checkRateLimit(`nl:subscribe:${ip}`, 3, 3_600_000)) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429 }
+    );
+  }
+
   const { email, source = 'popup', category = 'general' } = await req.json().catch(() => ({}));
 
   if (!email || !String(email).includes('@')) {
@@ -14,7 +27,6 @@ export async function POST(req: NextRequest) {
   const clean = String(email).toLowerCase().trim();
   const BASE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.vercel.app').replace(/\/$/, '');
 
-  // ── 1. Neon: upsert subscriber ────────────────────────────────────────
   try {
     const sql = neon(process.env.DATABASE_URL!);
     const existing = await sql`
@@ -34,14 +46,13 @@ export async function POST(req: NextRequest) {
         VALUES (${clean}, ${source}, ${category})
       `;
     }
-  } catch (dbErr: any) {
-    console.error('[Newsletter] Neon write failed:', dbErr.message);
-    // Continue — don't block subscriber
+  } catch (dbErr: unknown) {
+    const message = dbErr instanceof Error ? dbErr.message : String(dbErr);
+    console.error('[Newsletter] Neon write failed:', message);
   }
 
   const audienceId = process.env.RESEND_AUDIENCE_ID;
 
-  // ── 2. Resend: add to audience ────────────────────────────────────────
   if (audienceId) {
     try {
       await resend.contacts.create({
@@ -49,15 +60,14 @@ export async function POST(req: NextRequest) {
         unsubscribed: false,
         audienceId,
       });
-    } catch (e: any) {
-      // "Contact already exists" is fine — not a real error
-      if (!e?.message?.includes('already exists')) {
-        console.warn('[Newsletter] Resend contact create failed:', e.message);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      if (!message.includes('already exists')) {
+        console.warn('[Newsletter] Resend contact create failed:', message);
       }
     }
   }
 
-  // ── 3. Send welcome email ─────────────────────────────────────────────
   const unsubscribeUrl = `${BASE}/api/newsletter/unsubscribe?email=${encodeURIComponent(clean)}`;
 
   try {
@@ -65,78 +75,11 @@ export async function POST(req: NextRequest) {
       from: `CryptoBrainNews <${process.env.RESEND_DOMAIN ? `newsletter@${process.env.RESEND_DOMAIN}` : 'onboarding@resend.dev'}>`,
       to: [clean],
       subject: '⚡ Welcome to the CryptoBrain Daily Brief',
-      html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#050505;font-family:'Helvetica Neue',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#050505;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
-        <!-- Header -->
-        <tr>
-          <td style="padding:0 0 32px 0;">
-            <table cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="background:#FABF2C;padding:6px 12px;">
-                  <span style="font-size:14px;font-weight:900;color:#000;letter-spacing:2px;">CB</span>
-                </td>
-                <td style="padding-left:12px;">
-                  <span style="font-size:16px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:2px;">CryptoBrain</span>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <!-- Body -->
-        <tr>
-          <td style="border-left:3px solid #FABF2C;padding:0 0 0 24px;margin-bottom:32px;">
-            <h1 style="font-size:28px;font-weight:900;color:#fff;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:-1px;">
-              You're In.
-            </h1>
-            <p style="font-size:14px;color:#FABF2C;margin:0;font-family:monospace;text-transform:uppercase;letter-spacing:2px;">
-              Daily Brief — Confirmed
-            </p>
-          </td>
-        </tr>
-        <tr><td style="padding:32px 0;">
-          <p style="font-size:15px;color:#ccc;line-height:1.7;margin:0 0 16px 0;">
-            Every morning you'll receive institutional-grade crypto intelligence — market analysis,
-            onchain signals, and alpha calls — before the open.
-          </p>
-          <p style="font-size:15px;color:#ccc;line-height:1.7;margin:0;">
-            First brief arrives tomorrow at <strong style="color:#FABF2C;">08:00 UTC</strong>.
-          </p>
-        </td></tr>
-        <!-- CTA -->
-        <tr>
-          <td style="padding:0 0 40px 0;">
-            <a href="${BASE}/news"
-              style="display:inline-block;background:#FABF2C;color:#000;font-size:11px;font-weight:900;
-                     text-transform:uppercase;letter-spacing:3px;padding:14px 28px;text-decoration:none;">
-              Read Today's Intelligence →
-            </a>
-          </td>
-        </tr>
-        <!-- Footer -->
-        <tr>
-          <td style="border-top:1px solid #1a1a1a;padding:24px 0 0 0;">
-            <p style="font-size:11px;color:#555;margin:0;font-family:monospace;">
-              You subscribed at ${BASE} · 
-              <a href="${unsubscribeUrl}" style="color:#555;">Unsubscribe</a>
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>
-      `,
+      html: `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#0a0a0a;color:#f8fafc;font-family:sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%"><tr><td style="padding:0 0 32px 0"><span style="background:#22c55e;color:#0a0a0a;padding:6px 12px;font-size:14px;font-weight:700;letter-spacing:2px">CB</span><span style="padding-left:12px;font-size:16px;font-weight:700;color:#f8fafc;text-transform:uppercase;letter-spacing:2px">CryptoBrain</span></td></tr><tr><td style="border-left:3px solid #22c55e;padding:0 0 0 24px"><h1 style="font-size:28px;font-weight:700;color:#f8fafc;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:-1px">You're In.</h1><p style="font-size:14px;color:#22c55e;margin:0;font-family:monospace;text-transform:uppercase;letter-spacing:2px">Daily Brief — Confirmed</p></td></tr><tr><td style="padding:32px 0"><p style="font-size:15px;color:#a3a3a3;line-height:1.7;margin:0 0 16px 0">Every morning you'll receive institutional-grade crypto intelligence — market analysis, onchain signals, and alpha calls — before the open.</p></td></tr><tr><td style="padding:0 0 40px 0"><a href="${BASE}/news" style="display:inline-block;background:#22c55e;color:#0a0a0a;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:3px;padding:14px 28px;text-decoration:none;border-radius:8px">Read Today's Intelligence →</a></td></tr><tr><td style="border-top:1px solid #27272a;padding:24px 0 0 0"><p style="font-size:11px;color:#52525b;margin:0;font-family:monospace">You subscribed at ${BASE} · <a href="${unsubscribeUrl}" style="color:#52525b">Unsubscribe</a></p></td></tr></table></td></tr></table></body></html>`,
     });
-  } catch (emailErr: any) {
-    console.error('[Newsletter] Welcome email failed:', emailErr.message);
-    // Don't fail the request — subscriber is saved
+  } catch (emailErr: unknown) {
+    const message = emailErr instanceof Error ? emailErr.message : String(emailErr);
+    console.error('[Newsletter] Welcome email failed:', message);
   }
 
   return NextResponse.json({ success: true });

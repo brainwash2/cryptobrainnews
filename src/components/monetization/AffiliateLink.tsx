@@ -1,4 +1,4 @@
-'use client';
+// src/components/monetization/AffiliateLink.tsx
 import React from 'react';
 
 const AFFILIATES: Record<string, string> = {
@@ -10,10 +10,23 @@ const AFFILIATES: Record<string, string> = {
   kraken: 'https://kraken.com/refer/YOUR_REF'
 };
 
-export default function AffiliateLink({ exchange, children, className }: { exchange: string; children: React.ReactNode; className?: string; }) {
+interface AffiliateLinkProps {
+  exchange: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+export default function AffiliateLink({ exchange, children, className }: AffiliateLinkProps) {
   const url = AFFILIATES[exchange.toLowerCase()] || '#';
   return (
-    <a href={url} target="_blank" rel="noopener noreferrer sponsored" className={`text-[#FABF2C] hover:underline font-bold transition-colors ${className || ''}`}>
+    <a
+      href={url}
+      target="_blank"
+      rel="nofollow noopener sponsored"
+      data-sponsored="true"
+      data-partner={exchange.toLowerCase()}
+      className={`text-[#22c55e] hover:underline font-bold transition-colors ${className || ''}`}
+    >
       {children}
     </a>
   );

@@ -21,8 +21,6 @@
     "@sanity/client": "^7.20.0",
     "@sanity/vision": "^5.13.0",
     "@sentry/nextjs": "^10.39.0",
-    "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.19",
     "@upstash/redis": "^1.36.2",

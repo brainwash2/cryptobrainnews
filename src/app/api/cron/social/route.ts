@@ -1,25 +1,13 @@
-/**
- * app/api/cron/social/route.ts
- * Vercel Cron handler — runs every minute to process due social posts.
- *
- * vercel.json entry:
- *   { "path": "/api/cron/social", "schedule": "* * * * *" }
- *
- * Auth: Vercel automatically sets Authorization: Bearer <CRON_SECRET>
- * on cron-invoked routes. We verify this.
- */
-
+// src/app/api/cron/social/route.ts
+import 'server-only';
 import { type NextRequest, NextResponse } from 'next/server';
+import { validateVercelCronAuth }         from '../../../../lib/ops/cron-guard';
 import { SocialScheduler }                from '../../../../lib/social/scheduler';
 import { TwitterThreadPublisher }          from '../../../../lib/social/twitter-thread';
 
-const CRON_SECRET = process.env.CRON_SECRET ?? '';
-
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const auth = req.headers.get('authorization');
-  if (auth !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
-  }
+  const unauth = validateVercelCronAuth(req);
+  if (unauth) return unauth;
 
   const scheduler = new SocialScheduler();
   const creds = {

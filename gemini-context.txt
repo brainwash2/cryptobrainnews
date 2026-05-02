@@ -1,5 +1,5 @@
 === CRYPTOBRAINNEWS FULL CONTEXT ===
-Generated: Thu Apr 30 11:04:23 PM CET 2026
+Generated: Fri May  1 05:47:23 AM CET 2026
 
 ========== FOLDER STRUCTURE ==========
 .
@@ -470,7 +470,7 @@ You value correctness, clarity, and long‑term maintainability over speed. You 
 
 You are the research assistant and reviewer. You do **NOT** generate original implementation code. Your job is to:
 
-1. Receive code produced by **DeepSeek V4 Pro** (data‑terminal coding assistant) or **Claude 4.7** (news/pipeline coding assistant, accessed via notgpt.io, limited prompts).
+1. Receive code produced by **DeepSeek V4 Pro** (data‑terminal coding assistant) or **Claude 4.7** (news/pipeline coding assistant, accessed via notgpt.io, limited prompts).
 2. Format that code into exact `cat` commands (including `mkdir -p` if needed).
 3. Provide append‑only updates to `task.md` using the required format.
 4. Give the git commit and push command.
@@ -483,61 +483,104 @@ You never generate original implementation code – you only transcribe, format,
 - GitHub: https://github.com/brainwash2/cryptobrainnews
 - Two major parts: (1) a data terminal with 60+ pages covering crypto markets, on‑chain data, DeFi, NFTs, etc., and (2) a news section with an automated daily article pipeline.
 
-## Model Strategy (April 2026)
-- **DeepSeek V4 Pro** (via Zenmux.ai) – PRIMARY for data terminal refactoring, research, and audits (1M context, 384K output, 5 sessions/5h free). Used for Phases A–D implementation.
-- **Claude 4.7** (via notgpt.io) – for news section and news pipeline engine refactoring. Limited to 2–3 prompts daily. Used for surgical code changes, pipeline enhancements, and editorial workflow improvements.
-- **Grok** (X Premium) – research partner for both data section and news section. Used for competitive analysis, API scouting, and validating data sources before implementation.
+## Model Strategy (April–May 2026)
+- **DeepSeek V4 Pro** (via Zenmux.ai) – PRIMARY for data terminal refactoring, research, and audits (1M context, 384K output, 5 sessions/5h free). Used for Phases A–D, Phase E, Zerion replacement, environment audit, and currently generating Phase F security/pipeline overhaul.
+- **Claude 4.7** (via notgpt.io) – for news pipeline auditing and small surgical fixes. Very limited by small token context windows and “too many users” errors. Used for the full‑app audit only.
+- **Grok** (X Premium) – research partner for both sections. Used for The Block dashboard UI audit, Dune free‑tier table discoveries, API viability research (Zerion free tier, CoinGlass status, Santiment free plan), and the full‑application audit.
 
 ## Context Files (always refer to these)
-- gemini-context.txt – full project codebase snapshot
-- docs/DeepSeekV4-Research-Blueprint.md – The Block dashboard clone blueprint
-- docs/DUNE_QUERIES.md – Dune query specifications (needs update with new IDs)
-- docs/metrics.txt – complete product specification
-- docs/design_system.md – design system reference
-- Scaling-solution.md – notes on scaling, edge cases, and improvements (active, seeded with initial structure)
-- task.md – task ledger
+- `gemini-context.txt` – full project codebase snapshot
+- `structure-context.txt` – project folder/file tree (for Claude 4.7 where full context won’t fit)
+- `docs/DeepSeekV4-Research-Blueprint.md` – The Block dashboard clone blueprint + all phase summaries
+- `docs/DUNE_QUERIES.md` – live Dune query IDs, exact SQL, expected columns
+- `docs/metrics.txt` – complete product specification for the data terminal
+- `docs/design_system.md` – current design tokens
+- `docs/editorial-blueprint.md` – complete publishing pipeline & business plan
+- `docs/editorial-workflow.md` – Sanity Studio step‑by‑step guide
+- `docs/deepseek_article_writer.txt` – article writer prompt (DeepSeek)
+- `docs/gemini_system_and_prompt.txt` – editor polish prompt (Gemini)
+- `docs/deepseek_sanity_formatter.txt` – Sanity formatter prompt (DeepSeek)
+- `docs/grok_daily_research.txt` – research brief prompt (Grok)
+- `docs/testing-framework-plan.md` – testing strategy & phased rollout
+- `Scaling-solution.md` – append‑only improvement log
+- `task.md` – immutable task ledger
 
-## Completed Work
+## Completed Work (as of April 30, 2026)
 
-### Data Terminal — Refactored via DeepSeek V4 Pro (Blueprint Phases A–D)
-- **Phase A** (11 frontend improvements): Miner Revenue, UTXO Age Bands, ETH Supply Growth, Bybit Liquidations, Peg Deviation, ETF Premium/Discount, Volume Dominance, Revenue Trend, L2 Gas, Trending Coins, Fear & Greed 90D history — all live, TypeScript clean.
-- **Phase B** (7 free API integrations): Flipside Crypto (seed fallback, gated), CoinGlass (live liquidations), Token Terminal (seed fallback), LunarCrush (seed fallback), IntoTheBlock (seed fallback), Spot On Chain (deprecated, pending Zerion replacement), DefiLlama /unlocks (live). All pages functional.
-- **Phase C** (Paid → Free replacements): Kaiko replaced with Hyperliquid + Drift order books, Santiment replaced with ApeWisdom + Santiment free tier, Glassnode with seed fallback, CoinShares manual seed, Greeks.live manual seed. Zero paid API dependencies.
-- **Phase D** (Live Dune + final wiring): All 10 Dune query functions in `src/lib/dune.ts` with live API calls, 24‑hour cache, and seed fallbacks. Remaining ComingSoon pages replaced with curated reference data. Governance page live via Snapshot GraphQL.
+### Data Terminal — Phases A–E + Zerion + Environment Audit
 
-**Current Dune status (April 29, 2026):**
-- 9 new Dune queries must be created on your fresh Dune.com account (SQL provided in the conversation).
-- Once created, numeric IDs go into environment variables; terminal switches to live Dune data.
-- `docs/DUNE_QUERIES.md` must be updated with the new query IDs.
+| Phase | Title | Status | Deliverables |
+|-------|-------|--------|-------------|
+| **A** | 11 Frontend Improvements | ✅ | Miner Revenue, UTXO Age Bands, ETH Supply Growth, Bybit Liquidations, Peg Deviation, ETF Premium, Volume Dominance, Revenue Trend, L2 Gas, Trending Coins, F&G 90D history |
+| **B** | 7 New Free API Integrations | ✅ | Flipside, CoinGlass, Token Terminal, LunarCrush, IntoTheBlock, Spot On Chain, DefiLlama /unlocks |
+| **C** | Paid → Free Replacements | ✅ | Kaiko → Hyperliquid+Drift, Santiment → ApeWisdom+Santiment free, Glassnode seed, CoinShares seed, Greeks.live seed |
+| **D** | Live Dune SQL Integration | ✅ | 8 live free-tier Dune queries created + wired; `DUNE_QUERIES.md` updated with exact SQL and IDs |
+| **E** | Chart & UX Standardisation | ✅ | 15 files; global CSS + 5 shared components + 8 page client upgrades; The Block design clone |
+| **Zerion** | Spot On Chain → Zerion | ✅ | `src/lib/zerion.ts`; merged Etherscan + Zerion sources on `/data/defi/whale-watch` |
+| **Env** | Vercel Security Hardening | ✅ | 7 deprecated vars removed; 15 secrets rotated; 14 new vars added; free‑only `.env.example` |
 
-### News Pipeline — Built by Claude 4.6 Sonnet (Functional, requires re‑audit)
-- Daily article pipeline: RSS → Groq → DeepSeek → Gemini → Sanity (5 articles per run).
-- Telegram broadcasting, newsletter via Resend, social scheduler (X/Twitter threads).
-- Pro gating (Stripe), affiliate links, sponsored content, health checks, ops alerts.
-- All 7 original pipeline audit parts delivered (Typescript strict mode, dedup, caching, SEO/GEO, social, monetisation, ops).
-- **IMPORTANT: This section requires a full re‑audit.** The news pipeline is functional but not yet considered complete. A full refactoring pass via Claude 4.7 is planned. Do NOT describe the news pipeline as "fully operational" or "complete" — it is functional but pending re‑audit and refactoring.
+### News Pipeline (Functional, re‑audit pending)
+- Daily RSS → Groq → DeepSeek → Gemini → Sanity pipeline (5 articles/run)
+- Telegram broadcasting with dead‑letter retry queue
+- Newsletter via Resend, social scheduler (X/Twitter threads)
+- Pro gating (Stripe), affiliate links, sponsored content slots
+- Health checks, ops alerts, env‑audit module, smoke‑test script
+- **Status:** Functional but requires a full refactoring pass (after Phase F).
+
+### Audits
+- **Grok full‑app audit** (April 30): degraded health, missing sitemap routes, UI rendering blocks, missing legal pages, rate‑limiting gaps.
+- **Claude 4.7 security audit** (April 30): CRON_SECRET gaps, Stripe idempotency missing, dead‑letter writes to ephemeral /tmp, missing server‑only guards.
 
 ## Pending Work
 
-### Data Terminal
-- Create 9 Dune queries on new dune.com account, wire IDs into `src/lib/dune.ts`.
-- Update `docs/DUNE_QUERIES.md` with the new IDs.
-- Spot On Chain → Zerion whale alerts replacement (prompt ready at `docs/phase-b-zerion-replacement-master-prompt.md`).
-- Testing framework: design and implementation after full data terminal sign‑off.
+### 🔴 Phase F — Security, Pipeline & Code Quality (generating via DeepSeek V4)
+- F‑1: cron guard, Stripe webhook idempotency, dead‑letter queue → Redis, server‑only guards
+- F‑2: Telegram rate‑limiting, RSS dedup hardening, sitemap `/data/*` expansion, GDPR unsubscribe
+- F‑3: health endpoint expansion, public‑route rate‑limiting, legal pages, affiliate attributes, package cleanup
+- F‑Research: duplication scan, hardcoded values audit, structural suggestions
 
-### News Section & Pipeline
-- FULL RE‑AUDIT of the news pipeline (functional but not complete).
-- Refactoring via Claude 4.7 (notgpt.io, 2–3 prompts/day).
-- Enhance editorial workflow, category pages, search, AI pipeline, caching, SEO.
-- Grok to research news pipeline improvements and competitive analysis before Claude 4.7 code generation.
+### 🟠 After Phase F
+- **News pipeline full refactor** (DeepSeek V4)
+- **Testing framework** – per `docs/testing-framework-plan.md`
+- **CSV export wiring** into page components
+- **Mobile responsiveness pass** on top 10 pages
+- **`Scaling-solution.md`** – populate with observations from this conversation
 
-### Cross‑Cutting
-- Build out Scaling-solution.md with observations from each phase (file now seeded).
-- Testing framework research and rollout after both data and news sections are signed off.
+### 🟡 Professional Publishing Blueprint (existing + planned)
+These files are already in `docs/` and ready to use:
+- `editorial-blueprint.md` – complete publishing pipeline, role split, partner invite, first 30‑day content plan
+- `editorial-workflow.md` – Sanity Studio guide: draft, preview, publish, schedule, RSS import
+- `deepseek_article_writer.txt` – system prompt for DeepSeek to write articles
+- `gemini_system_and_prompt.txt` – Gemini system instruction + polish prompt
+- `deepseek_sanity_formatter.txt` – Sanity formatter prompt
+- `grok_daily_research.txt` – Grok research brief prompt
+
+**To be created in a future phase:**
+1. **Content Calendar Template** – 7‑day/week cycle mapping topics to categories (RWA, AI×Crypto, Institutional, DeFi, etc.) with target publish times.
+2. **Style Guide** – brand voice, formatting rules, image standards, citation format, headline conventions.
+3. **SEO Checklist** – per‑article verification: meta title ≤70 chars, meta description ≤160 chars, tags populated, canonical URL correct, OG image generated.
+4. **Promotion Checklist** – after publishing: Telegram auto‑post, Twitter thread, LinkedIn, newsletter.
+5. **Analytics Dashboard** – view counts per article (Redis view‑counter already exists at `/api/analytics/view`), plus social engagement tracking.
+6. **Guest Author Onboarding** – invite contributors, set permissions, create author profiles in Sanity.
+7. **Sponsored Content Guidelines** – rate card, placement rules, disclosure requirements.
+
+### 🟢 Testing Framework (per `docs/testing-framework-plan.md`)
+
+| Layer | What to Test | Suggested Tools |
+|-------|-------------|-----------------|
+| **Unit** | Data fetchers, type guards, formatters | Vitest |
+| **Integration** | API routes, RSS parsing, dedup, Stripe webhook | Vitest + MSW |
+| **Component** | Chart wrappers, table sorting, timeframe selector | React Testing Library |
+| **Visual Regression** | Screenshot comparisons of key pages | Playwright + Percy/Chromatic |
+| **E2E Smoke** | Pipeline end‑to‑end, cron route auth, unsubscribe flow | Playwright |
+| **Performance** | Core Web Vitals on top 20 pages, CI | Lighthouse CI |
+
+**Phased rollout:** Smoke → Integration → Unit → Visual Regression → Performance CI.
+**Do NOT implement until data terminal + news pipeline are fully signed off.**
 
 ## Workflow Reminder
 
-1. I will tell you when a new phase is approved and provide Claude's or DeepSeek V4 pro generated code (as a code block).
+1. I will tell you when a new phase is approved and provide DeepSeek V4 Pro or Claude 4.7 generated code (as a code block).
 2. You will immediately produce `mkdir -p` commands for any needed directories, `cat` commands for each file, append‑only updates to `task.md`, and a git commit/push command.
 3. I will run those commands and report back.
 4. You will then review the code and provide a concise analysis, including any suggestions for improvements, edge cases, or data quality concerns. You will also provide the exact text to append to `Scaling-solution.md`.
@@ -547,12 +590,10 @@ You must wait for my explicit approval before proceeding. Never generate code or
 
 ## Example Output Format
 
-When I give you Claude's code or DeepSeek V4 pro, your response must look exactly like this – nothing more, nothing less:
-
 ```bash
 mkdir -p src/lib
 cat << 'EOF' > src/lib/new-file.ts
-[Paste the entire content from Claude's or DeepSeek V4 pro file here]
+[Complete file content from DeepSeek V4 Pro or Claude 4.7]
 
 --- next.config.mjs ---
 /** @type {import('next').NextConfig} */
@@ -694,6 +735,3122 @@ import "./.next/dev/types/routes.d.ts";
   "type": "module"
 }
 
+--- phase-f1-context.txt ---
+=== CRYPTOBRAINNEWS PHASE F-1 CONTEXT ===
+Generated: Thu Apr 30 11:59:17 PM CET 2026
+
+--- scripts/daily-article.ts ---
+/**
+ * scripts/daily-article.ts
+ * Daily automated article pipeline: RSS → Groq → DeepSeek → Gemini → Sanity
+ *
+ * Vercel-compatible: dead-letter files go to /tmp (only writable directory).
+ */
+
+import { randomUUID } from 'crypto';
+import { writeFileSync, mkdirSync } from 'fs';
+import { join } from 'path';
+import { ArticleDedup } from '../src/lib/news/dedup';
+import { PipelineLogger } from '../src/lib/news/pipeline-logger';
+import { RSSCache } from '../src/lib/news/rss-cache';
+import { TelegramBroadcaster } from '../src/lib/news/telegram';
+import type {
+  RSSItem,
+  GrokSummary,
+  DeepSeekEnrichment,
+  GeminiPolish,
+  SanityArticlePayload,
+  SanityWriteResult,
+  PipelineRun,
+} from '../src/lib/news/types';
+import {
+  isGrokSummary,
+  isDeepSeekEnrichment,
+  isGeminiPolish,
+} from '../src/lib/news/types';
+
+const RSS_FEEDS: string[] = (process.env.RSS_FEED_URLS ?? '').split(',').filter(Boolean);
+const MAX_ARTICLES_PER_RUN = Number(process.env.MAX_ARTICLES_PER_RUN ?? '5');
+
+// Vercel serverless has a read-only filesystem except for /tmp.
+const DEAD_LETTER_DIR = '/tmp/dead-letter';
+
+// ── API keys ──────────────────────────────────────────────────────────────
+const GROQ_API_KEY       = process.env.GROQ_API_KEY       ?? '';
+const DEEPSEEK_API_KEY   = process.env.DEEPSEEK_API_KEY   ?? '';
+const GEMINI_API_KEY     = process.env.GEMINI_API_KEY     ?? '';
+const SANITY_PROJECT_ID  = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '';
+const SANITY_DATASET     = process.env.NEXT_PUBLIC_SANITY_DATASET     ?? 'production';
+const SANITY_API_TOKEN   = process.env.SANITY_API_TOKEN   ?? '';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? '';
+
+// ── Retry helper ──────────────────────────────────────────────────────────
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts: number,
+  baseDelayMs: number,
+  label: string,
+): Promise<{ result: T; attempts: number }> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await fn();
+      return { result, attempts: attempt };
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxAttempts)
+        await new Promise(r => setTimeout(r, baseDelayMs * Math.pow(2, attempt - 1)));
+    }
+  }
+  throw new Error(`${label} failed after ${maxAttempts} attempts: ${String(lastError)}`);
+}
+
+// ── Dead‑letter writer (never crashes the pipeline) ──────────────────────
+function writeDeadLetter(runId: string, item: RSSItem, reason: string, partial: unknown): string {
+  try {
+    mkdirSync(DEAD_LETTER_DIR, { recursive: true });
+    const filename = `${runId}-${Date.now()}-${item.guid.replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.json`;
+    const path = join(DEAD_LETTER_DIR, filename);
+    writeFileSync(
+      path,
+      JSON.stringify({ runId, failedAt: new Date().toISOString(), reason, item, partial }, null, 2),
+      'utf-8',
+    );
+    return path;
+  } catch {
+    console.warn('[pipeline] Unable to write dead-letter file (filesystem read-only?)');
+    return '';
+  }
+}
+
+// ─── AI Stage 1: Groq (free tier, fast) ─────────────────────────────────
+async function runGroq(item: RSSItem): Promise<GrokSummary> {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    signal: AbortSignal.timeout(30_000),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a crypto news analyst. Respond ONLY with valid JSON matching the GrokSummary schema. No markdown fences.',
+        },
+        {
+          role: 'user',
+          content: `Summarise this article. Schema: { headline, summary, keyPoints, rawArticleUrl, sourceTitle }\nTitle: ${item.title}\nURL: ${item.link}\nContent: ${(item.content ?? item.description).slice(0, 4000)}`,
+        },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`Groq API ${res.status}: ${await res.text()}`);
+  const data = (await res.json()) as { choices: Array<{ message: { content: string } }> };
+  const raw: unknown = JSON.parse(data.choices[0].message.content);
+  if (!isGrokSummary(raw)) throw new Error('Groq response failed type guard');
+  return raw;
+}
+
+// ─── AI Stage 2: DeepSeek (optional, degraded if missing) ────────────────
+async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEnrichment> {
+  const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    signal: AbortSignal.timeout(45_000),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a senior crypto journalist. Respond ONLY with valid JSON. No markdown fences.',
+        },
+        {
+          role: 'user',
+          content: `Expand this summary into a full article body. Schema: { expandedBody, tags, category, sentiment, relatedTickers }\nSummary: ${grok.summary}\nKey points: ${grok.keyPoints.join('; ')}\nSource: ${item.link}`,
+        },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`DeepSeek API ${res.status}: ${await res.text()}`);
+  const data = (await res.json()) as { choices: Array<{ message: { content: string } }> };
+  const raw: unknown = JSON.parse(data.choices[0].message.content);
+  if (!isDeepSeekEnrichment(raw)) throw new Error('DeepSeek response failed type guard');
+  return raw;
+}
+
+// ─── AI Stage 3: Gemini (optional, degraded if missing) ──────────────────
+async function runGemini(grok: GrokSummary, deepSeek: DeepSeekEnrichment): Promise<GeminiPolish> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      signal: AbortSignal.timeout(45_000),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `Polish this crypto article for SEO. Return JSON with: title, metaDescription, body, slug.\nDraft title: ${grok.headline}\nDraft body: ${deepSeek.expandedBody.slice(0, 6000)}\nTags: ${deepSeek.tags.join(', ')}`,
+              },
+            ],
+          },
+        ],
+      }),
+    },
+  );
+  if (!res.ok) throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
+  const data = (await res.json()) as {
+    candidates: Array<{ content: { parts: Array<{ text: string }> } }>;
+  };
+  const raw: unknown = JSON.parse(data.candidates[0].content.parts[0].text);
+  if (!isGeminiPolish(raw)) throw new Error('Gemini response failed type guard');
+  return raw;
+}
+
+// ── Fallback when later stages are missing ───────────────────────────────
+function buildFallbackPolish(grok: GrokSummary, deepSeek?: DeepSeekEnrichment): GeminiPolish {
+  const headline = grok.headline;
+  const slug = headline
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .slice(0, 80);
+  return {
+    title: headline,
+    metaDescription: grok.summary.slice(0, 160),
+    body:
+      deepSeek?.expandedBody ??
+      `${grok.summary}\n\n${grok.keyPoints.map(p => `- ${p}`).join('\n')}`,
+    slug,
+  };
+}
+
+// ── Sanity helpers ───────────────────────────────────────────────────────
+async function slugExistsInSanity(slug: string): Promise<boolean> {
+  const query = encodeURIComponent(
+    `*[_type == "post" && slug.current == "${slug}"][0]._id`,
+  );
+  const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2024-01-01/data/query/${SANITY_DATASET}?query=${query}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${SANITY_API_TOKEN}` },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) throw new Error(`Sanity slug check ${res.status}`);
+  const { result } = (await res.json()) as { result: string | null };
+  return result != null;
+}
+
+async function writeToSanity(payload: SanityArticlePayload): Promise<SanityWriteResult> {
+  const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v2024-01-01/data/mutate/${SANITY_DATASET}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    signal: AbortSignal.timeout(20_000),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${SANITY_API_TOKEN}`,
+    },
+    body: JSON.stringify({ mutations: [{ create: payload }] }),
+  });
+  if (!res.ok) throw new Error(`Sanity write ${res.status}: ${await res.text()}`);
+
+  // The mutation succeeded; we don't strictly need the document ID because
+  // dedup is done via slug. Grab the ID if available, otherwise use a placeholder.
+  const json = (await res.json()) as { results?: Array<{ id: string }> };
+  const documentId = json.results?.[0]?.id ?? `san-${payload.slug.current}`;
+
+  return { documentId, slug: payload.slug.current, publishedAt: payload.publishedAt };
+}
+
+// ── Article processor ────────────────────────────────────────────────────
+async function processArticle(
+  item: RSSItem,
+  runId: string,
+  dedup: ArticleDedup,
+  logger: PipelineLogger,
+): Promise<{ published: boolean; deadLetterPath?: string }> {
+  logger.setStage('dedup-check');
+  const { isDuplicate } = await dedup.isDuplicate(item.link, item.title);
+  if (isDuplicate) {
+    logger.info('Skipping duplicate', { url: item.link });
+    return { published: false };
+  }
+
+  // ── Groq (fatal if missing) ──────────────────────────────────────
+  logger.setStage('grok-summarise');
+  let grok: GrokSummary;
+  try {
+    const { result, attempts } = await withRetry(() => runGroq(item), 3, 1000, 'Groq');
+    grok = result;
+    logger.info('Groq succeeded', { attempts });
+  } catch (err) {
+    const path = writeDeadLetter(runId, item, 'Groq failed', null);
+    logger.error('Groq fatal – dead-lettered', 'fatal', err, 3);
+    return { published: false, deadLetterPath: path || undefined };
+  }
+
+  // ── DeepSeek (optional) ──────────────────────────────────────────
+  logger.setStage('deepseek-enrich');
+  let deepSeek: DeepSeekEnrichment | undefined;
+  try {
+    const { result, attempts } = await withRetry(
+      () => runDeepSeek(item, grok),
+      2,
+      2000,
+      'DeepSeek',
+    );
+    deepSeek = result;
+    logger.info('DeepSeek succeeded', { attempts });
+  } catch (err) {
+    logger.error('DeepSeek failed – degraded to Groq output only', 'degraded', err, 2);
+  }
+
+  // ── Gemini (optional) ────────────────────────────────────────────
+  logger.setStage('gemini-polish');
+  let gemini: GeminiPolish | undefined;
+  if (deepSeek) {
+    try {
+      const { result, attempts } = await withRetry(
+        () => runGemini(grok, deepSeek!),
+        2,
+        2000,
+        'Gemini',
+      );
+      gemini = result;
+      logger.info('Gemini succeeded', { attempts });
+    } catch (err) {
+      logger.error('Gemini failed – degraded to DeepSeek output', 'degraded', err, 2);
+    }
+  }
+
+  const finalPolish = gemini ?? buildFallbackPolish(grok, deepSeek);
+
+  // ── Sanity write ─────────────────────────────────────────────────
+  logger.setStage('sanity-write');
+  try {
+    const exists = await slugExistsInSanity(finalPolish.slug);
+    if (exists) {
+      logger.info('Slug already exists – skipping write', { slug: finalPolish.slug });
+      await dedup.markSeen(item.link, item.title, runId);
+      return { published: false };
+    }
+  } catch (err) {
+    logger.warn('Slug check failed – proceeding with write', { cause: String(err) });
+  }
+
+  // Convert the plain‑text body into a valid Portable Text block (required by Sanity)
+  const bodyBlock = {
+    _key: randomUUID(),
+    _type: 'block',
+    style: 'normal',
+    markDefs: [],
+    children: [
+      {
+        _type: 'span',
+        _key: randomUUID(),
+        text: finalPolish.body,
+        marks: [],
+      },
+    ],
+  };
+
+  // Only fields defined in the Sanity "post" schema are sent.
+  const payload = {
+    _type: 'post',
+    title: finalPolish.title,
+    slug: { _type: 'slug', current: finalPolish.slug },
+    body: [bodyBlock],
+    excerpt: grok.summary.slice(0, 180),
+    category: deepSeek?.category ?? 'News',
+    tags: deepSeek?.tags ?? [],
+    publishedAt: new Date().toISOString(),
+    status: 'published',
+    seo: {
+      metaTitle: finalPolish.title.slice(0, 70),
+      metaDescription: finalPolish.metaDescription.slice(0, 160),
+      noIndex: false,
+    },
+  } as SanityArticlePayload;
+
+  let sanityResult: SanityWriteResult;
+  try {
+    const { result, attempts } = await withRetry(
+      () => writeToSanity(payload),
+      3,
+      2000,
+      'Sanity',
+    );
+    sanityResult = result;
+    logger.info('Sanity write succeeded', {
+      documentId: sanityResult.documentId,
+      attempts,
+    });
+  } catch (err) {
+    const path = writeDeadLetter(runId, item, 'Sanity write failed', payload);
+    logger.error('Sanity write fatal – dead-lettered', 'fatal', err, 3);
+    return { published: false, deadLetterPath: path || undefined };
+  }
+
+  await dedup.markSeen(item.link, item.title, runId, sanityResult.documentId);
+
+  const telegram = new TelegramBroadcaster(TELEGRAM_BOT_TOKEN);
+  await telegram.send(
+    TelegramBroadcaster.formatArticleMessage(
+      finalPolish.title,
+      grok.summary,
+      finalPolish.slug,
+      deepSeek?.tags ?? [],
+    ),
+    runId,
+  );
+
+  return { published: true };
+}
+
+// ── Main pipeline entrypoint ─────────────────────────────────────────────
+export async function runPipeline(): Promise<PipelineRun> {
+  const runId = randomUUID();
+  const startedAt = new Date().toISOString();
+  const logger = new PipelineLogger(runId);
+  const dedup = new ArticleDedup();
+  const rssCache = new RSSCache();
+
+  logger.info('Pipeline run starting', { runId, maxArticles: MAX_ARTICLES_PER_RUN });
+  const run: PipelineRun = {
+    runId,
+    startedAt,
+    stage: 'idle',
+    articlesAttempted: 0,
+    articlesPublished: 0,
+    errors: [],
+    deadLetterPaths: [],
+  };
+
+  let items: RSSItem[];
+  try {
+    const feedConfig = RSS_FEEDS.map((url, i) => ({ url, name: `Feed-${i + 1}` }));
+    const result = await rssCache.getAllItems(feedConfig);
+    items = result.items;
+    if (items.length === 0) throw new Error('All RSS feeds returned zero items.');
+    logger.info(`Fetched ${items.length} total items from ${feedConfig.length} feeds`);
+  } catch (err) {
+    run.stage = 'failed';
+    run.errors.push(logger.error('RSS fetch fatal', 'fatal', err, 0));
+    run.completedAt = new Date().toISOString();
+    return run;
+  }
+
+  logger.setStage('dedup-check');
+  const dedupMap = await dedup.bulkCheck(
+    items.map(i => ({ guid: i.guid, url: i.link, title: i.title })),
+  );
+  const fresh = items.filter(i => !dedupMap.get(i.guid)?.isDuplicate);
+  logger.info(`Dedup: ${items.length} total → ${fresh.length} fresh`);
+
+  const toProcess = fresh.slice(0, MAX_ARTICLES_PER_RUN);
+  for (const item of toProcess) {
+    run.articlesAttempted += 1;
+    try {
+      const { published, deadLetterPath } = await processArticle(item, runId, dedup, logger);
+      if (published) run.articlesPublished += 1;
+      if (deadLetterPath) run.deadLetterPaths.push(deadLetterPath);
+    } catch (err) {
+      logger.error(`Unhandled error processing ${item.link}`, 'fatal', err);
+    }
+  }
+
+  const tg = new TelegramBroadcaster(TELEGRAM_BOT_TOKEN);
+  const tgDrain = await tg.drainRetries();
+  logger.info('Telegram retry drain', tgDrain);
+
+  if (process.env.RESEND_API_KEY) {
+    const { NewsletterService } = await import('../src/lib/news/newsletter');
+    const nl = new NewsletterService(process.env.RESEND_API_KEY);
+    const nlDrain = await nl.drainRetries();
+    logger.info('Newsletter retry drain', nlDrain);
+  }
+
+  run.stage = logger.hasFatal() ? 'failed' : 'complete';
+  run.errors = [...logger.getErrors()];
+  run.completedAt = new Date().toISOString();
+  logger.info('Pipeline run complete', {
+    articlesAttempted: run.articlesAttempted,
+    articlesPublished: run.articlesPublished,
+    deadLetterCount: run.deadLetterPaths.length,
+    fatalErrors: run.errors.filter(e => e.severity === 'fatal').length,
+  });
+  return run;
+}
+
+// CLI entrypoint
+if (require.main === module) {
+  runPipeline()
+    .then(run => {
+      process.exitCode = run.stage === 'failed' ? 1 : 0;
+    })
+    .catch(err => {
+      console.error('Unhandled pipeline crash:', err);
+      process.exitCode = 1;
+    });
+}
+--- src/app/api/cron/daily-article/route.ts ---
+/**
+ * app/api/cron/daily-article/route.ts
+ * Vercel Cron entrypoint for the daily article pipeline.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { runPipeline }                    from '../../../../../scripts/daily-article';
+import { OpsAlerter }                     from '../../../../lib/ops/alerts';
+import type { StageError }                from '../../../../lib/news/types';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (req.headers.get('authorization') !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  }
+
+  const run = await runPipeline();
+
+  if (run.stage === 'failed' || run.articlesPublished === 0) {
+    const alerter = new OpsAlerter();
+    await alerter.pipelineAlert({
+      stage:             run.stage,
+      runId:             run.runId,
+      articlesPublished: run.articlesPublished,
+      fatalErrors:       run.errors.filter((e: StageError) => e.severity === 'fatal').length,
+      deadLetterCount:   run.deadLetterPaths.length,
+    });
+  }
+
+  return NextResponse.json({
+    ok:                run.stage !== 'failed',
+    runId:             run.runId,
+    articlesPublished: run.articlesPublished,
+    articlesAttempted: run.articlesAttempted,
+    fatalErrors:       run.errors.filter((e: StageError) => e.severity === 'fatal').length,
+    deadLetterCount:   run.deadLetterPaths.length,
+    duration:          run.completedAt && run.startedAt
+      ? `${((new Date(run.completedAt).getTime() - new Date(run.startedAt).getTime()) / 1000).toFixed(1)}s`
+      : null,
+  });
+}
+
+--- src/app/api/cron/health/route.ts ---
+/**
+ * app/api/cron/health/route.ts
+ * Runs every 5 minutes. Self-calls /api/health and alerts ops on failures.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { Redis }                           from '@upstash/redis';
+import { OpsAlerter }                      from '../../../../lib/ops/alerts';
+import { BroadcastQueue }                  from '../../../../lib/news/broadcast-queue';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+const BASE_URL    = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cryptobrainnews.com';
+const PREV_DOWN_KEY = 'health:prev-down';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (req.headers.get('authorization') !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  }
+
+  const alerter = new OpsAlerter();
+  const redis   = Redis.fromEnv();
+
+  const healthRes = await fetch(`${BASE_URL}/api/health?detail=true`, {
+    headers: {
+      'x-cron-secret': CRON_SECRET,
+      'Cache-Control':  'no-store',
+    },
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  const report = (await healthRes.json()) as {
+    status:  string;
+    systems: Record<string, { status: string; latencyMs: number; message?: string }>;
+  };
+
+  const prevDownRaw = await redis.get<string>(PREV_DOWN_KEY).catch(() => null);
+  const prevDown    = new Set<string>(prevDownRaw ? JSON.parse(prevDownRaw) : []);
+  const currentDown = new Set<string>();
+
+  for (const [system, check] of Object.entries(report.systems)) {
+    if (check.status === 'down' || check.status === 'degraded') {
+      currentDown.add(system);
+
+      if (!prevDown.has(system)) {
+        await alerter.healthAlert({
+          system,
+          message: check.message ?? `${system} is ${check.status}`,
+          latency: check.latencyMs,
+        });
+      }
+    }
+
+    if (prevDown.has(system) && !currentDown.has(system)) {
+      await alerter.recoveryNotice(system);
+    }
+  }
+
+  const bq = new BroadcastQueue();
+  const [tgDepth, nlDepth] = await Promise.all([
+    bq.pendingCount('telegram'),
+    bq.pendingCount('newsletter'),
+  ]);
+
+  if (tgDepth > 20) await alerter.deadLetterAlert({ count: tgDepth,  channel: 'telegram' });
+  if (nlDepth > 20) await alerter.deadLetterAlert({ count: nlDepth, channel: 'newsletter' });
+
+  await redis.set(PREV_DOWN_KEY, JSON.stringify([...currentDown]), { ex: 60 * 60 });
+
+  return NextResponse.json({
+    ok:          report.status !== 'down',
+    status:      report.status,
+    downSystems: [...currentDown],
+    checkedAt:   new Date().toISOString(),
+  });
+}
+
+--- src/app/api/cron/sitemap-warm/route.ts ---
+/**
+ * app/api/cron/sitemap-warm/route.ts
+ * Warms the sitemap Redis cache every hour so /sitemap.xml is always fast.
+ * Also pre-warms the most recent 5 article OG images via self-fetch.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { PageCache }                      from '../../../../lib/news/page-cache';
+import { getSitemapArticles }             from '../../../../lib/news/sanity-queries';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+const BASE_URL    = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cryptobrainnews.com';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (req.headers.get('authorization') !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  }
+
+  const cache = new PageCache();
+
+  // Re-warm sitemap data
+  const articles = await cache.getOrSet('sitemap', 'articles', () => getSitemapArticles());
+
+  // Pre-warm OG images for the 5 most recent articles (fire-and-forget)
+  const recent = articles.data.slice(0, 5);
+  void Promise.allSettled(
+    recent.map(({ slug }: { slug: string }) =>
+      fetch(`${BASE_URL}/api/og?slug=${encodeURIComponent(slug)}`, { method: 'GET' }),
+    ),
+  );
+
+  return NextResponse.json({
+    ok:             true,
+    articlesCached: articles.data.length,
+    ogPrewarmed:    recent.length,
+    at:             new Date().toISOString(),
+  });
+}
+
+--- src/app/api/cron/social/route.ts ---
+/**
+ * app/api/cron/social/route.ts
+ * Vercel Cron handler — runs every minute to process due social posts.
+ *
+ * vercel.json entry:
+ *   { "path": "/api/cron/social", "schedule": "* * * * *" }
+ *
+ * Auth: Vercel automatically sets Authorization: Bearer <CRON_SECRET>
+ * on cron-invoked routes. We verify this.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { SocialScheduler }                from '../../../../lib/social/scheduler';
+import { TwitterThreadPublisher }          from '../../../../lib/social/twitter-thread';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const auth = req.headers.get('authorization');
+  if (auth !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  }
+
+  const scheduler = new SocialScheduler();
+  const creds = {
+    apiKey:            process.env.TWITTER_API_KEY             ?? '',
+    apiSecret:         process.env.TWITTER_API_SECRET          ?? '',
+    accessToken:       process.env.TWITTER_ACCESS_TOKEN        ?? '',
+    accessTokenSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET ?? '',
+    bearerToken:       process.env.TWITTER_BEARER_TOKEN        ?? '',
+  };
+
+  const publisher = creds.apiKey ? new TwitterThreadPublisher(creds) : null;
+
+  const result = await scheduler.processDueJobs({
+    twitter_thread: publisher
+      ? async (job) => {
+          if (job.channel !== 'twitter_thread') return;
+          await publisher.publish({
+            article:       job.payload,
+            pipelineRunId: job.pipelineRunId,
+          });
+        }
+      : undefined,
+  });
+
+  return NextResponse.json({ ok: true, ...result });
+}
+
+--- src/app/api/cron/broadcast-drain/route.ts ---
+/**
+ * app/api/cron/broadcast-drain/route.ts
+ * Drains Telegram + Newsletter retry queues every 15 minutes.
+ * Handles transient failures from the daily pipeline run.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { TelegramBroadcaster }            from '../../../../lib/news/telegram';
+import { NewsletterService }              from '../../../../lib/news/newsletter';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (req.headers.get('authorization') !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+  }
+
+  const results: Record<string, unknown> = {};
+
+  // Telegram drain
+  if (process.env.TELEGRAM_BOT_TOKEN) {
+    const tg         = new TelegramBroadcaster(process.env.TELEGRAM_BOT_TOKEN);
+    results['telegram'] = await tg.drainRetries();
+  }
+
+  // Newsletter drain
+  if (process.env.RESEND_API_KEY) {
+    const nl            = new NewsletterService(process.env.RESEND_API_KEY);
+    results['newsletter'] = await nl.drainRetries();
+  }
+
+  return NextResponse.json({ ok: true, drains: results, at: new Date().toISOString() });
+}
+
+--- src/app/api/webhooks/stripe/route.ts ---
+/**
+ * app/api/webhooks/stripe/route.ts
+ * Stripe webhook endpoint.
+ *
+ * CRITICAL: Must use the raw request body for signature verification.
+ * Next.js App Router returns ReadableStream — we must buffer it manually.
+ * Do NOT parse with req.json() before verifying the signature.
+ *
+ * Idempotency: Stripe may retry webhooks. handleWebhookEvent() uses
+ * Redis to persist subscription state (last-write-wins is safe for
+ * subscription events since Stripe sends them in order).
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { handleWebhookEvent }             from '../../../../lib/monetisation/stripe';
+
+// Disable Next.js body parsing — required for Stripe signature verification
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const signature = req.headers.get('stripe-signature');
+  if (!signature) {
+    return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+  }
+
+  // Buffer the raw body as a string
+  let rawBody: string;
+  try {
+    const buffer = await req.arrayBuffer();
+    rawBody = new TextDecoder('utf-8').decode(buffer);
+  } catch {
+    return NextResponse.json({ error: 'Failed to read request body' }, { status: 400 });
+  }
+
+  try {
+    const { handled, event } = await handleWebhookEvent(rawBody, signature);
+    return NextResponse.json({ received: true, handled, event });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+
+    // 400 on invalid signature (tells Stripe to stop retrying this exact payload)
+    if (message.includes('signature')) {
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+
+    // 500 on processing errors (tells Stripe to retry)
+    console.error('[stripe-webhook] processing error', { message });
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
+}
+
+--- src/lib/monetisation/stripe.ts ---
+/**
+ * lib/monetisation/stripe.ts
+ * Stripe Pro subscription integration – dynamic import to survive missing modules.
+ */
+import { Redis }   from '@upstash/redis';
+
+// ─── Config ───────────────────────────────────────────────────────────────────
+const STRIPE_SECRET_KEY     = process.env.STRIPE_SECRET_KEY ?? '';
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? '';
+const BASE_URL              = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cryptobrainnews.com';
+
+export const PRICE_IDS = {
+  pro_monthly:  process.env.STRIPE_PRO_MONTHLY_PRICE_ID  ?? '',
+  pro_yearly:   process.env.STRIPE_PRO_YEARLY_PRICE_ID   ?? '',
+} as const;
+
+export type PricePlan = keyof typeof PRICE_IDS;
+export type SubscriptionTier   = 'free' | 'pro' | 'team';
+export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete';
+
+export interface UserSubscription {
+  userId:         string;
+  tier:           SubscriptionTier;
+  status:         SubscriptionStatus;
+  customerId:     string;
+  subscriptionId: string;
+  priceId:        string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd:boolean;
+}
+
+export interface CheckoutSessionResult {
+  sessionId: string;
+  url:       string;
+}
+
+export interface PortalSessionResult {
+  url: string;
+}
+
+// ─── Redis helpers ────────────────────────────────────────────────────────────
+const SUB_KEY_PREFIX   = 'sub:';
+const SUB_TTL_SECONDS  = 60 * 60 * 24;
+
+function subKey(userId: string): string {
+  return SUB_KEY_PREFIX + userId;
+}
+
+// ─── Stripe client (lazy dynamic import – survives missing package at build) ──
+let _Stripe: any = null;   // eslint-disable-line @typescript-eslint/no-explicit-any
+
+async function getStripe(): Promise<any> {  // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (_Stripe) return _Stripe;
+    try {
+    const mod = await import('stripe');
+    const Stripe = mod.default ?? mod;
+    _Stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2026-03-25.dahlia' });
+    return _Stripe;
+  } catch (err: unknown) {
+    
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Stripe is not available: ${message}. Please run 'npm install stripe' and ensure it's in your deployment.`);
+  }
+}
+
+// ─── Subscription state store ─────────────────────────────────────────────────
+export class SubscriptionStore {
+  private readonly redis: Redis;
+
+  constructor() {
+    this.redis = Redis.fromEnv();
+  }
+
+  async get(userId: string): Promise<UserSubscription | null> {
+    return this.redis.get<UserSubscription>(subKey(userId));
+  }
+
+  async set(sub: UserSubscription): Promise<void> {
+    await this.redis.set(subKey(sub.userId), sub, { ex: SUB_TTL_SECONDS });
+  }
+
+  async isProOrAbove(userId: string): Promise<boolean> {
+    const sub = await this.get(userId);
+    if (!sub) return false;
+    return (
+      (sub.tier === 'pro' || sub.tier === 'team') &&
+      (sub.status === 'active' || sub.status === 'trialing')
+    );
+  }
+
+  async findByCustomerId(customerId: string): Promise<UserSubscription | null> {
+    const keys = await this.redis.keys(`${SUB_KEY_PREFIX}*`);
+    for (const key of keys) {
+      const sub = await this.redis.get<UserSubscription>(key);
+      if (sub?.customerId === customerId) return sub;
+    }
+    return null;
+  }
+}
+
+// ─── Checkout ─────────────────────────────────────────────────────────────────
+export async function createCheckoutSession(
+  userId:    string,
+  userEmail: string,
+  plan:      PricePlan,
+): Promise<CheckoutSessionResult> {
+  const stripe  = await getStripe();
+  const priceId = PRICE_IDS[plan];
+  if (!priceId) throw new Error(`Price ID not configured for plan: ${plan}`);
+
+  const session = await stripe.checkout.sessions.create({
+    mode:                'subscription',
+    customer_email:      userEmail,
+    line_items:          [{ price: priceId, quantity: 1 }],
+    success_url:         `${BASE_URL}/pro/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url:          `${BASE_URL}/pro?cancelled=true`,
+    allow_promotion_codes: true,
+    subscription_data: {
+      trial_period_days: 7,
+      metadata:          { userId },
+    },
+    metadata: { userId, plan },
+    client_reference_id: userId,
+  });
+
+  return { sessionId: session.id, url: session.url ?? '' };
+}
+
+// ─── Customer Portal ──────────────────────────────────────────────────────────
+export async function createPortalSession(
+  userId: string,
+): Promise<PortalSessionResult> {
+  const stripe = await getStripe();
+  const store  = new SubscriptionStore();
+  const sub    = await store.get(userId);
+
+  if (!sub?.customerId) {
+    throw new Error(`No Stripe customer found for user ${userId}`);
+  }
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer:   sub.customerId,
+    return_url: `${BASE_URL}/pro`,
+  });
+
+  return { url: session.url };
+}
+
+// ─── Webhook event handler ────────────────────────────────────────────────────
+function tierFromPriceId(priceId: string): SubscriptionTier {
+  if (priceId === PRICE_IDS.pro_monthly || priceId === PRICE_IDS.pro_yearly) return 'pro';
+  return 'free';
+}
+
+function mapStripeStatus(status: string): SubscriptionStatus {
+  const map: Record<string, SubscriptionStatus> = {
+    active:             'active',
+    trialing:           'trialing',
+    past_due:           'past_due',
+    canceled:           'canceled',
+    incomplete:         'incomplete',
+    incomplete_expired: 'canceled',
+    unpaid:             'past_due',
+    paused:             'canceled',
+  };
+  return map[status] ?? 'canceled';
+}
+
+export async function handleWebhookEvent(
+  rawBody:   string,
+  signature: string,
+): Promise<{ handled: boolean; event: string }> {
+  const stripe = await getStripe();
+  const store  = new SubscriptionStore();
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET);
+  } catch {
+    throw new Error('Invalid Stripe webhook signature');
+  }
+
+  const HANDLED_EVENTS = new Set([
+    'customer.subscription.created',
+    'customer.subscription.updated',
+    'customer.subscription.deleted',
+    'checkout.session.completed',
+  ]);
+
+  if (!HANDLED_EVENTS.has(event.type)) {
+    return { handled: false, event: event.type };
+  }
+
+  if (
+    event.type === 'customer.subscription.created' ||
+    event.type === 'customer.subscription.updated' ||
+    event.type === 'customer.subscription.deleted'
+  ) {
+    const subscription = event.data.object;
+    const userId       = subscription.metadata['userId'] ?? '';
+    if (!userId) return { handled: false, event: event.type };
+
+    const priceId = subscription.items.data[0]?.price.id ?? '';
+    const periodEnd = subscription.current_period_end;
+    
+    await store.set({
+      userId,
+      tier:             event.type === 'customer.subscription.deleted' ? 'free' : tierFromPriceId(priceId),
+      status:           mapStripeStatus(subscription.status),
+      customerId:       subscription.customer as string,
+      subscriptionId:   subscription.id,
+      priceId,
+      currentPeriodEnd: new Date(periodEnd * 1000).toISOString(),
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    });
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const userId     = session.metadata?.['userId'] ?? session.client_reference_id ?? '';
+    const customerId = session.customer as string;
+    if (userId && customerId) {
+      const existing = await store.get(userId);
+      if (!existing) {
+        await store.set({
+          userId,
+          tier:             'free',
+          status:           'incomplete',
+          customerId,
+          subscriptionId:   '',
+          priceId:          '',
+          currentPeriodEnd: new Date().toISOString(),
+          cancelAtPeriodEnd: false,
+        });
+      }
+    }
+  }
+
+  return { handled: true, event: event.type };
+}
+
+export const subscriptionStore = new SubscriptionStore();
+
+--- src/lib/ops/env-audit.ts ---
+/**
+ * lib/ops/env-audit.ts
+ * Environment variable validator.
+ *
+ * Run at module initialisation in any server entrypoint (cron routes,
+ * daily-article.ts) to catch misconfiguration early — before a silent
+ * failure surfaces at 6 AM in production.
+ *
+ * Usage:
+ *   import { auditEnv } from '../lib/ops/env-audit';
+ *   auditEnv('pipeline');   // throws if any REQUIRED var is missing
+ *
+ * Severity levels:
+ *   REQUIRED — missing = throw (hard stop)
+ *   WARN     — missing = console.warn (degraded but runnable)
+ *   INFO     — missing = note in audit report only
+ *
+ * The complete env var reference is embedded below as the
+ * authoritative source of truth for .env.local and Vercel dashboard.
+ */
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type EnvSeverity = 'REQUIRED' | 'WARN' | 'INFO';
+type EnvContext  =
+  | 'all'
+  | 'pipeline'
+  | 'social'
+  | 'monetisation'
+  | 'newsletter'
+  | 'health';
+
+interface EnvSpec {
+  key:         string;
+  severity:    EnvSeverity;
+  contexts:    EnvContext[];
+  description: string;
+  example:     string;
+  secret:      boolean;   // true = never log the value
+}
+
+// ─── Complete environment variable manifest ───────────────────────────────────
+
+export const ENV_MANIFEST: EnvSpec[] = [
+  // ── Sanity ─────────────────────────────────────────────────────────────────
+  {
+    key: 'NEXT_PUBLIC_SANITY_PROJECT_ID', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Sanity project ID (public)',
+    example: 'abc123de', secret: false,
+  },
+  {
+    key: 'NEXT_PUBLIC_SANITY_DATASET', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Sanity dataset name',
+    example: 'production', secret: false,
+  },
+  {
+    key: 'SANITY_API_TOKEN', severity: 'REQUIRED', contexts: ['pipeline'],
+    description: 'Sanity write token — Editor role minimum',
+    example: 'sk...', secret: true,
+  },
+
+  // ── Upstash Redis ──────────────────────────────────────────────────────────
+  {
+    key: 'UPSTASH_REDIS_REST_URL', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Upstash Redis REST endpoint',
+    example: 'https://xxx.upstash.io', secret: false,
+  },
+  {
+    key: 'UPSTASH_REDIS_REST_TOKEN', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Upstash Redis REST token',
+    example: 'AX...', secret: true,
+  },
+
+  // ── AI Pipeline ────────────────────────────────────────────────────────────
+  {
+    key: 'GROK_API_KEY', severity: 'REQUIRED', contexts: ['pipeline'],
+    description: 'xAI Grok API key for summarisation stage',
+    example: 'xai-...', secret: true,
+  },
+  {
+    key: 'DEEPSEEK_API_KEY', severity: 'WARN', contexts: ['pipeline'],
+    description: 'DeepSeek API key — pipeline degrades without it',
+    example: 'sk-...', secret: true,
+  },
+  {
+    key: 'GEMINI_API_KEY', severity: 'WARN', contexts: ['pipeline'],
+    description: 'Google Gemini API key — GEO enhancer + polish stage',
+    example: 'AIza...', secret: true,
+  },
+
+  // ── RSS Feeds ──────────────────────────────────────────────────────────────
+  {
+    key: 'RSS_FEED_URLS', severity: 'REQUIRED', contexts: ['pipeline'],
+    description: 'Comma-separated list of RSS feed URLs to ingest',
+    example: 'https://cointelegraph.com/rss,https://decrypt.co/feed', secret: false,
+  },
+  {
+    key: 'MAX_ARTICLES_PER_RUN', severity: 'INFO', contexts: ['pipeline'],
+    description: 'Max articles to process per daily run (default: 5)',
+    example: '5', secret: false,
+  },
+
+  // ── Site ───────────────────────────────────────────────────────────────────
+  {
+    key: 'NEXT_PUBLIC_SITE_URL', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Canonical site URL (no trailing slash)',
+    example: 'https://cryptobrainnews.com', secret: false,
+  },
+  {
+    key: 'NEXT_PUBLIC_TWITTER_URL', severity: 'INFO', contexts: ['all'],
+    description: 'Twitter/X profile URL for schema sameAs',
+    example: 'https://x.com/CryptoBrainNews', secret: false,
+  },
+  {
+    key: 'NEXT_PUBLIC_TWITTER_HANDLE', severity: 'INFO', contexts: ['all'],
+    description: 'Twitter/X handle for Twitter Card meta tag',
+    example: '@CryptoBrainNews', secret: false,
+  },
+  {
+    key: 'NEXT_PUBLIC_TELEGRAM_URL', severity: 'INFO', contexts: ['all'],
+    description: 'Telegram channel URL for schema sameAs',
+    example: 'https://t.me/cryptobrainnews', secret: false,
+  },
+
+  // ── Telegram ───────────────────────────────────────────────────────────────
+  {
+    key: 'TELEGRAM_BOT_TOKEN', severity: 'WARN', contexts: ['pipeline', 'social', 'health'],
+    description: 'Telegram Bot API token for broadcasting + ops alerts',
+    example: '123456:ABC-...', secret: true,
+  },
+  {
+    key: 'TELEGRAM_CHAT_ID', severity: 'WARN', contexts: ['pipeline', 'social'],
+    description: 'Telegram channel/chat ID for article broadcasts',
+    example: '-1001234567890', secret: false,
+  },
+  {
+    key: 'TELEGRAM_OPS_CHAT_ID', severity: 'WARN', contexts: ['health'],
+    description: 'Separate Telegram chat for ops/health alerts (can equal TELEGRAM_CHAT_ID)',
+    example: '-1009876543210', secret: false,
+  },
+
+  // ── Twitter / X ────────────────────────────────────────────────────────────
+  {
+    key: 'TWITTER_API_KEY', severity: 'WARN', contexts: ['social'],
+    description: 'Twitter API v2 consumer key (OAuth 1.0a)',
+    example: 'abc...', secret: true,
+  },
+  {
+    key: 'TWITTER_API_SECRET', severity: 'WARN', contexts: ['social'],
+    description: 'Twitter API v2 consumer secret',
+    example: 'xyz...', secret: true,
+  },
+  {
+    key: 'TWITTER_ACCESS_TOKEN', severity: 'WARN', contexts: ['social'],
+    description: 'Twitter OAuth 1.0a access token (user context)',
+    example: '123456-abc...', secret: true,
+  },
+  {
+    key: 'TWITTER_ACCESS_TOKEN_SECRET', severity: 'WARN', contexts: ['social'],
+    description: 'Twitter OAuth 1.0a access token secret',
+    example: 'xyz...', secret: true,
+  },
+  {
+    key: 'TWITTER_BEARER_TOKEN', severity: 'INFO', contexts: ['social'],
+    description: 'Twitter Bearer token (app-only read access)',
+    example: 'AAAA...', secret: true,
+  },
+
+  // ── Stripe ─────────────────────────────────────────────────────────────────
+  {
+    key: 'STRIPE_SECRET_KEY', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Stripe secret key — server-only, never expose to browser',
+    example: 'sk_live_...', secret: true,
+  },
+  {
+    key: 'STRIPE_WEBHOOK_SECRET', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Stripe webhook signing secret from dashboard → Webhooks',
+    example: 'whsec_...', secret: true,
+  },
+  {
+    key: 'STRIPE_PRO_MONTHLY_PRICE_ID', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Stripe Price ID for Pro monthly ($19/mo)',
+    example: 'price_1...', secret: false,
+  },
+  {
+    key: 'STRIPE_PRO_YEARLY_PRICE_ID', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Stripe Price ID for Pro yearly ($190/yr)',
+    example: 'price_1...', secret: false,
+  },
+
+  // ── Newsletter (Resend) ────────────────────────────────────────────────────
+  {
+    key: 'RESEND_API_KEY', severity: 'WARN', contexts: ['newsletter'],
+    description: 'Resend API key for transactional + newsletter sends',
+    example: 're_...', secret: true,
+  },
+  {
+    key: 'NEWSLETTER_FROM', severity: 'INFO', contexts: ['newsletter'],
+    description: 'From address for newsletter sends',
+    example: 'news@cryptobrainnews.com', secret: false,
+  },
+
+  // ── Affiliate ──────────────────────────────────────────────────────────────
+  {
+    key: 'AFFILIATE_LEDGER_REF', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Ledger affiliate referral code',
+    example: 'CBN2024', secret: false,
+  },
+  {
+    key: 'AFFILIATE_BINANCE_REF', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Binance referral code',
+    example: 'XXXXXXXX', secret: false,
+  },
+  {
+    key: 'AFFILIATE_BYBIT_REF', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Bybit affiliate ID',
+    example: '12345', secret: false,
+  },
+
+  // ── Auth / Security ────────────────────────────────────────────────────────
+  {
+    key: 'JWT_SECRET', severity: 'REQUIRED', contexts: ['all'],
+    description: 'HS256 secret for session JWT signing (min 32 bytes)',
+    example: '<random 64-char hex>', secret: true,
+  },
+  {
+    key: 'CRON_SECRET', severity: 'REQUIRED', contexts: ['all'],
+    description: 'Shared secret for Vercel Cron route auth',
+    example: '<random 32-char hex>', secret: true,
+  },
+  {
+    key: 'SESSION_COOKIE_NAME', severity: 'INFO', contexts: ['all'],
+    description: 'Name of the session cookie (default: cbn_session)',
+    example: 'cbn_session', secret: false,
+  },
+  {
+    key: 'IP_HASH_SALT', severity: 'WARN', contexts: ['monetisation'],
+    description: 'Salt for GDPR-compliant IP hashing in affiliate analytics',
+    example: '<random 32-char hex>', secret: true,
+  },
+
+  // ── Dead letter ────────────────────────────────────────────────────────────
+  {
+    key: 'DEAD_LETTER_DIR', severity: 'INFO', contexts: ['pipeline'],
+    description: 'Directory for dead-letter JSON files (default: scripts/dead-letter)',
+    example: 'scripts/dead-letter', secret: false,
+  },
+];
+
+// ─── Auditor ──────────────────────────────────────────────────────────────────
+
+export interface AuditResult {
+  context:  EnvContext;
+  missing:  Array<{ key: string; severity: EnvSeverity; description: string }>;
+  present:  string[];
+  warnings: string[];
+  errors:   string[];
+  passed:   boolean;
+}
+
+export function auditEnv(context: EnvContext = 'all'): AuditResult {
+  const relevant = ENV_MANIFEST.filter(
+    (s) => s.contexts.includes('all') || s.contexts.includes(context),
+  );
+
+  const result: AuditResult = {
+    context,
+    missing:  [],
+    present:  [],
+    warnings: [],
+    errors:   [],
+    passed:   true,
+  };
+
+  for (const spec of relevant) {
+    const val = process.env[spec.key];
+
+    if (!val) {
+      result.missing.push({ key: spec.key, severity: spec.severity, description: spec.description });
+
+      if (spec.severity === 'REQUIRED') {
+        result.errors.push(`REQUIRED env var missing: ${spec.key} — ${spec.description}`);
+        result.passed = false;
+      } else if (spec.severity === 'WARN') {
+        result.warnings.push(`WARN env var missing: ${spec.key} — ${spec.description}`);
+      }
+    } else {
+      // Never log secret values
+      result.present.push(spec.secret ? `${spec.key}=<redacted>` : `${spec.key}=${val}`);
+    }
+  }
+
+  // Throw on any REQUIRED miss — hard fail at startup
+  if (!result.passed) {
+    throw new Error(
+      `[env-audit] ${context} context failed:\n` +
+      result.errors.map((e) => `  ✗ ${e}`).join('\n'),
+    );
+  }
+
+  // Emit warnings to stdout (captured by Vercel logs)
+  for (const w of result.warnings) {
+    process.stdout.write(JSON.stringify({ level: 'warn', msg: w }) + '\n');
+  }
+
+  return result;
+}
+
+/**
+ * Generate a .env.example file content from the manifest.
+ * Run: npx ts-node -e "require('./lib/ops/env-audit').printEnvExample()"
+ */
+export function printEnvExample(): void {
+  const lines: string[] = [
+    '# CryptoBrainNews — environment variables',
+    '# Generated from lib/ops/env-audit.ts — do not edit manually',
+    '# Copy to .env.local and fill in values',
+    '',
+  ];
+
+  let lastContext = '';
+  for (const spec of ENV_MANIFEST) {
+    const ctx = spec.contexts.filter((c) => c !== 'all')[0] ?? 'all';
+    if (ctx !== lastContext) {
+      lines.push(`# ── ${ctx.toUpperCase()} ` + '─'.repeat(60 - ctx.length));
+      lastContext = ctx;
+    }
+    lines.push(`# ${spec.description}`);
+    lines.push(`# Severity: ${spec.severity}  |  Example: ${spec.example}`);
+    lines.push(`${spec.key}=`);
+    lines.push('');
+  }
+
+  process.stdout.write(lines.join('\n'));
+}
+
+--- src/lib/news/sanity-client.ts ---
+/**
+ * lib/news/sanity-client.ts
+ * Two purposefully-separated Sanity clients:
+ *
+ *   readClient  — useCdn: true, no token
+ *                 Hits Sanity's global CDN edge cache.
+ *                 Use for ALL read queries (category pages, search, article fetch).
+ *                 Latency: ~20–50 ms globally vs ~200–400 ms for API.
+ *
+ *   writeClient — useCdn: false, SANITY_API_TOKEN required
+ *                 Bypasses CDN, talks directly to Sanity API.
+ *                 Use ONLY in pipeline scripts (daily-article.ts) and
+ *                 server-side mutations. Never ship to the browser.
+ *
+ * Separation prevents the common mistake of accidentally using an
+ * authenticated token on CDN requests (which disables CDN caching).
+ */
+
+import { createClient, type SanityClient, type QueryParams } from '@sanity/client';
+
+const PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '';
+const DATASET    = process.env.NEXT_PUBLIC_SANITY_DATASET    ?? 'production';
+const API_TOKEN  = process.env.SANITY_API_TOKEN              ?? '';
+const API_VERSION = '2024-01-01';
+
+if (!PROJECT_ID) {
+  throw new Error('NEXT_PUBLIC_SANITY_PROJECT_ID is not set');
+}
+
+// ─── CDN read client (public, no token) ──────────────────────────────────────
+export const readClient: SanityClient = createClient({
+  projectId:  PROJECT_ID,
+  dataset:    DATASET,
+  apiVersion: API_VERSION,
+  useCdn:     true,       // ← critical: enables Sanity CDN edge caching
+  token:      undefined,  // ← critical: token disables CDN – never pass here
+  perspective: 'published',
+});
+
+// ─── Direct API write client (server-only, never import on client) ───────────
+export const writeClient: SanityClient = createClient({
+  projectId:  PROJECT_ID,
+  dataset:    DATASET,
+  apiVersion: API_VERSION,
+  useCdn:     false,      // ← must be false for mutations
+  token:      API_TOKEN,
+});
+
+// ─── Query helper with timeout ────────────────────────────────────────────────
+const QUERY_TIMEOUT_MS = 10_000;
+
+export async function sanityFetch<T>(
+  query: string,
+  params: QueryParams = {},
+  client: SanityClient = readClient,
+): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
+  try {
+    return await client.fetch<T>(query, params, {
+      signal: controller.signal as AbortSignal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// ─── Health check (used by /api/health route) ─────────────────────────────────
+export async function sanityHealthCheck(): Promise<boolean> {
+  try {
+    await sanityFetch<unknown>('*[_type == "article"][0]._id');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+--- src/lib/supabase-server.ts ---
+// src/lib/supabase-server.ts
+// ─── Server-only Supabase client ─────────────────────────────────────────
+import 'server-only';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+
+let _client: SupabaseClient | null = null;
+
+export function getServerSupabase(): SupabaseClient {
+  if (_client) return _client;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error('[Supabase] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  }
+
+  _client = createClient(url, key, {
+    auth: { persistSession: false },
+  });
+  return _client;
+}
+
+--- src/lib/news/broadcast-queue.ts ---
+/**
+ * lib/news/broadcast-queue.ts
+ * Redis-backed dead-letter queue for Telegram and Newsletter broadcasts.
+ *
+ * On first failure:    item pushed to retry list with attempt count = 1
+ * On retry (cron):     up to MAX_RETRIES attempts with exponential backoff check
+ * After MAX_RETRIES:   item moved to dead-letter list (permanent, inspectable)
+ *
+ * Queue keys:
+ *   broadcast:retry:<channel>   LIST  – pending retries (LPUSH/RPOP)
+ *   broadcast:dead:<channel>    LIST  – permanent failures (LPUSH only)
+ *   broadcast:inflight:<id>     STRING – per-item lock (prevents double-send)
+ *
+ * Designed to be drained by a separate cron job or at the end of the
+ * daily pipeline run via drainRetryQueue().
+ */
+
+import { Redis } from '@upstash/redis';
+
+export type BroadcastChannel = 'telegram' | 'newsletter';
+
+export interface BroadcastJob<T = unknown> {
+  id: string;           // uuid-v4 from the original pipeline run
+  channel: BroadcastChannel;
+  payload: T;
+  attempts: number;
+  firstFailedAt: string;
+  lastFailedAt: string;
+  lastError: string;
+}
+
+const MAX_RETRIES = 4;
+const INFLIGHT_TTL_SECONDS = 120; // prevent double-send within 2 min
+
+function retryKey(channel: BroadcastChannel): string  { return `broadcast:retry:${channel}`; }
+function deadKey(channel: BroadcastChannel): string   { return `broadcast:dead:${channel}`; }
+function inflightKey(id: string): string               { return `broadcast:inflight:${id}`; }
+
+export class BroadcastQueue {
+  private readonly redis: Redis;
+
+  constructor() {
+    this.redis = Redis.fromEnv();
+  }
+
+  /**
+   * Push a failed broadcast onto the retry queue.
+   * If the job has already hit MAX_RETRIES, send straight to dead-letter.
+   */
+  async enqueueFailure<T>(
+    job: Omit<BroadcastJob<T>, 'lastFailedAt'> & { error: string },
+  ): Promise<void> {
+    const updated: BroadcastJob<T> = {
+      ...job,
+      attempts: job.attempts,
+      lastFailedAt: new Date().toISOString(),
+      lastError: job.error,
+    };
+
+    if (updated.attempts >= MAX_RETRIES) {
+      await this.redis.lpush(deadKey(job.channel), JSON.stringify(updated));
+    } else {
+      await this.redis.lpush(retryKey(job.channel), JSON.stringify(updated));
+    }
+  }
+
+  /**
+   * Drain the retry queue for a given channel.
+   * Calls sendFn for each job; on success removes from queue, on failure
+   * re-enqueues with incremented attempt count.
+   *
+   * Returns counts for observability.
+   */
+  async drainRetryQueue<T>(
+    channel: BroadcastChannel,
+    sendFn: (payload: T) => Promise<void>,
+  ): Promise<{ sent: number; requeued: number; deadLettered: number }> {
+    const counts = { sent: 0, requeued: 0, deadLettered: 0 };
+
+    // Drain entire queue in one pass (snapshot length to avoid infinite loop)
+    const length = await this.redis.llen(retryKey(channel));
+    if (length === 0) return counts;
+
+    for (let i = 0; i < length; i++) {
+      const raw = await this.redis.rpop<string>(retryKey(channel));
+      if (!raw) break;
+
+      let job: BroadcastJob<T>;
+      try {
+        job = JSON.parse(raw) as BroadcastJob<T>;
+      } catch {
+        // Malformed entry – drop it
+        continue;
+      }
+
+      // Idempotency lock: skip if another worker is processing this id
+      const locked = await this.redis.set(inflightKey(job.id), '1', {
+        nx: true,
+        ex: INFLIGHT_TTL_SECONDS,
+      });
+      if (!locked) continue;
+
+      try {
+        await sendFn(job.payload);
+        counts.sent += 1;
+        // Success – do NOT re-enqueue; inflight key expires naturally
+      } catch (err) {
+        counts.requeued += 1;
+        const nextAttempts = job.attempts + 1;
+        if (nextAttempts >= MAX_RETRIES) counts.deadLettered += 1;
+
+        await this.enqueueFailure<T>({
+          ...job,
+          attempts: nextAttempts,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        // Release inflight lock so retry can proceed after backoff
+        await this.redis.del(inflightKey(job.id));
+      }
+    }
+
+    return counts;
+  }
+
+  /** Inspect dead-letter items (for dashboard/alerting). */
+  async peekDeadLetters(channel: BroadcastChannel, count = 20): Promise<BroadcastJob[]> {
+    const items = await this.redis.lrange(deadKey(channel), 0, count - 1);
+    return items.map((raw) => JSON.parse(raw as string) as BroadcastJob);
+  }
+
+  /** Count pending retries. Useful for health-check endpoints. */
+  async pendingCount(channel: BroadcastChannel): Promise<number> {
+    return this.redis.llen(retryKey(channel));
+  }
+}
+
+--- src/lib/news/telegram.ts ---
+/**
+ * lib/news/telegram.ts
+ * Telegram broadcast with:
+ *   - Rate-limit awareness (Telegram: 30 msg/s globally, 1 msg/s per chat)
+ *   - Automatic dead-letter queuing on failure
+ *   - Message chunking for articles exceeding 4096-char limit
+ *   - HTML parse mode with safe escaping
+ */
+
+import { randomUUID } from 'crypto';
+import { BroadcastQueue } from './broadcast-queue';
+import type { TelegramPayload } from './types';
+
+const TELEGRAM_API = 'https://api.telegram.org';
+const MAX_MSG_LENGTH = 4096;
+// Minimum delay between messages to the same chat (1050ms > Telegram's 1/s limit)
+const INTER_MESSAGE_DELAY_MS = 1050;
+
+export class TelegramBroadcaster {
+  private readonly botToken: string;
+  private readonly queue: BroadcastQueue;
+
+  constructor(botToken: string) {
+    if (!botToken) throw new Error('TELEGRAM_BOT_TOKEN is required');
+    this.botToken = botToken;
+    this.queue = new BroadcastQueue();
+  }
+
+  /**
+   * Send a message. On failure, enqueues for retry rather than throwing.
+   * Returns true if sent successfully, false if queued for retry.
+   */
+  async send(
+    payload: TelegramPayload,
+    runId?: string,
+  ): Promise<boolean> {
+    const id = runId ?? randomUUID();
+    const chunks = this.chunkMessage(payload.text, MAX_MSG_LENGTH);
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunkPayload: TelegramPayload = {
+        ...payload,
+        text: chunks[i],
+      };
+      try {
+        await this.sendRaw(chunkPayload);
+        if (i < chunks.length - 1) {
+          await new Promise((r) => setTimeout(r, INTER_MESSAGE_DELAY_MS));
+        }
+      } catch (err) {
+        await this.queue.enqueueFailure({
+          id: `${id}-chunk${i}`,
+          channel: 'telegram',
+          payload: chunkPayload,
+          attempts: 1,
+          firstFailedAt: new Date().toISOString(),
+          error: err instanceof Error ? err.message : String(err),
+          lastError: '',
+        });
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Drain retry queue – call from end of daily pipeline run or a separate cron. */
+  async drainRetries(): Promise<{ sent: number; requeued: number; deadLettered: number }> {
+    return this.queue.drainRetryQueue<TelegramPayload>('telegram', (payload) =>
+      this.sendRaw(payload),
+    );
+  }
+
+  /** Escape HTML special chars for Telegram HTML parse mode. */
+  static escapeHTML(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  /** Format a published article for Telegram. */
+  static formatArticleMessage(
+    title: string,
+    summary: string,
+    slug: string,
+    tags: string[],
+  ): TelegramPayload {
+    const tagLine = tags.slice(0, 5).map((t) => `#${t.replace(/\s+/g, '')}`).join(' ');
+    const url = `https://cryptobrainnews.com/news/${slug}`;
+    const text =
+      `📰 <b>${TelegramBroadcaster.escapeHTML(title)}</b>\n\n` +
+      `${TelegramBroadcaster.escapeHTML(summary)}\n\n` +
+      `${tagLine}\n\n` +
+      `<a href="${url}">Read full article →</a>`;
+
+    return { chatId: process.env.TELEGRAM_CHAT_ID ?? '', text, parseMode: 'HTML', disableWebPagePreview: false };
+  }
+
+  private async sendRaw(payload: TelegramPayload): Promise<void> {
+    const res = await fetch(`${TELEGRAM_API}/bot${this.botToken}/sendMessage`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(15_000),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: payload.chatId,
+        text: payload.text,
+        parse_mode: payload.parseMode,
+        disable_web_page_preview: payload.disableWebPagePreview ?? false,
+      }),
+    });
+
+    if (res.status === 429) {
+      // Respect Retry-After header
+      const retryAfter = Number(res.headers.get('Retry-After') ?? '5');
+      await new Promise((r) => setTimeout(r, retryAfter * 1000));
+      // One automatic retry on rate-limit
+      return this.sendRaw(payload);
+    }
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Telegram API ${res.status}: ${body}`);
+    }
+  }
+
+  /** Split text at word boundaries without breaking HTML tags. */
+  private chunkMessage(text: string, maxLen: number): string[] {
+    if (text.length <= maxLen) return [text];
+    const chunks: string[] = [];
+    let remaining = text;
+    while (remaining.length > maxLen) {
+      let cutAt = remaining.lastIndexOf('\n', maxLen);
+      if (cutAt < maxLen * 0.5) cutAt = remaining.lastIndexOf(' ', maxLen);
+      if (cutAt <= 0) cutAt = maxLen;
+      chunks.push(remaining.slice(0, cutAt).trim());
+      remaining = remaining.slice(cutAt).trim();
+    }
+    if (remaining) chunks.push(remaining);
+    return chunks;
+  }
+}
+
+--- .gitignore ---
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+# CryptoBrainNews Final
+.env.local
+.next/
+node_modules/
+.vercel/
+.DS_Store
+*.tsbuildinfo
+
+
+--- phase-f2-context.txt ---
+=== CRYPTOBRAINNEWS PHASE F-2 CONTEXT ===
+Generated: Fri May  1 12:06:58 AM CET 2026
+
+--- src/lib/news/telegram.ts ---
+/**
+ * lib/news/telegram.ts
+ * Telegram broadcast with:
+ *   - Rate-limit awareness (Telegram: 30 msg/s globally, 1 msg/s per chat)
+ *   - Automatic dead-letter queuing on failure
+ *   - Message chunking for articles exceeding 4096-char limit
+ *   - HTML parse mode with safe escaping
+ */
+
+import { randomUUID } from 'crypto';
+import { BroadcastQueue } from './broadcast-queue';
+import type { TelegramPayload } from './types';
+
+const TELEGRAM_API = 'https://api.telegram.org';
+const MAX_MSG_LENGTH = 4096;
+// Minimum delay between messages to the same chat (1050ms > Telegram's 1/s limit)
+const INTER_MESSAGE_DELAY_MS = 1050;
+
+export class TelegramBroadcaster {
+  private readonly botToken: string;
+  private readonly queue: BroadcastQueue;
+
+  constructor(botToken: string) {
+    if (!botToken) throw new Error('TELEGRAM_BOT_TOKEN is required');
+    this.botToken = botToken;
+    this.queue = new BroadcastQueue();
+  }
+
+  /**
+   * Send a message. On failure, enqueues for retry rather than throwing.
+   * Returns true if sent successfully, false if queued for retry.
+   */
+  async send(
+    payload: TelegramPayload,
+    runId?: string,
+  ): Promise<boolean> {
+    const id = runId ?? randomUUID();
+    const chunks = this.chunkMessage(payload.text, MAX_MSG_LENGTH);
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunkPayload: TelegramPayload = {
+        ...payload,
+        text: chunks[i],
+      };
+      try {
+        await this.sendRaw(chunkPayload);
+        if (i < chunks.length - 1) {
+          await new Promise((r) => setTimeout(r, INTER_MESSAGE_DELAY_MS));
+        }
+      } catch (err) {
+        await this.queue.enqueueFailure({
+          id: `${id}-chunk${i}`,
+          channel: 'telegram',
+          payload: chunkPayload,
+          attempts: 1,
+          firstFailedAt: new Date().toISOString(),
+          error: err instanceof Error ? err.message : String(err),
+          lastError: '',
+        });
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Drain retry queue – call from end of daily pipeline run or a separate cron. */
+  async drainRetries(): Promise<{ sent: number; requeued: number; deadLettered: number }> {
+    return this.queue.drainRetryQueue<TelegramPayload>('telegram', (payload) =>
+      this.sendRaw(payload),
+    );
+  }
+
+  /** Escape HTML special chars for Telegram HTML parse mode. */
+  static escapeHTML(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  /** Format a published article for Telegram. */
+  static formatArticleMessage(
+    title: string,
+    summary: string,
+    slug: string,
+    tags: string[],
+  ): TelegramPayload {
+    const tagLine = tags.slice(0, 5).map((t) => `#${t.replace(/\s+/g, '')}`).join(' ');
+    const url = `https://cryptobrainnews.com/news/${slug}`;
+    const text =
+      `📰 <b>${TelegramBroadcaster.escapeHTML(title)}</b>\n\n` +
+      `${TelegramBroadcaster.escapeHTML(summary)}\n\n` +
+      `${tagLine}\n\n` +
+      `<a href="${url}">Read full article →</a>`;
+
+    return { chatId: process.env.TELEGRAM_CHAT_ID ?? '', text, parseMode: 'HTML', disableWebPagePreview: false };
+  }
+
+  private async sendRaw(payload: TelegramPayload): Promise<void> {
+    const res = await fetch(`${TELEGRAM_API}/bot${this.botToken}/sendMessage`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(15_000),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: payload.chatId,
+        text: payload.text,
+        parse_mode: payload.parseMode,
+        disable_web_page_preview: payload.disableWebPagePreview ?? false,
+      }),
+    });
+
+    if (res.status === 429) {
+      // Respect Retry-After header
+      const retryAfter = Number(res.headers.get('Retry-After') ?? '5');
+      await new Promise((r) => setTimeout(r, retryAfter * 1000));
+      // One automatic retry on rate-limit
+      return this.sendRaw(payload);
+    }
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Telegram API ${res.status}: ${body}`);
+    }
+  }
+
+  /** Split text at word boundaries without breaking HTML tags. */
+  private chunkMessage(text: string, maxLen: number): string[] {
+    if (text.length <= maxLen) return [text];
+    const chunks: string[] = [];
+    let remaining = text;
+    while (remaining.length > maxLen) {
+      let cutAt = remaining.lastIndexOf('\n', maxLen);
+      if (cutAt < maxLen * 0.5) cutAt = remaining.lastIndexOf(' ', maxLen);
+      if (cutAt <= 0) cutAt = maxLen;
+      chunks.push(remaining.slice(0, cutAt).trim());
+      remaining = remaining.slice(cutAt).trim();
+    }
+    if (remaining) chunks.push(remaining);
+    return chunks;
+  }
+}
+
+--- src/lib/news/broadcast-queue.ts ---
+/**
+ * lib/news/broadcast-queue.ts
+ * Redis-backed dead-letter queue for Telegram and Newsletter broadcasts.
+ *
+ * On first failure:    item pushed to retry list with attempt count = 1
+ * On retry (cron):     up to MAX_RETRIES attempts with exponential backoff check
+ * After MAX_RETRIES:   item moved to dead-letter list (permanent, inspectable)
+ *
+ * Queue keys:
+ *   broadcast:retry:<channel>   LIST  – pending retries (LPUSH/RPOP)
+ *   broadcast:dead:<channel>    LIST  – permanent failures (LPUSH only)
+ *   broadcast:inflight:<id>     STRING – per-item lock (prevents double-send)
+ *
+ * Designed to be drained by a separate cron job or at the end of the
+ * daily pipeline run via drainRetryQueue().
+ */
+
+import { Redis } from '@upstash/redis';
+
+export type BroadcastChannel = 'telegram' | 'newsletter';
+
+export interface BroadcastJob<T = unknown> {
+  id: string;           // uuid-v4 from the original pipeline run
+  channel: BroadcastChannel;
+  payload: T;
+  attempts: number;
+  firstFailedAt: string;
+  lastFailedAt: string;
+  lastError: string;
+}
+
+const MAX_RETRIES = 4;
+const INFLIGHT_TTL_SECONDS = 120; // prevent double-send within 2 min
+
+function retryKey(channel: BroadcastChannel): string  { return `broadcast:retry:${channel}`; }
+function deadKey(channel: BroadcastChannel): string   { return `broadcast:dead:${channel}`; }
+function inflightKey(id: string): string               { return `broadcast:inflight:${id}`; }
+
+export class BroadcastQueue {
+  private readonly redis: Redis;
+
+  constructor() {
+    this.redis = Redis.fromEnv();
+  }
+
+  /**
+   * Push a failed broadcast onto the retry queue.
+   * If the job has already hit MAX_RETRIES, send straight to dead-letter.
+   */
+  async enqueueFailure<T>(
+    job: Omit<BroadcastJob<T>, 'lastFailedAt'> & { error: string },
+  ): Promise<void> {
+    const updated: BroadcastJob<T> = {
+      ...job,
+      attempts: job.attempts,
+      lastFailedAt: new Date().toISOString(),
+      lastError: job.error,
+    };
+
+    if (updated.attempts >= MAX_RETRIES) {
+      await this.redis.lpush(deadKey(job.channel), JSON.stringify(updated));
+    } else {
+      await this.redis.lpush(retryKey(job.channel), JSON.stringify(updated));
+    }
+  }
+
+  /**
+   * Drain the retry queue for a given channel.
+   * Calls sendFn for each job; on success removes from queue, on failure
+   * re-enqueues with incremented attempt count.
+   *
+   * Returns counts for observability.
+   */
+  async drainRetryQueue<T>(
+    channel: BroadcastChannel,
+    sendFn: (payload: T) => Promise<void>,
+  ): Promise<{ sent: number; requeued: number; deadLettered: number }> {
+    const counts = { sent: 0, requeued: 0, deadLettered: 0 };
+
+    // Drain entire queue in one pass (snapshot length to avoid infinite loop)
+    const length = await this.redis.llen(retryKey(channel));
+    if (length === 0) return counts;
+
+    for (let i = 0; i < length; i++) {
+      const raw = await this.redis.rpop<string>(retryKey(channel));
+      if (!raw) break;
+
+      let job: BroadcastJob<T>;
+      try {
+        job = JSON.parse(raw) as BroadcastJob<T>;
+      } catch {
+        // Malformed entry – drop it
+        continue;
+      }
+
+      // Idempotency lock: skip if another worker is processing this id
+      const locked = await this.redis.set(inflightKey(job.id), '1', {
+        nx: true,
+        ex: INFLIGHT_TTL_SECONDS,
+      });
+      if (!locked) continue;
+
+      try {
+        await sendFn(job.payload);
+        counts.sent += 1;
+        // Success – do NOT re-enqueue; inflight key expires naturally
+      } catch (err) {
+        counts.requeued += 1;
+        const nextAttempts = job.attempts + 1;
+        if (nextAttempts >= MAX_RETRIES) counts.deadLettered += 1;
+
+        await this.enqueueFailure<T>({
+          ...job,
+          attempts: nextAttempts,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        // Release inflight lock so retry can proceed after backoff
+        await this.redis.del(inflightKey(job.id));
+      }
+    }
+
+    return counts;
+  }
+
+  /** Inspect dead-letter items (for dashboard/alerting). */
+  async peekDeadLetters(channel: BroadcastChannel, count = 20): Promise<BroadcastJob[]> {
+    const items = await this.redis.lrange(deadKey(channel), 0, count - 1);
+    return items.map((raw) => JSON.parse(raw as string) as BroadcastJob);
+  }
+
+  /** Count pending retries. Useful for health-check endpoints. */
+  async pendingCount(channel: BroadcastChannel): Promise<number> {
+    return this.redis.llen(retryKey(channel));
+  }
+}
+
+--- src/lib/news/dedup.ts ---
+/**
+ * lib/news/dedup.ts
+ * Redis-backed deduplication for the RSS ingestion and daily-article pipeline.
+ *
+ * Strategy:
+ *  - Primary key:   SHA-256 of normalised article URL (stable, content-independent)
+ *  - Secondary key: SHA-256 of normalised headline (catches re-published URLs)
+ *  - TTL:           7 days (604 800 s) – long enough to prevent re-processing
+ *    within any reasonable publishing cycle, short enough to allow genuine re-runs.
+ *
+ * Usage:
+ *   const dedup = new ArticleDedup();
+ *   if (await dedup.isDuplicate(item.link, item.title)) continue;
+ *   // … process …
+ *   await dedup.markSeen(item.link, item.title, pipelineRunId);
+ */
+
+import { Redis } from '@upstash/redis';
+import { createHash } from 'crypto';
+
+const DEDUP_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
+const KEY_PREFIX_URL = 'dedup:url:';
+const KEY_PREFIX_TITLE = 'dedup:title:';
+
+export interface DedupRecord {
+  seenAt: string;         // ISO-8601
+  pipelineRunId: string;
+  sanityDocumentId?: string;
+}
+
+export interface DedupCheckResult {
+  isDuplicate: boolean;
+  matchedOn?: 'url' | 'title';
+  existingRecord?: DedupRecord;
+}
+
+function normaliseUrl(url: string): string {
+  try {
+    const u = new URL(url.trim().toLowerCase());
+    // Strip UTM and tracking params
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'ref'].forEach(
+      (p) => u.searchParams.delete(p),
+    );
+    return u.toString();
+  } catch {
+    return url.trim().toLowerCase();
+  }
+}
+
+function normaliseTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')   // strip punctuation
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function sha256(input: string): string {
+  return createHash('sha256').update(input).digest('hex');
+}
+
+export class ArticleDedup {
+  private readonly redis: Redis;
+
+  constructor() {
+    // Upstash Redis auto-reads UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+    this.redis = Redis.fromEnv();
+  }
+
+  private urlKey(url: string): string {
+    return KEY_PREFIX_URL + sha256(normaliseUrl(url));
+  }
+
+  private titleKey(title: string): string {
+    return KEY_PREFIX_TITLE + sha256(normaliseTitle(title));
+  }
+
+  /**
+   * Returns true if we have seen this URL or title before.
+   * Checks both keys; the first match wins and is returned.
+   */
+  async isDuplicate(url: string, title: string): Promise<DedupCheckResult> {
+    const [urlRecord, titleRecord] = await Promise.all([
+      this.redis.get<DedupRecord>(this.urlKey(url)),
+      this.redis.get<DedupRecord>(this.titleKey(title)),
+    ]);
+
+    if (urlRecord) {
+      return { isDuplicate: true, matchedOn: 'url', existingRecord: urlRecord };
+    }
+    if (titleRecord) {
+      return { isDuplicate: true, matchedOn: 'title', existingRecord: titleRecord };
+    }
+    return { isDuplicate: false };
+  }
+
+  /**
+   * Marks an article as seen. Writes both URL and title keys atomically via pipeline.
+   * Should be called AFTER successful Sanity write so a failed publish doesn't
+   * permanently block an article.
+   */
+  async markSeen(
+    url: string,
+    title: string,
+    pipelineRunId: string,
+    sanityDocumentId?: string,
+  ): Promise<void> {
+    const record: DedupRecord = {
+      seenAt: new Date().toISOString(),
+      pipelineRunId,
+      ...(sanityDocumentId ? { sanityDocumentId } : {}),
+    };
+
+    const pipeline = this.redis.pipeline();
+    pipeline.set(this.urlKey(url), record, { ex: DEDUP_TTL_SECONDS });
+    pipeline.set(this.titleKey(title), record, { ex: DEDUP_TTL_SECONDS });
+    await pipeline.exec();
+  }
+
+  /**
+   * Bulk check – returns a map of guid → DedupCheckResult.
+   * Use for RSS batch ingestion to avoid per-item round trips.
+   */
+  async bulkCheck(
+    items: Array<{ guid: string; url: string; title: string }>,
+  ): Promise<Map<string, DedupCheckResult>> {
+    if (items.length === 0) return new Map();
+
+    // Fetch all URL and title keys in two batched mget calls
+    const urlKeys = items.map((i) => this.urlKey(i.url));
+    const titleKeys = items.map((i) => this.titleKey(i.title));
+
+    const [urlResults, titleResults] = await Promise.all([
+      this.redis.mget<DedupRecord[]>(...urlKeys),
+      this.redis.mget<DedupRecord[]>(...titleKeys),
+    ]);
+
+    const results = new Map<string, DedupCheckResult>();
+    items.forEach((item, idx) => {
+      const urlRecord = urlResults[idx];
+      const titleRecord = titleResults[idx];
+      if (urlRecord) {
+        results.set(item.guid, { isDuplicate: true, matchedOn: 'url', existingRecord: urlRecord });
+      } else if (titleRecord) {
+        results.set(item.guid, {
+          isDuplicate: true,
+          matchedOn: 'title',
+          existingRecord: titleRecord,
+        });
+      } else {
+        results.set(item.guid, { isDuplicate: false });
+      }
+    });
+    return results;
+  }
+}
+
+
+--- src/app/sitemap.ts ---
+/**
+ * app/sitemap.ts
+ * Next.js 16 Metadata API sitemap — auto-submitted to Google Search Console.
+ */
+
+import { type MetadataRoute } from 'next';
+import { NEWS_CATEGORIES } from '@/lib/news-categories';
+import { getAllTags } from '@/lib/sanity';
+import { PageCache } from '../lib/news/page-cache';
+import { sanityFetch } from '../lib/news/sanity-client';
+
+export const revalidate = 3600;
+
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'https://cryptobrainnews.com';
+const cache = new PageCache();
+
+interface ArticleMeta {
+  slug:        string;
+  publishedAt: string;
+  updatedAt?:  string;
+}
+
+interface AuthorMeta {
+  slug: string;
+}
+
+async function fetchArticleMetas(): Promise<ArticleMeta[]> {
+  const { data } = await cache.getOrSet('sitemap', 'articles', () =>
+    sanityFetch<ArticleMeta[]>(
+      `*[_type == "post"] | order(publishedAt desc) {
+         "slug":        slug.current,
+         "publishedAt": publishedAt,
+         "updatedAt":   _updatedAt
+       }`,
+    ),
+  );
+  return data;
+}
+
+async function fetchAuthors(): Promise<AuthorMeta[]> {
+  const { data } = await cache.getOrSet('sitemap', 'authors', () =>
+    sanityFetch<AuthorMeta[]>(
+      `*[_type == "author" && defined(slug.current)] { "slug": slug.current }`,
+    ),
+  );
+  return data;
+}
+
+function articlePriority(publishedAt: string): number {
+  const ageMs  = Date.now() - new Date(publishedAt).getTime();
+  const ageDays = ageMs / (1000 * 60 * 60 * 24);
+  if (ageDays < 7)  return 0.9;
+  if (ageDays < 30) return 0.8;
+  return 0.6;
+}
+
+function articleChangefreq(
+  publishedAt: string,
+): MetadataRoute.Sitemap[number]['changeFrequency'] {
+  const ageDays = (Date.now() - new Date(publishedAt).getTime()) / 86_400_000;
+  if (ageDays < 7)  return 'hourly';
+  if (ageDays < 30) return 'daily';
+  return 'weekly';
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [allTags, articleMetas, authors] = await Promise.all([
+    getAllTags().catch(() => []),
+    fetchArticleMetas(),
+    fetchAuthors(),
+  ]);
+
+  // Static routes
+  const staticRoutes: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/`,              lastModified: new Date(), changeFrequency: 'hourly',  priority: 1.0 },
+    { url: `${BASE_URL}/news`,          lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.95 },
+    { url: `${BASE_URL}/news/search`,   lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.5 },
+    { url: `${BASE_URL}/tags`,          lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
+    { url: `${BASE_URL}/authors`,       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.6 },
+    { url: `${BASE_URL}/events`,        lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
+    { url: `${BASE_URL}/airdrops`,      lastModified: new Date(), changeFrequency: 'daily',   priority: 0.7 },
+    { url: `${BASE_URL}/price-indexes`, lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.8 },
+    { url: `${BASE_URL}/bookmarks`,     lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
+  ];
+
+  // Category routes
+  const categoryRoutes: MetadataRoute.Sitemap = NEWS_CATEGORIES.map(cat => ({
+    url: `${BASE_URL}/news/category/${cat.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'hourly' as const,
+    priority: 0.85,
+  }));
+
+  // Tag routes
+  const tagRoutes: MetadataRoute.Sitemap = (allTags as string[]).map(tag => ({
+    url: `${BASE_URL}/tags/${encodeURIComponent(tag)}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.65,
+  }));
+
+  // Article routes
+  const articleEntries: MetadataRoute.Sitemap = articleMetas.map((a) => ({
+    url:            `${BASE_URL}/news/${a.slug}`,
+    lastModified:   a.updatedAt ?? a.publishedAt,
+    changeFrequency: articleChangefreq(a.publishedAt),
+    priority:       articlePriority(a.publishedAt),
+  }));
+
+  // Author routes
+  const authorEntries: MetadataRoute.Sitemap = authors.map((a) => ({
+    url:            `${BASE_URL}/authors/${a.slug}`,
+    changeFrequency: 'monthly',
+    priority:       0.5,
+  }));
+
+  return [
+    ...staticRoutes,
+    ...categoryRoutes,
+    ...tagRoutes,
+    ...articleEntries,
+    ...authorEntries,
+  ];
+}
+
+--- src/app/api/newsletter/unsubscribe/route.ts ---
+import { NextRequest, NextResponse } from 'next/server';
+import { Resend } from 'resend';
+import { neon } from '@neondatabase/serverless';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+function renderPage(message: string, isError = false) {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CryptoBrainNews — Unsubscribe</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#050505;color:#fff;font-family:'Helvetica Neue',sans-serif;
+         min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .card{max-width:440px;width:100%;border:1px solid #1a1a1a;padding:40px}
+    .logo{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+    .logo-badge{background:#FABF2C;color:#000;font-size:12px;font-weight:900;
+                padding:5px 10px;letter-spacing:2px}
+    .logo-name{font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:3px}
+    h1{font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:-0.5px;
+       margin-bottom:12px;color:${isError ? '#ff4757' : '#fff'}}
+    p{font-size:13px;color:#888;line-height:1.7;margin-bottom:24px;font-family:monospace}
+    a{display:inline-block;background:#FABF2C;color:#000;font-size:10px;font-weight:900;
+      text-transform:uppercase;letter-spacing:3px;padding:12px 24px;text-decoration:none}
+    a:hover{background:#fff}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="logo-badge">CB</div>
+      <div class="logo-name">CryptoBrain</div>
+    </div>
+    <h1>${isError ? 'Something went wrong' : 'Unsubscribed'}</h1>
+    <p>${message}</p>
+    <a href="${(process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.vercel.app').replace(/\/$/, '')}">
+      Return to CryptoBrainNews →
+    </a>
+  </div>
+</body>
+</html>`;
+}
+
+export async function GET(req: NextRequest) {
+  const email = req.nextUrl.searchParams.get('email');
+
+  if (!email || !email.includes('@')) {
+    return new NextResponse(renderPage('Invalid or missing email address.', true), {
+      status: 400,
+      headers: { 'Content-Type': 'text/html' },
+    });
+  }
+
+  const clean = decodeURIComponent(email).toLowerCase().trim();
+
+  // ── 1. Update Neon ────────────────────────────────────────────────────
+  try {
+    const sql = neon(process.env.DATABASE_URL!);
+    await sql`
+      UPDATE newsletter_subscribers
+      SET status = 'unsubscribed', updated_at = NOW()
+      WHERE email = ${clean}
+    `;
+  } catch (dbErr: any) {
+    console.error('[Unsubscribe] Neon update failed:', dbErr.message);
+  }
+
+  // ── 2. Remove from Resend audience ───────────────────────────────────
+  const audienceId = process.env.RESEND_AUDIENCE_ID;
+  if (audienceId) {
+    try {
+      // List contacts to find the contact ID by email
+      const { data } = await resend.contacts.list({ audienceId });
+      const contact = data?.data?.find((c: any) => c.email === clean);
+      if (contact?.id) {
+        await resend.contacts.remove({ audienceId, id: contact.id });
+      }
+    } catch (e: any) {
+      console.warn('[Unsubscribe] Resend remove failed:', e.message);
+      // Still show success — Neon is updated
+    }
+  }
+
+  return new NextResponse(
+    renderPage(`${clean} has been removed from all CryptoBrainNews mailings. You won't hear from us again.`),
+    { headers: { 'Content-Type': 'text/html' } }
+  );
+}
+
+--- src/lib/news/newsletter.ts ---
+/**
+ * lib/news/newsletter.ts
+ * Resend-backed newsletter broadcast with:
+ *   - Dead-letter queuing on failure (mirrors Telegram strategy)
+ *   - Subscriber batching (Resend free tier: 100 emails/day; adjust batch size for Pro)
+ *   - Idempotency key per article slug to prevent double-sends on retries
+ *   - Unsubscribe link injected automatically
+ */
+
+import { randomUUID } from 'crypto';
+import { BroadcastQueue } from './broadcast-queue';
+import type { NewsletterPayload } from './types';
+
+const RESEND_API = 'https://api.resend.com';
+const BATCH_SIZE = 90; // stay under Resend free-tier daily limit with headroom
+const FROM_ADDRESS = process.env.NEWSLETTER_FROM ?? 'news@cryptobrainnews.com';
+const UNSUBSCRIBE_BASE = 'https://cryptobrainnews.com/unsubscribe';
+
+export interface ResendSendRequest {
+  from: string;
+  to: string[];
+  subject: string;
+  html: string;
+  text: string;
+  headers?: Record<string, string>;
+  idempotency_key?: string;
+}
+
+export interface NewsletterSendJob {
+  payload: NewsletterPayload;
+  recipients: string[];
+  articleSlug: string;  // Used as idempotency key prefix
+}
+
+export class NewsletterService {
+  private readonly apiKey: string;
+  private readonly queue: BroadcastQueue;
+
+  constructor(apiKey: string) {
+    if (!apiKey) throw new Error('RESEND_API_KEY is required');
+    this.apiKey = apiKey;
+    this.queue = new BroadcastQueue();
+  }
+
+  /**
+   * Broadcast to all recipients in batches.
+   * Each batch failure is independently queued for retry.
+   * Returns { sent, queued } counts.
+   */
+  async broadcast(job: NewsletterSendJob): Promise<{ sent: number; queued: number }> {
+    const { payload, recipients, articleSlug } = job;
+    const batches = this.toBatches(recipients, BATCH_SIZE);
+    let sent = 0;
+    let queued = 0;
+
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      const idempotencyKey = `${articleSlug}-batch-${batchIndex}`;
+
+      const request: ResendSendRequest = {
+        from: FROM_ADDRESS,
+        to: batch,
+        subject: payload.subject,
+        html: this.buildHTML(payload, batch),
+        text: this.buildText(payload),
+        headers: {
+          'List-Unsubscribe': `<${UNSUBSCRIBE_BASE}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
+        idempotency_key: idempotencyKey,
+      };
+
+      try {
+        await this.sendBatch(request);
+        sent += batch.length;
+      } catch (err) {
+        queued += batch.length;
+        await this.queue.enqueueFailure<ResendSendRequest>({
+          id: `newsletter-${idempotencyKey}-${randomUUID()}`,
+          channel: 'newsletter',
+          payload: request,
+          attempts: 1,
+          firstFailedAt: new Date().toISOString(),
+          error: err instanceof Error ? err.message : String(err),
+          lastError: '',
+        });
+      }
+    }
+
+    return { sent, queued };
+  }
+
+  /** Drain the newsletter retry queue. Call from daily pipeline or separate cron. */
+  async drainRetries(): Promise<{ sent: number; requeued: number; deadLettered: number }> {
+    return this.queue.drainRetryQueue<ResendSendRequest>('newsletter', (req) =>
+      this.sendBatch(req),
+    );
+  }
+
+  private async sendBatch(request: ResendSendRequest): Promise<void> {
+    const res = await fetch(`${RESEND_API}/emails`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(20_000),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+        ...(request.idempotency_key
+          ? { 'Idempotency-Key': request.idempotency_key }
+          : {}),
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (res.status === 429) {
+      const retryAfter = Number(res.headers.get('Retry-After') ?? '10');
+      await new Promise((r) => setTimeout(r, retryAfter * 1000));
+      return this.sendBatch(request);
+    }
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Resend API ${res.status}: ${body}`);
+    }
+  }
+
+  private buildHTML(payload: NewsletterPayload, _recipients: string[]): string {
+    // Minimal plain-HTML template — swap for your React Email component in production
+    const tagPills = payload.tags
+      .slice(0, 6)
+      .map((t) => `<span style="background:#1a1a2e;color:#00d4ff;padding:2px 8px;border-radius:4px;font-size:12px;margin-right:4px">${t}</span>`)
+      .join('');
+
+    return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="background:#0d0d1a;color:#e0e0e0;font-family:system-ui,sans-serif;margin:0;padding:0">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;padding:32px 16px">
+    <tr><td>
+      <p style="color:#00d4ff;font-size:12px;letter-spacing:2px;text-transform:uppercase">CryptoBrainNews Daily</p>
+      <h1 style="font-size:24px;line-height:1.3;color:#ffffff;margin:8px 0 16px">${payload.articleTitle}</h1>
+      <p style="font-size:15px;line-height:1.6;color:#b0b0c0">${payload.summary}</p>
+      <div style="margin:20px 0">${tagPills}</div>
+      <a href="${payload.articleUrl}" style="display:inline-block;background:#00d4ff;color:#0d0d1a;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:14px">Read Full Article →</a>
+      <hr style="border:none;border-top:1px solid #1a1a2e;margin:32px 0">
+      <p style="font-size:11px;color:#555">You're receiving this because you subscribed to CryptoBrainNews.
+        <a href="${UNSUBSCRIBE_BASE}?email={{email}}" style="color:#555">Unsubscribe</a>
+      </p>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+  }
+
+  private buildText(payload: NewsletterPayload): string {
+    return [
+      `CryptoBrainNews Daily`,
+      ``,
+      payload.articleTitle,
+      ``,
+      payload.summary,
+      ``,
+      `Tags: ${payload.tags.join(', ')}`,
+      ``,
+      `Read full article: ${payload.articleUrl}`,
+      ``,
+      `Unsubscribe: ${UNSUBSCRIBE_BASE}`,
+    ].join('\n');
+  }
+
+  private toBatches<T>(arr: T[], size: number): T[][] {
+    const batches: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) {
+      batches.push(arr.slice(i, i + size));
+    }
+    return batches;
+  }
+}
+
+
+--- phase-f3-context.txt ---
+=== CRYPTOBRAINNEWS PHASE F-3 CONTEXT ===
+Generated: Fri May  1 12:07:39 AM CET 2026
+
+--- src/app/api/health/route.ts ---
+/**
+ * app/api/health/route.ts
+ * Comprehensive health check endpoint.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { Redis }                           from '@upstash/redis';
+import { sanityHealthCheck }               from '../../../lib/news/sanity-client';
+import { SocialScheduler }                 from '../../../lib/social/scheduler';
+import { BroadcastQueue }                  from '../../../lib/news/broadcast-queue';
+
+const CRON_SECRET = process.env.CRON_SECRET ?? '';
+
+type SystemStatus = 'healthy' | 'degraded' | 'down' | 'unconfigured';
+
+interface SystemCheck {
+  status:    SystemStatus;
+  latencyMs: number;
+  message?:  string;
+  checkedAt: string;
+}
+
+interface HealthReport {
+  status:    'healthy' | 'degraded' | 'down';
+  systems:   Record<string, SystemCheck>;
+  version:   string;
+  checkedAt: string;
+}
+
+async function checkRedis(): Promise<SystemCheck> {
+  const start = Date.now();
+  try {
+    const redis  = Redis.fromEnv();
+    const result = await redis.ping();
+    return {
+      status:    result === 'PONG' ? 'healthy' : 'degraded',
+      latencyMs: Date.now() - start,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkSanity(): Promise<SystemCheck> {
+  const start = Date.now();
+  try {
+    const ok = await sanityHealthCheck();
+    return {
+      status:    ok ? 'healthy' : 'degraded',
+      latencyMs: Date.now() - start,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkTelegram(): Promise<SystemCheck> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return { status: 'unconfigured', latencyMs: 0, checkedAt: new Date().toISOString() };
+
+  const start = Date.now();
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/getMe`, {
+      signal: AbortSignal.timeout(8_000),
+    });
+    return {
+      status:    res.ok ? 'healthy' : 'degraded',
+      latencyMs: Date.now() - start,
+      message:   res.ok ? undefined : `HTTP ${res.status}`,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkTwitter(): Promise<SystemCheck> {
+  const bearer = process.env.TWITTER_BEARER_TOKEN;
+  if (!bearer) return { status: 'unconfigured', latencyMs: 0, checkedAt: new Date().toISOString() };
+
+  const start = Date.now();
+  try {
+    const res = await fetch('https://api.twitter.com/2/users/me', {
+      signal:  AbortSignal.timeout(8_000),
+      headers: { Authorization: `Bearer ${bearer}` },
+    });
+    return {
+      status:    res.ok ? 'healthy' : (res.status === 429 ? 'degraded' : 'down'),
+      latencyMs: Date.now() - start,
+      message:   res.ok ? undefined : `HTTP ${res.status}`,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkStripe(): Promise<SystemCheck> {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return { status: 'unconfigured', latencyMs: 0, checkedAt: new Date().toISOString() };
+
+  const start = Date.now();
+  try {
+    const res = await fetch('https://api.stripe.com/v1/account', {
+      signal:  AbortSignal.timeout(8_000),
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    return {
+      status:    res.ok ? 'healthy' : 'degraded',
+      latencyMs: Date.now() - start,
+      message:   res.ok ? undefined : `HTTP ${res.status}`,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkRSSFeeds(): Promise<SystemCheck> {
+  const urls = (process.env.RSS_FEED_URLS ?? '').split(',').filter(Boolean);
+  if (urls.length === 0) {
+    return { status: 'unconfigured', latencyMs: 0, checkedAt: new Date().toISOString() };
+  }
+
+  const start   = Date.now();
+  const results = await Promise.allSettled(
+    urls.slice(0, 5).map((url) =>
+      fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(6_000) }),
+    ),
+  );
+
+  const failed  = results.filter((r) => r.status === 'rejected').length;
+  const total   = results.length;
+
+  return {
+    status:    failed === 0 ? 'healthy' : failed < total ? 'degraded' : 'down',
+    latencyMs: Date.now() - start,
+    message:   failed > 0 ? `${failed}/${total} feeds unreachable` : undefined,
+    checkedAt: new Date().toISOString(),
+  };
+}
+
+async function checkPipelineLastRun(): Promise<SystemCheck> {
+  const start = Date.now();
+  try {
+    const redis      = Redis.fromEnv();
+    const lastRunRaw = await redis.get<string>('pipeline:last-success');
+
+    if (!lastRunRaw) {
+      return {
+        status: 'degraded', latencyMs: Date.now() - start,
+        message: 'No successful pipeline run recorded',
+        checkedAt: new Date().toISOString(),
+      };
+    }
+
+    const ageHours = (Date.now() - new Date(lastRunRaw).getTime()) / 3_600_000;
+    return {
+      status:    ageHours < 26 ? 'healthy' : 'degraded',
+      latencyMs: Date.now() - start,
+      message:   `Last success: ${lastRunRaw} (${ageHours.toFixed(1)}h ago)`,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'down', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+async function checkQueueDepths(): Promise<SystemCheck> {
+  const start = Date.now();
+  try {
+    const scheduler = new SocialScheduler();
+    const bqTg      = new BroadcastQueue();
+    const bqNl      = new BroadcastQueue();
+
+    const [pending, tgRetry, nlRetry] = await Promise.all([
+      scheduler.pendingCounts(),
+      bqTg.pendingCount('telegram'),
+      bqNl.pendingCount('newsletter'),
+    ]);
+
+    const totalPending = Object.values(pending).reduce(
+      (s: number, v: number) => s + v, 0
+    );
+    const totalRetry   = tgRetry + nlRetry;
+    const degraded     = totalRetry > 50 || totalPending > 200;
+
+    return {
+      status:    degraded ? 'degraded' : 'healthy',
+      latencyMs: Date.now() - start,
+      message:   `Social pending: ${totalPending} | Broadcast retry: ${totalRetry}`,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      status: 'degraded', latencyMs: Date.now() - start,
+      message: err instanceof Error ? err.message : String(err),
+      checkedAt: new Date().toISOString(),
+    };
+  }
+}
+
+const CRITICAL_SYSTEMS = new Set(['redis', 'sanity']);
+
+function aggregateStatus(systems: Record<string, SystemCheck>): HealthReport['status'] {
+  const criticalDown = [...CRITICAL_SYSTEMS].some(
+    (k) => systems[k]?.status === 'down',
+  );
+  if (criticalDown) return 'down';
+
+  const anyDown = Object.values(systems).some((s) => s.status === 'down');
+  if (anyDown) return 'degraded';
+
+  const anyDegraded = Object.values(systems).some((s) => s.status === 'degraded');
+  return anyDegraded ? 'degraded' : 'healthy';
+}
+
+export const runtime = 'nodejs';
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const detail = req.nextUrl.searchParams.get('detail') === 'true';
+  const isAdmin = req.headers.get('x-cron-secret') === CRON_SECRET && CRON_SECRET !== '';
+
+  const [redis, sanity, telegram, twitter, stripe, rss, pipeline, queues] =
+    await Promise.all([
+      checkRedis(),
+      checkSanity(),
+      checkTelegram(),
+      checkTwitter(),
+      checkStripe(),
+      checkRSSFeeds(),
+      checkPipelineLastRun(),
+      checkQueueDepths(),
+    ]);
+
+  const systems: Record<string, SystemCheck> = {
+    redis,
+    sanity,
+    telegram,
+    twitter,
+    stripe,
+    rss_feeds: rss,
+    pipeline_last_run: pipeline,
+    queue_depths: queues,
+  };
+
+  const overallStatus = aggregateStatus(systems);
+
+  const report: HealthReport = {
+    status:    overallStatus,
+    systems:   detail && isAdmin ? systems : Object.fromEntries(
+      Object.entries(systems).map(([k, v]) => [k, { status: v.status, latencyMs: v.latencyMs, checkedAt: v.checkedAt }]),
+    ),
+    version:   process.env.NEXT_PUBLIC_APP_VERSION ?? 'unknown',
+    checkedAt: new Date().toISOString(),
+  };
+
+  const httpStatus = overallStatus === 'down' ? 503 : 200;
+
+  return NextResponse.json(report, {
+    status: httpStatus,
+    headers: {
+      'Cache-Control': 'no-store',
+      'X-Health-Status': overallStatus,
+    },
+  });
+}
+
+--- src/lib/rate-limit.ts ---
+import 'server-only';
+import { Redis } from '@upstash/redis';
+
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
+    : null;
+
+const memoryStore = new Map<string, { count: number; resetAt: number }>();
+
+/**
+ * Distributed rate limiter using Upstash Redis.
+ * Falls back to memory if Redis is unavailable.
+ */
+export async function checkRateLimit(
+  identifier: string,
+  maxRequests: number = 5,
+  windowMs: number = 60_000
+): Promise<boolean> {
+  if (redis) {
+    try {
+      const count = await redis.incr(identifier);
+      if (count === 1) {
+        await redis.pexpire(identifier, windowMs);
+      }
+      return count > maxRequests;
+    } catch (e) {
+      console.warn('[RateLimit] Redis failed, falling back to memory');
+    }
+  }
+
+  // Memory fallback (per-instance only)
+  const now = Date.now();
+  const entry = memoryStore.get(identifier);
+  if (!entry || now > entry.resetAt) {
+    memoryStore.set(identifier, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+  entry.count++;
+  return entry.count > maxRequests;
+}
+
+--- src/components/monetization/AffiliateLink.tsx ---
+'use client';
+import React from 'react';
+
+const AFFILIATES: Record<string, string> = {
+  binance: 'https://accounts.binance.com/register?ref=YOUR_REF',
+  bybit: 'https://www.bybit.com/register?affiliate_id=YOUR_REF',
+  mexc: 'https://www.mexc.com/register?inviteCode=YOUR_REF',
+  changenow: 'https://changenow.io/?link_id=YOUR_REF',
+  coinbase: 'https://coinbase.com/join/YOUR_REF',
+  kraken: 'https://kraken.com/refer/YOUR_REF'
+};
+
+export default function AffiliateLink({ exchange, children, className }: { exchange: string; children: React.ReactNode; className?: string; }) {
+  const url = AFFILIATES[exchange.toLowerCase()] || '#';
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer sponsored" className={`text-[#FABF2C] hover:underline font-bold transition-colors ${className || ''}`}>
+      {children}
+    </a>
+  );
+}
+
+--- src/components/layout/Footer.tsx ---
+import React from 'react';
+import Link from 'next/link';
+import NewsletterForm from './NewsletterForm';
+
+export default function Footer() {
+  return (
+    <footer className="bg-black border-t border-[#1a1a1a] py-16 px-4 lg:px-8 mt-20">
+      <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+        <div className="space-y-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center font-black text-black">CB</div>
+            <span className="text-xl font-black tracking-tighter text-white uppercase">CryptoBrain</span>
+          </div>
+          <p className="text-[#444] text-xs leading-relaxed font-medium max-w-xs">
+            The definitive source for institutional-grade crypto intelligence, DeFi data, and on-chain education.
+          </p>
+          <div className="flex gap-4">
+            {['X', 'TG', 'DC', 'IN'].map((social) => (
+              <div key={social} className="w-8 h-8 border border-[#1a1a1a] flex items-center justify-center text-[10px] text-[#444] hover:border-primary hover:text-primary cursor-pointer transition-all">
+                {social}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6">Network</h4>
+          <ul className="space-y-4">
+            <li><Link href="/news" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">News Hub</Link></li>
+            <li><Link href="/data" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Data Terminal</Link></li>
+            <li><Link href="/events" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Events Calendar</Link></li>
+            <li><Link href="/airdrops" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Alpha Airdrops</Link></li>
+            <li><Link href="/learning" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Learning Hub</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6">Policies</h4>
+          <ul className="space-y-4">
+            <li><Link href="/privacy" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Privacy Policy</Link></li>
+            <li><Link href="/terms" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Terms of Service</Link></li>
+            <li><Link href="/editorial" className="text-[#666] text-xs hover:text-white transition-colors uppercase font-bold">Editorial Guidelines</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6">Daily Briefing</h4>
+          <p className="text-[#444] text-xs mb-6 font-medium">Institutional alpha delivered to your inbox every morning.</p>
+          <NewsletterForm />
+        </div>
+      </div>
+      <div className="container mx-auto mt-16 pt-8 border-t border-[#111] flex justify-between items-center">
+        <p className="text-[9px] text-[#333] font-mono uppercase tracking-widest">© 2026 CryptoBrainNews. Market Data by CoinGecko.</p>
+      </div>
+    </footer>
+  );
+}
+
+--- package.json ---
+{
+  "name": "cryptobrainnews",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "analyze": "ANALYZE=true next build",
+    "build:stats": "next build 2>&1 | tee build.log",
+    "validate:env": "ts-node scripts/validate-env.ts",
+    "warm-cache": "curl -s http://localhost:3000/api/admin/warm-cache | jq ."
+  },
+  "dependencies": {
+    "@ai-sdk/groq": "^3.0.24",
+    "@duneanalytics/client-sdk": "^0.3.5",
+    "@heroicons/react": "^2.2.0",
+    "@neondatabase/serverless": "^1.0.2",
+    "@portabletext/react": "^4.0.3",
+    "@sanity/client": "^7.20.0",
+    "@sanity/vision": "^5.13.0",
+    "@sentry/nextjs": "^10.39.0",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.95.3",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/typography": "^0.5.19",
+    "@upstash/redis": "^1.36.2",
+    "@vercel/analytics": "^1.6.1",
+    "@vercel/speed-insights": "^1.3.1",
+    "ai": "^6.0.86",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.4.1",
+    "ethers": "^6.16.0",
+    "lightweight-charts": "^5.1.0",
+    "lucide-react": "^0.563.0",
+    "marked": "^17.0.6",
+    "next": "^16.1.6",
+    "next-sanity": "^12.1.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "recharts": "^3.7.0",
+    "resend": "^6.10.0",
+    "sanity": "^5.13.0",
+    "sanity-plugin-markdown": "^6.0.0",
+    "server-only": "^0.0.1",
+    "siwe": "^3.0.0",
+    "stripe": "^22.0.2",
+    "styled-components": "^6.3.11",
+    "swr": "^2.4.0",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20.19.33",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.8",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5"
+  },
+  "type": "module"
+}
+
+
 --- postcss.config.mjs ---
 export default {
   plugins: {
@@ -799,6 +3956,456 @@ Sentry.init({
   environment: process.env.NODE_ENV,
   enabled: process.env.NODE_ENV === 'production',
 });
+
+--- structure-context.txt ---
+=== CRYPTOBRAINNEWS PROJECT STRUCTURE ===
+Generated: Thu Apr 30 11:50:55 PM CET 2026
+
+========== FOLDER STRUCTURE ==========
+.
+./dist
+./dist/static
+./docs
+./docs/archive
+./node_modules
+./public
+./scripts
+./scripts/dead-letter
+./src
+./src/app
+./src/app/about
+./src/app/admin
+./src/app/advertise
+./src/app/advertise/_components
+./src/app/agent-registry
+./src/app/agent-registry/analytics
+./src/app/agent-registry/analytics/_components
+./src/app/agent-registry/_components
+./src/app/agent-registry/sandbox
+./src/app/airdrops
+./src/app/airdrops/[slug]
+./src/app/alpha-guides
+./src/app/api
+./src/app/api/ad-leads
+./src/app/api/admin
+./src/app/api/admin/generate-airdrop
+./src/app/api/admin/import-rss
+./src/app/api/admin/status
+./src/app/api/admin/warm-cache
+./src/app/api/agent-registry
+./src/app/api/analytics
+./src/app/api/analytics/popular
+./src/app/api/analytics/view
+./src/app/api/cron
+./src/app/api/cron/broadcast-drain
+./src/app/api/cron/daily-article
+./src/app/api/cron/health
+./src/app/api/cron/sitemap-warm
+./src/app/api/cron/social
+./src/app/api/data
+./src/app/api/data/defi
+./src/app/api/data/derivatives
+./src/app/api/data/l2
+./src/app/api/events
+./src/app/api/execute
+./src/app/api/health
+./src/app/api/monetisation
+./src/app/api/monetisation/analytics
+./src/app/api/monetisation/analytics/track
+./src/app/api/monetisation/checkout
+./src/app/api/monetisation/portal
+./src/app/api/news
+./src/app/api/news/ai
+./src/app/api/news/category
+./src/app/api/news/category/[slug]
+./src/app/api/newsletter
+./src/app/api/newsletter/subscribe
+./src/app/api/newsletter/unsubscribe
+./src/app/api/news/search
+./src/app/api/og
+./src/app/api/operator
+./src/app/api/operator/agents
+./src/app/api/operator/playbooks
+./src/app/api/oracle
+./src/app/api/oracle/airdrops
+./src/app/api/oracle/airdrops/[slug]
+./src/app/api/oracle/predictions
+./src/app/api/prices
+./src/app/api/referrals
+./src/app/api/social
+./src/app/api/social/twitter
+./src/app/api/telegram
+./src/app/api/telegram/broadcast
+./src/app/api/verify-passport
+./src/app/api/webhooks
+./src/app/api/webhooks/stripe
+./src/app/auth
+./src/app/auth/callback
+./src/app/authors
+./src/app/authors/[slug]
+./src/app/bookmarks
+./src/app/bookmarks/_components
+./src/app/coins
+./src/app/coins/[slug]
+./src/app/dashboard
+./src/app/dashboard/playbooks
+./src/app/data
+./src/app/data/alternative
+./src/app/data/alternative/app-usage
+./src/app/data/alternative/funding
+./src/app/data/alternative/politics
+./src/app/data/alternative/social
+./src/app/data/alternative/web-traffic
+./src/app/data/alternative/web-traffic/_components
+./src/app/data/_components
+./src/app/data/_components/charts
+./src/app/data/defi
+./src/app/data/defi/_components
+./src/app/data/defi/derivatives
+./src/app/data/defi/dex-volume
+./src/app/data/defi/exploits
+./src/app/data/defi/large-swaps
+./src/app/data/defi/launchpads
+./src/app/data/defi/lending
+./src/app/data/defi/prediction
+./src/app/data/defi/restaking
+./src/app/data/defi/revenue
+./src/app/data/defi/rwa
+./src/app/data/defi/social
+./src/app/data/defi/stablecoins
+./src/app/data/defi/token-unlocks
+./src/app/data/defi/tvl
+./src/app/data/defi/tvl/_components
+./src/app/data/defi/whale-watch
+./src/app/data/defi/yields
+./src/app/data/etfs
+./src/app/data/etfs/bitcoin
+./src/app/data/etfs/comparison
+./src/app/data/etfs/_components
+./src/app/data/etfs/crypto
+./src/app/data/etfs/ethereum
+./src/app/data/etfs/solana
+./src/app/data/etfs/xrp
+./src/app/data/exchanges
+./src/app/data/exchanges/_components
+./src/app/data/governance
+./src/app/data/governance/_components
+./src/app/data/l2
+./src/app/data/l2/_components
+./src/app/data/_lib
+./src/app/data/market
+./src/app/data/markets
+./src/app/data/markets/cme-cots
+./src/app/data/markets/companies
+./src/app/data/markets/exchange-tokens
+./src/app/data/markets/exchange-tokens/_components
+./src/app/data/markets/futures
+./src/app/data/markets/futures/_components
+./src/app/data/markets/indices
+./src/app/data/markets/liquidations
+./src/app/data/markets/liquidity
+./src/app/data/markets/options
+./src/app/data/markets/options/_components
+./src/app/data/markets/prices
+./src/app/data/markets/prices/_components
+./src/app/data/markets/sports-tokens
+./src/app/data/markets/spot
+./src/app/data/markets/spot/_components
+./src/app/data/markets/volumes
+./src/app/data/nfts
+./src/app/data/nfts/art
+./src/app/data/nfts/collections
+./src/app/data/nfts/gaming
+./src/app/data/nfts/marketplaces
+./src/app/data/nfts/volume
+./src/app/data/onchain
+./src/app/data/onchain/aptos
+./src/app/data/onchain/avalanche
+./src/app/data/onchain/bitcoin
+./src/app/data/onchain/bitcoin/_components
+./src/app/data/onchain/comparison
+./src/app/data/onchain/_components
+./src/app/data/onchain/ethereum
+./src/app/data/onchain/ethereum/_components
+./src/app/data/onchain/flows
+./src/app/data/onchain/gas
+./src/app/data/onchain/solana
+./src/app/data/onchain/solana/_components
+./src/app/data/scaling
+./src/app/data/scaling/_components
+./src/app/data/scaling/data-availability
+./src/app/data/scaling/l1-evm
+./src/app/data/scaling/l1-non-evm
+./src/app/data/scaling/l2-comparison
+./src/app/data/scaling/optimistic
+./src/app/data/scaling/zk
+./src/app/data/stablecoins
+./src/app/data/stablecoins/chains
+./src/app/data/stablecoins/non-fiat
+./src/app/data/stablecoins/non-usd
+./src/app/data/stablecoins/usd
+./src/app/data/stablecoins/usd/_components
+./src/app/data/treasuries
+./src/app/data/treasuries/bitcoin
+./src/app/data/treasuries/_components
+./src/app/data/treasuries/crypto
+./src/app/data/treasuries/ethereum
+./src/app/data/treasuries/solana
+./src/app/docs
+./src/app/events
+./src/app/events/_components
+./src/app/feed.xml
+./src/app/learning
+./src/app/marketplace
+./src/app/marketplace/_components
+./src/app/news
+./src/app/news/category
+./src/app/news/category/[slug]
+./src/app/news/[id]
+./src/app/news/[id]/_components
+./src/app/news/search
+./src/app/news/search/_components
+./src/app/price-indexes
+./src/app/price-indexes/_components
+./src/app/pricing
+./src/app/studio
+./src/app/studio/[[...index]]
+./src/app/tags
+./src/app/tags/[slug]
+./src/components
+./src/components/agent
+./src/components/auth
+./src/components/common
+./src/components/layout
+./src/components/monetisation
+./src/components/monetization
+./src/components/news
+./src/components/ops
+./src/components/providers
+./src/components/ui
+./src/components/wallet
+./src/hooks
+./src/lib
+./src/lib/monetisation
+./src/lib/news
+./src/lib/news/seo
+./src/lib/ops
+./src/lib/social
+./src/sanity
+./src/sanity/schemas
+./src/styles
+./tasks
+
+========== KEY FILES ==========
+./.env.example
+./.env.local
+./eslint.config.mjs
+./MASTER_PROMPT.md
+./next.config.mjs
+./package.json
+./postcss.config.mjs
+./README.md
+./sanity.config.ts
+./Scaling-solution.md
+./sentry.client.config.ts
+./sentry.edge.config.ts
+./sentry.server.config.ts
+./tailwind.config.ts
+./task.md
+./tsconfig.json
+./vercel.json
+
+========== SRC FILES (first 3 levels) ==========
+src/app/about/page.tsx
+src/app/admin/page.tsx
+src/app/advertise/page.tsx
+src/app/agent-registry/page.tsx
+src/app/airdrops/page.tsx
+src/app/alpha-guides/page.tsx
+src/app/authors/page.tsx
+src/app/bookmarks/page.tsx
+src/app/dashboard/layout.tsx
+src/app/dashboard/page.tsx
+src/app/data/layout.tsx
+src/app/data/page.tsx
+src/app/docs/layout.tsx
+src/app/docs/page.tsx
+src/app/error.tsx
+src/app/events/page.tsx
+src/app/feed.xml/route.ts
+src/app/layout.tsx
+src/app/learning/page.tsx
+src/app/loading.tsx
+src/app/marketplace/page.tsx
+src/app/news/error.tsx
+src/app/news/loading.tsx
+src/app/news/page.tsx
+src/app/not-found.tsx
+src/app/page.tsx
+src/app/price-indexes/error.tsx
+src/app/price-indexes/loading.tsx
+src/app/price-indexes/page.tsx
+src/app/pricing/page.tsx
+src/app/robots.ts
+src/app/sitemap.ts
+src/app/tags/page.tsx
+src/components/agent/AgentHandoff.tsx
+src/components/auth/AlphaGate.tsx
+src/components/auth/AuthButton.tsx
+src/components/auth/GitcoinPassport.tsx
+src/components/common/Breadcrumb.tsx
+src/components/common/CookieConsent.tsx
+src/components/common/GlossaryTooltip.tsx
+src/components/common/Header.tsx
+src/components/common/PriceTicker.tsx
+src/components/layout/Footer.tsx
+src/components/layout/Header.tsx
+src/components/layout/NewsDropdown.tsx
+src/components/layout/NewsletterForm.tsx
+src/components/monetisation/AffiliateDashboard.tsx
+src/components/monetisation/SponsoredSlot.tsx
+src/components/monetization/AdUnit.tsx
+src/components/monetization/AffiliateLink.tsx
+src/components/monetization/NewsletterCTA.tsx
+src/components/monetization/NewsletterPopup.tsx
+src/components/monetization/ProChartWrapper.tsx
+src/components/monetization/SponsoredSlot.tsx
+src/components/monetization/SwapWidget.tsx
+src/components/news/AINewsFeed.tsx
+src/components/news/AuthorBio.tsx
+src/components/news/BookmarkButton.tsx
+src/components/news/CointelegraphCard.tsx
+src/components/news/GEOBlocks.tsx
+src/components/news/NewsTickerBar.tsx
+src/components/news/PopularArticles.tsx
+src/components/providers/Web3Provider.tsx
+src/components/ui/AppIcon.tsx
+src/components/ui/AppImage.tsx
+src/components/ui/Skeleton.tsx
+src/components/ui/TradingViewChart.tsx
+src/components/wallet/ConnectWallet.tsx
+src/hooks/useArticleView.ts
+src/hooks/useBookmarks.ts
+src/lib/alternative-data.ts
+src/lib/apewisdom.ts
+src/lib/api.ts
+src/lib/articles.ts
+src/lib/article-utils.ts
+src/lib/cache.ts
+src/lib/coinglass.ts
+src/lib/coinshares.ts
+src/lib/defi-data.ts
+src/lib/derivatives.ts
+src/lib/dune.ts
+src/lib/etf-data.ts
+src/lib/etf-scraper.ts
+src/lib/fallback-data.ts
+src/lib/fetch-with-timeout.ts
+src/lib/flipside.ts
+src/lib/glassnode.ts
+src/lib/greekslive.ts
+src/lib/intotheblock.ts
+src/lib/l2beat.ts
+src/lib/lunarcrush.ts
+src/lib/market-data.ts
+src/lib/monetisation/affiliate.ts
+src/lib/monetisation/analytics.ts
+src/lib/monetisation/newsletter-segments.ts
+src/lib/monetisation/portal.ts
+src/lib/monetisation/sponsored.ts
+src/lib/monetisation/stripe.ts
+src/lib/neon.ts
+src/lib/news/broadcast-queue.ts
+src/lib/news-categories.ts
+src/lib/news/dedup.ts
+src/lib/news/newsletter.ts
+src/lib/news/page-cache.ts
+src/lib/news/pipeline-logger.ts
+src/lib/news/rss-cache.ts
+src/lib/news/sanity-client.ts
+src/lib/news/sanity-queries.ts
+src/lib/news/telegram.ts
+src/lib/news.ts
+src/lib/news/types.ts
+src/lib/nft-data.ts
+src/lib/onchain-data.ts
+src/lib/onchain-extended.ts
+src/lib/ops/alerts.ts
+src/lib/ops/env-audit.ts
+src/lib/options.ts
+src/lib/orderbook.ts
+src/lib/predictions.ts
+src/lib/rate-limit.ts
+src/lib/sanity.ts
+src/lib/santiment.ts
+src/lib/scaling-data.ts
+src/lib/security.ts
+src/lib/sidebar-config.ts
+src/lib/social/scheduler.ts
+src/lib/social/twitter-thread.ts
+src/lib/supabase-server.ts
+src/lib/supabase.ts
+src/lib/token-terminal.ts
+src/lib/treasury-data.ts
+src/lib/types.ts
+src/lib/zerion.ts
+src/proxy.ts
+src/sanity/sanity.config.ts
+src/sanity/schemas/airdropGuide.ts
+src/sanity/schemas/author.ts
+src/sanity/schemas/event.ts
+src/sanity/schemas/glossaryTerm.ts
+src/sanity/schemas/index.ts
+src/sanity/schemas/playbook.ts
+src/sanity/schemas/post.ts
+src/sanity/schemas/siteNotification.ts
+src/sanity/schemas/sponsoredPost.ts
+src/styles/globals.css
+
+========== SCRIPTS ==========
+scripts/daily-article.ts
+scripts/dead-letter/.gitkeep
+scripts/last-category.json
+scripts/newsletter_schema.sql
+scripts/rls_hotfix_phase23.sql
+scripts/rls_hotfix_referrals.sql
+scripts/schema_v2_agents.sql
+scripts/schema_v3_referrals.sql
+scripts/schema_v4_playbooks.sql
+scripts/secure_roles_and_rls.sql
+scripts/seed_real_data.sql
+scripts/smoke-test.ts
+scripts/supabase_schema_events_adleads.sql
+scripts/supabase_schema.sql
+scripts/validate-env.cjs
+scripts/validate-env.ts
+
+========== DOCS ==========
+docs/archive/claude-opus-data-refactor-ARCHIVED.md
+docs/archive/task-history.md
+docs/claude-sonnet-news-pipeline.md
+docs/deepseek_article_writer.txt
+docs/deepseek_sanity_formatter.txt
+docs/DeepSeekV4-Research-Blueprint.txt
+docs/design_system.txt
+docs/DUNE_QUERIES.txt
+docs/editorial-blueprint.md
+docs/editorial-workflow.md
+docs/gemini_system_and_prompt.txt
+docs/grok_daily_research.txt
+docs/implementation-plan.md
+docs/metrics.txt
+docs/phase-a-master-prompt.md
+docs/phase-b-master-prompt.md
+docs/phase-b-zerion-replacement-master-prompt.md
+docs/phase-c-free-replacements-master-prompt.md
+docs/phase-c-master-prompt.md
+docs/phase-d-master-prompt.md
+docs/phase-e-master-prompt.md
+docs/relocation.md
+docs/Scaling-solution.md
+docs/SECURITY_GUIDELINES.md
+docs/testing-framework-plan.md
 
 --- tailwind.config.ts ---
 import type { Config } from "tailwindcss";
@@ -960,6 +4567,10 @@ Deferred from Phase B: Spot On Chain → Zerion whale alerts
 	•	Reference: Phase B — Spot On Chain → Zerion replacement
 	•	New Status: COMPLETED
 	•	Notes: Created src/lib/zerion.ts with getZerionWhaleAlerts() fetching entity‑labelled transactions from Zerion API (free tier: 3,000 req/day). Queries known whale addresses (Binance, Coinbase, Kraken, Maker DAO). Filters >$100K and deduplicates by tx_hash. Updated whale-watch/page.tsx to merge Etherscan + Zerion sources with a new Entity column. Added ZERION_API_KEY to .env.example. Spot On Chain module kept as deprecated reference.
+[YYYY-MM-DD] STATUS UPDATE
+	•	Reference: Phase X (Task description)
+	•	New Status: COMPLETED
+	•	Notes: Brief notes on what was built.
 
 --- tsconfig.json ---
 {
@@ -40225,6 +43836,83 @@ Summary of Deliverables
 
 
 
+---
+
+## Phase E — Chart & UX Standardisation (The Block Clone)
+
+**Status:** ✅ COMPLETE (April 30, 2026)
+
+**Goal:** Upgrade the visual identity of the data terminal to match The Block's institutional dark dashboard. Replace all Recharts-heavy charts with TradingView Lightweight Charts, enforce consistent design tokens, and add reusable loading/error states.
+
+**Reference research:** Grok performed a live UI audit of https://www.theblock.co/data and extracted exact colors, typography, spacing, timeframe selector patterns, and loading/error state conventions.
+
+**Deliverables (15 files):**
+- Global CSS redesign: `#161616` cards, `#27272a` borders, `#22c55e` primary accent, custom scrollbar, shimmer animation.
+- 5 shared components rewritten: `TimeframeSelector` (pill‑style), `ChartSkeleton` (shimmer), `DataPageError`, `MetricCard` (with trend badge), `ProChartWrapper` (CSV export ready).
+- `TvLightweightChart` extended with histogram support.
+- 8 page‑specific client components upgraded: `SpotClient`, `FuturesClient`, `BitcoinChartsClient`, `EthTvlClient`, `SolanaChartsClient`, `DeFiTvlClient`, `RevenueTrendClient`, `StablecoinUsdClient`.
+- All Recharts replaced with TradingView Lightweight Charts where applicable. Histograms later reverted to Recharts for categorical data after a live‑site "PI" symbol error.
+
+**Key design tokens enforced:**
+- Background: `#0a0a0a` | Card: `#161616` | Border: `#27272a`
+- Primary: `#22c55e` | Error: `#ef4444` | Text: `#f8fafc` | Muted: `#a3a3a3`
+- Typography: Inter (headings, font-weight 600), Space Mono (data, tabular-nums)
+- Cards: `rounded-3xl`, padding `p-6`, hover shadow
+
+---
+
+## Phase F — Security, Pipeline & Code Quality Overhaul
+
+**Status:** 🔲 IN PROGRESS (generating via DeepSeek V4, May 1, 2026)
+
+**Goal:** Remediate all �� Critical, 🟠 High, and 🟡 Medium findings from the Grok + Claude 4.7 full‑application audits conducted on April 30, 2026.
+
+**Audits that fed into Phase F:**
+- **Grok full‑app audit:** visited the live site, checked data freshness against CoinGecko, inspected sitemap, health endpoint, and page rendering. Flagged degraded health status, missing /data/* sitemap routes, "CONNECTING TO TAPE…" / "Rendering…" UI blocks, and missing legal pages.
+- **Claude 4.7 security & reliability audit:** reviewed the repository structure, identified CRON_SECRET enforcement gaps, Stripe webhook idempotency missing, dead‑letter queue writing to ephemeral /tmp, missing `server‑only` guards, and provided code snippets for fixes.
+
+**Phase F sub‑tasks:**
+
+### F‑1 — 🔴 Critical (Security & Pipeline Reliability)
+- Create `src/lib/ops/cron-guard.ts` — a reusable CRON_SECRET validator.
+- Apply the guard to all 5 cron routes (`daily-article`, `health`, `sitemap-warm`, `social`, `broadcast-drain`).
+- Stripe webhook: ensure raw‑body signature verification + event ID idempotency via Redis.
+- Dead‑letter queue: replace `/tmp` file writes in `daily-article.ts` with Redis LPUSH.
+- Add `import 'server-only'` to `sanity-client.ts`, `supabase-server.ts`, `stripe.ts`.
+
+### F‑2 — 🟠 High (Content, Broadcast & Legal)
+- Telegram: respect Retry‑After header on 429 responses, throttle to 1 msg/sec.
+- RSS dedup: add content‑snippet hash as a tertiary dedup key.
+- Sitemap: add all 60+ `/data/*` routes and fix canonical domain.
+- Newsletter unsubscribe: verify one‑click, no‑login, GDPR‑compliant flow.
+
+### F‑3 — 🟡 Medium (Code Quality & Monitoring)
+- Health endpoint: add sub‑checks for Sanity, Redis, and Resend.
+- Rate‑limiting: apply to `/api/newsletter/subscribe` and `/api/news/search`.
+- Legal pages: create `/privacy` and `/terms` placeholder pages with footer links.
+- Affiliate links: enforce `rel="nofollow noopener sponsored"`.
+- Dependencies: remove unused Supabase deps from `package.json`.
+
+### F‑Research (Structural Improvements)
+- Scan for code duplication (duplicate fetchers, duplicate UI components).
+- Find all hardcoded API URLs / TTLs that should be env vars.
+- Suggest top‑level project structure improvements.
+
+---
+
+## Phase Completion Summary
+
+| Phase | Title | Status | Key Outcome |
+|-------|-------|--------|------------|
+| **A** | 11 Frontend Improvements | ✅ | Miner Revenue, UTXO Age, ETH Supply, Bybit Liq., Peg Deviation, ETF Premium, Volume Dominance, Revenue Trend, L2 Gas, Trending Coins, F&G 90D |
+| **B** | 7 New Free APIs | ✅ | Flipside, CoinGlass, Token Terminal, LunarCrush, IntoTheBlock, Spot On Chain (→ Zerion), DefiLlama /unlocks |
+| **C** | Paid → Free Replacements | ✅ | Kaiko → Hyperliquid+Drift, Santiment → ApeWisdom+Santiment free, Glassnode seed, CoinShares seed, Greeks.live seed |
+| **D** | Live Dune SQL Integration | ✅ | 8 live Dune queries created on dune.com free tier, wired to `dune.ts`, seed fallbacks, DUNE_QUERIES.md updated |
+| **E** | Chart & UX Standardisation | ✅ | 15 files, The Block design clone, TradingView Lightweight Charts, shimmer skeletons, pill timeframes, CSV export ready |
+| **Zerion** | Spot On Chain Replacement | ✅ | `zerion.ts`, entity‑labelled whales, merged Etherscan+Zerion on `/data/defi/whale-watch` |
+| **Env Audit** | Vercel Security Hardening | ✅ | 7 deprecated vars removed, 15 secrets rotated, 14 new vars added, free‑tier‑only `.env.example` |
+| **F** | Security, Pipeline & Code Quality | 🔲 | Cron guard, Stripe idempotency, dead‑letter → Redis, Telegram rate‑limiting, sitemap expansion, legal pages, rate‑limiting, health checks (generating now) |
+
 --- docs/design_system.md ---
 # Design System
 
@@ -42600,12 +46288,37 @@ After the data terminal and news pipeline refactors are fully done, we will rese
 - Data section: component rendering tests (Recharts, tables, sidebars), API mock/data‑fetcher tests, snapshot tests for every page, CI integration.
 - News pipeline: RSS parsing, Groq/DeepSeek/Gemini/Stripe/Sanity integration tests, dead‑letter queue tests, cron‑job smoke tests.
 
-## Research to be done
-- Evaluate testing libraries (Jest, React Testing Library, Playwright, Vitest) for Next.js 16 + Turbopack.
-- Design a test‑runner strategy that works with Vercel serverless and local dev.
-- Prioritise a phased rollout: smoke tests → integration tests → unit tests → visual regression tests.
+## Tool Evaluation (to be finalised)
+- Evaluate **Vitest** for unit/integration (native ESM, compatible with Next.js 16 + Turbopack).
+- **React Testing Library** for component tests.
+- **Playwright** for E2E and visual regression.
+- **Percy** or **Chromatic** for visual snapshot diffs.
+- **Lighthouse CI** for performance budgets in CI.
 
-**Do NOT implement this now. It is a future task to be researched and planned once all data and pipeline work is signed off.**
+## Proposed Test Layers
+
+| Layer | What to Test | Suggested Tools |
+|-------|-------------|-----------------|
+| **Unit** | Data fetchers (`dune.ts`, `defi-data.ts`), type guards, formatters | Vitest |
+| **Integration** | API routes (`/api/news/search`, `/api/newsletter/subscribe`, Stripe webhook), RSS parsing, dedup logic | Vitest + MSW |
+| **Component** | Chart wrappers (mounted guard, empty state, error state), table sorting, timeframe selector | React Testing Library |
+| **Visual Regression** | Screenshot comparisons of key pages (spot, futures, on‑chain, news article) | Playwright + Percy/Chromatic |
+| **E2E Smoke** | Pipeline end‑to‑end (RSS → Sanity), cron route authentication, unsubscribe flow | Playwright |
+| **Performance** | Core Web Vitals on top 20 pages, Lighthouse CI in CI pipeline | Lighthouse CI |
+
+## Phased Rollout
+1. **Smoke tests** – health endpoints, cron route auth, basic page loads.
+2. **Integration tests** – API routes, data fetchers with mocked external APIs.
+3. **Unit tests** – utility functions, type guards, formatters.
+4. **Visual regression tests** – screenshot comparisons of top 20 pages.
+5. **Performance CI** – Lighthouse budgets enforced on every PR.
+
+## Constraints
+- Must work with Vercel serverless environment.
+- Must not require paid third‑party services (all tools listed are free / open‑source).
+- Must run in CI (GitHub Actions) without breaking the deployment pipeline.
+
+**Do NOT implement this now. This is a future task to be researched and planned once all data and pipeline work is signed off.**
 
 ========== SCRIPTS FOLDER ==========
 --- scripts/daily-article.ts ---

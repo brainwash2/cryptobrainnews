@@ -1,19 +1,16 @@
-/**
- * app/api/cron/daily-article/route.ts
- * Vercel Cron entrypoint for the daily article pipeline.
- */
-
+// src/app/api/cron/daily-article/route.ts
+import 'server-only';
 import { type NextRequest, NextResponse } from 'next/server';
+import { validateVercelCronAuth }         from '../../../../lib/ops/cron-guard';
 import { runPipeline }                    from '../../../../../scripts/daily-article';
 import { OpsAlerter }                     from '../../../../lib/ops/alerts';
 import type { StageError }                from '../../../../lib/news/types';
 
-const CRON_SECRET = process.env.CRON_SECRET ?? '';
+export const maxDuration = 60;
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  if (req.headers.get('authorization') !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
-  }
+  const unauth = validateVercelCronAuth(req);
+  if (unauth) return unauth;
 
   const run = await runPipeline();
 

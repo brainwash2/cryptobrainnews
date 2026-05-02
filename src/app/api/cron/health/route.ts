@@ -1,28 +1,23 @@
-/**
- * app/api/cron/health/route.ts
- * Runs every 5 minutes. Self-calls /api/health and alerts ops on failures.
- */
-
+// src/app/api/cron/health/route.ts
+import 'server-only';
 import { type NextRequest, NextResponse } from 'next/server';
+import { validateVercelCronAuth }         from '../../../../lib/ops/cron-guard';
 import { Redis }                           from '@upstash/redis';
 import { OpsAlerter }                      from '../../../../lib/ops/alerts';
 import { BroadcastQueue }                  from '../../../../lib/news/broadcast-queue';
 
-const CRON_SECRET = process.env.CRON_SECRET ?? '';
 const BASE_URL    = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cryptobrainnews.com';
 const PREV_DOWN_KEY = 'health:prev-down';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  if (req.headers.get('authorization') !== `Bearer ${CRON_SECRET}` || !CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
-  }
+  const unauth = validateVercelCronAuth(req);
+  if (unauth) return unauth;
 
   const alerter = new OpsAlerter();
   const redis   = Redis.fromEnv();
 
   const healthRes = await fetch(`${BASE_URL}/api/health?detail=true`, {
     headers: {
-      'x-cron-secret': CRON_SECRET,
       'Cache-Control':  'no-store',
     },
     signal: AbortSignal.timeout(30_000),

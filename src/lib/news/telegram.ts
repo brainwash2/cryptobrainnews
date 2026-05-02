@@ -1,20 +1,17 @@
-/**
- * lib/news/telegram.ts
- * Telegram broadcast with:
- *   - Rate-limit awareness (Telegram: 30 msg/s globally, 1 msg/s per chat)
- *   - Automatic dead-letter queuing on failure
- *   - Message chunking for articles exceeding 4096-char limit
- *   - HTML parse mode with safe escaping
- */
-
+// src/lib/news/telegram.ts
+import 'server-only';
 import { randomUUID } from 'crypto';
 import { BroadcastQueue } from './broadcast-queue';
 import type { TelegramPayload } from './types';
 
 const TELEGRAM_API = 'https://api.telegram.org';
 const MAX_MSG_LENGTH = 4096;
-// Minimum delay between messages to the same chat (1050ms > Telegram's 1/s limit)
 const INTER_MESSAGE_DELAY_MS = 1050;
+
+// Per‑chat throttle: track last send timestamp in memory.
+// In production this would be Redis; memory is acceptable for Vercel
+// serverless because each instance handles one cron invocation at a time.
+const lastSendTime = new Map<string, number>();
 
 export class TelegramBroadcaster {
   private readonly botToken: string;
@@ -26,10 +23,6 @@ export class TelegramBroadcaster {
     this.queue = new BroadcastQueue();
   }
 
-  /**
-   * Send a message. On failure, enqueues for retry rather than throwing.
-   * Returns true if sent successfully, false if queued for retry.
-   */
   async send(
     payload: TelegramPayload,
     runId?: string,
@@ -43,7 +36,7 @@ export class TelegramBroadcaster {
         text: chunks[i],
       };
       try {
-        await this.sendRaw(chunkPayload);
+        await this.throttledSend(chunkPayload);
         if (i < chunks.length - 1) {
           await new Promise((r) => setTimeout(r, INTER_MESSAGE_DELAY_MS));
         }
@@ -63,14 +56,12 @@ export class TelegramBroadcaster {
     return true;
   }
 
-  /** Drain retry queue – call from end of daily pipeline run or a separate cron. */
   async drainRetries(): Promise<{ sent: number; requeued: number; deadLettered: number }> {
     return this.queue.drainRetryQueue<TelegramPayload>('telegram', (payload) =>
-      this.sendRaw(payload),
+      this.throttledSend(payload),
     );
   }
 
-  /** Escape HTML special chars for Telegram HTML parse mode. */
   static escapeHTML(text: string): string {
     return text
       .replace(/&/g, '&amp;')
@@ -78,7 +69,6 @@ export class TelegramBroadcaster {
       .replace(/>/g, '&gt;');
   }
 
-  /** Format a published article for Telegram. */
   static formatArticleMessage(
     title: string,
     summary: string,
@@ -96,6 +86,27 @@ export class TelegramBroadcaster {
     return { chatId: process.env.TELEGRAM_CHAT_ID ?? '', text, parseMode: 'HTML', disableWebPagePreview: false };
   }
 
+  /**
+   * Rate‑limited send: enforces ≤1 msg/sec per chat.
+   * On 429, reads Retry‑After header and waits before retrying.
+   */
+  private async throttledSend(payload: TelegramPayload): Promise<void> {
+    const chatId = payload.chatId;
+
+    // ── Per‑chat throttle ──────────────────────────────────────────────
+    const prev = lastSendTime.get(chatId) ?? 0;
+    const elapsed = Date.now() - prev;
+    if (elapsed < INTER_MESSAGE_DELAY_MS) {
+      await new Promise((r) => setTimeout(r, INTER_MESSAGE_DELAY_MS - elapsed));
+    }
+
+    try {
+      await this.sendRaw(payload);
+    } finally {
+      lastSendTime.set(chatId, Date.now());
+    }
+  }
+
   private async sendRaw(payload: TelegramPayload): Promise<void> {
     const res = await fetch(`${TELEGRAM_API}/bot${this.botToken}/sendMessage`, {
       method: 'POST',
@@ -110,10 +121,10 @@ export class TelegramBroadcaster {
     });
 
     if (res.status === 429) {
-      // Respect Retry-After header
+      // Respect Retry‑After header (Telegram returns seconds)
       const retryAfter = Number(res.headers.get('Retry-After') ?? '5');
+      console.warn(`[Telegram] 429 rate-limited. Waiting ${retryAfter}s…`);
       await new Promise((r) => setTimeout(r, retryAfter * 1000));
-      // One automatic retry on rate-limit
       return this.sendRaw(payload);
     }
 
@@ -123,7 +134,6 @@ export class TelegramBroadcaster {
     }
   }
 
-  /** Split text at word boundaries without breaking HTML tags. */
   private chunkMessage(text: string, maxLen: number): string[] {
     if (text.length <= maxLen) return [text];
     const chunks: string[] = [];

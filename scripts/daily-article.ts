@@ -1,17 +1,11 @@
-/**
- * scripts/daily-article.ts
- * Daily automated article pipeline: RSS → Groq → DeepSeek → Gemini → Sanity
- *
- * Vercel-compatible: dead-letter files go to /tmp (only writable directory).
- */
-
+// scripts/daily-article.ts
+import 'server-only';
 import { randomUUID } from 'crypto';
-import { writeFileSync, mkdirSync } from 'fs';
-import { join } from 'path';
 import { ArticleDedup } from '../src/lib/news/dedup';
 import { PipelineLogger } from '../src/lib/news/pipeline-logger';
 import { RSSCache } from '../src/lib/news/rss-cache';
 import { TelegramBroadcaster } from '../src/lib/news/telegram';
+import { BroadcastQueue } from '../src/lib/news/broadcast-queue';
 import type {
   RSSItem,
   GrokSummary,
@@ -30,9 +24,6 @@ import {
 const RSS_FEEDS: string[] = (process.env.RSS_FEED_URLS ?? '').split(',').filter(Boolean);
 const MAX_ARTICLES_PER_RUN = Number(process.env.MAX_ARTICLES_PER_RUN ?? '5');
 
-// Vercel serverless has a read-only filesystem except for /tmp.
-const DEAD_LETTER_DIR = '/tmp/dead-letter';
-
 // ── API keys ──────────────────────────────────────────────────────────────
 const GROQ_API_KEY       = process.env.GROQ_API_KEY       ?? '';
 const DEEPSEEK_API_KEY   = process.env.DEEPSEEK_API_KEY   ?? '';
@@ -41,6 +32,9 @@ const SANITY_PROJECT_ID  = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '';
 const SANITY_DATASET     = process.env.NEXT_PUBLIC_SANITY_DATASET     ?? 'production';
 const SANITY_API_TOKEN   = process.env.SANITY_API_TOKEN   ?? '';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? '';
+
+// Shared broadcast queue instance for dead-letter writes
+const deadLetterQueue = new BroadcastQueue();
 
 // ── Retry helper ──────────────────────────────────────────────────────────
 async function withRetry<T>(
@@ -63,25 +57,33 @@ async function withRetry<T>(
   throw new Error(`${label} failed after ${maxAttempts} attempts: ${String(lastError)}`);
 }
 
-// ── Dead‑letter writer (never crashes the pipeline) ──────────────────────
-function writeDeadLetter(runId: string, item: RSSItem, reason: string, partial: unknown): string {
+// ── Dead‑letter writer → Redis LPUSH ────────────────────────────────────
+// Replaces writeFileSync to /tmp. Uses the existing BroadcastQueue class.
+async function writeDeadLetter(
+  runId: string,
+  item: RSSItem,
+  reason: string,
+  partial: unknown,
+): Promise<string> {
+  const id = `${runId}-${item.guid.replace(/[^a-z0-9]/gi, '-').slice(0, 40)}`;
   try {
-    mkdirSync(DEAD_LETTER_DIR, { recursive: true });
-    const filename = `${runId}-${Date.now()}-${item.guid.replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.json`;
-    const path = join(DEAD_LETTER_DIR, filename);
-    writeFileSync(
-      path,
-      JSON.stringify({ runId, failedAt: new Date().toISOString(), reason, item, partial }, null, 2),
-      'utf-8',
-    );
-    return path;
-  } catch {
-    console.warn('[pipeline] Unable to write dead-letter file (filesystem read-only?)');
+    await deadLetterQueue.enqueueFailure({
+      id,
+      channel: 'telegram', // reused channel — dead letter is inspectable
+      payload: { runId, failedAt: new Date().toISOString(), reason, item, partial },
+      attempts: 1,
+      firstFailedAt: new Date().toISOString(),
+      error: reason,
+      lastError: reason,
+    });
+    return id;
+  } catch (err) {
+    console.warn('[pipeline] Unable to write dead-letter to Redis:', String(err));
     return '';
   }
 }
 
-// ─── AI Stage 1: Groq (free tier, fast) ─────────────────────────────────
+// ─── AI Stage 1: Groq ────────────────────────────────────────────────────
 async function runGroq(item: RSSItem): Promise<GrokSummary> {
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -112,7 +114,7 @@ async function runGroq(item: RSSItem): Promise<GrokSummary> {
   return raw;
 }
 
-// ─── AI Stage 2: DeepSeek (optional, degraded if missing) ────────────────
+// ─── AI Stage 2: DeepSeek (optional) ─────────────────────────────────────
 async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEnrichment> {
   const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
@@ -143,7 +145,7 @@ async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEn
   return raw;
 }
 
-// ─── AI Stage 3: Gemini (optional, degraded if missing) ──────────────────
+// ─── AI Stage 3: Gemini (optional) ───────────────────────────────────────
 async function runGemini(grok: GrokSummary, deepSeek: DeepSeekEnrichment): Promise<GeminiPolish> {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -173,7 +175,6 @@ async function runGemini(grok: GrokSummary, deepSeek: DeepSeekEnrichment): Promi
   return raw;
 }
 
-// ── Fallback when later stages are missing ───────────────────────────────
 function buildFallbackPolish(grok: GrokSummary, deepSeek?: DeepSeekEnrichment): GeminiPolish {
   const headline = grok.headline;
   const slug = headline
@@ -191,7 +192,6 @@ function buildFallbackPolish(grok: GrokSummary, deepSeek?: DeepSeekEnrichment): 
   };
 }
 
-// ── Sanity helpers ───────────────────────────────────────────────────────
 async function slugExistsInSanity(slug: string): Promise<boolean> {
   const query = encodeURIComponent(
     `*[_type == "post" && slug.current == "${slug}"][0]._id`,
@@ -218,16 +218,11 @@ async function writeToSanity(payload: SanityArticlePayload): Promise<SanityWrite
     body: JSON.stringify({ mutations: [{ create: payload }] }),
   });
   if (!res.ok) throw new Error(`Sanity write ${res.status}: ${await res.text()}`);
-
-  // The mutation succeeded; we don't strictly need the document ID because
-  // dedup is done via slug. Grab the ID if available, otherwise use a placeholder.
   const json = (await res.json()) as { results?: Array<{ id: string }> };
   const documentId = json.results?.[0]?.id ?? `san-${payload.slug.current}`;
-
   return { documentId, slug: payload.slug.current, publishedAt: payload.publishedAt };
 }
 
-// ── Article processor ────────────────────────────────────────────────────
 async function processArticle(
   item: RSSItem,
   runId: string,
@@ -241,7 +236,6 @@ async function processArticle(
     return { published: false };
   }
 
-  // ── Groq (fatal if missing) ──────────────────────────────────────
   logger.setStage('grok-summarise');
   let grok: GrokSummary;
   try {
@@ -249,12 +243,11 @@ async function processArticle(
     grok = result;
     logger.info('Groq succeeded', { attempts });
   } catch (err) {
-    const path = writeDeadLetter(runId, item, 'Groq failed', null);
+    const path = await writeDeadLetter(runId, item, 'Groq failed', null);
     logger.error('Groq fatal – dead-lettered', 'fatal', err, 3);
     return { published: false, deadLetterPath: path || undefined };
   }
 
-  // ── DeepSeek (optional) ──────────────────────────────────────────
   logger.setStage('deepseek-enrich');
   let deepSeek: DeepSeekEnrichment | undefined;
   try {
@@ -270,7 +263,6 @@ async function processArticle(
     logger.error('DeepSeek failed – degraded to Groq output only', 'degraded', err, 2);
   }
 
-  // ── Gemini (optional) ────────────────────────────────────────────
   logger.setStage('gemini-polish');
   let gemini: GeminiPolish | undefined;
   if (deepSeek) {
@@ -290,7 +282,6 @@ async function processArticle(
 
   const finalPolish = gemini ?? buildFallbackPolish(grok, deepSeek);
 
-  // ── Sanity write ─────────────────────────────────────────────────
   logger.setStage('sanity-write');
   try {
     const exists = await slugExistsInSanity(finalPolish.slug);
@@ -303,7 +294,6 @@ async function processArticle(
     logger.warn('Slug check failed – proceeding with write', { cause: String(err) });
   }
 
-  // Convert the plain‑text body into a valid Portable Text block (required by Sanity)
   const bodyBlock = {
     _key: randomUUID(),
     _type: 'block',
@@ -319,7 +309,6 @@ async function processArticle(
     ],
   };
 
-  // Only fields defined in the Sanity "post" schema are sent.
   const payload = {
     _type: 'post',
     title: finalPolish.title,
@@ -351,7 +340,7 @@ async function processArticle(
       attempts,
     });
   } catch (err) {
-    const path = writeDeadLetter(runId, item, 'Sanity write failed', payload);
+    const path = await writeDeadLetter(runId, item, 'Sanity write failed', payload);
     logger.error('Sanity write fatal – dead-lettered', 'fatal', err, 3);
     return { published: false, deadLetterPath: path || undefined };
   }
@@ -372,7 +361,6 @@ async function processArticle(
   return { published: true };
 }
 
-// ── Main pipeline entrypoint ─────────────────────────────────────────────
 export async function runPipeline(): Promise<PipelineRun> {
   const runId = randomUUID();
   const startedAt = new Date().toISOString();

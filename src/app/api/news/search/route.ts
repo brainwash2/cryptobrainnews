@@ -1,29 +1,14 @@
-/**
- * app/api/news/search/route.ts
- * Edge-compatible full-text search over Sanity articles.
- *
- * Security:
- *   - Query sanitised (max 120 chars, stripped to alphanumeric + spaces/hyphens)
- *   - Rate-limited via Redis counter (60 req/min per IP)
- *
- * Caching:
- *   - Popular queries cached 2 min in Redis (search results are relatively stable)
- *   - No Vercel CDN caching for search (query is per-user, vary too high)
- *   - Very short stale window (20 min) to prevent stale search results
- */
-
+// src/app/api/news/search/route.ts
+import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
-import { Redis }           from '@upstash/redis';
 import { PageCache }       from '../../../../lib/news/page-cache';
 import { searchArticles }  from '../../../../lib/news/sanity-queries';
+import { checkRateLimit }  from '@/lib/rate-limit';
 
 export const runtime = 'edge';
 
 const cache     = new PageCache();
-const redis     = Redis.fromEnv();
 const MAX_QUERY_LEN = 120;
-const RATE_LIMIT_WINDOW = 60;  // seconds
-const RATE_LIMIT_MAX    = 60;  // requests per window
 
 function sanitiseQuery(raw: string): string {
   return raw
@@ -33,22 +18,15 @@ function sanitiseQuery(raw: string): string {
     .trim();
 }
 
-async function isRateLimited(ip: string): Promise<boolean> {
-  const key    = `rl:search:${ip}`;
-  const count  = await redis.incr(key);
-  if (count === 1) await redis.expire(key, RATE_LIMIT_WINDOW);
-  return count > RATE_LIMIT_MAX;
-}
-
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  // ── Rate limit: 60 requests/min/IP ──────────────────────────────────
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-
-  if (await isRateLimited(ip)) {
+  if (await checkRateLimit(`search:${ip}`, 60, 60_000)) {
     return NextResponse.json(
       { error: 'Too many requests' },
       {
         status: 429,
-        headers: { 'Retry-After': String(RATE_LIMIT_WINDOW) },
+        headers: { 'Retry-After': '60' },
       },
     );
   }
