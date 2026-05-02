@@ -11,6 +11,7 @@ import HashRateTrendChart           from "./_components/HashRateTrendChart";
 import MvrvGauge                   from "./_components/MvrvGauge";
 import NuplGauge                   from "./_components/NuplGauge";
 import PuellGauge                  from "./_components/PuellGauge";
+import S2fChart                    from "./_components/S2fChart";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
@@ -143,6 +144,45 @@ async function fetchPuellMultiple(): Promise<PuellResult> {
   }
 }
 
+// ── Batch 12: BTC 90-Day Price History for S2F overlay ───────────────────────
+interface BtcPriceHistory {
+  points: { date: string; price: number }[];
+  source: "live" | "seed";
+}
+
+function generateBtcPriceSeed(): BtcPriceHistory {
+  const pts: { date: string; price: number }[] = [];
+  const now = Date.now();
+  for (let i = 89; i >= 0; i--) {
+    const d     = new Date(now - i * 86_400_000);
+    const date  = d.toISOString().slice(0, 10);
+    // Gentle sine wave ~$96K, range $90K–$102K
+    const price = Math.round(96_000 + 6_000 * Math.sin((i / 45) * Math.PI));
+    pts.push({ date, price });
+  }
+  return { points: pts, source: "seed" };
+}
+
+async function fetchBtcPriceHistory(): Promise<BtcPriceHistory> {
+  try {
+    const res = await fetch(
+      "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=90&interval=daily",
+      { next: { revalidate: 3600 } },
+    );
+    if (!res.ok) return generateBtcPriceSeed();
+    const json = await res.json() as { prices?: Array<[number, number]> };
+    const prices = json.prices ?? [];
+    if (prices.length < 10) return generateBtcPriceSeed();
+    const points = prices.map(([ts, p]) => ({
+      date:  new Date(ts).toISOString().slice(0, 10),
+      price: Math.round(p),
+    }));
+    return { points, source: "live" };
+  } catch {
+    return generateBtcPriceSeed();
+  }
+}
+
 // ── Unit 5: BTC 30-Day Annualized Realized Volatility ───────────────────────
 async function fetchBtcVolatility(): Promise<number | null> {
   try {
@@ -165,7 +205,7 @@ async function fetchBtcVolatility(): Promise<number | null> {
 }
 
 async function BitcoinData() {
-  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData, btcVol, lnStats, mvrvTs, nuplTs, puellData] =
+  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData, btcVol, lnStats, mvrvTs, nuplTs, puellData, s2fPriceData] =
     await Promise.all([
       getBitcoinStats().catch(() => null),
       fetchBtcChart("n-unique-addresses",    90),
@@ -181,6 +221,7 @@ async function BitcoinData() {
       getGlassnodeMetric("mvrv", "BTC", "24h", 90).catch(() => null),
       getGlassnodeMetric("nupl", "BTC", "24h", 90).catch(() => null),
       fetchPuellMultiple().catch(() => generatePuellSeed()),
+      fetchBtcPriceHistory().catch(() => generateBtcPriceSeed()),
     ]);
 
   // ── Batch 9: MVRV ratio — derive current value + chart points ───────────────
@@ -209,6 +250,13 @@ async function BitcoinData() {
     ? (puellPoints[puellPoints.length - 1]?.value ?? 0.85)
     : 0.85;                               // seed fallback (Fair Value zone)
   const puellSource  = puellData.source;
+
+  // ── Batch 12: S2F price history ───────────────────────────────────────────────
+  const s2fPriceHistory  = s2fPriceData.points;
+  const s2fCurrentPrice  = s2fPriceHistory.length > 0
+    ? (s2fPriceHistory[s2fPriceHistory.length - 1]?.price ?? 96_000)
+    : 96_000;
+  const s2fPriceSource   = s2fPriceData.source;
 
   // ── Unit 2: hash rate 30d change (computed from hashData) ──────────────────
   const sortedHash    = [...hashData].sort((a, b) => a.date.localeCompare(b.date));
@@ -406,6 +454,13 @@ async function BitcoinData() {
         source={puellSource}
       />
 
+      {/* Batch 12 — Stock‑to‑Flow Model */}
+      <S2fChart
+        priceHistory={s2fPriceHistory}
+        currentPrice={s2fCurrentPrice}
+        source={s2fPriceSource}
+      />
+
       {/* Unit 2 — Hash Rate Trend Chart */}
       {hashData.length > 0 && (
         <HashRateTrendChart
@@ -438,6 +493,7 @@ async function BitcoinData() {
             ["MVRV Ratio",             "Market Value ÷ Realized Value. <1 = undervalued; 1–3 = fair; >3 = overvalued; >4.5 = extreme. Source: Glassnode."],
             ["NUPL",                   "Net Unrealized Profit/Loss = (Market Cap − Realized Cap) ÷ Market Cap. <0 Capitulation; 0–0.25 Hope; 0.25–0.5 Optimism; 0.5–0.75 Belief; >0.75 Euphoria."],
             ["Puell Multiple",         "Daily miner revenue ÷ 365-day SMA. <0.5 historically strong buy; 0.5–1.0 fair; 1.0–2.0 caution; >2.0 extreme overvaluation. Source: blockchain.info."],
+            ["Stock‑to‑Flow (S2F)",    "Circulating supply ÷ annual new issuance. Model price = S2F³ × $0.40 (PlanB). Constant between halvings; next update at 2028 halving. Current S2F ≈ 120."],
           ].map(([k, v]) => (
             <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>
           ))}

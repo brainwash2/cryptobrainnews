@@ -4,11 +4,31 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 11 – Puell Multiple ✅
+Batch 12 – Stock‑to‑Flow Model ✅
 
 ## Current Goal
 
-Add Bitcoin Puell Multiple tracker with zone gauge
+Add Bitcoin Stock‑to‑Flow model tracker with price overlay
+
+### Batch 12 — Unit 1: Bitcoin Stock‑to‑Flow (S2F) Model Tracker ✅
+- `src/app/data/onchain/bitcoin/_components/S2fChart.tsx` **created** (`"use client"`):
+  - Props: `{ priceHistory: { date: string; price: number }[]; currentPrice: number; source: "live" | "seed" }`
+  - `useSyncExternalStore` SSR hydration guard (`mounted`)
+  - Pure-computed S2F constants (no API): `CIRCULATING_SUPPLY = 19_700_000`, `ANNUAL_ISSUANCE = 164_250`, `S2F_RATIO ≈ 119.94`, `MODEL_PRICE = S2F³ × $0.40 ≈ $690K`
+  - 4-KPI grid: S2F Ratio / Model Price / Current BTC Price / % vs Model (color-coded green/red)
+  - Recharts `ComposedChart` dual-YAxis: left = actual BTC price (auto-scale), right = S2F model (±5% domain so flat line sits centered); amber solid + muted dashed lines; `isAnimationActive={false}`
+  - `fmtUsd()` helper for $K/$M formatting; custom `PriceTooltip`
+  - Footnote: issuance, supply, constant-between-halvings caveat
+- `src/app/data/onchain/bitcoin/page.tsx` updated:
+  - `interface BtcPriceHistory` added: `{ points: { date: string; price: number }[]; source: "live" | "seed" }`
+  - `generateBtcPriceSeed()` — 90-point sine-wave series ~$96K (range $90K–$102K) as deterministic fallback
+  - `fetchBtcPriceHistory()` — CoinGecko `market_chart?days=90&interval=daily`; maps `[ts, price]` pairs; `next: { revalidate: 3600 }`; seed fallback on error
+  - `import S2fChart` added; 15th Promise.all slot; `s2fPriceHistory` / `s2fCurrentPrice` / `s2fPriceSource` derived
+  - `<S2fChart priceHistory={...} currentPrice={...} source={...} />` rendered below `<PuellGauge />`, above `<HashRateTrendChart />`
+  - Glossary entry added for Stock‑to‑Flow (S2F)
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 11 ✅ — Puell Multiple
 
 ### Batch 11 — Unit 1: Bitcoin Puell Multiple Tracker ✅
 - `src/app/data/onchain/bitcoin/_components/PuellGauge.tsx` **created** (`"use client"`):
