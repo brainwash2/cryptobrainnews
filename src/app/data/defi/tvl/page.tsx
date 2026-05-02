@@ -8,7 +8,8 @@ import {
   getDefiTotalFees24h,
 } from "@/lib/defi-data";
 import type { ProtocolRow } from "@/lib/defi-data";
-import DeFiTvlClient from "./_components/DeFiTvlClient";
+import DeFiTvlClient           from "./_components/DeFiTvlClient";
+import DefiCategoryPieChart    from "./_components/DefiCategoryPieChart";
 
 export const metadata = {
   title: "DeFi TVL Rankings | CryptoBrainNews",
@@ -89,6 +90,19 @@ async function TvlData() {
           </div>
         ))}
       </div>
+
+      {/* Protocol Dominance Breakdown — Recharts donut pie */}
+      {categories.length > 0 && (
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-white mb-1 border-l-2 border-[#FABF2C] pl-3">
+            Protocol Dominance Breakdown
+          </h3>
+          <p className="text-[10px] font-mono text-[#555] mb-5 ml-5">
+            % of total DeFi TVL by category · Top 9 + Others · Source: DefiLlama · Cached 1 h
+          </p>
+          <DefiCategoryPieChart categories={categories} />
+        </div>
+      )}
 
       {/* Interactive charts - client component */}
       <DeFiTvlClient categories={categories} totalHistory={totalHistory} />

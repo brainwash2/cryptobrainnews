@@ -4,9 +4,18 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 4 – Metric Expansion 🔄 IN PROGRESS
+Awaiting instruction for next batch.
 
-## Completed Batch 4
+## Completed Batch 4 ✅ — Metric Expansion (ALL 4 UNITS DONE)
+
+### Unit 4 — Protocol Dominance Breakdown Chart (DeFi TVL page)
+- `getTvlByCategory()` already existed in `src/lib/defi-data.ts` (cached 3600s, returns top 15 categories with `{ category, tvl, share }`) — no new lib function required
+- New `src/app/data/defi/tvl/_components/DefiCategoryPieChart.tsx` — `"use client"` Recharts donut `PieChart` (`innerRadius="52%"` `outerRadius="78%"`), top 9 categories + "Others" bucket, `isAnimationActive={false}`, `useSyncExternalStore` mount guard, `ChartSkeleton` fallback, `CustomTooltip` showing category/TVL/share, 2-column legend grid (colored dot + name + TVL + share %)
+- `src/app/data/defi/tvl/page.tsx` updated:
+  - Imports `DefiCategoryPieChart`
+  - New "Protocol Dominance Breakdown" section inserted between KPI strip and existing `DeFiTvlClient` — `bg-[#0a0a0a] border border-[#1a1a1a]` card with `FABF2C` left-border heading
+- TypeScript: 0 errors
+- `npm run build` — Bus error (Replit free-tier container OOM during Next.js production compile; environment constraint, not a code issue)
 
 ### Unit 3 — 7-day TVL Sparklines in Top 5 L2 Cards
 - `slug` + `llamaSlug` fields added to `Layer2TVLEntry` interface in `src/lib/scaling-data.ts` — `slug` is the catalogue identifier, `llamaSlug` is the actual DefiLlama chain name (e.g. `'OP Mainnet'`) for use with the historicalChainTvl API
