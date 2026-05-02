@@ -4,11 +4,35 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 13 – Realized Price ✅
+Batch 14 – Thermocap Multiple ✅
 
 ## Current Goal
 
-Add Bitcoin Realized Price tracker (cycle floor indicator)
+Add Bitcoin Thermocap Multiple tracker (8th cycle indicator)
+
+### Batch 14 — Unit 1: Bitcoin Thermocap Multiple Tracker ✅
+- `src/app/data/onchain/bitcoin/_components/ThermocapGauge.tsx` **created** (`"use client"`):
+  - Props: `{ multiple: number; points: { date: string; value: number }[]; source: "live" | "seed" }`
+  - `useSyncExternalStore` SSR hydration guard (`mounted`)
+  - `tcColor(v)` / `tcZoneLabel(v)` — 4 historically-calibrated zones: Undervalued (<5×) green, Fair Value (5–15×) amber, Overvalued (15–30×) orange, Extreme (>30×) red
+  - CSS semi-circular gauge — display range `[0, 50×]`; needle = `(multiple / 50) * 180 − 90`; 4 zone labels (UV/FV/OV/EX) around arc; pivot dot
+  - Recharts `AreaChart` 90-day history; `isAnimationActive={false}`; amber gradient fill; 3 `ReferenceLine` zone boundaries at 5×/15×/30× (color-coded); YAxis `tickFormatter` appends `×`
+  - Zone legend strip (4 items); Live vs Seed badge
+- `src/app/data/onchain/bitcoin/page.tsx` updated (zero new API calls):
+  - `import ThermocapGauge` added
+  - `THERMOCAP_BASE = 80_000_000_000` — estimated $80B cumulative miner revenue prior to last 90 days
+  - `priceByDate` Map built from `s2fPriceHistory` (date → price)
+  - `sortedRev` — `minerRevData` sorted ascending by date
+  - Running loop: `runningThermocap += rev.value`; for each day with matching price, pushes `{ date, value: marketCap / runningThermocap }` to `thermocapPoints`
+  - `currentThermocap` = final `runningThermocap` after all 90 days
+  - `currentTcMultiple` = `(s2fCurrentPrice × 19,700,000) / currentThermocap` (seed fallback `22.5`)
+  - `tcPoints` — uses `thermocapPoints` if non-empty, else constant-multiple fallback across `s2fPriceHistory`
+  - `tcSource` = `s2fPriceSource`
+  - `<ThermocapGauge multiple={currentTcMultiple} points={tcPoints} source={tcSource} />` rendered below `<RealizedPriceChart />`, above `<HashRateTrendChart />`
+  - Glossary entry added for Thermocap Multiple
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 13 ✅ — Realized Price
 
 ### Batch 13 — Unit 1: Bitcoin Realized Price Tracker ✅
 - `src/app/data/onchain/bitcoin/_components/RealizedPriceChart.tsx` **created** (`"use client"`):

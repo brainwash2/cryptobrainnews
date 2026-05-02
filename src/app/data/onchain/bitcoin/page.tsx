@@ -13,6 +13,7 @@ import NuplGauge                   from "./_components/NuplGauge";
 import PuellGauge                  from "./_components/PuellGauge";
 import S2fChart                    from "./_components/S2fChart";
 import RealizedPriceChart          from "./_components/RealizedPriceChart";
+import ThermocapGauge              from "./_components/ThermocapGauge";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
@@ -281,6 +282,43 @@ async function BitcoinData() {
       }));
   const realizedSource = (s2fPriceSource === "live" || mvrvSource === "live") ? "live" as const : "seed" as const;
 
+  // ── Batch 14: Thermocap Multiple — MarketCap ÷ cumulative miner revenue ──────
+  // THERMOCAP_BASE: estimated cumulative miner revenue prior to last 90 days (~$80B)
+  const THERMOCAP_BASE        = 80_000_000_000;
+  const CIRCULATING_SUPPLY_TC = 19_700_000;  // same constant as S2F
+  // Build a date→price lookup from the already-fetched price history
+  const priceByDate  = new Map(s2fPriceHistory.map((p) => [p.date, p.price]));
+  // Sort minerRevData ascending by date
+  const sortedRev    = [...minerRevData].sort((a, b) => a.date.localeCompare(b.date));
+  // Running cumulative thermocap + daily Multiple points
+  let runningThermocap = THERMOCAP_BASE;
+  const thermocapPoints: { date: string; value: number }[] = [];
+  for (const rev of sortedRev) {
+    runningThermocap += rev.value;               // accumulate daily USD revenue
+    const btcPriceDay = priceByDate.get(rev.date);
+    if (btcPriceDay !== undefined && runningThermocap > 0) {
+      const marketCapDay = btcPriceDay * CIRCULATING_SUPPLY_TC;
+      thermocapPoints.push({
+        date:  rev.date,
+        value: Math.round((marketCapDay / runningThermocap) * 100) / 100,
+      });
+    }
+  }
+  // Current thermocap (after accumulating all minerRevData)
+  const currentThermocap = runningThermocap;
+  const currentMarketCap = s2fCurrentPrice * CIRCULATING_SUPPLY_TC;
+  const currentTcMultiple = currentThermocap > 0
+    ? Math.round((currentMarketCap / currentThermocap) * 100) / 100
+    : 22.5;  // seed fallback (~Fair Value zone)
+  // If no matched points (date mismatch), build seed points at constant current multiple
+  const tcPoints = thermocapPoints.length > 0
+    ? thermocapPoints
+    : s2fPriceHistory.map((p) => ({
+        date:  p.date,
+        value: currentTcMultiple,
+      }));
+  const tcSource = s2fPriceSource;
+
   // ── Unit 2: hash rate 30d change (computed from hashData) ──────────────────
   const sortedHash    = [...hashData].sort((a, b) => a.date.localeCompare(b.date));
   const lastHashVal   = sortedHash[sortedHash.length - 1]?.value ?? 0;
@@ -492,6 +530,13 @@ async function BitcoinData() {
         source={realizedSource}
       />
 
+      {/* Batch 14 — Thermocap Multiple */}
+      <ThermocapGauge
+        multiple={currentTcMultiple}
+        points={tcPoints}
+        source={tcSource}
+      />
+
       {/* Unit 2 — Hash Rate Trend Chart */}
       {hashData.length > 0 && (
         <HashRateTrendChart
@@ -526,6 +571,7 @@ async function BitcoinData() {
             ["Puell Multiple",         "Daily miner revenue ÷ 365-day SMA. <0.5 historically strong buy; 0.5–1.0 fair; 1.0–2.0 caution; >2.0 extreme overvaluation. Source: blockchain.info."],
             ["Stock‑to‑Flow (S2F)",    "Circulating supply ÷ annual new issuance. Model price = S2F³ × $0.40 (PlanB). Constant between halvings; next update at 2028 halving. Current S2F ≈ 120."],
             ["Realized Price",         "Average on-chain cost basis of all BTC weighted by last movement. Derived as BTC Price ÷ MVRV. Trading below Realized Price = deep bear accumulation zone."],
+            ["Thermocap Multiple",     "Market Cap ÷ cumulative all-time miner revenue. <5× historically undervalued; 5–15× fair; 15–30× overvalued; >30× cycle top territory. Derived from blockchain.info."],
           ].map(([k, v]) => (
             <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>
           ))}
