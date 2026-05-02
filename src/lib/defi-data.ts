@@ -310,6 +310,18 @@ export async function getDefiTotalFees24h(): Promise<number> {
   }, 3600);
 }
 
+// ─── 3d. Global DEX Volume (24h) — for stablecoin velocity ───────────────────
+
+export async function getGlobalDexVolume24h(): Promise<number> {
+  return cached('defi:dex:vol24h:global', async () => {
+    const data = await safeFetch<{ total24h?: number }>(
+      'https://api.llama.fi/overview/dexs?excludeTotalDataChartBreakdown=true&excludeTotalDataChart=true',
+      {},
+    );
+    return data.total24h ?? 0;
+  }, 1800);
+}
+
 // ─── 4. Lending ───────────────────────────────────────────────────────────────
 
 export async function getLendingProtocols(): Promise<LendingProtocol[]> {

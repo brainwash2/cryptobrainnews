@@ -1,10 +1,11 @@
 import React, { Suspense } from "react";
 import { DataHeader }    from "../../_components/DataHeader";
 import { ChartSkeleton } from "../../_components/ChartSkeleton";
+import { cached }        from "@/lib/cache";
 import EthTvlClient      from "./_components/EthTvlClient";
 
 export const metadata = { title: "Ethereum On-Chain | CryptoBrainNews" };
-export const revalidate = 1800;
+export const revalidate = 300;
 
 async function ft(url: string, opts?: RequestInit): Promise<Response | null> {
   const ac = new AbortController();
@@ -14,7 +15,9 @@ async function ft(url: string, opts?: RequestInit): Promise<Response | null> {
   finally { clearTimeout(id); }
 }
 
-function Card({ label, value, sub, color = "#3b82f6" }: { label: string; value: string; sub?: string; color?: string }) {
+function Card({ label, value, sub, color = "#3b82f6" }: {
+  label: string; value: string; sub?: string; color?: string;
+}) {
   return (
     <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
       <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{label}</p>
@@ -24,11 +27,28 @@ function Card({ label, value, sub, color = "#3b82f6" }: { label: string; value: 
   );
 }
 
+// ── Unit 1: ETH Staking Stats — cached 5 min via cached() ────────────────────
+
+interface EthStakingData {
+  eligibleether?:  number;
+  validatorscount?: number;
+  stakingapr?:      number;
+}
+
+async function getEthStakingStats(): Promise<EthStakingData | null> {
+  return cached("eth:staking:v1", async () => {
+    const res = await ft("https://beaconcha.in/api/v1/epoch/latest");
+    if (!res?.ok) return null;
+    const json = await res.json() as { data?: EthStakingData };
+    return json.data ?? null;
+  }, 300);
+}
+
 interface EthSupplyRow {
-  date:       string;
-  supply:     number;
-  burned:     number;
-  netEmission:number;
+  date:        string;
+  supply:      number;
+  burned:      number;
+  netEmission: number;
 }
 
 async function fetchEthSupplyGrowth(): Promise<EthSupplyRow[]> {
@@ -69,71 +89,122 @@ async function fetchEthSupplyGrowth(): Promise<EthSupplyRow[]> {
 }
 
 async function EthData() {
-  const priceR  = await ft("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd");
-  const beaconR = await ft("https://beaconcha.in/api/v1/epoch/latest");
-  const tvlR    = await ft("https://api.llama.fi/v2/historicalChainTvl/Ethereum");
-  const gasR    = await ft("https://cloudflare-eth.com", {
+  const priceR = await ft("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd");
+  const tvlR   = await ft("https://api.llama.fi/v2/historicalChainTvl/Ethereum");
+  const gasR   = await ft("https://cloudflare-eth.com", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_gasPrice", params: [] }),
   });
 
-  const [priceJ, beaconJ, tvlJ, gasJ, supplyRows] = await Promise.allSettled([
-    priceR?.ok  ? priceR.json()  : Promise.resolve(null),
-    beaconR?.ok ? beaconR.json() : Promise.resolve(null),
-    tvlR?.ok    ? tvlR.json()    : Promise.resolve(null),
-    gasR?.ok    ? gasR.json()    : Promise.resolve(null),
+  const [priceJ, tvlJ, gasJ, supplyRows, stakingData] = await Promise.allSettled([
+    priceR?.ok ? priceR.json() : Promise.resolve(null),
+    tvlR?.ok   ? tvlR.json()   : Promise.resolve(null),
+    gasR?.ok   ? gasR.json()   : Promise.resolve(null),
     fetchEthSupplyGrowth(),
+    getEthStakingStats(),
   ]);
 
-  const priceValue  = priceJ.status  === "fulfilled" ? (priceJ.value  as Record<string, { usd: number }> | null) : null;
-  const beaconValue = beaconJ.status === "fulfilled" ? (beaconJ.value as { data?: { eligibleether?: number; validatorscount?: number; stakingapr?: number } } | null) : null;
-  const tvlValue    = tvlJ.status    === "fulfilled" ? (tvlJ.value as Array<{ date: number; tvl: number }> | null) : null;
-  const gasValue    = gasJ.status    === "fulfilled" ? (gasJ.value as { result?: string } | null) : null;
+  const priceValue   = priceJ.status    === "fulfilled" ? (priceJ.value    as Record<string, { usd: number }> | null) : null;
+  const tvlValue     = tvlJ.status      === "fulfilled" ? (tvlJ.value      as Array<{ date: number; tvl: number }> | null) : null;
+  const gasValue     = gasJ.status      === "fulfilled" ? (gasJ.value      as { result?: string } | null) : null;
+  const beacon       = stakingData.status === "fulfilled" ? stakingData.value : null;
 
   const price          = priceValue?.ethereum?.usd ?? 0;
-  const beacon         = beaconValue?.data;
   const tvlRaw         = tvlValue ?? [];
   const gasHex         = gasValue?.result ?? null;
+  const supplyData     = (supplyRows.status === "fulfilled" ? supplyRows.value : []) as EthSupplyRow[];
 
-  const totalStaked    = beacon?.eligibleether   ? beacon.eligibleether / 1e9 : 0;
+  const totalStaked    = beacon?.eligibleether    ? beacon.eligibleether / 1e9    : 0;
   const validatorCount = beacon?.validatorscount  ?? 0;
-  const stakingApr     = beacon?.stakingapr       ? +(beacon.stakingapr * 100).toFixed(2) : 3.5;
-  const avgGasGwei     = gasHex ? Math.round(parseInt(gasHex, 16) / 1e9) : 20;
+  const stakingApr     = beacon?.stakingapr       ? +(beacon.stakingapr * 100).toFixed(2) : 0;
+  const avgGasGwei     = gasHex ? Math.round(parseInt(gasHex, 16) / 1e9) : 0;
   const latestTvl      = Array.isArray(tvlRaw) && tvlRaw.length ? tvlRaw[tvlRaw.length - 1]?.tvl ?? 0 : 0;
+  const currentSupply  = supplyData[0]?.supply ?? 0;
+  const burnedEth      = supplyData[0]?.burned ?? 0;
+
+  const fmtN = (n: number) => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : n.toFixed(0);
 
   const tvlChart = Array.isArray(tvlRaw) ? tvlRaw.slice(-90).map((p) => ({
     date: new Date(p.date * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     tvl:  p.tvl,
   })) : [];
 
-  const fmtN = (n: number) => n >= 1e6 ? `${(n/1e6).toFixed(1)}M` : n >= 1e3 ? `${(n/1e3).toFixed(1)}K` : n.toFixed(0);
-
-  const supplyData = (supplyRows.status === "fulfilled" ? supplyRows.value : []) as EthSupplyRow[];
-  const currentSupply = supplyData[0]?.supply ?? 0;
-  const burnedEth     = supplyData[0]?.burned ?? 0;
-
   return (
     <div className="space-y-10 pb-20">
-      <DataHeader title="Ethereum On-Chain"
-        description="Ethereum network health — staking, gas, TVL, supply growth, and on-chain activity." />
+      <DataHeader
+        title="Ethereum On-Chain"
+        description="Ethereum network health — staking, gas, TVL, supply growth, and on-chain activity."
+      />
       <div className="flex items-center gap-3">
         <span className="border border-[#00d672]/40 text-[#00d672] font-mono text-[10px] px-3 py-1 uppercase tracking-widest">
           Live — beaconcha.in + DefiLlama + cloudflare-eth.com
         </span>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card label="ETH Price"        value={price > 0 ? `$${price.toLocaleString()}` : "—"} sub="CoinGecko" />
-        <Card label="ETH Staked"       value={totalStaked > 0 ? `${fmtN(totalStaked)} ETH` : "—"}
-          sub={price > 0 && totalStaked > 0 ? `$${((totalStaked * price)/1e9).toFixed(1)}B` : "beaconcha.in"} />
-        <Card label="Validators"       value={validatorCount > 0 ? fmtN(validatorCount) : "—"} sub="active + pending" color="#fff" />
-        <Card label="Staking APR"      value={`${stakingApr.toFixed(2)}%`} sub="beaconcha.in" color="#00d672" />
-        <Card label="Avg Gas"          value={`${avgGasGwei} Gwei`}
-          color={avgGasGwei > 50 ? "#ff4757" : "#FABF2C"} sub="cloudflare-eth.com" />
-        <Card label="DeFi TVL"         value={latestTvl > 0 ? `$${(latestTvl/1e9).toFixed(1)}B` : "—"} sub="DefiLlama" color="#FABF2C" />
-        <Card label="% ETH Staked"     value={totalStaked > 0 ? `${((totalStaked/120_000_000)*100).toFixed(1)}%` : "—"} sub="of ~120M supply" color="#888" />
-        <Card label="ETH Burned"       value={burnedEth > 0 ? `${(burnedEth/1e6).toFixed(1)}M ETH` : "4.4M+ ETH"} sub="since EIP-1559" color="#ff4757" />
+
+      {/* ── Unit 1: ETH Staking Stats ─────────────────────────────────────────── */}
+      <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+        <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#3b82f6] pl-3 mb-5">
+          ETH Staking Stats
+        </h3>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card
+            label="ETH Staked"
+            value={totalStaked > 0 ? `${fmtN(totalStaked)} ETH` : "—"}
+            sub={price > 0 && totalStaked > 0 ? `$${((totalStaked * price) / 1e9).toFixed(1)}B locked` : "beaconcha.in"}
+            color="#3b82f6"
+          />
+          <Card
+            label="Validator Count"
+            value={validatorCount > 0 ? fmtN(validatorCount) : "—"}
+            sub="active validators"
+            color="#fff"
+          />
+          <Card
+            label="Staking APR"
+            value={stakingApr > 0 ? `${stakingApr.toFixed(2)}%` : "—"}
+            sub="beaconcha.in · annualized"
+            color="#00d672"
+          />
+          <Card
+            label="% ETH Staked"
+            value={totalStaked > 0 ? `${((totalStaked / 120_000_000) * 100).toFixed(1)}%` : "—"}
+            sub="of ~120M supply"
+            color="#888"
+          />
+        </div>
+        <p className="text-[9px] text-[#333] font-mono mt-4">
+          Source: beaconcha.in/api/v1/epoch/latest · Cached 5 min
+        </p>
       </div>
 
+      {/* ── Main KPI Grid ─────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card
+          label="ETH Price"
+          value={price > 0 ? `$${price.toLocaleString()}` : "—"}
+          sub="CoinGecko"
+        />
+        <Card
+          label="Avg Gas"
+          value={avgGasGwei > 0 ? `${avgGasGwei} Gwei` : "—"}
+          color={avgGasGwei > 50 ? "#ff4757" : avgGasGwei > 0 ? "#FABF2C" : "#888"}
+          sub="cloudflare-eth.com"
+        />
+        <Card
+          label="DeFi TVL"
+          value={latestTvl > 0 ? `$${(latestTvl / 1e9).toFixed(1)}B` : "—"}
+          sub="DefiLlama"
+          color="#FABF2C"
+        />
+        <Card
+          label="ETH Burned"
+          value={burnedEth > 0 ? `${(burnedEth / 1e6).toFixed(1)}M ETH` : "4.4M+ ETH"}
+          sub="since EIP-1559"
+          color="#ff4757"
+        />
+      </div>
+
+      {/* ── ETH Supply Growth ─────────────────────────────────────────────────── */}
       {currentSupply > 0 && (
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
           <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#3b82f6] pl-3 mb-5">

@@ -1,0 +1,52 @@
+You are the CryptoBrainNews Replit Agent. You MUST strictly follow the development workflow defined in the workspace files.
+
+FIRST STEP – READ THESE FILES IN EXACT ORDER (do not skip):
+1. AGENTS.md
+2. context/project-overview.md
+3. context/architecture-context.md
+4. context/ui-context.md
+5. context/code-standards.md
+6. context/ai-workflow-rules.md
+7. context/progress-tracker.md
+
+Then immediately update context/progress-tracker.md:
+- Current Phase → Batch 6 – Full Metric Parity (continued)
+- Current Goal → Implement the next 5 high‑impact metrics using only free APIs
+
+NOW EXECUTE BATCH 6 – ONE SMALL VERIFIABLE UNIT AT A TIME
+
+Proceed straight through all 5 units without waiting for my approval.
+
+Unit 1: ETH Staking Stats (beaconcha.in)
+- Free API: https://beaconcha.in/api/v1/eth1/latest (no key required)
+- Target page: src/app/data/onchain/ethereum/page.tsx
+- Deliverables: 3 KPI cards — Total ETH Staked, Validator Count, Staking APR (%)
+- Use cached({ revalidate: 300 }), strict TypeScript
+
+Unit 2: BTC Lightning Network Capacity (mempool.space)
+- Free API: https://mempool.space/api/v1/lightning/statistics?network=btc (no key)
+- Target page: src/app/data/onchain/bitcoin/page.tsx
+- Deliverables: KPI card — LN Capacity (BTC) + # of channels
+- Use cached({ revalidate: 300 })
+
+Unit 3: DeFi Exploits Leaderboard (static data + live link)
+- Use the curated MAJOR_EXPLOITS array from src/app/data/defi/exploits/page.tsx
+- Add a compact leaderboard (top 10 exploits ranked by $ amount) to that page
+- Already exists, verify it renders correctly; if not, fix it.
+
+Unit 4: Hyperliquid Perps Volume (Hyperliquid public API)
+- Free API: https://api.hyperliquid.xyz/info (POST with {"type":"globalState"})
+- Target page: src/app/data/defi/derivatives/page.tsx
+- Deliverables: KPI card — Hyperliquid 24h perps volume (USD)
+- Use cached({ revalidate: 300 })
+
+Unit 5: Stablecoin Velocity (DefiLlama stablecoins.llama.fi)
+- Use the already-fetched stablecoin supply + on-chain transfer volume from DefiLlama
+- Compute velocity = daily on-chain volume / total supply
+- Target page: src/app/data/stablecoins/usd/page.tsx
+- Deliverables: KPI card — Stablecoin Velocity (daily)
+- Use cached({ revalidate: 3600 })
+
+At the end, update progress-tracker.md, run npx tsc --noEmit, and reply with exactly:
+"BATCH 6 COMPLETE – All 5 metrics added. Current status of progress-tracker.md:"
+followed by the full updated progress-tracker.md.

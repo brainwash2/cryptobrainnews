@@ -3,6 +3,7 @@ import { DataHeader }               from "../../_components/DataHeader";
 import { ChartSkeleton }            from "../../_components/ChartSkeleton";
 import { getBitcoinStats }          from "@/lib/onchain-data";
 import { getFearGreedHistory }      from "@/lib/market-data";
+import { cached }                   from "@/lib/cache";
 import BitcoinChartsClient          from "./_components/BitcoinChartsClient";
 import FearGreedWidget              from "./_components/FearGreedWidget";
 import HashRateTrendChart           from "./_components/HashRateTrendChart";
@@ -69,6 +70,29 @@ async function fetchUtxoAgeBands(): Promise<UtxoAgeBand[]> {
   } catch { return []; }
 }
 
+// ── Unit 2: BTC Lightning Network Capacity ────────────────────────────────────
+
+interface LightningStats {
+  channel_count:  number;
+  total_capacity: number;
+  node_count:     number;
+}
+
+async function fetchLightningStats(): Promise<LightningStats | null> {
+  return cached("btc:lightning:stats", async () => {
+    try {
+      const res = await fetch("https://mempool.space/api/v1/lightning/statistics/latest", {
+        next: { revalidate: 300 },
+      });
+      if (!res.ok) return null;
+      const json = await res.json() as { latest?: LightningStats };
+      return json.latest ?? null;
+    } catch {
+      return null;
+    }
+  }, 300);
+}
+
 // ── Unit 5: BTC 30-Day Annualized Realized Volatility ───────────────────────
 async function fetchBtcVolatility(): Promise<number | null> {
   try {
@@ -91,7 +115,7 @@ async function fetchBtcVolatility(): Promise<number | null> {
 }
 
 async function BitcoinData() {
-  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData, btcVol] =
+  const [btcStats, addrData, txData, hashData, feeData, mempoolData, minerRevData, utxoData, fngData, btcVol, lnStats] =
     await Promise.all([
       getBitcoinStats().catch(() => null),
       fetchBtcChart("n-unique-addresses",    90),
@@ -103,6 +127,7 @@ async function BitcoinData() {
       fetchUtxoAgeBands(),
       getFearGreedHistory().catch(() => []),
       fetchBtcVolatility(),
+      fetchLightningStats().catch(() => null),
     ]);
 
   // ── Unit 2: hash rate 30d change (computed from hashData) ──────────────────
@@ -177,6 +202,46 @@ async function BitcoinData() {
           }
         />
       </div>
+
+      {/* Unit 2 — Lightning Network Capacity ────────────────────────────────── */}
+      {lnStats && (
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-white border-l-2 border-[#FABF2C] pl-3 mb-5">
+            ⚡ Lightning Network
+          </h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              label="LN Capacity"
+              value={`${(lnStats.total_capacity / 1e8).toFixed(0)} BTC`}
+              sub="total locked in channels"
+              color="#FABF2C"
+            />
+            <StatCard
+              label="Open Channels"
+              value={lnStats.channel_count.toLocaleString()}
+              sub="active payment channels"
+              color="#fff"
+            />
+            <StatCard
+              label="Network Nodes"
+              value={lnStats.node_count.toLocaleString()}
+              sub="routing nodes"
+              color="#888"
+            />
+            <StatCard
+              label="Avg Channel Size"
+              value={lnStats.channel_count > 0
+                ? `${((lnStats.total_capacity / 1e8) / lnStats.channel_count).toFixed(4)} BTC`
+                : "—"}
+              sub="capacity ÷ channels"
+              color="#555"
+            />
+          </div>
+          <p className="text-[9px] text-[#333] font-mono mt-4">
+            Source: mempool.space/api/v1/lightning/statistics · Cached 5 min
+          </p>
+        </div>
+      )}
 
       {fngData.length > 0 && <FearGreedWidget data={fngData} />}
 

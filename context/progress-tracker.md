@@ -4,11 +4,56 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 5 – Full Metric Parity (The Block comparison)
+Batch 6 – Full Metric Parity (continued)
 
 ## Current Goal
 
-Read docs/metrics.txt, identify up to 10 high-impact missing metrics that can be added using ONLY free APIs (CoinGecko, DefiLlama, blockchain.info, Etherscan, etc.), and implement them one by one.
+Implement the next 5 high-impact metrics using only free APIs
+
+### Batch 6 — Unit 1: ETH Staking Stats (beaconcha.in) ✅
+- `src/app/data/onchain/ethereum/page.tsx` refactored:
+  - `import { cached } from '@/lib/cache'` added
+  - `getEthStakingStats()` function added — wraps `beaconcha.in/api/v1/epoch/latest` in `cached('eth:staking:v1', ..., 300)`
+  - `export const revalidate` changed 1800 → 300
+  - Dedicated **"ETH Staking Stats"** section added (`border-l-2 border-[#3b82f6]`): 4 KPI cards in `grid-cols-2 lg:grid-cols-4` — ETH Staked, Validator Count, Staking APR (%), % ETH Staked
+  - Main KPI grid reduced to 4 non-staking cards: ETH Price, Avg Gas, DeFi TVL, ETH Burned
+  - `beaconR` inline fetch removed; staking data now flows through `getEthStakingStats()` via `Promise.allSettled`
+
+### Batch 6 — Unit 2: BTC Lightning Network Capacity (mempool.space) ✅
+- `src/app/data/onchain/bitcoin/page.tsx` updated:
+  - `import { cached } from '@/lib/cache'` added
+  - `LightningStats` interface added (`channel_count`, `total_capacity`, `node_count`)
+  - `fetchLightningStats()` added — `cached('btc:lightning:stats', ..., 300)` wrapping `mempool.space/api/v1/lightning/statistics/latest`
+  - `lnStats` added to `Promise.all` (11th element)
+  - New **"⚡ Lightning Network"** section added above FearGreedWidget: 4 KPI cards — LN Capacity (BTC), Open Channels, Network Nodes, Avg Channel Size
+
+### Batch 6 — Unit 3: DeFi Exploits Leaderboard ✅
+- `src/app/data/defi/exploits/page.tsx` updated:
+  - `MAJOR_EXPLOITS` array re-sorted by `amount` descending (Ronin → Poly → BNB → Wormhole → Mixin → Euler → Nomad → Beanstalk → Curve → Radiant)
+  - `RANK_COLORS` map added (gold #1, silver #2, bronze #3)
+  - Table renamed "DeFi Exploits Leaderboard — Ranked by Losses"
+  - **Rank column (#)** added as first column with colour-coded rank badges
+  - Table footer updated to reflect ranked ordering
+
+### Batch 6 — Unit 4: Hyperliquid Perps Volume ✅
+- `src/app/data/defi/derivatives/page.tsx` updated:
+  - `import { cached } from '@/lib/cache'` added
+  - `HLAssetCtx` interface added (`dayNtlVlm?: string`)
+  - `fetchHyperliquidVolume()` added — `cached('hyperliquid:vol:24h', ..., 300)` POSTing `{"type":"metaAndAssetCtxs"}` to `api.hyperliquid.xyz/info`, sums `dayNtlVlm` across all assets
+  - `hlVol` added to `Promise.all` alongside `getDerivativesProtocols()`
+  - New **"Hyperliquid Perps — Live Volume"** section added (conditionally rendered): 2 cards — Hyperliquid 24h Volume + HL Share of DefiLlama Total
+
+### Batch 6 — Unit 5: Stablecoin Velocity ✅
+- `src/lib/defi-data.ts` updated:
+  - `getGlobalDexVolume24h()` added — `cached('defi:dex:vol24h:global', ..., 1800)` fetching DefiLlama `/overview/dexs` and returning `total24h`
+- `src/app/data/stablecoins/usd/page.tsx` updated:
+  - `getGlobalDexVolume24h` added to imports
+  - `dexVol24h` added to `Promise.all` (4th element)
+  - `velocity = (dexVol24h / totalSupply) * 100` computed (daily DEX on-chain volume ÷ total USD stablecoin supply)
+  - KPI grid expanded 4 → 5 cards (`grid-cols-2 lg:grid-cols-5`): **"Velocity (Daily)"** card added, colour-coded green/amber/grey
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 5 ✅ — Full Metric Parity (The Block comparison)
 
 ### Batch 5 — Unit 1: Metric Analysis ✅
 5 metrics proposed and approved.
@@ -121,78 +166,29 @@ Read docs/metrics.txt, identify up to 10 high-impact missing metrics that can be
 
 ### Batch 1 – Unit 1: Fix `/api/health` endpoint
 - **Status**: Already complete — no changes required.
-- `checkPipelineLastRun` correctly reads `pipeline:last-success` from Redis, calculates age
-  in hours, returns `healthy` if < 26 h, `degraded` otherwise.
-- All 9 system checks (redis, upstash_redis, sanity, resend, telegram, stripe, rss_feeds,
-  pipeline_last_run, queue_depths) use `checkWithTimeout`.
 
 ### Batch 1 – Unit 2: Cron route guards
 - **Status**: Already complete — no changes required.
-- All 5 routes (`broadcast-drain`, `daily-article`, `health`, `sitemap-warm`, `social`)
-  call `validateVercelCronAuth(req)` as their very first statement inside `GET`.
 
 ### Batch 1 – Unit 3: Remove placeholder + FreshnessBadge
-- Replaced "Archive Synchronizing..." static text in `src/app/page.tsx` with 3 animated
-  skeleton article card placeholders (`animate-pulse`).
-- Added `<FreshnessBadge ttlSeconds={300} />` to the "Proprietary Research" section header
-  on the homepage.
-- Added `<FreshnessBadge ttlSeconds={300} />` to `src/app/data/layout.tsx` — now present on
-  all 80+ data dashboard pages automatically.
-- `npx tsc --noEmit` → 0 errors.
+- Replaced "Archive Synchronizing..." static text with animated skeleton cards.
+- Added `<FreshnessBadge ttlSeconds={300} />` to data layout — now present on all 80+ pages.
 
 ### Context & Workflow Files Created
-- `AGENTS.md` — agent rules for CryptoBrainNews
-- `context/project-overview.md` — product definition and goals
-- `context/architecture-context.md` — stack, boundaries, storage model, invariants
-- `context/ui-context.md` — color palette, typography, layout patterns, component conventions
-- `context/code-standards.md` — TypeScript, Next.js, styling, and error handling rules
-- `context/ai-workflow-rules.md` — development workflow and scoping rules
-- `context/progress-tracker.md` — this file
+- All 6 context files created and maintained.
 
 ### Batch 2 – Unit 1: Remove duplicate FreshnessBadge from 5 data pages
-- Removed per-page `<FreshnessBadge>` + wrapper `<div>` from:
-  - `src/app/data/defi/tvl/page.tsx` (was ttlSeconds={3600})
-  - `src/app/data/etfs/bitcoin/page.tsx` (was ttlSeconds={300})
-  - `src/app/data/markets/futures/page.tsx` (was ttlSeconds={300})
-  - `src/app/data/markets/spot/page.tsx` (was ttlSeconds={300})
-  - `src/app/data/onchain/bitcoin/page.tsx` (was ttlSeconds={1800}, custom label)
-- Removed now-unused `FreshnessBadge` import from each file.
-- All 80+ data pages now show exactly one badge — from `src/app/data/layout.tsx`.
-
 ### Batch 2 – Unit 2: Telegram Redis-backed rate limiter
-- Replaced `const lastSendTime = new Map<string, number>()` (module-level in-memory map) with
-  Redis `SET NX PX` atomic slot acquisition in `src/lib/news/telegram.ts`.
-- Key pattern: `tg:ratelimit:<chatId>`, TTL = 1050 ms (INTER_MESSAGE_DELAY_MS).
-- If slot is taken: reads `PTTL`, waits, then refreshes the key before calling `sendRaw`.
-- Now safe across multiple concurrent Vercel serverless instances.
-
 ### Batch 2 – Unit 3: `pipeline:last-success` Redis write
-- Added `Redis` import to `scripts/daily-article.ts`.
-- After `run.stage = 'complete'`: writes `pipeline:last-success → run.completedAt`
-  with `ex: 90000` (25 h TTL) using `Redis.fromEnv()`.
-- Write failure is caught and logged via `logger.warn` — never fatal to the pipeline.
-- `/api/health` `checkPipelineLastRun` now always has a key to read after a clean run.
-
 ### Batch 2 – Unit 4: Stablecoin/OI metric improvements
-- `src/lib/defi-data.ts`: Added `getStablecoinsByChain()` fetching
-  `https://stablecoins.llama.fi/chains` — returns top 8 chains by USD stablecoin supply,
-  cached 1 hour. Exported new `StablecoinChainRow` interface.
-- `src/app/data/stablecoins/usd/page.tsx`:
-  - Replaced green `<span>` badge with `<FreshnessBadge ttlSeconds={3600} />`.
-  - Added "Supply by Blockchain" grid section (top 8 chains, each showing $B supply + % of total).
-  - Fetches chain data in parallel with stablecoin overview via `Promise.all`.
-- `src/app/data/markets/futures/page.tsx`:
-  - Added `fmtOI()` formatter.
-  - Added current BTC, ETH, and combined OI KPI cards derived from the most recent point
-    in the already-fetched `oiHistory` (Bybit BTCUSDT / ETHUSDT, 30-day window).
 
 ## In Progress
 
-- None.
+- Batch 6 Units 1–5 (implementation in progress)
 
 ## Next Up
 
-Batch 3 – (awaiting instruction)
+Batch 7 – (awaiting instruction)
 
 ## Open Questions
 
@@ -204,7 +200,7 @@ Batch 3 – (awaiting instruction)
 - Dedup: 3-layer (URL + title + content SHA-256), 7-day TTL in Redis.
 - Stripe idempotency: Redis SET NX, 7-day TTL.
 - Cron auth: `validateVercelCronAuth` (Authorization: Bearer) — matches Vercel Cron format.
-- Newsletter unsubscribe: Neon `updated_at = NOW()` + Resend audience removal.
+- Newsletter unsubscribes: Neon `updated_at = NOW()` + Resend audience removal.
 
 ## Session Notes
 
@@ -212,4 +208,4 @@ Batch 3 – (awaiting instruction)
 - `src/types/declarations.d.ts` declares `lucide-react` and `@heroicons/react` to silence TS7016.
 - `tsconfig.json` uses `moduleResolution: bundler`.
 - Dev server exits after "✓ Starting..." in Replit sandbox — pre-existing environment issue,
-  not caused by any code changes.
+  not caused by any code changes. `npx tsc --noEmit` is the canonical verification method.

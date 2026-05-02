@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { getStablecoinsOverview, getStablecoinsByChain, getStablecoinTrendData } from "@/lib/defi-data";
+import { getStablecoinsOverview, getStablecoinsByChain, getStablecoinTrendData, getGlobalDexVolume24h } from "@/lib/defi-data";
 import { DataHeader }          from "../../_components/DataHeader";
 import { ChartSkeleton }       from "../../_components/ChartSkeleton";
 import { FreshnessBadge }      from "@/components/common/FreshnessBadge";
@@ -13,10 +13,11 @@ export const metadata = {
 export const revalidate = 3600;
 
 async function StablecoinData() {
-  const [all, chainRows, trendData] = await Promise.all([
+  const [all, chainRows, trendData, dexVol24h] = await Promise.all([
     getStablecoinsOverview().catch(() => []),
     getStablecoinsByChain().catch(() => []),
     getStablecoinTrendData().catch(() => []),
+    getGlobalDexVolume24h().catch(() => 0),
   ]);
   const usd = all.filter((s) => s.pegType === "peggedUSD");
 
@@ -25,6 +26,9 @@ async function StablecoinData() {
   const usdcEntry    = usd.find((c) => c.symbol === "USDC");
   const usdtDom      = totalSupply > 0 ? ((usdt?.circulatingUsd ?? 0) / totalSupply) * 100 : 0;
   const usdcDom      = totalSupply > 0 ? ((usdcEntry?.circulatingUsd ?? 0) / totalSupply) * 100 : 0;
+
+  // Unit 5: Stablecoin velocity = daily DEX on-chain volume / total supply
+  const velocity     = totalSupply > 0 && dexVol24h > 0 ? (dexVol24h / totalSupply) * 100 : null;
 
   return (
     <div className="space-y-8 pb-20">
@@ -40,7 +44,7 @@ async function StablecoinData() {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
           <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Total USD Supply</p>
           <p className="text-2xl font-black text-[#00d672] tabular-nums">
@@ -65,6 +69,18 @@ async function StablecoinData() {
           <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Assets Tracked</p>
           <p className="text-2xl font-black text-[#888] tabular-nums">{usd.length}</p>
           <p className="text-[10px] font-mono text-[#555] mt-1">USD-pegged only</p>
+        </div>
+        {/* Unit 5 — Stablecoin Velocity */}
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
+          <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Velocity (Daily)</p>
+          <p className="text-2xl font-black tabular-nums" style={{
+            color: velocity === null ? '#888' : velocity > 5 ? '#00d672' : velocity > 2 ? '#FABF2C' : '#888'
+          }}>
+            {velocity !== null ? `${velocity.toFixed(2)}%` : '—'}
+          </p>
+          <p className="text-[10px] font-mono text-[#555] mt-1">
+            DEX vol ÷ total supply
+          </p>
         </div>
       </div>
 
