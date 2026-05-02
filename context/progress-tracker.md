@@ -4,11 +4,30 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 16 – LTH Supply ✅
+Batch 17 – Miner Capitulation ✅
 
 ## Current Goal
 
-Add Bitcoin Long‑Term Holder Supply tracker (tenth cycle indicator)
+Add Bitcoin Miner Capitulation / Hash Ribbon signal (11th cycle indicator)
+
+### Batch 17 — Unit 1: Bitcoin Miner Capitulation / Hash Ribbon Tracker ✅
+- `src/app/data/onchain/bitcoin/_components/MinerCapitulationChart.tsx` **created** (`"use client"`):
+  - Props: `{ data: { date: string; value: number }[] }` — raw `hashData` passed from page (zero new API calls)
+  - `useMemo` for all EMA computation + signal derivation; `useSyncExternalStore` SSR hydration guard
+  - `computeEma(values, period)` — standard EMA formula `k = 2/(period+1)`; seeds from first data point
+  - `toEh(ghPerSec)` — converts blockchain.info GH/s values to EH/s for display
+  - Signal determination: ratio = ema30/ema60; <0.998 → Capitulation (red); >1.002 → Recovery (green); else Neutral (amber)
+  - Crossover detection: iterates `built[]` finding sign-flip of `(ema30 − ema60)`; each crossover date gets a `ReferenceLine` with `✕` label
+  - 3-KPI grid: Signal status (color-coded) / 30d EMA in EH/s / 60d EMA in EH/s + spread
+  - Recharts `ComposedChart` with two `Line`s: 30d EMA amber solid (strokeWidth=2) + 60d EMA white dashed; `Legend` auto-generated; `isAnimationActive={false}`
+  - Interpretation key strip with inline swatch legend
+- `src/app/data/onchain/bitcoin/page.tsx` updated:
+  - `import MinerCapitulationChart` added
+  - `{hashData.length > 0 && <MinerCapitulationChart data={hashData} />}` rendered below `<LthSupplyChart />`, above `<HashRateTrendChart />`
+  - Glossary entry added for Miner Capitulation
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 16 ✅ — LTH Supply
 
 ### Batch 16 — Unit 1: Bitcoin LTH Supply Tracker ✅
 - `src/app/data/onchain/bitcoin/_components/LthSupplyChart.tsx` **created** (`"use client"`):

@@ -16,6 +16,7 @@ import RealizedPriceChart          from "./_components/RealizedPriceChart";
 import ThermocapGauge              from "./_components/ThermocapGauge";
 import ExchangeReserveChart        from "./_components/ExchangeReserveChart";
 import LthSupplyChart              from "./_components/LthSupplyChart";
+import MinerCapitulationChart      from "./_components/MinerCapitulationChart";
 
 export const metadata = {
   title: "Bitcoin On-Chain | CryptoBrainNews",
@@ -602,6 +603,11 @@ async function BitcoinData() {
         source={lthSupplyData.source}
       />
 
+      {/* Batch 17 — Miner Capitulation / Hash Ribbon */}
+      {hashData.length > 0 && (
+        <MinerCapitulationChart data={hashData} />
+      )}
+
       {/* Unit 2 — Hash Rate Trend Chart */}
       {hashData.length > 0 && (
         <HashRateTrendChart
@@ -639,6 +645,7 @@ async function BitcoinData() {
             ["Thermocap Multiple",     "Market Cap ÷ cumulative all-time miner revenue. <5× historically undervalued; 5–15× fair; 15–30× overvalued; >30× cycle top territory. Derived from blockchain.info."],
             ["Exchange Reserve",       "Total BTC held in known exchange wallets. Falling = coins withdrawn to self-custody (accumulation, bullish). Rising = inflow to exchanges (sell pressure, bearish)."],
             ["LTH Supply",             "% of circulating supply unmoved 155+ days (Long-Term Holder threshold). Rising = strong-hand accumulation (supply contraction, bullish). Falling = LTH distribution (late-cycle signal)."],
+            ["Miner Capitulation",     "Hash Ribbon: 30-day EMA vs 60-day EMA of network hash rate. 30d crossing below 60d = miner capitulation (stress, historically near cycle lows). Cross back above = recovery signal (profitability restored, bullish)."],
           ].map(([k, v]) => (
             <div key={k}><span className="text-[#888] font-black">{k}:</span> {v}</div>
           ))}

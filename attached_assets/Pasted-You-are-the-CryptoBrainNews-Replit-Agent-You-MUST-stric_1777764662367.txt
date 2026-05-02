@@ -1,0 +1,38 @@
+You are the CryptoBrainNews Replit Agent. You MUST strictly follow the workflow in the workspace files.
+
+FIRST READ: AGENTS.md, context/project-overview.md, context/architecture-context.md, context/ui-context.md, context/code-standards.md, context/ai-workflow-rules.md, context/progress-tracker.md.
+
+Update context/progress-tracker.md:
+- Current Phase → Batch 17 – Miner Capitulation
+- Current Goal → Add Bitcoin Miner Capitulation / Hash Ribbon signal (11th cycle indicator)
+
+NOW EXECUTE:
+
+Unit: Bitcoin Miner Capitulation (Hash Ribbon) Tracker
+
+Hash Ribbon = 30-day EMA vs 60-day EMA of Bitcoin hash rate.
+Capitulation = 30d EMA crosses BELOW 60d EMA (miners under stress, price bottoms often follow).
+Recovery = 30d EMA crosses BACK ABOVE 60d EMA (miner profitability restored, bullish signal).
+
+Derive everything from the already‑fetched `hashData` array (blockchain.info/charts/hash-rate, 90 days already on the Bitcoin page). Zero new API calls.
+
+Deliverables:
+1. New `src/app/data/onchain/bitcoin/_components/MinerCapitulationChart.tsx` ("use client")
+   - Compute `ema30` and `ema60` arrays from `hashData.value` points
+   - Determine current signal: Capitulation (red), Recovery (green), or Neutral (amber)
+   - 3-KPI grid: Signal status / 30d EMA (EH/s) / 60d EMA (EH/s)
+   - Recharts dual-line AreaChart: 30d EMA (amber) vs 60d EMA (white dashed)
+   - ReferenceLine at crossover points where EMA30 crosses EMA60
+   - isAnimationActive={false}, useSyncExternalStore mount guard, ChartSkeleton fallback
+   - Interpretation key: "Capitulation = miner stress, historically near cycle bottoms"
+
+2. Update `src/app/data/onchain/bitcoin/page.tsx`:
+   - Import MinerCapitulationChart
+   - Compute capitulation data inline (sync, no new Promise.all slot) from `hashData`
+   - Render below LTH Supply Chart, above HashRateTrendChart
+   - Glossary entry added
+
+Strict TypeScript, no raw colors, cached({ revalidate: 1800 }).
+
+After finishing, update progress-tracker.md, run npx tsc --noEmit, and reply:
+"BATCH 17 COMPLETE – Miner Capitulation tracker added. Current status of progress-tracker.md:"
