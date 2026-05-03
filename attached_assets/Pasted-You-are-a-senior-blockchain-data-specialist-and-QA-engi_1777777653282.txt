@@ -1,0 +1,87 @@
+You are a senior blockchain data specialist and QA engineer with a sharp eye for visual design, data accuracy, and pipeline reliability.
+
+Perform a deep, no-holds-barred audit of CryptoBrainNews. This is a free-tier clone of The Block's data dashboard. The site has undergone 29 consecutive build batches this weekend. I need to know what's working, what's broken, and what's still missing.
+
+Live site: https://cryptobrainnews.vercel.app
+GitHub repo: https://github.com/brainwash2/cryptobrainnews
+Product spec: docs/metrics.txt in the repo
+Reference site: https://www.theblock.co/data
+
+## Part 1 – Data Terminal Audit
+
+Visit every /data/* page. For each page, report:
+
+A. Data freshness — compare BTC/ETH prices and key metrics against CoinGecko live API. Are numbers stale or accurate?
+B. Visual quality — do charts render cleanly? Any "Rendering…" placeholders, broken skeletons, "CONNECTING TO TAPE…" flashes?
+C. Mobile responsiveness — test at 375px and 768px. Do tables scroll horizontally? Do KPI grids collapse to 2 columns?
+D. Loading/error states — does each page show ChartSkeleton/PageSkeleton while loading? Error boundaries present?
+E. New features — verify these recent additions are working:
+   - Bitcoin page: Fear & Greed gauge, MVRV gauge, NUPL gauge, Puell gauge, S2F chart, Realized Price chart, Thermocap gauge, Exchange Reserve chart, LTH Supply chart, Miner Capitulation chart, Mempool Congestion gauge, Hash Rate trend
+   - Ethereum page: Staking stats, Burn Rate tracker
+   - Solana page: Validator count, Nakamoto coefficient
+   - L2 Comparison: Top 5 cards with 7-day sparklines
+   - Futures: CME BTC OI KPI, BTC/ETH Open Interest cards
+   - Stablecoins: 90-day USDT/USDC trend chart, Supply by Blockchain chart, Velocity KPI
+   - DeFi/Revenue: Revenue Efficiency leaderboard, chain badges
+   - DeFi/Lending: Lending Rates leaderboard
+   - DeFi/Yields: Stablecoin Yield Scanner
+   - DeFi/Token Unlocks: High-impact events leaderboard
+   - DeFi/TVL: Protocol Dominance pie chart, Chain leaderboard table
+   - DeFi: Liquidation Heatmap page, Protocol Treasury Tracker page
+   - NFTs: Total NFT 24h Volume KPI
+   - Gas Tracker: 30-day ETH gas history chart
+   - Bridge Flows page: volume, net inflow/outflow
+   - Governance: Live DAO dashboard (no longer "Coming Soon")
+   - All pages: FreshnessBadge present, no double badges
+
+F. Missing sections — which pages are still ComingSoon stubs? Which metrics from docs/metrics.txt are still not implemented?
+
+## Part 2 – News Pipeline Audit
+
+Read these files directly from the GitHub repo:
+- scripts/daily-article.ts — full AI pipeline
+- src/lib/news/dedup.ts — article deduplication
+- src/lib/news/telegram.ts — Telegram broadcasting
+- src/lib/news/newsletter.ts — Resend newsletter
+- src/lib/news/rss-cache.ts — RSS feed caching
+- src/app/api/newsletter/subscribe/route.ts
+- src/app/api/newsletter/unsubscribe/route.ts
+- src/lib/news/seo/schema.ts — JSON-LD schema
+- src/lib/news/seo/metadata.ts — SEO metadata
+
+For each file, identify:
+- Error handling gaps (missing try/catch, unhandled promise rejections)
+- Missing fallbacks (what happens when an AI stage fails)
+- Type safety issues (any types, missing interfaces)
+- Performance issues (missing caching, unnecessary re-fetches)
+- Security gaps (missing auth, input validation)
+- The circuit breaker we added — is it correctly implemented?
+- RSS resilience (per-feed timeout + parallel fetch) — is it correct?
+
+## Part 3 – News Section Visual Audit
+
+Visit the live news pages and compare against professional crypto news sites (The Defiant, Cointelegraph):
+
+- /news — does the hero article render correctly? Category pills working? Newsletter CTA visible?
+- /news/[id] — drop cap on first paragraph? Author bio box? Related articles sidebar? OG meta tags? JSON-LD schema?
+- /news/category/[slug] — category description and icon? Article count badge?
+- /search — functional? Rate-limited correctly?
+- Article cards — gradient overlay on images? Reading time estimate? Category color coding?
+
+## Part 4 – Final Report
+
+Output a single structured report:
+
+1. 🔴 Critical issues (broken pages, security gaps, data inaccuracies) — must fix immediately
+2. 🟠 High issues (missing features, UI bugs, performance problems) — fix this week
+3. 🟡 Medium issues (code quality, missing polish, visual inconsistencies) — fix this month
+4. 🟢 Low issues (nice-to-haves, future improvements)
+
+For each issue, provide:
+- Exact file path and line number if possible
+- A one-sentence suggested fix
+- Severity rating
+
+End with a numbered list of the top 10 items sorted by severity, with a one-line action for each.
+
+Be brutally honest. We have 29 batches of work to validate.
