@@ -144,7 +144,7 @@ export class NewsletterService {
       <a href="${payload.articleUrl}" style="display:inline-block;background:#00d4ff;color:#0d0d1a;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:14px">Read Full Article →</a>
       <hr style="border:none;border-top:1px solid #1a1a2e;margin:32px 0">
       <p style="font-size:11px;color:#555">You're receiving this because you subscribed to CryptoBrainNews.
-        <a href="${UNSUBSCRIBE_BASE}?email={{email}}" style="color:#555">Unsubscribe</a>
+        <a href="${UNSUBSCRIBE_BASE}" style="color:#555">Unsubscribe</a>
       </p>
     </td></tr>
   </table>

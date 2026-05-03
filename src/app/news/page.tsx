@@ -55,9 +55,9 @@ export default async function NewsPage() {
           {hero && (
             <div className="mb-12">
               <Link
-                href={hero.url.startsWith('http') ? hero.url : `/news/${hero.id}`}
+                href={(hero.url ?? '').startsWith('http') ? hero.url : `/news/${hero.id}`}
                 className="group block border border-[#1a1a1a] overflow-hidden relative"
-                {...(hero.url.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                {...((hero.url ?? '').startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               >
                 <div className="relative w-full aspect-[21/9] bg-[#0a0a0a]">
                   <AppImage

@@ -40,8 +40,8 @@ export default function BookmarksClient() {
       </p>
       <div className="divide-y divide-[#1a1a1a]">
         {bookmarks.map(article => {
-          const href = article.url.startsWith('http') ? article.url : `/news/${article.id}`;
-          const isExternal = article.url.startsWith('http');
+          const href = (article.url ?? '').startsWith('http') ? article.url : `/news/${article.id}`;
+          const isExternal = (article.url ?? '').startsWith('http');
           return (
             <div key={article.id} className="flex gap-4 py-5 group">
               <Link

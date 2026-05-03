@@ -41,7 +41,7 @@ export default function NewsTickerBar() {
             {doubled.map((a, i) => (
               <a
                 key={`${a.id}-${i}`}
-                href={a.url.startsWith('http') ? a.url : `/news/${a.id}`}
+                href={(a.url ?? '').startsWith('http') ? a.url : `/news/${a.id}`}
                 target={a.sourceType === 'wire' ? '_blank' : undefined}
                 rel={a.sourceType === 'wire' ? 'noopener noreferrer' : undefined}
                 className="shrink-0 text-[10px] font-mono text-[#888] hover:text-[#FABF2C] transition-colors flex items-center gap-2"

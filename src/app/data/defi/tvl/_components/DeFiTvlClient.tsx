@@ -3,9 +3,9 @@
 import React, { useState, useSyncExternalStore, useRef, useEffect } from "react";
 import { ChartSkeleton } from "../../../_components/ChartSkeleton";
 import {
-  createChart, AreaSeries, HistogramSeries, ColorType,
+  createChart, AreaSeries, ColorType,
 } from "lightweight-charts";
-import type { IChartApi, DeepPartial, ChartOptions, AreaStyleOptions, SeriesOptionsCommon, HistogramStyleOptions } from "lightweight-charts";
+import type { IChartApi, DeepPartial, ChartOptions, AreaStyleOptions, SeriesOptionsCommon } from "lightweight-charts";
 import { TimeframeSelector } from "../../../_components/TimeframeSelector";
 import type { Timeframe } from "../../../_components/TimeframeSelector";
 
@@ -80,37 +80,37 @@ function TvlAreaChart({ data, height }: { data: TvlHistoryPoint[]; height: numbe
   return <div ref={containerRef} style={{ height }} />;
 }
 
-function CategoryHistogram({ categories, height }: { categories: Category[]; height: number }) {
-  const containerRef = useRef<HTMLDivElement>(null);
+function CategoryBars({ categories }: { categories: Category[] }) {
+  const top = categories.slice(0, 12);
+  const maxTvl = top.reduce((m, c) => Math.max(m, c.tvl), 0);
 
-  useEffect(() => {
-    if (!containerRef.current || categories.length === 0) return;
-    const chart = createChart(containerRef.current, { ...DARK_OPTIONS, width: containerRef.current.clientWidth, height });
-    const top = categories.slice(0, 12);
+  const fmt = (v: number) => {
+    if (v >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
+    if (v >= 1e6) return `$${(v / 1e6).toFixed(0)}M`;
+    return `$${v.toFixed(0)}`;
+  };
 
-    top.forEach((cat, i) => {
-      const series = chart.addSeries(HistogramSeries, {
-        color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
-        priceFormat: { type: 'volume' },
-      } as DeepPartial<HistogramStyleOptions & SeriesOptionsCommon>);
-
-      series.setData([{ time: cat.category, value: cat.tvl }]);
-    });
-
-    chart.timeScale().fitContent();
-
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const w = entry.contentRect.width;
-        if (w > 0) chart.applyOptions({ width: w });
-      }
-    });
-    ro.observe(containerRef.current);
-
-    return () => { ro.disconnect(); chart.remove(); };
-  }, [categories, height]);
-
-  return <div ref={containerRef} style={{ height }} />;
+  return (
+    <div className="space-y-3">
+      {top.map((cat, i) => {
+        const pct = maxTvl > 0 ? (cat.tvl / maxTvl) * 100 : 0;
+        const color = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
+        return (
+          <div key={cat.category} className="flex items-center gap-3 text-xs font-mono">
+            <span className="w-32 shrink-0 text-[#888] text-[10px] uppercase tracking-widest truncate">{cat.category}</span>
+            <div className="flex-1 bg-[#1a1a1a] h-5 relative overflow-hidden">
+              <div
+                className="h-full transition-all duration-500"
+                style={{ width: `${pct}%`, backgroundColor: color }}
+              />
+            </div>
+            <span className="w-20 text-right tabular-nums" style={{ color }}>{fmt(cat.tvl)}</span>
+            <span className="w-10 text-right text-[#555] tabular-nums">{cat.share.toFixed(1)}%</span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function DeFiTvlClient({ categories, totalHistory }: Props) {
@@ -141,8 +141,8 @@ export default function DeFiTvlClient({ categories, totalHistory }: Props) {
           <h3 className="text-sm font-semibold text-[#f8fafc] uppercase tracking-wider">TVL by Category</h3>
           <p className="text-sm text-[#a3a3a3] font-mono mt-1">Share of total DeFi value locked</p>
         </div>
-        {mounted && categories.length > 0 ? (
-          <CategoryHistogram categories={categories} height={Math.max(40 + categories.length * 32, 260)} />
+        {categories.length > 0 ? (
+          <CategoryBars categories={categories} />
         ) : (
           <ChartSkeleton kpis={0} rows={0} charts={1} height={260} />
         )}

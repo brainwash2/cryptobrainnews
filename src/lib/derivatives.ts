@@ -45,8 +45,8 @@ export async function getDerivativesExchanges(): Promise<DerivativeMarketData[]>
         .filter((e) => (e.open_interest_btc ?? 0) > 0)
         .map((e) => ({
           exchange:     e.name,
-          volume24h:    e.trade_volume_24h_btc ?? 0,   // BTC-denominated volume
-          openInterest: e.open_interest_btc    ?? 0,   // BTC-denominated OI
+          volume24h:    Number(e.trade_volume_24h_btc ?? 0),   // BTC-denominated volume
+          openInterest: Number(e.open_interest_btc    ?? 0),   // BTC-denominated OI
         }))
         .sort((a, b) => b.openInterest - a.openInterest);
     } catch {

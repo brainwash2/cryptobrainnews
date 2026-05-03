@@ -44,7 +44,7 @@ export default async function HomePage() {
  
               {hero && (
                 <Link
-                  href={hero.url.startsWith('http') ? hero.url : `/news/${hero.id}`}
+                  href={(hero.url ?? '').startsWith('http') ? hero.url : `/news/${hero.id}`}
                   className="group block space-y-8"
                 >
                   <h1 className="text-5xl lg:text-7xl font-black uppercase tracking-tighter leading-[0.9] group-hover:text-[#FABF2C] transition-colors">

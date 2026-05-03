@@ -219,7 +219,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ id
               <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-8">Related Intelligence</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {related.map((rel: WeightedArticle) => (
-                  <Link key={rel.id} href={rel.url.startsWith('http') ? rel.url : `/news/${rel.id}`} className="group flex gap-4 items-start">
+                  <Link key={rel.id} href={(rel.url ?? '').startsWith('http') ? rel.url : `/news/${rel.id}`} className="group flex gap-4 items-start">
                     <div className="relative w-24 h-16 overflow-hidden border border-[#1a1a1a] bg-[#0a0a0a] shrink-0">
                       <AppImage src={rel.image} alt={rel.title} fill className="object-cover group-hover:scale-105 transition-all" />
                     </div>
