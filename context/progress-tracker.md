@@ -4,11 +4,90 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 26 – News Pipeline Audit + Governance Tracker ✅
+Batch 27 – Pipeline Circuit Breaker ✅
 
 ## Current Goal
 
-Professional news section redesign + DeFi Governance Activity Tracker
+Add a circuit-breaker to the AI article pipeline to prevent API credit burning on cascading failures
+
+---
+
+### Batch 27 — Unit 1: AI Pipeline Circuit Breaker ✅
+
+**Files changed:**
+
+| File | Change |
+|------|--------|
+| `scripts/daily-article.ts` | Full circuit-breaker implementation (see detail below) |
+| `src/app/api/health/route.ts` | `checkPipelineLastRun` updated to read `pipeline:health` |
+
+#### 1. Per-stage timeout config
+
+Three env-driven constants added at the top of `scripts/daily-article.ts`:
+
+```
+GROQ_TIMEOUT_MS     = parseInt(process.env.GROQ_TIMEOUT_MS     ?? '30000', 10)
+DEEPSEEK_TIMEOUT_MS = parseInt(process.env.DEEPSEEK_TIMEOUT_MS ?? '45000', 10)
+GEMINI_TIMEOUT_MS   = parseInt(process.env.GEMINI_TIMEOUT_MS   ?? '45000', 10)
+```
+
+`AbortSignal.timeout(...)` in `runGroq`, `runDeepSeek`, and `runGemini` all now reference these constants instead of hardcoded literals.
+
+#### 2. NonRetryableError class
+
+```typescript
+class NonRetryableError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) { ... }
+}
+```
+
+- `runGroq`, `runDeepSeek`, `runGemini` check `isClientError(status)` (4xx, not 429) and throw `NonRetryableError` instead of `Error`.
+- `withRetry` bails immediately on `NonRetryableError` (no exponential back-off wasted).
+- `processArticle` catches `NonRetryableError` from Groq and returns `{ circuitBreak: true }` to signal the article loop should stop.
+
+#### 3. PipelineCircuitBreaker class
+
+Manages two Redis keys:
+
+| Key | Type | TTL | Meaning |
+|-----|------|-----|---------|
+| `pipeline:health` | `'healthy' \| 'degraded' \| 'failed'` | 24h | Current health at a glance |
+| `pipeline:consecutive-failures` | integer | 1h rolling | Failure counter for trip logic |
+
+Methods: `setHealth()`, `getHealth()`, `incrementFailures()`, `resetFailures()`, `getFailureCount()`, `isTripped()`.
+
+All Redis operations are wrapped in `try/catch` — circuit breaker errors never propagate to the pipeline caller.
+
+#### 4. Circuit-breaker logic in `runPipeline()`
+
+Flow at the **start** of each run:
+1. Try `Redis.fromEnv()` — if Redis is unavailable, circuit breaker is disabled for this run (logged, pipeline proceeds).
+2. `cb.isTripped()` → if `consecutive-failures >= 3`: set `pipeline:health = 'failed'`, fire `OpsAlerter.healthAlert({ system: 'pipeline-circuit-breaker', ... })`, return early (`stage: 'failed'`).
+3. If not tripped: `cb.setHealth('healthy')`.
+
+Flow during the **article loop**:
+- `processArticle` returns `circuitBreak: true` on non-retryable Groq error → break loop, set `pipeline:health = 'degraded'`.
+- DeepSeek failure → continue to Gemini (existing degraded behaviour, unchanged).
+
+Flow at the **end** of each run:
+- `stage === 'complete' && articlesPublished > 0` → `cb.resetFailures()` + `cb.setHealth('healthy')`.
+- `stage === 'failed' || circuitBroken` → `cb.incrementFailures()`; if new count `>= 3`, set `pipeline:health = 'failed'` and send OpsAlerter alert.
+- Partial run (degraded, nothing fatal) → `cb.setHealth('degraded')`, no counter increment.
+
+#### 5. Health endpoint update
+
+`checkPipelineLastRun()` now reads `pipeline:last-success` **and** `pipeline:health` in one parallel `Promise.all` call:
+
+- `health === 'failed'` → immediately return `status: 'down'` with "Circuit breaker tripped" message (no time-based calculation needed).
+- `health === 'degraded'` → return `status: 'degraded'` even if last-success is within 26h.
+- Otherwise: existing age-based logic unchanged.
+
+**OpsAlerter**: uses existing `healthAlert({ system, message })` — no new methods needed.
+
+**TypeScript**: `tsc --noEmit --skipLibCheck` — exit 0, 0 errors.
+
+---
 
 ---
 

@@ -225,22 +225,48 @@ async function checkRSSFeeds(): Promise<SystemCheck> {
 async function checkPipelineLastRun(): Promise<SystemCheck> {
   const start = Date.now();
   try {
-    const redis      = Redis.fromEnv();
-    const lastRunRaw = await redis.get<string>('pipeline:last-success');
+    const redis = Redis.fromEnv();
 
-    if (!lastRunRaw) {
+    // Read both keys in one round-trip for speed
+    const [lastRunRaw, healthRaw] = await Promise.all([
+      redis.get<string>('pipeline:last-success'),
+      redis.get<string>('pipeline:health'),
+    ]);
+
+    const health = healthRaw as 'healthy' | 'degraded' | 'failed' | null;
+
+    // pipeline:health gives immediate circuit-breaker status without waiting
+    // for the time-based last-success calculation.
+    if (health === 'failed') {
       return {
-        status: 'degraded', latencyMs: Date.now() - start,
-        message: 'No successful pipeline run recorded',
+        status:    'down',
+        latencyMs: Date.now() - start,
+        message:   'Circuit breaker tripped — pipeline paused (pipeline:health=failed)',
         checkedAt: new Date().toISOString(),
       };
     }
 
-    const ageHours = (Date.now() - new Date(lastRunRaw).getTime()) / 3_600_000;
+    if (!lastRunRaw) {
+      return {
+        status:    health === 'degraded' ? 'degraded' : 'degraded',
+        latencyMs: Date.now() - start,
+        message:   'No successful pipeline run recorded',
+        checkedAt: new Date().toISOString(),
+      };
+    }
+
+    const ageHours  = (Date.now() - new Date(lastRunRaw).getTime()) / 3_600_000;
+    const timeStatus: SystemStatus = ageHours < 26 ? 'healthy' : 'degraded';
+
+    // If the health key says degraded, honour it even within the time window
+    const status: SystemStatus =
+      health === 'degraded' ? 'degraded' : timeStatus;
+
     return {
-      status:    ageHours < 26 ? 'healthy' : 'degraded',
+      status,
       latencyMs: Date.now() - start,
-      message:   `Last success: ${lastRunRaw} (${ageHours.toFixed(1)}h ago)`,
+      message:   `Last success: ${lastRunRaw} (${ageHours.toFixed(1)}h ago)` +
+                 (health ? ` | health=${health}` : ''),
       checkedAt: new Date().toISOString(),
     };
   } catch (err) {

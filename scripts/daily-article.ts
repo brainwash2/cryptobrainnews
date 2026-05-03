@@ -7,6 +7,7 @@ import { PipelineLogger } from '../src/lib/news/pipeline-logger';
 import { RSSCache } from '../src/lib/news/rss-cache';
 import { TelegramBroadcaster } from '../src/lib/news/telegram';
 import { BroadcastQueue } from '../src/lib/news/broadcast-queue';
+import { OpsAlerter } from '../src/lib/ops/alerts';
 import type {
   RSSItem,
   GrokSummary,
@@ -34,6 +35,89 @@ const SANITY_DATASET     = process.env.NEXT_PUBLIC_SANITY_DATASET     ?? 'produc
 const SANITY_API_TOKEN   = process.env.SANITY_API_TOKEN   ?? '';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? '';
 
+// ── Per-stage timeout config (ms) ─────────────────────────────────────────
+const GROQ_TIMEOUT_MS     = parseInt(process.env.GROQ_TIMEOUT_MS     ?? '30000', 10);
+const DEEPSEEK_TIMEOUT_MS = parseInt(process.env.DEEPSEEK_TIMEOUT_MS ?? '45000', 10);
+const GEMINI_TIMEOUT_MS   = parseInt(process.env.GEMINI_TIMEOUT_MS   ?? '45000', 10);
+
+// ── Circuit breaker constants ─────────────────────────────────────────────
+const CIRCUIT_BREAKER_THRESHOLD = 3;  // trips after this many consecutive failures
+const CIRCUIT_BREAKER_WINDOW_S  = 3600; // 1-hour sliding window
+
+// ── NonRetryableError ──────────────────────────────────────────────────────
+/**
+ * Thrown when an AI stage returns a 4xx (non-429) HTTP error.
+ * These are client errors (bad API key, malformed request) that will not
+ * resolve by retrying — we should bail immediately to preserve credits.
+ */
+class NonRetryableError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name  = 'NonRetryableError';
+    this.status = status;
+  }
+}
+
+// ── PipelineCircuitBreaker ────────────────────────────────────────────────
+/**
+ * Manages three Redis keys:
+ *   pipeline:health               → 'healthy' | 'degraded' | 'failed' (TTL 24h)
+ *   pipeline:consecutive-failures → integer counter, TTL 1h rolling window
+ */
+class PipelineCircuitBreaker {
+  constructor(private readonly redis: Redis) {}
+
+  async setHealth(status: 'healthy' | 'degraded' | 'failed'): Promise<void> {
+    try {
+      await this.redis.set('pipeline:health', status, { ex: 86400 });
+    } catch {
+      // Redis write errors must never surface to the pipeline caller
+    }
+  }
+
+  async getHealth(): Promise<'healthy' | 'degraded' | 'failed' | null> {
+    try {
+      return await this.redis.get<'healthy' | 'degraded' | 'failed'>('pipeline:health');
+    } catch {
+      return null;
+    }
+  }
+
+  async incrementFailures(): Promise<number> {
+    try {
+      const key   = 'pipeline:consecutive-failures';
+      const count = await this.redis.incr(key);
+      // Set TTL only on first write so the window slides from first failure
+      if (count === 1) await this.redis.expire(key, CIRCUIT_BREAKER_WINDOW_S);
+      return count;
+    } catch {
+      return 0;
+    }
+  }
+
+  async resetFailures(): Promise<void> {
+    try {
+      await this.redis.del('pipeline:consecutive-failures');
+    } catch {
+      // silent
+    }
+  }
+
+  async getFailureCount(): Promise<number> {
+    try {
+      const raw = await this.redis.get<number>('pipeline:consecutive-failures');
+      return raw ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  async isTripped(): Promise<boolean> {
+    return (await this.getFailureCount()) >= CIRCUIT_BREAKER_THRESHOLD;
+  }
+}
+
 // Shared broadcast queue instance for dead-letter writes
 const deadLetterQueue = new BroadcastQueue();
 
@@ -50,6 +134,9 @@ async function withRetry<T>(
       const result = await fn();
       return { result, attempts: attempt };
     } catch (err) {
+      // Non-retryable errors (bad API key, 400, 403 …) must not be retried —
+      // retrying would burn credits with zero chance of recovery.
+      if (err instanceof NonRetryableError) throw err;
       lastError = err;
       if (attempt < maxAttempts)
         await new Promise(r => setTimeout(r, baseDelayMs * Math.pow(2, attempt - 1)));
@@ -59,7 +146,6 @@ async function withRetry<T>(
 }
 
 // ── Dead‑letter writer → Redis LPUSH ────────────────────────────────────
-// Replaces writeFileSync to /tmp. Uses the existing BroadcastQueue class.
 async function writeDeadLetter(
   runId: string,
   item: RSSItem,
@@ -70,7 +156,7 @@ async function writeDeadLetter(
   try {
     await deadLetterQueue.enqueueFailure({
       id,
-      channel: 'telegram', // reused channel — dead letter is inspectable
+      channel: 'telegram',
       payload: { runId, failedAt: new Date().toISOString(), reason, item, partial },
       attempts: 1,
       firstFailedAt: new Date().toISOString(),
@@ -84,11 +170,17 @@ async function writeDeadLetter(
   }
 }
 
+// ── Shared non-retryable check helper ────────────────────────────────────
+/** Returns true for 4xx responses that are NOT 429 (rate-limit). */
+function isClientError(status: number): boolean {
+  return status >= 400 && status < 500 && status !== 429;
+}
+
 // ─── AI Stage 1: Groq ────────────────────────────────────────────────────
 async function runGroq(item: RSSItem): Promise<GrokSummary> {
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(GROQ_TIMEOUT_MS),
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${GROQ_API_KEY}`,
@@ -108,7 +200,13 @@ async function runGroq(item: RSSItem): Promise<GrokSummary> {
       ],
     }),
   });
-  if (!res.ok) throw new Error(`Groq API ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    const body = await res.text();
+    if (isClientError(res.status)) {
+      throw new NonRetryableError(`Groq API ${res.status}: ${body}`, res.status);
+    }
+    throw new Error(`Groq API ${res.status}: ${body}`);
+  }
   const data = (await res.json()) as { choices: Array<{ message: { content: string } }> };
   const raw: unknown = JSON.parse(data.choices[0].message.content);
   if (!isGrokSummary(raw)) throw new Error('Groq response failed type guard');
@@ -119,7 +217,7 @@ async function runGroq(item: RSSItem): Promise<GrokSummary> {
 async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEnrichment> {
   const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
-    signal: AbortSignal.timeout(45_000),
+    signal: AbortSignal.timeout(DEEPSEEK_TIMEOUT_MS),
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
@@ -139,7 +237,13 @@ async function runDeepSeek(item: RSSItem, grok: GrokSummary): Promise<DeepSeekEn
       ],
     }),
   });
-  if (!res.ok) throw new Error(`DeepSeek API ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    const body = await res.text();
+    if (isClientError(res.status)) {
+      throw new NonRetryableError(`DeepSeek API ${res.status}: ${body}`, res.status);
+    }
+    throw new Error(`DeepSeek API ${res.status}: ${body}`);
+  }
   const data = (await res.json()) as { choices: Array<{ message: { content: string } }> };
   const raw: unknown = JSON.parse(data.choices[0].message.content);
   if (!isDeepSeekEnrichment(raw)) throw new Error('DeepSeek response failed type guard');
@@ -152,7 +256,7 @@ async function runGemini(grok: GrokSummary, deepSeek: DeepSeekEnrichment): Promi
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
     {
       method: 'POST',
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [
@@ -167,7 +271,13 @@ async function runGemini(grok: GrokSummary, deepSeek: DeepSeekEnrichment): Promi
       }),
     },
   );
-  if (!res.ok) throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    const body = await res.text();
+    if (isClientError(res.status)) {
+      throw new NonRetryableError(`Gemini API ${res.status}: ${body}`, res.status);
+    }
+    throw new Error(`Gemini API ${res.status}: ${body}`);
+  }
   const data = (await res.json()) as {
     candidates: Array<{ content: { parts: Array<{ text: string }> } }>;
   };
@@ -224,12 +334,19 @@ async function writeToSanity(payload: SanityArticlePayload): Promise<SanityWrite
   return { documentId, slug: payload.slug.current, publishedAt: payload.publishedAt };
 }
 
+interface ProcessResult {
+  published:       boolean;
+  deadLetterPath?: string;
+  /** True when a non-retryable error means the whole pipeline should stop. */
+  circuitBreak?:   boolean;
+}
+
 async function processArticle(
   item: RSSItem,
   runId: string,
   dedup: ArticleDedup,
   logger: PipelineLogger,
-): Promise<{ published: boolean; deadLetterPath?: string }> {
+): Promise<ProcessResult> {
   logger.setStage('dedup-check');
   const { isDuplicate } = await dedup.isDuplicate(item.link, item.title, item.description);
   if (isDuplicate) {
@@ -244,9 +361,18 @@ async function processArticle(
     grok = result;
     logger.info('Groq succeeded', { attempts });
   } catch (err) {
-    const path = await writeDeadLetter(runId, item, 'Groq failed', null);
-    logger.error('Groq fatal – dead-lettered', 'fatal', err, 3);
-    return { published: false, deadLetterPath: path || undefined };
+    const isNonRetry = err instanceof NonRetryableError;
+    const reason = isNonRetry
+      ? `Groq non-retryable (HTTP ${(err as NonRetryableError).status}) – pipeline halted`
+      : 'Groq failed after retries';
+    const path = await writeDeadLetter(runId, item, reason, null);
+    logger.error(
+      isNonRetry ? 'Groq non-retryable – circuit break' : 'Groq fatal – dead-lettered',
+      'fatal',
+      err,
+      isNonRetry ? 0 : 3,
+    );
+    return { published: false, deadLetterPath: path || undefined, circuitBreak: isNonRetry };
   }
 
   logger.setStage('deepseek-enrich');
@@ -261,6 +387,7 @@ async function processArticle(
     deepSeek = result;
     logger.info('DeepSeek succeeded', { attempts });
   } catch (err) {
+    // DeepSeek failure is degraded — Gemini or fallback will still run
     logger.error('DeepSeek failed – degraded to Groq output only', 'degraded', err, 2);
   }
 
@@ -363,21 +490,59 @@ async function processArticle(
 }
 
 export async function runPipeline(): Promise<PipelineRun> {
-  const runId = randomUUID();
+  const runId     = randomUUID();
   const startedAt = new Date().toISOString();
-  const logger = new PipelineLogger(runId);
-  const dedup = new ArticleDedup();
-  const rssCache = new RSSCache();
+  const logger    = new PipelineLogger(runId);
+  const dedup     = new ArticleDedup();
+  const rssCache  = new RSSCache();
+
+  // ── Circuit breaker + health key setup ───────────────────────────────────
+  let cb: PipelineCircuitBreaker | null = null;
+  try {
+    cb = new PipelineCircuitBreaker(Redis.fromEnv());
+  } catch {
+    logger.warn('Redis unavailable — circuit breaker disabled for this run', {});
+  }
+
+  // Check if circuit breaker is already tripped from previous runs
+  if (cb) {
+    const tripped = await cb.isTripped();
+    if (tripped) {
+      const failCount = await cb.getFailureCount();
+      const msg = `Circuit breaker tripped: ${failCount} consecutive failures in last hour — pipeline paused`;
+      logger.warn(msg, { failCount });
+      await cb.setHealth('failed');
+
+      const alerter = new OpsAlerter();
+      await alerter.healthAlert({
+        system:  'pipeline-circuit-breaker',
+        message: `Pipeline PAUSED — ${failCount} consecutive failures in last hour. Manual inspection required.`,
+      });
+
+      return {
+        runId,
+        startedAt,
+        completedAt: new Date().toISOString(),
+        stage:              'failed',
+        articlesAttempted:  0,
+        articlesPublished:  0,
+        errors:             [],
+        deadLetterPaths:    [],
+      };
+    }
+    // Mark healthy at the start of each live run
+    await cb.setHealth('healthy');
+  }
 
   logger.info('Pipeline run starting', { runId, maxArticles: MAX_ARTICLES_PER_RUN });
   const run: PipelineRun = {
     runId,
     startedAt,
-    stage: 'idle',
-    articlesAttempted: 0,
-    articlesPublished: 0,
-    errors: [],
-    deadLetterPaths: [],
+    stage:              'idle',
+    articlesAttempted:  0,
+    articlesPublished:  0,
+    errors:             [],
+    deadLetterPaths:    [],
   };
 
   let items: RSSItem[];
@@ -391,6 +556,10 @@ export async function runPipeline(): Promise<PipelineRun> {
     run.stage = 'failed';
     run.errors.push(logger.error('RSS fetch fatal', 'fatal', err, 0));
     run.completedAt = new Date().toISOString();
+    if (cb) {
+      const failCount = await cb.incrementFailures();
+      await cb.setHealth(failCount >= CIRCUIT_BREAKER_THRESHOLD ? 'failed' : 'degraded');
+    }
     return run;
   }
 
@@ -398,36 +567,79 @@ export async function runPipeline(): Promise<PipelineRun> {
   const dedupMap = await dedup.bulkCheck(
     items.map(i => ({ guid: i.guid, url: i.link, title: i.title, description: i.description })),
   );
-  const fresh = items.filter(i => !dedupMap.get(i.guid)?.isDuplicate);
+  const fresh     = items.filter(i => !dedupMap.get(i.guid)?.isDuplicate);
   logger.info(`Dedup: ${items.length} total → ${fresh.length} fresh`);
 
   const toProcess = fresh.slice(0, MAX_ARTICLES_PER_RUN);
+  let circuitBroken = false;
+
   for (const item of toProcess) {
     run.articlesAttempted += 1;
     try {
-      const { published, deadLetterPath } = await processArticle(item, runId, dedup, logger);
+      const { published, deadLetterPath, circuitBreak } = await processArticle(
+        item, runId, dedup, logger,
+      );
       if (published) run.articlesPublished += 1;
       if (deadLetterPath) run.deadLetterPaths.push(deadLetterPath);
+
+      if (circuitBreak) {
+        // Non-retryable Groq error: same key would fail every article — stop now
+        circuitBroken = true;
+        logger.warn(
+          'Non-retryable Groq error — stopping article loop to preserve API credits',
+          { item: item.link },
+        );
+        if (cb) await cb.setHealth('degraded');
+        break;
+      }
     } catch (err) {
       logger.error(`Unhandled error processing ${item.link}`, 'fatal', err);
     }
   }
 
-  const tg = new TelegramBroadcaster(TELEGRAM_BOT_TOKEN);
+  const tg      = new TelegramBroadcaster(TELEGRAM_BOT_TOKEN);
   const tgDrain = await tg.drainRetries();
   logger.info('Telegram retry drain', tgDrain);
 
   if (process.env.RESEND_API_KEY) {
     const { NewsletterService } = await import('../src/lib/news/newsletter');
-    const nl = new NewsletterService(process.env.RESEND_API_KEY);
+    const nl      = new NewsletterService(process.env.RESEND_API_KEY);
     const nlDrain = await nl.drainRetries();
     logger.info('Newsletter retry drain', nlDrain);
   }
 
-  run.stage = logger.hasFatal() ? 'failed' : 'complete';
+  run.stage  = logger.hasFatal() ? 'failed' : 'complete';
   run.errors = [...logger.getErrors()];
   run.completedAt = new Date().toISOString();
 
+  // ── Update circuit breaker state ─────────────────────────────────────────
+  if (cb) {
+    const hasFatal = run.stage === 'failed' || circuitBroken;
+
+    if (!hasFatal && run.articlesPublished > 0) {
+      // Successful run — reset window
+      await cb.resetFailures();
+      await cb.setHealth('healthy');
+    } else if (hasFatal) {
+      const failCount = await cb.incrementFailures();
+      const tripped   = failCount >= CIRCUIT_BREAKER_THRESHOLD;
+      await cb.setHealth(tripped ? 'failed' : 'degraded');
+
+      if (tripped) {
+        logger.warn(`Circuit breaker threshold reached (${failCount} failures)`, { failCount });
+        const alerter = new OpsAlerter();
+        await alerter.healthAlert({
+          system:  'pipeline-circuit-breaker',
+          message: `Circuit breaker TRIPPED after ${failCount} consecutive failures — pipeline will pause on next run. Check Groq/DeepSeek/Gemini API keys and quotas.`,
+        });
+      }
+    } else {
+      // Partial run (some degraded stages, no fatals, no published) — mark degraded but don't increment
+      await cb.setHealth('degraded');
+    }
+  }
+
+  // ── pipeline:last-success ─────────────────────────────────────────────────
   if (run.stage === 'complete') {
     try {
       const redis = Redis.fromEnv();
@@ -438,10 +650,11 @@ export async function runPipeline(): Promise<PipelineRun> {
   }
 
   logger.info('Pipeline run complete', {
-    articlesAttempted: run.articlesAttempted,
-    articlesPublished: run.articlesPublished,
-    deadLetterCount: run.deadLetterPaths.length,
-    fatalErrors: run.errors.filter(e => e.severity === 'fatal').length,
+    articlesAttempted:  run.articlesAttempted,
+    articlesPublished:  run.articlesPublished,
+    deadLetterCount:    run.deadLetterPaths.length,
+    fatalErrors:        run.errors.filter(e => e.severity === 'fatal').length,
+    circuitBroken,
   });
   return run;
 }
