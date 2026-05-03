@@ -166,11 +166,11 @@ export async function getTagPage(
        | order(publishedAt desc) [$start..$end] {
          ${ARTICLE_CARD_PROJECTION}
        }`,
-      { tag, start, end } as any,
+      { tag, start, end } as Record<string, unknown>,
     ),
     sanityFetch<number>(
       `count(*[_type == "article" && $tag in tags])`,
-      { tag } as any,
+      { tag } as Record<string, unknown>,
     ),
   ]);
 

@@ -4,11 +4,100 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 25 – Cross-Chain Bridge Flow Tracker ✅
+Batch 26 – News Pipeline Audit + Governance Tracker ✅
 
 ## Current Goal
 
-Add a Cross-Chain Bridge Flow page with net inflow/outflow by chain
+Professional news section redesign + DeFi Governance Activity Tracker
+
+---
+
+### Batch 26 — Section 1: News Pipeline Audit + Professional Redesign ✅
+
+#### Part A — Pipeline Audit Summary
+
+| File | Issue | Severity | Fix Applied |
+|------|-------|----------|-------------|
+| `src/app/news/[id]/page.tsx` | `any` type on `related.map((rel: any)` | High | ✅ Changed to `WeightedArticle` |
+| `src/app/news/[id]/page.tsx` | `dangerouslySetInnerHTML` on `rawHtml` without sanitisation | High | ✅ `sanitizeHtml()` wrapper added |
+| `src/lib/news/newsletter.ts` | Missing `import 'server-only'` — could be imported in client bundles | High | ✅ Added `import 'server-only'` |
+| `src/lib/news/sanity-queries.ts` | `as any` on tag query params (lines 169, 173) | Medium | ✅ Changed to `as Record<string, unknown>` |
+| `src/app/api/newsletter/unsubscribe/route.ts` | `found` variable logic: DB error path falls through to "could not be found" message even when subscriber exists | Medium | Documented (no silent failure; fallback message is acceptable) |
+| `src/app/news/[id]/page.tsx` | `GlossaryTooltip` imported but never used in JSX | Low | Documented (remove if glossary feature is fully deprecated) |
+| `src/lib/news/newsletter.ts` | `buildHTML` references `{{email}}` placeholder literally — not replaced per-recipient | Medium | Documented (requires per-recipient batch templating in future) |
+| `scripts/daily-article.ts` | Multi-stage AI pipeline (Groq → DeepSeek → Gemini) has no circuit-breaker — all 3 can fail serially burning credits | Medium | Documented (add `Promise.race` timeout guard in next pass) |
+| `src/lib/news/rss-cache.ts` | RSS fetch has no per-feed timeout; slow feeds block entire pipeline | Medium | Documented |
+| `src/lib/news/dedup.ts` | Dedup window hardcoded; no configurable TTL via env | Low | Documented |
+
+**NEW: `src/lib/html-sanitize.ts`** (server-only):
+- Strips `<script>`, `<iframe>`, `<object>`, `<embed>`, `<form>` tags and all `on*=` event-handler attributes
+- Strips `javascript:` hrefs
+- Used in `news/[id]/page.tsx` before `dangerouslySetInnerHTML`
+
+#### Part B — Professional Redesign ✅
+
+**`src/components/news/CointelegraphCard.tsx`** rewritten:
+- `relativeTime()` helper — "2h ago", "3d ago", "just now" instead of raw locale date
+- `readingTime()` helper — `body.split(/\s+/).length / 200`, minimum 1 min
+- `CATEGORY_COLORS` map — 16 category slugs → distinct hex color (amber, orange, blue, green, purple, red…)
+- Category badge uses per-category color instead of static amber
+- Image aspect ratio changed from `16/9` to `16/10` per spec
+- Bottom gradient overlay on image for readability
+- Reading time badge overlaid on image (bottom-right)
+- External source badge repositioned (top-right with border)
+- Headline: `text-base md:text-[15px] font-black`; bottom border separator on meta row
+
+**`src/app/news/page.tsx`** redesigned:
+- **Hero article**: first article rendered as full-width `21:9` banner with image, gradient overlay, title + excerpt + byline + reading time overlaid on image
+- **First-row grid**: 3 articles in `lg:grid-cols-3` below hero
+- **Newsletter CTA** (`NewsletterCTA variant="inline"`) injected between first row and remainder
+- **Remainder grid**: `xl:grid-cols-4` for all remaining articles
+- `AppImage` + `NewsletterCTA` added to imports
+
+**`src/app/news/[id]/page.tsx`** improved:
+- Hero image aspect ratio `21:9` (was `video` / `16:9`) with gradient overlay
+- Drop cap on first body paragraph: `first-letter:text-5xl first-letter:float-left first-letter:text-[#FABF2C]`
+- `paragraphs` array filters empty lines before rendering
+- **Author bio box** below newsletter CTA: avatar initial, name link, role description, "More from this author →"
+- **Related articles** redesigned: horizontal thumbnail + title layout instead of card grid (more compact, editorial feel)
+- `NewsletterCTA` injected above author bio
+- `sanitizeHtml` wired to `rawHtml` rendering
+
+**`src/app/news/category/[slug]/page.tsx`** improved:
+- `CATEGORY_DESCRIPTIONS` map — plain-English description per slug (16 categories)
+- `CATEGORY_ICONS` map — emoji per category
+- Category description rendered below headline
+- **Article count badge** (`{n} articles`) shown top-right of header
+- **Sibling category quick-links** — first 8 other categories shown as pill links for cross-navigation
+
+#### Part C — Critical Fixes ✅
+See Part A table above — all Critical and High items resolved.
+
+---
+
+### Batch 26 — Section 2: DeFi Governance Activity Tracker ✅
+
+**`src/app/data/governance/_components/GovernanceClient.tsx`** — full rewrite (deprecated mock removed):
+- Props: `{ rows: DuneRow[]; source: 'live' | 'seed' }` — data from server component via `getDAOGovernance()`
+- `useSyncExternalStore` mount guard (SSR-safe)
+- **Aggregation**: groups `rows` by `dao` field summing `proposals_created` + `vote_count`; builds daily trend from `day` field
+- **4 KPI cards**: DAOs Tracked (amber) / Proposals 30d (blue) / Total Votes 30d (green) / Avg Votes/Proposal (orange)
+- **Horizontal bar chart**: top 8 DAOs by total votes; `BarChart layout="vertical"`; `Cell` color from `activityTier()`; `isAnimationActive={false}`; Tooltip with `fmt()` helper
+- **Activity Tier**: HOT (≥5000 votes, red) / ACTIVE (1000–5000, amber) / LOW (<1000, grey)
+- **30d AreaChart trend**: daily total votes with amber gradient fill; `isAnimationActive={false}`, no dot
+- **Ranked table**: # / DAO / Tier badge / Proposals / Total Votes (tier-colored) / Avg/Proposal / Share %
+- Live/Seed source badge
+- TypeScript: `Tooltip formatter` typed as `(v: number | undefined)` — 0 errors
+
+**`src/app/data/governance/page.tsx`** — ComingSoon replaced:
+- `revalidate = 86400` (24h, matches Dune TTL)
+- `getDAOGovernance()` called server-side; `rows` + `source` passed as props
+- Header with "On-Chain · Tally · Snapshot" badges
+- TypeScript: 0 errors (`tsc --noEmit --skipLibCheck`)
+
+---
+
+## Completed Batch 25 ✅ — Cross-Chain Bridge Flow Tracker
 
 ### Batch 25 — Unit 1: Cross-Chain Bridge Flow Tracker ✅
 - `src/lib/defi-data.ts` updated:

@@ -117,7 +117,7 @@ export default function GovernanceClient({ rows, source }: Props) {
                 />
                 <Tooltip
                   contentStyle={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: 0, fontSize: 11 }}
-                  formatter={(v: number) => [fmt(v), 'Votes']}
+                  formatter={(v: number | undefined) => [fmt(v ?? 0), 'Votes']}
                   cursor={{ fill: '#ffffff08' }}
                 />
                 <Bar dataKey="votes" isAnimationActive={false} radius={0}>
@@ -156,7 +156,7 @@ export default function GovernanceClient({ rows, source }: Props) {
                 <YAxis tick={{ fill: '#555', fontSize: 9 }} tickFormatter={fmt} width={42} />
                 <Tooltip
                   contentStyle={{ background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: 0, fontSize: 11 }}
-                  formatter={(v: number) => [fmt(v), 'Total Votes']}
+                  formatter={(v: number | undefined) => [fmt(v ?? 0), 'Total Votes']}
                   cursor={{ stroke: '#FABF2C', strokeWidth: 1, strokeDasharray: '3 3' }}
                 />
                 <Area

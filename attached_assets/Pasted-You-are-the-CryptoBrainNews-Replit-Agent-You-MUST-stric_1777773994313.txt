@@ -1,0 +1,117 @@
+You are the CryptoBrainNews Replit Agent. You MUST strictly follow the workflow in the workspace files.
+
+FIRST READ: AGENTS.md, context/project-overview.md, context/architecture-context.md, context/ui-context.md, context/code-standards.md, context/ai-workflow-rules.md, context/progress-tracker.md.
+
+Update context/progress-tracker.md:
+- Current Phase → Batch 26 – News Pipeline Audit + Governance Tracker
+- Current Goal → Professional news section redesign + DeFi Governance Activity Tracker
+
+EXECUTE THESE TWO SECTIONS IN ORDER:
+
+============================================================
+SECTION 1: NEWS PIPELINE AUDIT + PROFESSIONAL REDESIGN
+============================================================
+
+Part A – Deep Pipeline Audit
+Read and audit these files thoroughly:
+1. scripts/daily-article.ts – full AI pipeline (RSS → Groq → DeepSeek → Gemini → Sanity → Telegram)
+2. src/lib/news/dedup.ts – article deduplication
+3. src/lib/news/telegram.ts – Telegram broadcasting
+4. src/lib/news/newsletter.ts – Resend newsletter
+5. src/lib/news/rss-cache.ts – RSS feed caching
+6. src/lib/news/pipeline-logger.ts – logging
+7. src/lib/news/sanity-client.ts – Sanity CMS client
+8. src/lib/news/sanity-queries.ts – GROQ queries
+9. src/app/api/newsletter/subscribe/route.ts – newsletter signup
+10. src/app/api/newsletter/unsubscribe/route.ts – GDPR unsubscribe
+11. src/app/api/cron/daily-article/route.ts – pipeline cron
+12. src/lib/news/seo/schema.ts – JSON‑LD schema
+13. src/lib/news/seo/metadata.ts – SEO metadata
+14. src/components/news/CointelegraphCard.tsx – article card component
+15. src/app/news/[id]/page.tsx – article detail page
+
+For each file, identify:
+- Error handling gaps (missing try/catch, unhandled promise rejections)
+- Missing fallbacks (what happens when an AI stage fails)
+- Type safety issues (any types, missing interfaces)
+- Performance issues (missing caching, unnecessary re-fetches)
+- Security gaps (missing auth, input validation)
+
+Output a summary table: File | Issue | Severity (Critical/High/Medium/Low) | Suggested Fix
+
+Part B – Professional Redesign (Reference: The Defiant, Cointelegraph)
+Read the news section pages and components:
+- src/app/news/page.tsx (news homepage)
+- src/app/news/[id]/page.tsx (article detail)
+- src/app/news/category/[slug]/page.tsx (category pages)
+- src/components/news/CointelegraphCard.tsx (article cards)
+- src/app/page.tsx (homepage with news feed)
+
+Compare against professional crypto news sites. Implement these UX improvements:
+
+1. Article Card Redesign (CointelegraphCard.tsx):
+   - Larger, more prominent headline font (text-xl font-black)
+   - Better image-to-text ratio (taller images, 16:10 aspect)
+   - Gradient overlay on images for text readability
+   - Category badge with color coding per category
+   - Reading time estimate ("4 min read")
+   - Author avatar + name on editorial cards
+   - Source logo/badge for wire articles
+
+2. Article Detail Page (news/[id]/page.tsx):
+   - Larger hero image (full-width above fold)
+   - Drop cap on first paragraph
+   - Better typography: larger body text (text-lg), improved line-height
+   - Pull quotes for key statistics (blockquote with left gold border)
+   - Author bio box at bottom with avatar, name, role, and "More from this author" link
+   - Improved related articles section with side-by-side cards
+   - Sticky table of contents for long articles (scroll spy)
+
+3. News Homepage (news/page.tsx):
+   - Hero article: first article rendered large, spanning full width
+   - Grid below: 3 columns of smaller cards
+   - Category filter pills with smooth scroll to section
+   - "Trending Now" sidebar with most-viewed articles (use existing view counter API)
+   - Newsletter signup CTA card between article rows
+
+4. Category Pages:
+   - Category description header with icon/emoji
+   - Subcategory quick-links (if applicable)
+   - Article count badge
+
+Part C – Implement Top-Priority Fixes
+After the audit and design changes, implement the Critical and High fixes identified in Part A. Focus on:
+- Any missing error handling in the pipeline
+- Type safety improvements
+- Security validation gaps
+
+============================================================
+SECTION 2: BATCH 26 – DEFI GOVERNANCE ACTIVITY TRACKER
+============================================================
+
+Data sources: The existing getDAOGovernance() function in src/lib/dune.ts (Dune query 7400718 – Snapshot proposals). If Dune is unavailable, use a realistic seed dataset.
+
+Target page: The existing /data/governance page (currently a ComingSoon placeholder at src/app/data/governance/page.tsx). Replace the ComingSoon state with live data.
+
+Deliverables:
+1. Replace ComingSoon with a full governance dashboard
+2. 4 KPI cards:
+   - Total Proposals (30d)
+   - Active DAOs
+   - Avg Voter Participation %
+   - Most Active DAO (name + proposal count)
+3. Ranked table: DAO | Proposals (30d) | Avg Votes/Proposal | Participation % | Activity Tier
+   - Activity Tier badge: Very High (>50 props) green, High (20–50) light green, Moderate (5–20) amber, Low (<5) grey
+4. A horizontal bar chart of top 10 DAOs by proposal count
+5. A 30-day trend AreaChart of daily proposals (if time-series data available from the Dune query; otherwise a static bar chart)
+
+Strict TypeScript, isAnimationActive={false}, useSyncExternalStore mount guard, ChartSkeleton fallback. No raw colors.
+
+============================================================
+FINAL VERIFICATION
+============================================================
+After completing both sections:
+- Run npx tsc --noEmit and confirm zero errors
+- Update context/progress-tracker.md with all changes
+- Reply with: "SECTION 1 + BATCH 26 COMPLETE. Current status of progress-tracker.md:"
+  followed by the full updated progress-tracker.md
