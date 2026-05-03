@@ -4,11 +4,27 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 20 – DeFi Yield Opportunities ✅
+Batch 21 – Token Unlocks ✅
 
 ## Current Goal
 
-Enhance the Yields page with a Stablecoin Yield Scanner
+Enhance the Token Unlocks page with an upcoming vesting events scanner
+
+### Batch 21 — Unit 1: Token Unlock Calendar / Vesting Events Scanner ✅
+- `src/app/data/defi/token-unlocks/page.tsx` updated (zero new API calls — all data from existing `getNextUnlocks()` call):
+  - `fmtDate(iso, opts?)` helper added — `toLocaleDateString("en-US", ...)` with optional opts
+  - `type Impact = "High" | "Medium" | "Low"`; `impactTier(pct)` — `>1.0%` High (red), `0.1–1.0%` Medium (amber), `<0.1%` Low (grey); `impactColor()` / `impactBorder()` helpers
+  - `HighImpactLeaderboard` server component: props `{ next30d, sorted, total30d, isLive }`:
+    - `nextEvent = sorted[0]` (chronologically closest across all unlocks)
+    - `largestIn30d` = `next30d.reduce(best by amountUsd)`
+    - `leaderboard = [...next30d].sort((a,b) => (b.pctOfSupply??0) - (a.pctOfSupply??0))` — % of supply descending
+    - 3-KPI grid: Next Unlock (date + token + amount) / Largest Unlock 30d (USD + token + date) / Total Value 30d (USD + event count)
+    - Ranked table: # / Token / Amount / % of Supply (colored span) / Value (USD) / Date / Impact badge — 7 columns; `const as` type assertion on tier legend for strict literal inference
+    - Impact tier key strip (3 swatches)
+  - Section placed between existing "Next 30 Days" table and "All Upcoming Unlocks" table
+- TypeScript: 0 errors (`npx tsc --noEmit`)
+
+## Completed Batch 20 ✅ — DeFi Yield Opportunities
 
 ### Batch 20 — Unit 1: DeFi Stablecoin Yield Scanner ✅
 - `src/app/data/defi/yields/page.tsx` updated:

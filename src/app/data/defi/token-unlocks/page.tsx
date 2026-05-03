@@ -11,12 +11,11 @@ export const metadata = {
 };
 export const revalidate = 86400;
 
-// Module-level timestamp — evaluated once at import time, never during render.
-// The page ISR revalidates every 24 hours, so a new import runs once per day.
-const NOW_MS = Date.now();
+const NOW_MS         = Date.now();
 const THIRTY_DAYS_MS = 30 * 86400_000;
-const THRESHOLD_MS = NOW_MS + THIRTY_DAYS_MS;
+const THRESHOLD_MS   = NOW_MS + THIRTY_DAYS_MS;
 
+// ── Formatters ────────────────────────────────────────────────────────────────
 function fmtUsd(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
   if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
@@ -31,17 +30,211 @@ function fmtToken(n: number): string {
   return n.toLocaleString();
 }
 
+function fmtDate(iso: string, opts?: Intl.DateTimeFormatOptions): string {
+  return new Date(iso).toLocaleDateString("en-US", opts ?? {
+    month: "short", day: "numeric", year: "numeric",
+  });
+}
+
+// ── Impact badge helpers ──────────────────────────────────────────────────────
+type Impact = "High" | "Medium" | "Low";
+
+function impactTier(pct: number | null): Impact {
+  const v = pct ?? 0;
+  if (v > 1.0)  return "High";
+  if (v >= 0.1) return "Medium";
+  return "Low";
+}
+
+function impactColor(tier: Impact): string {
+  if (tier === "High")   return "#ff4d4f";
+  if (tier === "Medium") return "#FABF2C";
+  return "#888";
+}
+
+function impactBorder(tier: Impact): string {
+  if (tier === "High")   return "rgba(255,77,79,0.35)";
+  if (tier === "Medium") return "rgba(250,191,44,0.35)";
+  return "rgba(136,136,136,0.25)";
+}
+
+// ── High-Impact Leaderboard ───────────────────────────────────────────────────
+function HighImpactLeaderboard({
+  next30d,
+  sorted,
+  total30d,
+  isLive,
+}: {
+  next30d:  TokenUnlock[];
+  sorted:   TokenUnlock[];
+  total30d: number;
+  isLive:   boolean;
+}) {
+  // Next event (chronologically closest across all unlocks)
+  const nextEvent = sorted[0] ?? null;
+
+  // Largest single unlock in 30d by USD value
+  const largestIn30d = next30d.length
+    ? next30d.reduce((best, u) => (u.amountUsd > best.amountUsd ? u : best), next30d[0])
+    : null;
+
+  // High-impact leaderboard: next30d sorted by % of supply descending
+  const leaderboard = [...next30d]
+    .sort((a, b) => (b.pctOfSupply ?? 0) - (a.pctOfSupply ?? 0));
+
+  return (
+    <div>
+      <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center gap-3">
+        <span className="w-2 h-2 bg-[#FABF2C] rounded-full" />
+        Upcoming Vesting Events
+      </h3>
+
+      {/* ── 3-KPI strip ──────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Next Unlock */}
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
+          <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Next Unlock</p>
+          {nextEvent ? (
+            <>
+              <p className="text-2xl font-black tabular-nums text-[#FABF2C]">
+                {fmtDate(nextEvent.unlockDate, { month: "short", day: "numeric" })}
+              </p>
+              <p className="text-[10px] font-mono text-[#555] mt-1">
+                {nextEvent.token} · {fmtToken(nextEvent.amount)} tokens
+              </p>
+            </>
+          ) : (
+            <p className="text-2xl font-black text-[#555]">—</p>
+          )}
+        </div>
+
+        {/* Largest Unlock (30d) by USD */}
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
+          <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Largest Unlock (30d)</p>
+          {largestIn30d ? (
+            <>
+              <p className="text-2xl font-black tabular-nums text-[#ff4d4f]">
+                {largestIn30d.amountUsd > 0 ? fmtUsd(largestIn30d.amountUsd) : fmtToken(largestIn30d.amount)}
+              </p>
+              <p className="text-[10px] font-mono text-[#555] mt-1">
+                {largestIn30d.token} · {fmtDate(largestIn30d.unlockDate, { month: "short", day: "numeric" })}
+              </p>
+            </>
+          ) : (
+            <p className="text-2xl font-black text-[#555]">—</p>
+          )}
+        </div>
+
+        {/* Total Value to Unlock (30d) */}
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
+          <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Total Value (30d)</p>
+          <p className="text-2xl font-black tabular-nums text-[#FABF2C]">
+            {isLive ? fmtUsd(total30d) : "—"}
+          </p>
+          <p className="text-[10px] font-mono text-[#555] mt-1">
+            across {next30d.length} event{next30d.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+      </div>
+
+      {/* ── High-impact leaderboard ───────────────────────────────────────── */}
+      <div className="border border-[#1a1a1a] overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-[#1a1a1a] bg-[#080808]">
+              {["#", "Token", "Amount", "% of Supply", "Value (USD)", "Date", "Impact"].map((h) => (
+                <th
+                  key={h}
+                  className={`px-4 py-3 font-black text-[#555] uppercase tracking-widest whitespace-nowrap ${
+                    ["#", "Token"].includes(h) ? "text-left" : "text-right"
+                  }`}
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {leaderboard.map((u, i) => {
+              const pct    = u.pctOfSupply ?? 0;
+              const tier   = impactTier(u.pctOfSupply);
+              const color  = impactColor(tier);
+              const border = impactBorder(tier);
+              return (
+                <tr
+                  key={`lb-${u.token}-${u.unlockDate}-${i}`}
+                  className={`border-b border-[#111] hover:bg-[#0f0f0f] transition-colors ${
+                    i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]"
+                  }`}
+                >
+                  <td className="px-4 py-3 text-[#555] tabular-nums">{i + 1}</td>
+                  <td className="px-4 py-3 font-bold text-white">{u.token}</td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-[#FABF2C]">
+                    {fmtToken(u.amount)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span
+                      className="font-mono font-black tabular-nums text-[11px] px-1.5 py-0.5"
+                      style={{ color, border: `1px solid ${border}` }}
+                    >
+                      {pct.toFixed(2)}%
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-[#888]">
+                    {u.amountUsd > 0 ? fmtUsd(u.amountUsd) : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-[#888] whitespace-nowrap">
+                    {fmtDate(u.unlockDate)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span
+                      className="font-mono font-black text-[10px] px-2 py-0.5 uppercase tracking-widest"
+                      style={{ color, border: `1px solid ${border}` }}
+                    >
+                      {tier}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+            {leaderboard.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-4 py-10 text-center text-[#555] font-mono text-xs uppercase tracking-widest">
+                  {isLive ? "No unlock events in the next 30 days." : "Awaiting unlock data from DefiLlama."}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Impact tier key */}
+      <div className="flex gap-5 mt-3 flex-wrap">
+        {([
+          { tier: "High"   as Impact, desc: ">1.0% of supply" },
+          { tier: "Medium" as Impact, desc: "0.1–1.0% of supply" },
+          { tier: "Low"    as Impact, desc: "<0.1% of supply" },
+        ] as const).map(({ tier, desc }) => (
+          <div key={tier} className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: impactColor(tier) }} />
+            <span className="text-[9px] font-mono text-[#555]">{tier} — {desc}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Page data ─────────────────────────────────────────────────────────────────
 async function TokenUnlocksData() {
   const unlocks = await getNextUnlocks().catch(() => []);
   const sorted  = [...unlocks].sort(
-    (a, b) => new Date(a.unlockDate).getTime() - new Date(b.unlockDate).getTime()
+    (a, b) => new Date(a.unlockDate).getTime() - new Date(b.unlockDate).getTime(),
   );
 
-  const next30d   = sorted.filter(
-    (u) => new Date(u.unlockDate).getTime() <= THRESHOLD_MS
-  );
-  const total30d  = next30d.reduce((s, u) => s + u.amountUsd, 0);
-  const isLive    = unlocks.length > 0;
+  const next30d  = sorted.filter((u) => new Date(u.unlockDate).getTime() <= THRESHOLD_MS);
+  const total30d = next30d.reduce((s, u) => s + u.amountUsd, 0);
+  const isLive   = unlocks.length > 0;
 
   return (
     <div className="space-y-10 pb-20">
@@ -50,6 +243,7 @@ async function TokenUnlocksData() {
         description="Upcoming token unlock events — amount, percentage of circulating supply, and date."
       />
 
+      {/* Live badge */}
       <div className="flex items-center gap-3 flex-wrap">
         <span className={`border font-mono text-[10px] px-3 py-1 uppercase tracking-widest ${
           isLive
@@ -63,6 +257,7 @@ async function TokenUnlocksData() {
         </span>
       </div>
 
+      {/* Existing 4-KPI strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] p-5">
           <p className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Next 30D Unlocks</p>
@@ -83,6 +278,7 @@ async function TokenUnlocksData() {
         </div>
       </div>
 
+      {/* Existing Next 30 Days table */}
       <div>
         <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center gap-3">
           <span className="w-2 h-2 bg-[#ff4757] rounded-full animate-pulse" />
@@ -102,7 +298,7 @@ async function TokenUnlocksData() {
             <tbody>
               {next30d.map((u: TokenUnlock, i: number) => {
                 const pctOfSupply = u.pctOfSupply ?? 0;
-                const isLarge = pctOfSupply >= 1;
+                const isLarge     = pctOfSupply >= 1;
                 return (
                   <tr key={`${u.token}-${u.unlockDate}-${i}`} className={`border-b border-[#111] hover:bg-[#0f0f0f] ${
                     i % 2 === 0 ? "bg-[#080808]" : "bg-[#050505]"
@@ -144,6 +340,15 @@ async function TokenUnlocksData() {
         </div>
       </div>
 
+      {/* ── Batch 21: Upcoming Vesting Events scanner ────────────────────── */}
+      <HighImpactLeaderboard
+        next30d={next30d}
+        sorted={sorted}
+        total30d={total30d}
+        isLive={isLive}
+      />
+
+      {/* Existing All Upcoming Unlocks table */}
       {sorted.length > 0 && (
         <div>
           <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-4 flex items-center gap-3">
