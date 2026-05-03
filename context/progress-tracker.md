@@ -4,11 +4,26 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 21 – Token Unlocks ✅
+Batch 22 – DeFi Revenue Breakdown ✅
 
 ## Current Goal
 
-Enhance the Token Unlocks page with an upcoming vesting events scanner
+Enhance the Revenue page with a revenue efficiency leaderboard
+
+### Batch 22 — Unit 1: DeFi Revenue Efficiency Leaderboard ✅
+- `src/app/data/defi/revenue/page.tsx` updated (zero new API calls):
+  - `getTopProtocolsByTvl(200)` added to existing `Promise.all` (same cached endpoint, no new network call)
+  - `ratioColor(pct)` — `≥10%` green, `1–10%` amber, `<1%` grey
+  - `interface EfficiencyRow { name; category; rev24h; tvl; ratio; chains }` — ratio = `(rev24h / tvl) * 100`
+  - `tvlMap = new Map(tvlProtocols.map(p => [p.name.toLowerCase(), p.tvl]))` — case-insensitive join key
+  - `efficiencyRows` — join revenues→TVL, filter `tvl > 0 && rev24h > 0`, sort by ratio desc, slice 20
+  - 3-KPI grid: Most Efficient Protocol (ratio + name) / Total Protocol Revenue 24h / Matched Protocols count
+  - `DefiTable` efficiency table: Protocol / 24h Revenue (green) / TVL (blue) / Rev/TVL Ratio (color-tiered, 2dp if ≥1%, 4dp if <1%) / Category
+  - Ratio tier key strip (3 swatches)
+  - Section placed between Revenue Leaderboard and Fees Leaderboard
+- TypeScript: 0 errors (`tsc --skipLibCheck`)
+
+## Completed Batch 21 ✅ — Token Unlocks
 
 ### Batch 21 — Unit 1: Token Unlock Calendar / Vesting Events Scanner ✅
 - `src/app/data/defi/token-unlocks/page.tsx` updated (zero new API calls — all data from existing `getNextUnlocks()` call):
