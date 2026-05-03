@@ -4,11 +4,33 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 23 – DeFi Liquidation Heatmap ✅
+Batch 24 – Protocol Treasury Tracker ✅
 
 ## Current Goal
 
-Add a DeFi Liquidation Pressure heatmap page
+Add a Protocol Treasury Buffer page
+
+### Batch 24 — Unit 1: Protocol Treasury Tracker ✅
+- NEW `src/app/data/defi/protocol-treasury/page.tsx` (server component):
+  - `getTopProtocolsByTvl(300)` + `getProtocolFees(100)` fetched in parallel — zero new API calls
+  - `type StrengthTier = "Fortress" | "Strong" | "Moderate" | "Low"`
+  - `strengthTier(ratio)` — `>100%` Fortress (green), `50–100%` Strong (light-green), `20–50%` Moderate (amber), `<20%` Low (grey)
+  - `tierColor()` / `tierBorder()` / `fmtRatio()` helpers (adaptive dp: 1dp if ≥1%, 3dp if <1%)
+  - `TreasuryRow` interface: `{ name; category; tvl; estTreasury; ratio; tier }`
+  - `feesMap` case-insensitive join; `estTreasury = total30d × 12` (annualised proxy); filter `tvl > 0 && estTreasury > 0`; sort by ratio desc
+  - KPI: `topProtocol = [0]`; `avgRatio`; `strongBuffer` = ratio ≥50 count; `totalEstTreasury` = sum
+  - 4-KPI grid: Strongest Buffer / Avg Buffer Ratio / Strong Buffer (≥50%) count / Total Est. Treasury
+  - `TreasuryBarClient` rendered with `TreasuryBarRow[]` (top 10, serialisable)
+  - `DefiTable` ranked table: Protocol / Category / TVL (blue) / Est. Treasury (amber) / Buffer Ratio (color-tiered) / Strength Tier badge
+  - Strength tier key strip (4 swatches)
+- NEW `src/app/data/defi/protocol-treasury/TreasuryBarClient.tsx` ("use client"):
+  - `useSyncExternalStore` mount guard; Recharts `BarChart layout="vertical"`; `Bar isAnimationActive={false}`
+  - `Cell` per entry with `TIER_COLORS`; `LabelList` right-aligned; custom `TreasuryTooltip`
+  - `export interface TreasuryBarRow { name; ratio; tier }` — serialisation contract with page
+  - Tier legend strip (4 swatches with `as const`)
+- TypeScript: 0 errors (`tsc --skipLibCheck`)
+
+## Completed Batch 23 ✅ — DeFi Liquidation Heatmap
 
 ### Batch 23 — Unit 1: DeFi Liquidation Pressure Heatmap ✅
 - NEW `src/app/data/defi/liquidation-heatmap/page.tsx` (server component):
