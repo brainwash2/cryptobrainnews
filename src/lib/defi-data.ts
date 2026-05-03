@@ -536,6 +536,43 @@ export async function getPolymarketTop(limit = 20): Promise<PredictionMarket[]> 
   }, 600);
 }
 
+// ─── 11. Bridge Flows ─────────────────────────────────────────────────────────
+// api.llama.fi/bridges is 404; bridges.llama.fi/bridges is a paid endpoint.
+// We derive bridge flow from protocol TVL changes (category === "Bridge").
+// netFlow24h = tvl × change_1d/100  → positive = net inflow, negative = net outflow
+// volume24h  = |netFlow24h|          → unsigned magnitude
+
+export interface BridgeFlow {
+  name:       string;
+  chain:      string;   // primary chain (chains[0])
+  volume24h:  number;
+  volume7d:   number;
+  netFlow24h: number;
+  netFlow7d:  number;
+}
+
+export async function getBridgeFlows(): Promise<BridgeFlow[]> {
+  return cached('defi:bridges:flows', async () => {
+    const protocols = await getTopProtocolsByTvl(500);
+    return protocols
+      .filter((p) => p.category === 'Bridge')
+      .map((p) => {
+        const net24h = p.change_1d != null ? p.tvl * (p.change_1d / 100) : 0;
+        const net7d  = p.change_7d != null ? p.tvl * (p.change_7d / 100) : 0;
+        return {
+          name:       p.name,
+          chain:      p.chains[0] ?? 'Multi',
+          volume24h:  Math.abs(net24h),
+          volume7d:   Math.abs(net7d),
+          netFlow24h: net24h,
+          netFlow7d:  net7d,
+        };
+      })
+      .filter((b) => b.volume24h > 0)
+      .sort((a, b) => b.volume24h - a.volume24h);
+  }, 3600);
+}
+
 // Phase B: Token unlocks from DefiLlama /unlocks
 export interface TokenUnlock {
   token: string;

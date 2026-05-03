@@ -4,11 +4,31 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 24 – Protocol Treasury Tracker ✅
+Batch 25 – Cross-Chain Bridge Flow Tracker ✅
 
 ## Current Goal
 
-Add a Protocol Treasury Buffer page
+Add a Cross-Chain Bridge Flow page with net inflow/outflow by chain
+
+### Batch 25 — Unit 1: Cross-Chain Bridge Flow Tracker ✅
+- `src/lib/defi-data.ts` updated:
+  - `export interface BridgeFlow { name; chain; volume24h; volume7d; netFlow24h; netFlow7d }`
+  - `getBridgeFlows()` — cached 1h; derives from `getTopProtocolsByTvl(500)` filtered to `category === "Bridge"` (zero new API calls; `bridges.llama.fi` is paid, `api.llama.fi/bridges` is 404); `netFlow24h = tvl × change_1d/100`, `volume24h = |netFlow24h|`; sorted by volume24h desc
+- NEW `src/app/data/onchain/bridge-flows/page.tsx` (server component):
+  - `getBridgeFlows()` — single fetch, zero extra API calls
+  - KPI derivations: `total24hVol`; `totalNetFlow24h`; `topDestChain` (chain with highest total inflow); `activeBridges` count
+  - 4-KPI grid: Total Bridge Volume 24h / Net Inflow 24h (green if positive, red if negative) / Top Destination Chain / Active Bridges
+  - `BridgeBarClient` rendered with `BridgeBarRow[]` (top 10, serialisable)
+  - `DefiTable` ranked table: Bridge / Chain / 24h Vol / 7d Vol / Net Flow 24h / Net Flow 7d / Direction badge
+  - Direction badge: positive → green ▲ Inflow, negative → red ▼ Outflow
+- NEW `src/app/data/onchain/bridge-flows/BridgeBarClient.tsx` ("use client"):
+  - `useSyncExternalStore` mount guard; Recharts `BarChart layout="vertical"`; `Bar isAnimationActive={false}`
+  - `Cell` per entry: green if `positive`, red if outflow; `LabelList` right-aligned; custom `BridgeTooltip`
+  - `export interface BridgeBarRow { name; volume24h; positive }`
+- TypeScript: 0 errors (`tsc --skipLibCheck`)
+- **NOTE**: `bridges.llama.fi/bridges` is a paid endpoint (402); `api.llama.fi/bridges` returns 404. Data derived from free `protocols` endpoint, category = "Bridge".
+
+## Completed Batch 24 ✅ — Protocol Treasury Tracker
 
 ### Batch 24 — Unit 1: Protocol Treasury Tracker ✅
 - NEW `src/app/data/defi/protocol-treasury/page.tsx` (server component):
