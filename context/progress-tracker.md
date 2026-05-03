@@ -4,11 +4,34 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 22 – DeFi Revenue Breakdown ✅
+Batch 23 – DeFi Liquidation Heatmap ✅
 
 ## Current Goal
 
-Enhance the Revenue page with a revenue efficiency leaderboard
+Add a DeFi Liquidation Pressure heatmap page
+
+### Batch 23 — Unit 1: DeFi Liquidation Pressure Heatmap ✅
+- NEW `src/app/data/defi/liquidation-heatmap/page.tsx` (server component):
+  - `getProtocolFees(100)` + `getTopProtocolsByTvl(500)` fetched in parallel — zero new API calls
+  - `type RiskTier = "Critical" | "High" | "Moderate" | "Low"`
+  - `pressureTier(score)` — `>10%` Critical (red), `5–10%` High (orange), `2–5%` Moderate (amber), `<2%` Low (green)
+  - `tierColor()` / `tierBorder()` helpers; `fmtScore()` — 2dp if ≥1%, 4dp if <1%
+  - `PressureRow` interface: `{ name; category; tvl; fees24h; score; tier; chains }`
+  - `tvlMap` case-insensitive join; filter `tvl > 0 && fees24h > 0`; sort by score desc
+  - KPI derivations: `topProtocol = [0]`; `underStress` = score > 5 count; `totalFeesAtRisk` = sum of underStress fees24h; `avgScore`
+  - 4-KPI grid: Highest Pressure / Under Stress (>5%) / Fees at Risk (24h) / Avg Pressure Score
+  - `LiquidationBarClient` mounted with `barRows` (top 10, serialisable `BarRow[]`)
+  - `DefiTable` ranked table: Protocol / Category / TVL (blue) / 24h Fees (amber) / Pressure Score (color-tiered) / Risk Tier badge
+  - Risk tier key strip (4 swatches)
+- NEW `src/app/data/defi/liquidation-heatmap/LiquidationBarClient.tsx` ("use client"):
+  - `useSyncExternalStore` mount guard (SSR-safe)
+  - Recharts `BarChart layout="vertical"` horizontal bar chart — top 10 protocols
+  - `Bar dataKey="score" isAnimationActive={false}`; `Cell` per entry with `TIER_COLORS`; `LabelList` score values right-aligned
+  - Custom `PressureTooltip`; tier legend strip (4 swatches)
+  - `export interface BarRow { name; score; tier }` — used by page.tsx for serialisation
+- TypeScript: 0 errors (`tsc --skipLibCheck`)
+
+## Completed Batch 22 ✅ — DeFi Revenue Breakdown
 
 ### Batch 22 — Unit 1: DeFi Revenue Efficiency Leaderboard ✅
 - `src/app/data/defi/revenue/page.tsx` updated (zero new API calls):

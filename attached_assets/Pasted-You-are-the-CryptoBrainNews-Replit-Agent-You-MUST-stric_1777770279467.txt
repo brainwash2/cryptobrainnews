@@ -1,0 +1,44 @@
+You are the CryptoBrainNews Replit Agent. You MUST strictly follow the workflow in the workspace files.
+
+FIRST READ: AGENTS.md, context/project-overview.md, context/architecture-context.md, context/ui-context.md, context/code-standards.md, context/ai-workflow-rules.md, context/progress-tracker.md.
+
+Update context/progress-tracker.md:
+- Current Phase → Batch 23 – DeFi Liquidation Heatmap
+- Current Goal → Add a DeFi Liquidation Pressure heatmap page
+
+NOW EXECUTE:
+
+Unit: DeFi Liquidation Pressure Heatmap
+
+Concept: Surface protocols with the highest fee-to-TVL drawdown risk. Composite liquidation pressure score = (Fees 24h / TVL) × 100. This identifies protocols where fees represent a large fraction of locked value — a proxy for economic stress.
+
+Data sources (all already in the project, zero new API calls):
+- getProtocolFees() from src/lib/defi-data.ts (api.llama.fi/overview/fees)
+- getTopProtocolsByTvl() from src/lib/defi-data.ts (api.llama.fi/protocols)
+
+Target page: NEW page at src/app/data/defi/liquidation-heatmap/page.tsx
+
+Deliverables:
+1. New page with metadata: title 'DeFi Liquidation Heatmap | CryptoBrainNews'
+2. 4 KPI cards at top:
+   - Highest Pressure Protocol (name + score)
+   - Protocols Under Stress (count with score > 5%)
+   - Total Fees at Risk (sum of fees from high‑pressure protocols)
+   - Average Pressure Score
+3. A ranked table:
+   - Protocol | Category | TVL | 24h Fees | Pressure Score | Risk Tier
+   - Pressure Score = (Fees 24h / TVL) × 100, formatted as %
+   - Risk Tier badge (based on score):
+     * Critical (>10%) – red
+     * High (5–10%) – orange
+     * Moderate (2–5%) – amber
+     * Low (<2%) – green
+   - Sort by Pressure Score descending
+4. A horizontal bar chart above the table showing the top 10 protocols by pressure score (use existing client component pattern with useSyncExternalStore + isAnimationActive={false})
+5. Join fees data with TVL data by protocol name (case‑insensitive)
+6. Use existing DefiTable and DefiTable components
+
+Strict TypeScript, no raw colors, no new API calls, server component + client sub‑components pattern.
+
+After finishing, update progress-tracker.md, run npx tsc --noEmit, and reply:
+"BATCH 23 COMPLETE – DeFi Liquidation Heatmap added. Current status of progress-tracker.md:"
