@@ -1,30 +1,44 @@
-import ComingSoon from '../_components/ComingSoon';
+export const revalidate = 86400;
 
-export const metadata = {
-  title: 'Governance | CryptoBrainNews',
-  description: 'DAO governance votes, proposals, and voting metrics.',
+import React from 'react';
+import { getDAOGovernance } from '@/lib/dune';
+import GovernanceClient from './_components/GovernanceClient';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'DAO Governance | CryptoBrainNews',
+  description: 'Live DAO governance votes, proposals, and voting metrics from Tally and Snapshot.',
 };
 
-/**
- * Phase 45 · C1 — Governance page converted to ComingSoon.
- *
- * Root cause: Dune query IDs 6705858 (UNISWAP_GOVERNANCE) and 6705938 (DAO_ACTIVITY)
- * contain stub SQL that returns fabricated zeros / hardcoded strings. GovernanceClient
- * was also rendering its own MOCK_DAOS array, never calling Dune at all.
- *
- * Resolution: This page is marked ComingSoon until both Dune queries are authored
- * with real SQL (Tally/Snapshot on-chain governance data) and GovernanceClient is
- * rewritten to consume live DuneRow[] results.
- *
- * See: audit-report.md § C1, DUNE_QUERIES.md Q20 / Q22.
- */
-export default function GovernancePage() {
+export default async function GovernancePage() {
+  const { rows, source } = await getDAOGovernance();
+
   return (
-    <ComingSoon
-      title="Governance"
-      description="DAO votes, proposals & governance token metrics"
-      dataSource="Dune Analytics (Tally / Snapshot)"
-      targetPhase="Phase 45 — Query IDs 6705858 / 6705938 require real SQL"
-    />
+    <main className="min-h-screen bg-[#050505] font-sans">
+      <div className="py-10 px-4 lg:px-8">
+        <div className="max-w-[1400px] mx-auto">
+
+          <div className="mb-8 border-b border-[#1a1a1a] pb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#555] border border-[#1a1a1a] px-2 py-1">
+                On-Chain
+              </span>
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#555] border border-[#1a1a1a] px-2 py-1">
+                Tally · Snapshot
+              </span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter mb-2">
+              DAO <span className="text-[#FABF2C]">Governance</span>
+            </h1>
+            <p className="text-[#888] font-mono text-xs uppercase tracking-widest">
+              Proposal counts, vote totals, and participation trends across leading DeFi protocols.
+            </p>
+          </div>
+
+          <GovernanceClient rows={rows} source={source} />
+
+        </div>
+      </div>
+    </main>
   );
 }

@@ -6,6 +6,7 @@
  *   - Idempotency key per article slug to prevent double-sends on retries
  *   - Unsubscribe link injected automatically
  */
+import 'server-only';
 
 import { randomUUID } from 'crypto';
 import { BroadcastQueue } from './broadcast-queue';

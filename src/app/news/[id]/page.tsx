@@ -12,10 +12,12 @@ import GlossaryTooltip from '@/components/common/GlossaryTooltip';
 import Link from 'next/link';
 import Script from 'next/script';
 import type { Metadata } from 'next';
+import type { WeightedArticle } from '@/lib/types';
 import AdUnit from '@/components/monetization/AdUnit';
 import AffiliateLink from '@/components/monetization/AffiliateLink';
 import NewsletterCTA from '@/components/monetization/NewsletterCTA';
 import ViewTracker from './_components/ViewTracker';
+import { sanitizeHtml } from '@/lib/html-sanitize';
  
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://cryptobrainnews.com';
  
@@ -140,9 +142,9 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ id
               </AffiliateLink>
             </div>
  
-            {/* Render raw HTML if present (AI-generated), otherwise fallback to portable text */}
+            {/* Render raw HTML if present (AI-generated), sanitized before render */}
             {article.rawHtml ? (
-              <div className="prose-article" dangerouslySetInnerHTML={{ __html: article.rawHtml }} />
+              <div className="prose-article" dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.rawHtml) }} />
             ) : (
               <div className="prose prose-invert max-w-none font-sans">
                 {article.body.split('\n').map((para: string, idx: number) => (
@@ -164,7 +166,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ id
             <section className="mt-20 border-t border-[#1a1a1a] pt-16">
               <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-10">Related Intelligence</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                {related.map((rel: any) => (
+                {related.map((rel: WeightedArticle) => (
                   <Link key={rel.id} href={rel.url.startsWith('http') ? rel.url : `/news/${rel.id}`} className="group">
                     <div className="relative aspect-video mb-4 overflow-hidden border border-[#1a1a1a] bg-[#0a0a0a]">
                       <AppImage src={rel.image} alt={rel.title} fill className="object-cover group-hover:scale-105 transition-all" />
