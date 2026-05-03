@@ -4,35 +4,32 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Batch 28 – Circuit Reset Endpoint ✅
+Batch 29 – RSS Feed Resilience ✅
 
 ## Current Goal
 
-Add a manual circuit-breaker reset endpoint for ops recovery
+Add per-feed timeout + parallel fetch so slow feeds never block the pipeline
 
 ---
 
-### Batch 28 — Unit 1: Manual Circuit-Breaker Reset Endpoint ✅
+### Batch 29 — Unit 1: RSS Feed Timeout & Parallel Fetch ✅
 
 **Files changed:**
 
 | File | Change |
 |------|--------|
-| `src/app/api/ops/reset-circuit/route.ts` | New POST endpoint to reset pipeline circuit-breaker state |
-| `context/progress-tracker.md` | Batch 28 status update |
+| `src/lib/news/rss-cache.ts` | Per-feed timeout, parallel fetch, adaptive lock, slow-feed logging |
+| `context/progress-tracker.md` | Batch 29 status update |
 
-#### Reset endpoint
+#### Implemented
 
-- Route: `POST /api/ops/reset-circuit`
-- Auth: `validateVercelCronAuth(req)` first, supporting the existing Vercel cron bearer token pattern
-- Redis actions:
-  - delete `pipeline:consecutive-failures`
-  - set `pipeline:health = 'healthy'` with 24h TTL
-- Response shape:
-  - `reset: true`
-  - `previousState: { health, failureCount }`
-  - `newState: { health: 'healthy', failureCount: 0 }`
-- Idempotent: succeeds even if the circuit was not tripped
-- Logs reset event with auth source and ISO timestamp
+- Added `import 'server-only'`
+- Added `RSS_FEED_TIMEOUT_MS` env config with 8s default
+- `getFeed()` uses `AbortSignal.timeout(RSS_FEED_TIMEOUT_MS)`
+- Timeout/failure returns stale cached feed or empty feed; never throws
+- `getAllItems()` now uses `Promise.allSettled()` so feeds resolve independently
+- `LOCK_TTL_MS` reduced from 30s to 15s
+- Slow-feed warning logged at 80% of timeout budget
+- Dedup still runs after all feeds resolve
 
-**TypeScript:** `npx tsc --noEmit` passes with zero errors.
+**TypeScript:** `npx tsc --noEmit` must pass with zero errors.

@@ -1,0 +1,43 @@
+You are the CryptoBrainNews Replit Agent. You MUST strictly follow the workflow in the workspace files.
+
+FIRST READ: AGENTS.md, context/project-overview.md, context/architecture-context.md, context/ui-context.md, context/code-standards.md, context/ai-workflow-rules.md, context/progress-tracker.md.
+
+Update context/progress-tracker.md:
+- Current Phase → Batch 29 – RSS Feed Resilience
+- Current Goal → Add per‑feed timeout + parallel fetch so slow feeds never block the pipeline
+
+NOW EXECUTE:
+
+Unit: RSS Feed Timeout & Parallel Fetch
+
+Read src/lib/news/rss-cache.ts and scripts/daily-article.ts.
+
+Problems to fix (from the Batch 26 audit):
+1. RSSCache.getFeed() uses a global 15s timeout for all feeds. One slow feed delays the entire pipeline.
+2. getAllItems() calls getFeed() sequentially for each feed instead of fetching in parallel.
+3. The stampede‑lock uses a fixed 30s LOCK_TTL_MS which is too long for feeds that normally return in <2s.
+
+Implement:
+
+1. Per‑feed timeout via RSS_FEED_TIMEOUT_MS env var (default 8_000ms):
+   - Read process.env.RSS_FEED_TIMEOUT_MS, default 8000
+   - Pass to AbortSignal.timeout() in getFeed()
+   - On timeout, return the stale cached feed (if available) or empty feed — never throw.
+
+2. Parallel fetch in getAllItems():
+   - Replace the sequential for‑await with Promise.allSettled()
+   - All feeds fire simultaneously
+   - Failed feeds (rejected promises) are caught individually; healthy feeds still return data
+   - Deduplication still runs after all feeds resolve
+
+3. Adaptive stampede lock:
+   - Reduce LOCK_TTL_MS from 30_000 to 15_000
+   - If a feed fetch completes in under 5s, explicitly release the lock (del) rather than waiting for expiry
+
+4. Add logging so ops can see which feeds timed out:
+   - logger.warn when a feed exceeds 80% of its timeout without responding
+
+Strict TypeScript, import 'server-only', no new dependencies.
+
+After finishing, update progress-tracker.md, run npx tsc --noEmit, and reply:
+"BATCH 29 COMPLETE – RSS Feed Resilience added. Current status of progress-tracker.md:"

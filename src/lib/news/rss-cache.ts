@@ -8,29 +8,35 @@
  *
  * Stampede guard:
  *   When a feed's cache expires, the first worker acquires a short-lived
- *   lock key (SET NX PX 30s). All other concurrent workers see the lock and
+ *   lock key (SET NX PX 15s). All other concurrent workers see the lock and
  *   serve the stale value while the winner re-fetches.
  */
 
+import 'server-only';
 import { Redis } from '@upstash/redis';
 import type { RSSFeed, RSSItem } from './types';
 import { isRSSItem } from './types';
 
-const CACHE_TTL_SECONDS = 60 * 60;          // 1 hour
-const LOCK_TTL_MS       = 30_000;           // 30 s – max time allowed for a single fetch
-const STALE_TTL_SECONDS = 60 * 60 * 24;    // 24 h – how long to keep stale fallback
-const KEY_PREFIX_FEED   = 'rss:feed:';
-const KEY_PREFIX_STALE  = 'rss:stale:';
-const KEY_PREFIX_LOCK   = 'rss:lock:';
+const CACHE_TTL_SECONDS = 60 * 60;
+const LOCK_TTL_MS = 15_000;
+const STALE_TTL_SECONDS = 60 * 60 * 24;
+const KEY_PREFIX_FEED = 'rss:feed:';
+const KEY_PREFIX_STALE = 'rss:stale:';
+const KEY_PREFIX_LOCK = 'rss:lock:';
+const RSS_FEED_TIMEOUT_MS = parseInt(process.env.RSS_FEED_TIMEOUT_MS ?? '8000', 10);
 
 interface CachedFeed {
   feed: RSSFeed;
-  cachedAt: string; // ISO-8601
+  cachedAt: string;
 }
 
-function feedKey(url: string):  string { return KEY_PREFIX_FEED  + Buffer.from(url).toString('base64url'); }
+function feedKey(url: string): string { return KEY_PREFIX_FEED + Buffer.from(url).toString('base64url'); }
 function staleKey(url: string): string { return KEY_PREFIX_STALE + Buffer.from(url).toString('base64url'); }
-function lockKey(url: string):  string { return KEY_PREFIX_LOCK  + Buffer.from(url).toString('base64url'); }
+function lockKey(url: string): string { return KEY_PREFIX_LOCK + Buffer.from(url).toString('base64url'); }
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /** Minimal RSS XML→RSSItem parser (shared with daily-article.ts). */
 function parseRSSXML(xml: string, sourceUrl: string, sourceName: string): RSSFeed {
@@ -39,22 +45,22 @@ function parseRSSXML(xml: string, sourceUrl: string, sourceName: string): RSSFee
 
   for (const [, body] of itemMatches) {
     const get = (tag: string): string =>
-      (body.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`))?.[1] ??
-        body.match(new RegExp(`<${tag}[^>]*>([^<]*)<\\/${tag}>`))?.[1] ??
+      (body.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\/${tag}>`))?.[1] ??
+        body.match(new RegExp(`<${tag}[^>]*>([^<]*)<\/${tag}>`))?.[1] ??
         '').trim();
 
     const raw: unknown = {
-      title:       get('title'),
-      link:        get('link'),
-      pubDate:     get('pubDate') || new Date().toISOString(),
-      guid:        get('guid') || get('link'),
+      title: get('title'),
+      link: get('link'),
+      pubDate: get('pubDate') || new Date().toISOString(),
+      guid: get('guid') || get('link'),
       description: get('description'),
-      content:     get('content:encoded') || undefined,
-      author:      get('author') || get('dc:creator') || undefined,
-      categories:  body.match(/<category[^>]*>([^<]+)<\/category>/g)
-                       ?.map((c) => c.replace(/<[^>]+>/g, '').trim()) ?? [],
-      imageUrl:    body.match(/<media:thumbnail[^>]+url="([^"]+)"/)?.[1] ??
-                   body.match(/<enclosure[^>]+url="([^"]+)"/)?.[1] ?? undefined,
+      content: get('content:encoded') || undefined,
+      author: get('author') || get('dc:creator') || undefined,
+      categories: body.match(/<category[^>]*>([^<]+)<\/category>/g)
+        ?.map((c) => c.replace(/<[^>]+>/g, '').trim()) ?? [],
+      imageUrl: body.match(/<media:thumbnail[^>]+url="([^"]+)"/)?.[1] ??
+        body.match(/<enclosure[^>]+url="([^"]+)"/)?.[1] ?? undefined,
     };
 
     if (isRSSItem(raw)) items.push(raw);
@@ -72,45 +78,54 @@ export class RSSCache {
 
   /**
    * Fetch a single feed, using cached data when available.
-   * Never throws – returns empty feed on total failure.
+   * Never throws – returns stale cached feed on timeout/failure or empty feed.
    */
   async getFeed(url: string, sourceName: string): Promise<RSSFeed> {
-    // 1. Try live cache
     const cached = await this.redis.get<CachedFeed>(feedKey(url));
     if (cached) return cached.feed;
 
-    // 2. Attempt to acquire stampede lock (SET NX)
     const acquired = await this.redis.set(lockKey(url), '1', {
       nx: true,
       px: LOCK_TTL_MS,
     });
 
     if (!acquired) {
-      // Another worker is refreshing – serve stale immediately
       const stale = await this.redis.get<CachedFeed>(staleKey(url));
       if (stale) return stale.feed;
-      // No stale data at all – return empty feed rather than blocking
       return { source: sourceName, url, items: [], fetchedAt: new Date().toISOString() };
     }
 
-    // 3. We hold the lock – go fetch
+    let fetchStartedAt = Date.now();
+    let releaseLockEarly = false;
+
     try {
-      const feed = await this.fetchLive(url, sourceName);
+      const fetchPromise = this.fetchLive(url, sourceName);
+      const slowWarn = sleep(Math.floor(RSS_FEED_TIMEOUT_MS * 0.8)).then(() => {
+        if (Date.now() - fetchStartedAt >= Math.floor(RSS_FEED_TIMEOUT_MS * 0.8)) {
+          console.warn('[rss-cache] feed slow', { url, sourceName, timeoutMs: RSS_FEED_TIMEOUT_MS });
+        }
+      });
+
+      const feed = await Promise.race([fetchPromise, slowWarn.then(() => fetchPromise)]);
+      const durationMs = Date.now() - fetchStartedAt;
+      releaseLockEarly = durationMs < 5000;
 
       const payload: CachedFeed = { feed, cachedAt: new Date().toISOString() };
       const pipeline = this.redis.pipeline();
-      pipeline.set(feedKey(url),  payload, { ex: CACHE_TTL_SECONDS });
-      pipeline.set(staleKey(url), payload, { ex: STALE_TTL_SECONDS }); // always refresh stale
+      pipeline.set(feedKey(url), payload, { ex: CACHE_TTL_SECONDS });
+      pipeline.set(staleKey(url), payload, { ex: STALE_TTL_SECONDS });
       await pipeline.exec();
 
       return feed;
     } catch {
-      // Live fetch failed – serve stale if available
       const stale = await this.redis.get<CachedFeed>(staleKey(url));
       return stale?.feed ?? { source: sourceName, url, items: [], fetchedAt: new Date().toISOString() };
     } finally {
-      // Always release lock
-      await this.redis.del(lockKey(url));
+      if (releaseLockEarly) {
+        await this.redis.del(lockKey(url));
+      } else {
+        await this.redis.del(lockKey(url));
+      }
     }
   }
 
@@ -121,11 +136,14 @@ export class RSSCache {
   async getAllItems(
     feeds: Array<{ url: string; name: string }>,
   ): Promise<{ items: RSSItem[]; feedResults: RSSFeed[] }> {
-    const feedResults = await Promise.all(
+    const settled = await Promise.allSettled(
       feeds.map(({ url, name }) => this.getFeed(url, name)),
     );
 
-    // Flatten and deduplicate by guid across feeds
+    const feedResults = settled
+      .filter((result): result is PromiseFulfilledResult<RSSFeed> => result.status === 'fulfilled')
+      .map(result => result.value);
+
     const seen = new Set<string>();
     const items: RSSItem[] = [];
     for (const feed of feedResults) {
@@ -147,9 +165,8 @@ export class RSSCache {
 
   private async fetchLive(url: string, sourceName: string): Promise<RSSFeed> {
     const res = await fetch(url, {
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(RSS_FEED_TIMEOUT_MS),
       headers: { 'User-Agent': 'CryptoBrainNews/1.0 (+https://cryptobrainnews.com)' },
-      // Conditional request if Etag/Last-Modified available (optional improvement)
     });
     if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
     const xml = await res.text();
